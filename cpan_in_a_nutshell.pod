@@ -1,7 +1,7 @@
 =head1 Test modules
 
 Recommended Test module: L<Test::More>. Provides more functionality,
-better extensibility and more diagnostics than the old T<Test> module.
+better extensibility and more diagnostics than the old L<Test> module.
 Downside: Test::More is part of the core only since 5.7.3.
 
 Worthwhile additions to Test::More: L<Test::Differences> to display a
@@ -93,6 +93,19 @@ Data::JavaScript
 L<YAML>, see above.
 
 L<XML::Simple>, see above and below.
+
+=head1 Config/Ini files
+
+L<YAML> is both good for (de)serialization and config files. API is
+very simple to use. Note the overwhelming bug list on
+L<http://rt.cpan.org>, but for normal configuration files it should
+work OK.
+
+L<savevars>: my own pragma module for conveniently storing and
+retrieving a configuration.
+
+L<Config::IniFiles>: most people recommend this module for Windows-ini
+styled configuration files.
 
 =head1 XML related modules
 
