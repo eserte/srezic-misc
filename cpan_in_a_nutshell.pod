@@ -229,7 +229,6 @@ L<IO::All>: for an even simpler interface
 libnet (L<Net::FTP>) etc. (more low-level, has FTP, but no HTTP (?),
 POP3, SMTP etc.).
 
-
 L<WWW::Mechanize>: a class on top of L<LWP::UserAgent>, can be used to
 mechanize WWW requests. L<WWW::Automate> is similar, but outdated and
 not supported anymore. L<HTTP::Recorder> is a supporting tool for
@@ -247,6 +246,22 @@ L<HTTP::Proxy> to create a HTTP proxy.
 L<HTTP::Daemon> for a pure perl HTTP daemon. Other pure perl http
 daemons: tinyhttpd, httpi (links missing). For perl support in the
 Apache server see L<mod_perl> and the CGI support in Apache.
+
+=head2 Mail
+
+L<Mail::Send> and L<Mail::Mailer> are used for composing and sending
+simple messages. The modules are old and work somehow, but one has to
+actually read the source rather than the documentation to learn all
+the caveats. There's no support for constructing MIME mails.
+
+L<Mail::Sendmail>: XXX check this one. Just for sending.
+
+L<Net::SMTP>: A low-level module for accessing a SMTP server for
+sending mails. No support for constructing messages.
+
+L<Mail::Box>: a comprehensive suite of mail manipulating modules. This
+include: message construction, mbox/mail folder manipulation, sending
+mails. Support for MIME mails.
 
 =head1 Templating systems
 
