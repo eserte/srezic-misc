@@ -39,6 +39,16 @@ type "drag'n'drop", but seems to be useful. L<specPerl> (not on CPAN)
 is old, but probably useful. L<guido> (on Sourceforge) hast no active
 development anymore, and is not in a useful state.
 
+=head1 Tk widgets
+
+=head2 Date widgets
+
+L<Tk::Date>: a highly configurable text only entry widgets.
+
+L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
+
+L<Tk::DatePick>: not yet tested
+
 =head1 Serialization
 
 L<YAML> is neat: it's human readable, portable across languages, but
@@ -392,4 +402,3 @@ See
 L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
 about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
 Perl-byacc.
-
