@@ -243,12 +243,15 @@ Apache server see L<mod_perl> and the CGI support in Apache.
 L<Mail::Send> and L<Mail::Mailer> are used for composing and sending
 simple messages. The modules are old and work somehow, but one has to
 actually read the source rather than the documentation to learn all
-the caveats. There's no support for constructing MIME mails.
+the caveats. There's no support for constructing MIME mails. There are
+multiple backends (sendmail, mail, smtp ...) built in.
 
 L<Mail::Sendmail>: XXX check this one. Just for sending.
 
 L<Net::SMTP>: A low-level module for accessing a SMTP server for
 sending mails. No support for constructing messages.
+
+L<Mail::Sender> a higher-level module around Net::SMTP ??? 
 
 L<Mail::Box>: a comprehensive suite of mail manipulating modules. This
 include: message construction, mbox/mail folder manipulation
