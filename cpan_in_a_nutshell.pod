@@ -247,8 +247,13 @@ L<Net::SMTP>: A low-level module for accessing a SMTP server for
 sending mails. No support for constructing messages.
 
 L<Mail::Box>: a comprehensive suite of mail manipulating modules. This
-include: message construction, mbox/mail folder manipulation, sending
-mails. Support for MIME mails.
+include: message construction, mbox/mail folder manipulation
+(including access to POP3 mail accounts), sending mails. Support for
+MIME mails.
+
+L<Mail::Cclient> also gives access to various mailbox formats
+(including IMAP mail accounts). The module relies on an additional C
+library.
 
 =head1 Templating systems
 
