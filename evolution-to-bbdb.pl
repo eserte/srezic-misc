@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-our $VERSION = sprintf("%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/);
+our $VERSION = sprintf("%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/);
 
 use DB_File;
 use Encode;
@@ -17,7 +17,6 @@ tie my %adr, "DB_File", $adrdb, O_RDONLY, 0644
 my @l = localtime;
 my $today = sprintf "%04d-%02d-%02d", $l[5]+1900, $l[4]+1, $l[3];
 
-print ";;; BEGIN import from evolution addressbook\n";
 while(my($k,$v) = each %adr) {
     if ($k =~ /^pas-id/) {
 	$v =~ s/\0//g;
@@ -34,4 +33,3 @@ while(my($k,$v) = each %adr) {
 	}
     }
 }
-print ";;; END import from evolution addressbook\n";
