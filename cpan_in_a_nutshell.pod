@@ -362,3 +362,22 @@ PDF::Create, at least for my needs.
 
 There are some templating solutions (PDF::Reuse, PDF::Template). And
 there's also (non-perl) pdflatex!
+
+=head1 Building software
+
+L<ExtUtils::MakeMaker> is the old-fashioned standard way of building
+perl modules and applications. Unfortunately it depends on the
+existance of a C<make> tool on the system, so there's now a pure-perl
+solution in the beginnings: L<Module::Build>.
+
+A C<make> replacement as a perl module: L<Make>, together with a
+command line tool C<pmake>.
+
+L<Commands::Guarded> is an interesting module for guarded execution of
+commands (better description!).
+
+L<PANT> is meant as an C<ant> replacement to help to automate a build
+environment. It is usually used as a meta script which calls external
+C<make> commands and has some built-ins like NewerFile, CopyFile etc.
+
+L<Cons> is a make replacement. Cons files are written in pure perl.
