@@ -317,3 +317,12 @@ of the CPAN repository.
 A list can be found at
 L<http://www.perlmonks.org/index.pl?node_id=424075>. A discussion at
 L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
+
+=head1 IO
+
+=head2 Reading/writing to a scalar
+
+Since 5.8.0, this can be done with three-arg L<open|perlfunc/open> and
+a scalar ref instead of a filename. For former perl versions, use
+either L<IO::Scalar> or L<IO::Stringy> (XXX correct?).
+
