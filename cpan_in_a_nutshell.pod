@@ -49,6 +49,26 @@ L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
 
 L<Tk::DatePick>: not yet tested
 
+=head2 (Multicolumn) Listboxes, Tables
+
+L<Tk::Listbox>: a core Tk widget. Cannot use multiple columns, other
+than defining a fixed font a fake multiple columns. Since Tk804 it's
+possible to define a limited set of per-entry configuration
+(foreground color, others?).
+
+L<Tk::HList>: a core Perl/Tk widget, which has headers (through
+L<Tk::ResizeButton> also clickable and useable to resize columns),
+multiple columns, different styles for every cell, the possibility to
+use widgets or images in cells.
+
+L<Tk::MListbox>: XXX, are there others?
+
+L<Tk::Table>: a pure Perl/Tk table implemenentation. Rather complete,
+but slow on large tables, as each cell is represented by a widget.
+
+L<Tk::TableMatrix>: an XS extension to create tables. Complete and
+much faster than Tk::Table.
+
 =head1 Serialization
 
 L<YAML> is neat: it's human readable, portable across languages, but
