@@ -118,7 +118,11 @@ though on a very low level (if you compare with other fields Perl is
 strong). I suspect it's just the fact that a DOM/XML tree does not
 easily fit into the hash/array/scalar world of Perl.
 
+L<XML::Parser::EasyTree>: like C<XML::Parser> with Tree style, but the
+generated tree is more readable.
+
 =head2 Parser/Generators
+
 L<XML::LibXML>, an interface to the libxml2 library. Used the SAX
 parser --- low-level work, but worked OK.
 
