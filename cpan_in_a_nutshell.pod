@@ -172,8 +172,8 @@ L<Image::LibRSVG> converts svg graphics into popular image formats.
 =head1 Graphic utitilies
 
 L<Image::Size> and L<Image::Info> may be used to get information about
-an image file (like size, mime format etc.). (XXX Check the exact
-differences between those two).
+an image file (like size, mime format etc.). I had some exotic jpegs
+which did not work with Image::Info, but worked with Image::Size.
 
 =head1 Charts
 
@@ -385,3 +385,11 @@ environment. It is usually used as a meta script which calls external
 C<make> commands and has some built-ins like NewerFile, CopyFile etc.
 
 L<Cons> is a make replacement. Cons files are written in pure perl.
+
+=head1 Parsers
+
+See
+L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
+about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
+Perl-byacc.
+
