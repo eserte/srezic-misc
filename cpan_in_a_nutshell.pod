@@ -102,19 +102,6 @@ L<YAML>, see above.
 
 L<XML::Simple>, see above and below.
 
-=head1 Config/Ini files
-
-L<YAML> is both good for (de)serialization and config files. API is
-very simple to use. Note the overwhelming bug list on
-L<http://rt.cpan.org>, but for normal configuration files it should
-work OK.
-
-L<savevars>: my own pragma module for conveniently storing and
-retrieving a configuration.
-
-L<Config::IniFiles>: most people recommend this module for Windows-ini
-styled configuration files.
-
 =head1 XML related modules
 
 Best reference is probably L<http://perl-xml.sourceforge.net/>,
@@ -131,7 +118,7 @@ easily fit into the hash/array/scalar world of Perl.
 L<XML::LibXML>, an interface to the libxml2 library. Used the SAX
 parser --- low-level work, but worked OK.
 
-L<XML::Simple>, an high-level interface. For serious work there's a
+L<XML::Simple>, a high-level interface. For serious work there's a
 lot of options to fiddle with, but the documentation is extensive and
 marks the options which are important and which are not.
 
@@ -317,6 +304,32 @@ of the CPAN repository.
 A list can be found at
 L<http://www.perlmonks.org/index.pl?node_id=424075>. A discussion at
 L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
+
+=head1 File type detection
+
+L<MIME::Types>: the name may be misleading --- the module is just an
+file extension - mime type mapping. The module is not looking at
+file's magic. It is supposed to work just like the MIME type
+recognition of Apache.
+
+Look at L<File::MMagic>, L<File::MimeInfo::Magic> and L<File::Type>
+XXX.
+
+=head1 File system
+
+=head2 Copying files
+
+L<File::Copy> is in the core. There's no support for recursive copying
+or file attribute preservation.
+
+L<File::NCopy> is able to make recursive copies and preserve file
+attributes.
+
+=head2 Walking a file hierarchy
+
+L<File::Find> is in the core. 
+
+L<File::Find::Rule> is different XXX. Many plugins.
 
 =head1 IO
 
