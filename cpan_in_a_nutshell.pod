@@ -271,3 +271,9 @@ The classic module is L<CPAN>, which comes with core perl. Someday,
 L<CPANPLUS> will be the successor of CPAN.pm some day (once it is
 stable etc.). L<CPAN::Mini> is a module for creating a minimal mirror
 of the CPAN repository.
+
+=head1 Logic programming
+
+A list can be found at
+L<http://www.perlmonks.org/index.pl?node_id=424075>. A discussion at
+L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
