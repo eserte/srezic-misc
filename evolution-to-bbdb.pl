@@ -1,21 +1,28 @@
 #!/usr/bin/perl
 
 use strict;
-our $VERSION = sprintf("%d.%02d", q$Revision: 1.2 $ =~ /(\d+)\.(\d+)/);
+our $VERSION = sprintf("%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/);
 
 use DB_File;
 use Encode;
+use Getopt::Long;
 
 use Text::vCard;
 use Text::vCard::Addressbook;
 
-my $adrdb = "$ENV{HOME}/evolution/local/Contacts/addressbook.db";
+my %opt = (adrdb => "$ENV{HOME}/evolution/local/Contacts/addressbook.db",
+	  );
 
-tie my %adr, "DB_File", $adrdb, O_RDONLY, 0644
-    or die "Can't tie $adrdb: $!";
+GetOptions(\%opt, "adrdb=s", "add-header!")
+    or die "usage: $0 [-adrdb dbfile] [-add-header]";
+
+tie my %adr, "DB_File", $opt{adrdb}, O_RDONLY, 0644
+    or die "Can't tie $opt{adrdb}: $!";
 
 my @l = localtime;
 my $today = sprintf "%04d-%02d-%02d", $l[5]+1900, $l[4]+1, $l[3];
+
+print ";;; file-version: 6\n" if $opt{"add-header"};
 
 while(my($k,$v) = each %adr) {
     if ($k =~ /^pas-id/) {
