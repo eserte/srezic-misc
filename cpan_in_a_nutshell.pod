@@ -1,5 +1,9 @@
 =head1 Test modules
 
+A comprehensive overview of test modules can be found at
+L<http://qa.perl.org/test-modules.html> (An overview of the testing
+modules available on CPAN).
+
 Recommended Test module: L<Test::More>. Provides more functionality,
 better extensibility and more diagnostics than the old L<Test> module.
 Downside: Test::More is part of the core only since 5.7.3.
@@ -283,7 +287,7 @@ Maypole (XXX link?). A MVC system for Apache or cgi-bin.
 L<Apache::ASP>: a framework with a jsp/asp-like templating system XXX
 check.
 
-=head1 Versioning controll systems
+=head1 Versioning control systems
 
 L<VCS> and others. Look which one is the best nowadays XXX.
 
