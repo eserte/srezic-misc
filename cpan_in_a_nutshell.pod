@@ -61,9 +61,17 @@ L<Data::Dump::Streamer> is maybe worthwhile to take a look on XXX.
 
 L<Data::Denter> is a predecessor of YAML.
 
+L<XML::Dumper> is a serialisation module for dumping Perl objects
+from/to XML. As usually with XML, the output is very verbose and
+probably slower than other modules. It's possible to include a DTD in
+the generated XML document. There's no support for code references.
+
 L<Data::Serializer> is a meta class for handling a couple of
 serialization methods together with encryption, compression and
 checksumming.
+
+L<FreezeThaw> is ancient, pure-perl, and much slower than other
+modules.
 
 =head1 Config/Ini files
 
