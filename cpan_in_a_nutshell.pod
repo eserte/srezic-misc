@@ -229,6 +229,35 @@ L<Class::DBI> is popular. There are also L<Alzabo>, L<Rose::DB>. See
 also L<http://poop.sourceforge.net/>, as database abstraction layers
 and object persistence systems are mostly the same thing.
 
+=head1 File database systems
+
+File database systems or dbm systems are simple database systems with
+usually just a key-value relation and only one table per file.
+
+A short overview of standard DBM systems which come with perl can be
+looked at the L<AnyDBM_File> manpage. L<DB_File> has the most "+" in
+the AnyDBM_File table, but has some problems: the database file format
+changes across berkeley db versions, and there are reportedly many
+problems with corrupted databases.
+
+L<DBM::Deep> is a pure-perl implementation which can also handle deep
+nested structures as values (other DBM implementations can only
+handle scalars as values).
+
+L<CDB_File> is a "constant" database. This means that generating the
+database is costly, but reading is very fast.
+
+To have L<MLDBM> sits on top of the other DBM implementations and
+enables storing of deep nested structures. Unlike L<DBM::Deep>,
+storing of object information is also possible.
+
+L<MLDBM::Sync::SDBM_File> can be used to overcome the size limitations
+of L<SDBM_File>.
+
+L<DB_File::Lock> adds a locking layer to L<DB_File>.
+
+L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
+
 =head1 Development, Perl Interna
 
 =head2 Weak references
