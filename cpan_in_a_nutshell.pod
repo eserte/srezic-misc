@@ -351,3 +351,14 @@ Since 5.8.0, this can be done with three-arg L<open|perlfunc/open> and
 a scalar ref instead of a filename. For former perl versions, use
 either L<IO::Scalar> or L<IO::Stringy> (XXX correct?).
 
+=head1 PDF creation
+
+L<PDF::Create> works. Best to use version 0.06 from sourceforge
+(project perl-pdf).
+
+
+L<PDF::API2> is big and complete. But its seems to be slower than
+PDF::Create, at least for my needs.
+
+There are some templating solutions (PDF::Reuse, PDF::Template). And
+there's also (non-perl) pdflatex!
