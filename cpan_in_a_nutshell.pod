@@ -61,6 +61,10 @@ L<Data::Dump::Streamer> is maybe worthwhile to take a look on XXX.
 
 L<Data::Denter> is a predecessor of YAML.
 
+L<Data::Serializer> is a meta class for handling a couple of
+serialization methods together with encryption, compression and
+checksumming.
+
 =head1 Config/Ini files
 
 L<YAML> is both good for (de)serialization and config files. API is
