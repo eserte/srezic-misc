@@ -223,6 +223,12 @@ L<Storable> (see above) and all other (de)serialization modules. See
 also L<http://poop.sourceforge.net> for a comprehensive list of perl
 object persistance modules.
 
+=head1 Database Abstractions
+
+L<Class::DBI> is popular. There are also L<Alzabo>, L<Rose::DB>. See
+also L<http://poop.sourceforge.net/>, as database abstraction layers
+and object persistence systems are mostly the same thing.
+
 =head1 Development, Perl Interna
 
 =head2 Weak references
@@ -433,3 +439,4 @@ L<String::CRC32>: fast, written in C.
 L<Digest::Crc32>: very slow, written in pure perl.
 
 There are also L<Digest::CRC> and L<String::CRC>.
+
