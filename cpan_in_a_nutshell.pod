@@ -425,3 +425,11 @@ See
 L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
 about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
 Perl-byacc.
+
+=head1 CRC
+
+L<String::CRC32>: fast, written in C.
+
+L<Digest::Crc32>: very slow, written in pure perl.
+
+There are also L<Digest::CRC> and L<String::CRC>.
