@@ -371,6 +371,9 @@ or file attribute preservation.
 L<File::NCopy> is able to make recursive copies and preserve file
 attributes.
 
+L<File::Copy::Recursive> is an alternative module for copying files
+recursively.
+
 =head2 Walking a file hierarchy
 
 L<File::Find> is in the core. 
