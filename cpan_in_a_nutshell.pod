@@ -7,6 +7,11 @@ Downside: Test::More is part of the core only since 5.7.3.
 Worthwhile additions to Test::More: L<Test::Differences> to display a
 diff-like output of the comparison of two strings or data structures.
 
+L<Test::NoWarnings>: make sure that there are no warnings generated in
+your test suite. This is the opposite of Test::Warn.
+
+L<Test::Warn>: test the creation of warnings.
+
 =head1 List/Array modules
 
 Handy utility functions can be found in the core module (since 5.7.3)
@@ -69,6 +74,22 @@ retrieving a configuration.
 L<Config::IniFiles>: most people recommend this module for Windows-ini
 styled configuration files.
 
+L<XML::Simple>: out-of-the-box serialization is not possible without
+fiddling with a lot of options
+
+=head2 Serialization to other languages
+
+L<Data::JavaScript> from perl to javascript, can handle circular
+structures, but output is quite verbose
+
+L<Data::JavaScript::Anon> from perl to javascript, cannot handle
+circular references, but the output is terse compared to
+Data::JavaScript
+
+L<YAML>, see above.
+
+L<XML::Simple>, see above and below.
+
 =head1 XML related modules
 
 Best reference is probably L<http://perl-xml.sourceforge.net/>,
@@ -107,7 +128,9 @@ is also true font support.
 
 L<Image::Magick> (also known as PerlMagick) is, compared to GD, slow
 but creates superior results. It's also not so easy to install because
-of the dependency of the imagemagick program/library.
+of the dependency of the imagemagick program/library. An alternative
+is L<Graphics::Magick> (more stable, but not yet --- 2005-02-14 --- on
+CPAN).
 
 L<Imager> is a library which comes with the graphic library bundled in
 the perl module distribution. So you only need the low-level libraries
@@ -123,6 +146,8 @@ newfile.gif.
 
 L<GraphViz> is a B<graph> library. Feed in a graph or tree and get a
 graph as gif or postscript or Perl/Tk canvas output or ...
+
+L<Image::LibRSVG> converts svg graphics into popular image formats.
 
 =head1 Graphic utitilies
 
@@ -217,11 +242,32 @@ template. Small and useful.
 
 L<Apache::ASP>, to be used in conjuction with L<mod_perl>.
 
-EmbPerl (XXX link?).
+EmbPerl (XXX link?). Templating only?
 
-Mason (XXX link?).
+Mason (XXX link?). Templating only?
+
+Maypole (XXX link?). A MVC system for Apache or cgi-bin.
+
+L<Apache::ASP>: a framework with a jsp/asp-like templating system XXX
+check.
 
 =head1 Versioning controll systems
 
 L<VCS> and others. Look which one is the best nowadays XXX.
 
+=head1 Hash tools
+
+To get ordered hashes, use either L<Tie::IxHash>,
+L<Tie::InsertOrderHash> or L<Tie::Hash::Indexed>.
+
+=head1 Regexp tools
+
+L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
+modules doing similar things.
+
+=head1 Module installation
+
+The classic module is L<CPAN>, which comes with core perl. Someday,
+L<CPANPLUS> will be the successor of CPAN.pm some day (once it is
+stable etc.). L<CPAN::Mini> is a module for creating a minimal mirror
+of the CPAN repository.
