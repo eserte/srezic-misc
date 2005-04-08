@@ -333,6 +333,9 @@ library.
 
 =head1 Templating systems
 
+A comparison of web centered templating systems can be found at
+L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
+
 =head2 Standalone templating systems
 
 There are too many around there. Just to name some:
@@ -469,3 +472,6 @@ L<Digest::Crc32>: very slow, written in pure perl.
 
 There are also L<Digest::CRC> and L<String::CRC>.
 
+=head1 Password generators
+
+There are L<String::Random> and L<String::MkPasswd>.
