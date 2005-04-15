@@ -475,3 +475,9 @@ There are also L<Digest::CRC> and L<String::CRC>.
 =head1 Password generators
 
 There are L<String::Random> and L<String::MkPasswd>.
+
+=head1 Stripping accents
+
+L<Text::Unidecode>: highly recommended, handles all Unicode
+characters. There are also L<Text::Unaccent> and
+L<Text::StripAccents>.
