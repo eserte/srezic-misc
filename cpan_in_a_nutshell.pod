@@ -32,6 +32,12 @@ comparison). L<X11::Protocol> for a low-level interface to the X11
 windowing system --- good in conjuction with a higher level GUI
 toolkit like Tk.
 
+=head1 Console based GUI toolkits
+
+Low level: L<Curses>.
+
+Higher level: L<CDK>, L<Curses::UI>.
+
 =head1 GUI builder
 
 For L<Tk>: L<ZooZ> is actively developed. It is not exactly of the
