@@ -487,3 +487,8 @@ There are L<String::Random> and L<String::MkPasswd>.
 L<Text::Unidecode>: highly recommended, handles all Unicode
 characters. There are also L<Text::Unaccent> and
 L<Text::StripAccents>.
+
+=head1 Logging
+
+A good comparison can be found at:
+L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
