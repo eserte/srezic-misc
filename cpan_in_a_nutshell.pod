@@ -492,3 +492,8 @@ L<Text::StripAccents>.
 
 A good comparison can be found at:
 L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
+
+=head1 Sorting
+
+L<Sort::Key> is (according to the author) the fastest way to sort an
+array by key.
