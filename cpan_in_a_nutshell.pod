@@ -27,10 +27,10 @@ modules L<List::MoreUtil> and L<List::Utils>.
 
 L<Tk> is mature and runs on X11, Windows and MacOSX under XDarwin.
 Further alternatives are: L<Wx>, L<Gtk2>, L<Qt>, L<Prima>,
-L<Win32::GUI> etc. (XXX: Add link to perlmonks page with the GUI
-comparison). L<X11::Protocol> for a low-level interface to the X11
-windowing system --- good in conjuction with a higher level GUI
-toolkit like Tk.
+L<Win32::GUI> etc. (A GUI toolkit comparison can be found at
+L<http://www.perlmonks.org/?node_id=108708>). L<X11::Protocol> for a
+low-level interface to the X11 windowing system --- good in conjuction
+with a higher level GUI toolkit like Tk.
 
 =head1 Console based GUI toolkits
 
