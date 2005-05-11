@@ -497,3 +497,18 @@ L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
 
 L<Sort::Key> is (according to the author) the fastest way to sort an
 array by key.
+
+=head1 Class support
+
+=head2 Autogenerating accessors
+
+L<Class::Struct>: in the perl core, has a strange syntax and I
+remember other issues (no backward compatibility).
+
+L<Class::Accessor>: stable. Has varians for fast access
+L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
+
+L<accessors>: simple syntax, has also some variants. Test suite spits
+a lot of warnings.
+
+L<Class::AccessorMaker>: ???
