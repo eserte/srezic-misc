@@ -359,14 +359,21 @@ template. Small and useful.
 
 L<Apache::ASP>, to be used in conjuction with L<mod_perl>.
 
-EmbPerl (XXX link?). Templating only?
+EmbPerl (L<HTML::Embperl>). More than just templating XXX?
 
-Mason (XXX link?). Templating only?
-
-Maypole (XXX link?). A MVC system for Apache or cgi-bin.
+Mason (L<HTML::Mason>). More than just templating XXX?
 
 L<Apache::ASP>: a framework with a jsp/asp-like templating system XXX
 check.
+
+=head1 Web Frameworks
+
+L<Catalyst> --- The Elegant MVC Web Application Framework 
+
+L<Maypole>. A MVC system for Apache or cgi-bin.
+
+See also L<HTML::Mason> and maybe L<Apache::ASP>, which are more than just
+templating systems (is this true XXX?).
 
 =head1 Versioning control systems
 
