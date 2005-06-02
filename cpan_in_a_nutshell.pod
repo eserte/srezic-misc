@@ -568,3 +568,16 @@ restart a script after a previous failure and determining errors is
 not done by checking error coded, but by checking the
 should-condition.
 
+=head1 Date and time modules
+
+A classic one is L<Date::Calc>, a rather complete implementation of
+date/time functions with a functional (somewhat non-perlish naming)
+und object-oriented interfaces. It's written in C, so there's also a
+pure perl replacement L<Date::Pcalc>.
+
+The standard perl functions and modules: time, localtime, strftime and
+mktime in L<POSIX>, L<Time::Local>.
+
+Other efforts are: L<DateTime>, L<Time::Piece>, L<Date::Handler>,
+L<Date::Manip>, ... (XXX check and compare all of these...)
+
