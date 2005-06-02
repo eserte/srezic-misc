@@ -1,5 +1,7 @@
 =head1 Test modules
 
+=head2 Generic test modules
+
 A comprehensive overview of test modules can be found at
 L<http://qa.perl.org/test-modules.html> (An overview of the testing
 modules available on CPAN).
@@ -15,6 +17,41 @@ L<Test::NoWarnings>: make sure that there are no warnings generated in
 your test suite. This is the opposite of Test::Warn.
 
 L<Test::Warn>: test the creation of warnings.
+
+L<Test::Distribution>: test if a distribution is correct and complete
+(POD checking, all modules compile, existance of standard files like
+README). Simple to use.
+
+L<Test::Deep>: compare deep structures with a lot of features. For
+easier tests, is_deeply from Test::More should suffice.
+
+L<Test::Without::Module>: emulate the non-existance of modules (e.g. for
+optional features).
+
+=head2 WWW and HTML related test modules
+
+L<Test::HTTPStatus>: a very simple module for just checking the return
+value (status code) of an URL.
+
+L<Test::URI>: Check various parts of Uniform Resource Locators.
+
+L<Test::HTML::Content>: Perl extension for testing HTML output (e.g.
+expected links, content, xpath ...).
+
+L<Test::HTML::Lint>: make lint tests to HTML.
+
+L<Test::HTML::Tidy>: similar to Test::HTML::Lint, but uses the
+external tidy library.
+
+L<Test::WWW::Mechanize>: bring WWW::Mechanize and Test::More together
+
+L<Test::WWW::Simple>: simple content tests.
+
+L<CGI::Test>: ???
+
+=head2 Other test modules
+
+L<Test::XML>: Compare XML in perl tests.
 
 =head1 List/Array modules
 
@@ -519,3 +556,15 @@ L<accessors>: simple syntax, has also some variants. Test suite spits
 a lot of warnings.
 
 L<Class::AccessorMaker>: ???
+
+=head1 System administration
+
+L<Sysadm::Install>: a box full of tools typical for automated
+installation tasks. Looks very nice.
+
+L<Commands::Guarded>: this is more a paradigma the a toolbox: every
+action has a should-condition and an action. So it's possible to
+restart a script after a previous failure and determining errors is
+not done by checking error coded, but by checking the
+should-condition.
+
