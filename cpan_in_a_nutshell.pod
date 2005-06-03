@@ -581,3 +581,7 @@ mktime in L<POSIX>, L<Time::Local>.
 Other efforts are: L<DateTime>, L<Time::Piece>, L<Date::Handler>,
 L<Date::Manip>, ... (XXX check and compare all of these...)
 
+=head1 Geo modules
+
+L<Geo::Coder::US> is an interface to the free US geo data.
+
