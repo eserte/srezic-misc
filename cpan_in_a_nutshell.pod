@@ -389,6 +389,10 @@ system. Good documentation, good support.
 L<HTML::Template>, another popular system. Not so feature-rich like
 Template-Toolkit. Focus on HTML.
 
+Soon to come: L<HTML::Template::Compiled> is a version of
+L<HTML::Template> which uses perl code internally and thus should be
+faster than the original.
+
 L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
 template. Small and useful.
 
