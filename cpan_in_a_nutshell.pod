@@ -396,6 +396,11 @@ faster than the original.
 L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
 template. Small and useful.
 
+=head2 Meta templating systems
+
+L<Any::Template> is a wrapper around the major templating systems
+using the same API for all.
+
 =head2 Apache
 
 L<Apache::ASP>, to be used in conjuction with L<mod_perl>.
