@@ -535,6 +535,17 @@ There are also L<Digest::CRC> and L<String::CRC>.
 
 There are L<String::Random> and L<String::MkPasswd>.
 
+=head1 Approximate matching
+
+L<String::Approx> uses the Levenshtein edit distance. The core is
+implemented in C. Older versions of C<String::Approx> (version 2) also
+have a slower perl implementation.
+
+L<String::Similarity> returns a similarity index of two strings.
+
+L<String::Trigram> finds similar strings by trigram (or 1, 2, 4,
+etc.-gram) method.
+
 =head1 Stripping accents
 
 L<Text::Unidecode>: highly recommended, handles all Unicode
@@ -593,4 +604,20 @@ L<Date::Manip>, ... (XXX check and compare all of these...)
 =head1 Geo modules
 
 L<Geo::Coder::US> is an interface to the free US geo data.
+
+L<Geo::Google> is an interface to Google maps.
+
+=head1 Terminal input
+
+Use L<Term::Readkey> for one-key-at-a-time input (visible or
+invisible). Useful also for invisible password input.
+
+L<Term::ReadLine>: a perl module similar to readline. Enabled line
+editing and history handling. Comes in two flavours:
+L<Term::ReadLine::Perl> and L<Term::ReadLine::Gnu> (XXX what's the
+difference between those two?)
+
+L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
+string and getting an answer. Has a lot of useful options (defaults,
+input filters ...).
 
