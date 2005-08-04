@@ -1,0 +1,219 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: throughput,v 1.1 2005/08/04 21:31:20 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2000 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: eserte@cs.tu-berlin.de
+# WWW:  http://user.cs.tu-berlin.de/~eserte/
+#
+
+package OOIsdn::Throughput;
+
+use Tk;
+use strict;
+use vars qw($default_dev);
+
+#$default_dev = "ippp0" unless defined $default_dev;
+$default_dev = "isp0" unless defined $default_dev;
+
+sub new {
+    my($class, %args) = @_;
+
+    if (!defined $args{-dev}) {
+	$args{-dev} = $default_dev;
+    }
+
+    my $self = \%args;
+
+    $self->{-oldin}    = undef;
+    $self->{-oldout}   = undef;
+    $self->{-oldspeed} = undef;
+    $self->{-height}   = 300 unless defined $self->{-height};
+    $self->{-secs}     = 1 unless defined $self->{-secs};
+
+    bless $self, $class;
+
+    $self->create_canvas;
+
+    $self;
+}
+
+sub create_canvas {
+    my $self = shift;
+
+    my $top = $self->{-top};
+    my $dev = $self->{-dev};
+
+    my $canvas_width = 400; # Breite des Canvas
+
+    my($max_baud, $step, $step2);
+    $max_baud = $self->{-max} if defined $self->{-max};
+
+    if ($dev =~ /ppp|isp|tun/) { # ISDN/Modem
+	$max_baud = 16000 unless defined $max_baud; # Maximum der Baud-Anzeige
+	$step = 500; # für gestrichelte Linie
+	$step2 = 1000; # für Baud-Text
+    } else { # Ethernet etc.
+	$max_baud = 1_000_000 unless defined $max_baud; # Maximum der Baud-Anzeige
+#XXX automatisch feststellen, siehe tics-code
+#	$step = 50_000; # für gestrichelte Linie
+#	$step2 = 100_000; # für Baud-Text
+#  	$max_baud = 5_000_000; # Maximum der Baud-Anzeige
+  	$step = 500_000; # für gestrichelte Linie
+  	$step2 = 1_000_000; # für Baud-Text
+    }
+
+    my $incr = int(($canvas_width*$step)/$max_baud);
+
+    my $canvas = $top->Canvas(-bg => 'white',
+			      -width => $canvas_width,
+			      -height => $self->{-height},
+			      -highlightthickness => 0,
+			      -takefocus => 0,
+			      )->pack(-expand => 1, -fill => 'both');
+    my $baud = 0;
+    for(my $x = 0; $x<=$canvas_width; $x+=$incr) {
+	my $baud_text = sprintf("%.1f", $baud/1000);
+	$baud_text =~ /^(.*)$/; # untaint (why?)
+	$baud_text = $1;
+	$canvas->createLine($x, 0, $x, $self->{-height}, -fill => 'grey70');
+  	$canvas->createText($x, 6, -text => $baud_text,
+  			    -font => "5x7"
+			    )
+  	    if ($baud%$step2 == 0);
+	$baud += $step;
+    }
+
+    for(my $y = 0; $y<=$self->{-height}; $y+=60) {
+	$canvas->createLine(0, $y, 400, $y, -fill => 'grey70');
+    }
+
+    $self->{-canvas} = $canvas;
+    $self->{-canvaswidth} = $canvas_width;
+    $self->{-maxbaud} = $max_baud;
+}
+
+sub run {
+    my $self = shift;
+    my $canvas = $self->{-canvas};
+
+#      my $secs = 1;
+#      $self->{-secs} = $secs;
+    my $secs = $self->{-secs};
+
+    $self->refresh;
+    $canvas->repeat($secs*1000, sub { $self->refresh });
+}
+
+sub delete {
+    my $self = shift;
+    my $top = $self->{-top};
+    $top->destroy;
+}
+
+sub refresh {
+    my $self = shift;
+
+    my $dev = $self->{-dev};
+    my $canvas = $self->{-canvas};
+    my $max_baud = $self->{-maxbaud};
+    my $canvas_width = $self->{-canvaswidth};
+    my $secs = $self->{-secs};
+    my $old_in = $self->{-oldin};
+    my $old_out = $self->{-oldout};
+    my $old_speed = $self->{-oldspeed};
+    my $height = $self->{-height};
+
+    my($new_in, $new_out);
+
+    my $stat_proc;
+
+    if (-e "/proc/net/dev") {
+	$stat_proc = sub {
+	    my($l) = `cat /proc/net/dev | grep $dev`;
+	    chomp $l;
+	    $l =~ s/^[^:]+:\s*//;
+	    $l =~ /^(.*)$/; # untaint
+	    my(@data) = split(/\s+/, $1);
+	    $new_in  = $data[0];
+	    $new_out = $data[8];
+	};
+    } elsif ($^O =~ /bsd/i) {
+	$stat_proc = sub {
+	    my(@netstat_data) = `netstat -n -b -I $dev`;
+	    my $data = substr($netstat_data[1], 57);
+	    $data =~ s/^\s+//;
+	    my(@data) = split(/\s+/, $data);
+	    $new_in  = $data[0];
+	    $new_out = $data[3];
+	};
+    } else {
+	$stat_proc = sub {
+	    my(@netstat_data) = `netstat -n -b -I $dev`;
+	    my(@data) = split(/\s+/, $netstat_data[1]);
+	    $new_in  = $data[6];
+	    $new_out = $data[9];
+	};
+    }
+
+    $stat_proc->();
+
+    my $new_speed;
+    if (defined $old_in and defined $old_out) {
+	my $last_per_in  = $new_in - $old_in;
+	my $last_per_out = $new_out - $old_out;
+
+	$new_speed = ($last_per_in + $last_per_out)/$secs;
+
+	if (defined $old_speed) {
+	    $canvas->move('bps', 0, -1);
+	    $canvas->createLine
+		(int($old_speed*$canvas_width/$max_baud), $height-2,
+		 int($new_speed*$canvas_width/$max_baud), $height-1,
+		 -fill => 'red',
+		 -tags => 'bps');
+	}
+    }
+    $self->{-oldin} = $new_in;
+    $self->{-oldout} = $new_out;
+    $self->{-oldspeed} = $new_speed;
+}
+
+return 1 if caller;
+
+######################################################################
+
+package main;
+
+require Getopt::Long;
+
+$OOIsdn::Throughput::dev = $OOIsdn::Throughput::dev; # peacify -w
+my $dev = $OOIsdn::Throughput::dev;
+my $secs;
+my $geometry;
+my $max;
+if (!Getopt::Long::GetOptions("dev=s" => \$dev,
+			      "secs=f" => \$secs,
+			      "geometry=s" => \$geometry,
+			      "max=i" => \$max,
+			     )) {
+    die "Usage: $0 [-dev ifdevice] [-secs secs] [-max bps]";
+}
+
+my $top = new MainWindow;
+$top->geometry($geometry) if ($geometry);
+$top->title("Throughput for $dev") if defined $dev;
+my @args = (-top => $top, -dev => $dev);
+push @args, "-secs", $secs if defined $secs && $secs > 0;
+push @args, "-max", $max if defined $max && $max > 0;
+my $t = new OOIsdn::Throughput @args;
+$t->run;
+Tk::MainLoop();
+
+__END__
