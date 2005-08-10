@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+
+<h1>The Option Database</h1>
+
+The option database is a means to change the look of an Perl/Tk
+application. It holds a mapping of resource patterns to values.
+Resource patterns may consist of a widget specification and a resource
+(like font or foreground color). The corresponding value is used for
+these resources. This can be used either to create a personalized look
+for all Perl/Tk applications or just to save typing if you are using a
+lot of configuration options in your scripts.
+
+<p>
+
+The format and idea of option databases is stolen from the concept of
+X11 resources. Every old-fashioned X11 user should be familiar with
+the <tt>.Xdefaults</tt> or <tt>.Xresources</tt> file to put some
+personal preferences like fonts and colors.
+
+<p>
+
+In this article, the terms option and resource will be used in a
+synonymous manner. Perl/Tk's <tt>Tk::option</tt> manpage uses the term
+"option database" while the <tt>xrdb</tt> manpage uses "resource
+database", both terms meaning the same.
+
+<p>
+
+While this sounds like a lot of Unix/X11 stuff, Windows users do not
+need to skip this article. Resource files are not used under Windows,
+but the resource specification also apply to the method calls I will
+explain later.
+
+<p>
+
+An X11 resource file may look as following:
+
+<pre>
+*font:		-*-helvetica-medium-r-normal--14-*-*-*-*-iso8859-1
+*foreground:	black
+*background:	#ff0000
+</pre>
+
+<p>
+
+Resource specifications are simple key-value pairs. On the left side,
+there is a resource pattern, separated by a colon from a value. In the
+example above the global settings for the font, foreground and
+background colors are changed. These definitions are global (valid for
+all applications - unless they don't obey the resource specification
+at all) because they start with an asterisk.
+
+<p>
+
+If there should be only a definition for a specific application, the
+name of the application should be prepended:
+
+<pre>
+timex*font:	fixed
+</pre>
+
+Tk applications look at the definitions loaded from
+<tt>.Xdefaults</tt>. On Unix, you can check the current resources with
+the <tt>xrdb</tt> command:
+
+<pre>
+	xrdb -query
+</pre>
+
+<p>
+
+It is even possible to supply the resource specifications to Perl/Tk
+application from the command line with the <tt>-xrm</tt> option (like
+most Xt applications do). Try
+
+<pre>
+    widget -xrm "*foreground:white" -xrm "*background:green"
+</pre>
+
+to see the <tt>widget</tt> demonstration program in unfamiliar colors.
+
+<h2>Widget hierarchies</h2>
+
+To set options in specific widgets, one has to identify a widget in an
+application.
+
+<p>
+
+In Tcl/Tk, the programmer has to define a name for each widget he
+creates. To create an example hierarchie of frames and labels, the
+Tcl/Tk programmer has to write:
+
+<pre>
+frame .f
+pack .f
+frame .f.f
+pack .f.f
+label .f.f.l1 -text => "label1"
+pack .f.f.l1
+label .f.f.l2 -text => "label2"
+pack .f.f.l2
+</pre>
+
+The string <tt>.f.f.l2</tt> forms a pathname for the last created
+label in this example's widget hierarchy.
+
+<p>
+
+The Perl/Tk programmer does not have to specify names for the widget
+hierarchy. Instead, he can use object references or just don't use the
+returned references at all:
+
+<pre>
+$f = $mw->Frame->pack;
+$ff = $f->Frame->pack;
+$ff->Label(-text => "label1")->pack; # ignore returned widget reference
+$ff->Label(-text => "label2")->pack;
+</pre>
+
+<p>
+
+Since Perl/Tk uses the Tcl/Tk internals, there is always a pathname
+attached to each widget. Normally, this pathname is assigned
+automatically (implementation detail: this is done by concating the
+widget class name and an integer counter, e.g.
+<tt>.frame.frame.label2</tt>). The <tt>PathName</tt> method can return
+the pathname of a widget. This pathname can be used to identify
+specified widgets.
+
+<p>
+
+At last, the application may be prepended to the pathname. Consider
+the above example in a script called <tt>hello.pl</tt>, the complete
+pathname for the last label in this script would be
+<tt>hello.frame.frame.label2</tt>. The extension <tt>.pl</tt> is
+automatically stripped from the script name.
+
+<h2>Names and Classes</h2>
+
+Names and classes refer to widget and option names. Names are always
+lowercase and denote applications and options. Classes start with an
+upper case character and identify groups of widgets or options. For
+example, there may be some clock applications called "xclock",
+"tkclock", "oclock" ... and all these applications can share a common
+Class "Clock". Usually, Perl/Tk widget names and Tk class names
+matches, that is, <tt>Tk::Label</tt> widgets have the class name
+".Label".
+
+<p>
+
+This scheme is repeated for option names and classes, e.g.
+".label.foreground" vs. ".label.Foreground". Option class names are
+usually the same as the mere option names (that is, ".foreground" and
+".Foreground"), but there are option classes spanning over more option
+names (like <tt>BorderWidth</tt> containing
+<tt>activeBorderWidth</tt>, <tt>borderWidth</tt>,
+<tt>insertBorderWidth</tt> and <tt>selectBorderWidth</tt>).
+
+<h2>Methods</h2>
+
+For using the option database from your script, you can use these
+methods: <tt>optionAdd</tt>, <tt>optionGet</tt> and
+<tt>optionReadfile</tt>. Of course you can do nothing, Perl/Tk will
+handle the <tt>.Xdefaults</tt> for you. But for Windows users, this is
+the only way.
+
+<h3><tt>optionAdd</tt></h3>
+
+This method will add another entry to the resource db of the current
+application (it is merged with the <tt>xrdb</tt> resources, if there
+are any).
+
+<p>
+
+The optionAdd method takes 3 arguments: the widget pathname and
+resource specifier (everything left from the colon in the normal
+resource file), the value (that's what's right from the colon) and
+an optional priority.
+
+<p>
+
+Please note that the pathname as returned by the <tt>PathName</tt>
+method contains the dot "." as the separator between the widget parts
+and option names. For use in the <tt>optionAdd</tt> method it seems to
+be better to use the asterisk instead. Simply use <tt>s/\./*/g</tt> to
+transform the path name.
+
+<p>
+
+As an additional argument, a priority can be set. Standard priorities
+are <tt>widgetDefault</tt> (the lowest), <tt>startupFile</tt>,
+<tt>userDefault</tt> and <tt>interactive</tt> (the highest). Options
+from user-specified resource files like <tt>.Xdefaults</tt> have the
+priority <tt>userDefault</tt>. If you want your script settings
+overriding everything, set the priority to <tt>interactive</tt>. If
+you want to be nice and let the user a chance to change the settings
+via a <tt>.Xdefaults</tt> file, set the priority to
+<tt>startupFile</tt>. And be sure you had read the section "Being a
+good citizen" in the <tt>Tk::option</tt> manpage!
+
+<h3><tt>optionGet</tt></h3>
+
+
+The <tt>optionGet</tt> method gets the value of an entry in the
+resource database for the current widget. You have to specify both the
+name and class of the option as arguments to <tt>optionGet</tt>. Note
+that you can either get standard option values (like foreground,
+background ...) but also create your own ones. Consider the following
+lines in an <tt>.Xdefaults</tt> file:
+
+<pre>
+foo*abc: 23456
+foo*bar*xyz: 12345
+</pre>
+
+These settings are valid for programs named <tt>foo</tt>. To get the
+value of the first setting, you can use:
+
+<pre>
+use Tk;
+$top = new MainWindow;
+warn $top->optionGet("abc", "Abc");
+</pre>
+
+and for the second line (this applies to a subwidget named
+<tt>bar</tt>):
+
+<pre>
+$f = $top->Frame(Name => "bar");
+warn $f->optionGet("xyz", "Xyz");
+</pre>
+
+<h3><tt>optionReadfile</tt></h3>
+
+This method will read a resource file and add its values to the
+resource database. With this method it is possible for Windows users
+to use a resource file.
+
+
+<h2>Some examples</h2>
+
+Here are some probably useful examples to work with the option
+database.
+
+<p>
+
+Change the background color for some widgets. Here I have set the
+background color of some widgets (those with a sunken relief) to give
+some visual feedback.
+
+<pre>
+    for (qw(Entry NumEntry Listbox TixHList HList Text)) {
+        $top->optionAdd("*$_.background", "grey95", "userDefault");
+    }
+</pre>
+
+(It would be better to use the <tt>Darken</tt> method of
+<tt>Tk::Widget</tt> to get the color - so one does not have to assume
+that the default background color is grey.)
+
+<p>
+
+Change the cursor over click-sensitive areas to show a hand instead of
+the default left cursor - this is similar what do WWW browsers over a
+link.
+
+<pre>
+    for (qw(Button Checkbutton Radiobutton Menubutton)) {
+        $top->optionAdd("*$_.cursor", "hand2", "userDefault");
+    }
+</pre>
+
+<p>
+
+Predefine some texts and colors. This can be used to get the same
+appearance for, say, all OK or Cancel buttons. For example, the
+foreground color of all OK buttons may be set green and for all Cancel
+buttons to red. Furthermore, the text is automatically set to "OK".
+This can be used for i18n: only one <tt>optionAdd</tt> line have to be
+changed to get a different label on all widgets using this resource
+entry.
+
+<pre>
+$top->optionAdd("*ok*foreground"      => 'green4');
+$top->optionAdd("*ok*text"            => 'OK');
+$top->optionAdd("*ok*default"         => 'active');
+$top->optionAdd("*apply*foreground"   => 'yellow4');
+$top->optionAdd("*apply*text"         => 'Apply');
+$top->optionAdd("*search*foreground"  => 'yellow4');
+$top->optionAdd("*search*text"        => 'Search');
+$top->optionAdd("*show*foreground"    => 'yellow4');
+$top->optionAdd("*show*text"          => 'Show');
+$top->optionAdd("*default*foreground" => 'yellow4');
+$top->optionAdd("*default*text"       => 'Default);
+$top->optionAdd("*cancel*foreground"  => 'red');
+$top->optionAdd("*cancel*text"        => 'Cancel);
+$top->optionAdd("*close*foreground"   => 'red');
+$top->optionAdd("*close*text"         => 'Close');
+$top->optionAdd("*end*foreground"     => 'green4');
+$top->optionAdd("*end*text"           => 'End');
+</pre>
+
+To use the definitions above the name of the widget have to be set
+with the <tt>Name</tt> option (unlike other Tk options, the
+<tt>Name</tt> option is used without a dash!), like this:
+
+<pre>
+    $bf->Button(Name => 'ok',
+                -command => \&ok)->pack;
+    $bf->Button(Name => 'apply',
+                -command => \&apply)->pack;
+    $bf->Button(Name => 'close',
+                -command => \&close)->pack;
+</pre>
+
+You are tired of waiting for a balloon to pop up? Set the
+<tt>initWait</tt> resource to 0.
+
+<pre>
+    widget -xrm "*Balloon*initWait: 0"
+</pre>
+
+Or you don't want to see ever balloons? So set this value to a very
+high number. You can do this even in the .Xdefaults file for all
+Perl/Tk applications.
+
+<p>
+
+In this <a href="loadandsave.pl">example script</a> you can see how to
+use an option file for permanent store of options.
+
+</body></html>

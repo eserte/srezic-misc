@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Additional Perl/Tk modules at CPAN</h1>
+
+There are a lot of widgets in the standard Perl/Tk distribution (more
+than in the original Tcl/Tk distribution), but you want probably
+another widgets - because additional functionality is needed, or a
+different look, or ... The widget set in Perl/Tk is not static, the
+800.015 distribution has two new widgets in the core: Tk::ProgressBar
+(a widget to display a bar meter to show the progress of an operation)
+and Tk::Pane (a frame which allows scrollbars, in contrast to the
+standard Tk::Frame widget).
+
+<h2>CPAN</h2>
+
+At <a href="http://www.cpan.org">CPAN</a>, the Comprehensive Perl
+Archive Network, you can find additional Perl modules, and also
+additional modules related to <a
+href="http://www.cpan.org/modules/by-module/Tk">Tk</a>. To install one
+of these modules, there is the standard procedure:
+<ul>
+<li>Fetch the distribution package
+<li>Unpack the package. On Unix, you would say
+<pre>zcat Tk-Foo-0.01.tar.gz | tar xfv -</pre>
+<li>Compile the module. Mostly, there is no real compile, but there
+are some modules containing a C part, thus requires a compiler there.
+Other, perl-only packages, need this step, too:
+<pre>cd Tk-Foo
+perl Makefile.PL
+make</pre>
+<li>Test the module
+<pre>make test</pre>
+<li>Finally install it
+<pre>make install</pre>
+<ul>
+
+<p>
+
+There is another way, using the CPAN.pm module, which would do almost
+everything automatically: fetch the distribution package and its
+dependencies, make, test and install. To use this module, first type:
+<pre>perl -MCPAN -e shell</pre>
+If this is the first call to the CPAN.pm, you will answer a couple of
+questions. After that, you are in the interactive mode. Now type
+<pre>install Tk-Foo</pre> and the module will take all steps to
+install the module properly. If you want to just see what Tk-related
+modules exist, just type
+<pre>m /^Tk::/</pre> for a complete list. This will also include the
+core Perl/Tk modules.
+
+<p>
+
+For Windows folks, this is inconvenient, because there is often no
+compiler and no make installed. If you have Visual C++ and you are
+using the <a href="http://www.activestate.com">Activestate Perl</a>,
+everything is fine - just use "nmake" instead of "make", and all
+things should work. Otherwise you want probably to install gcc for
+windows. There is cygwin (link) and mingw32 (link). Note that it is
+necessary to compile Perl and Tk with the same compiler as the other
+modules. mingw32 uses "dmake" instead of "make".
+
+<p>
+
+An easier way is using the "ppm" install program that comes with
+Activestate Perl. It's similar to the CPAN.pm module, instead it
+installs precompiles binaries, thus skipping the compiler stage. The
+drawback is, that Activestate only provides a limited number of perl
+modules as pre-compiled binaries. You don't have access to the
+cutting-bleeding-edge modules (totally new ones or just new versions).
+Furthermore, the "ppm" program has some disadvantages like not working
+properly behind firewalls. If so, you can grab the packages from <a
+href="http://www.activestate.com/packages/zips/">http://www.activestate.com/packages/zips</a>
+with a common browser and put the package in your local repository
+(which one? where?).
+
+<h2>Special Entries</h2>
+
+Good, Entries are there to receive typed text - but sometimes it is
+necessary to control what kind of text is typed in. You want probably
+restrict the input to a character set, probably to numbers only, or to
+limit the size of the text. Or maybe something fancier?
+
+<p>
+
+To get control over the Entry widget, you have to create a new widget,
+which inherits from the Entry widget. <a href="MyEntry.pm">Here</a> is
+an example for this. This module creates a new widget MyEntry, which
+overrides the Insert method. There are some restriction examples in
+this module. The forth-coming release 800.017 will have new options
+(-validate, -validatecommand) to simplify this task.
+
+<h3>Tk::NumEntry</h3>
+
+But now to the fancy extensions. The NumEntry widget in the Tk-GBARR
+distribution (link) will let you restrict the input to digits only.
+Additionally you can scroll the current value either with the cursor
+keys or with two arrow keys. There are two flavours of this widget:
+NumEntryPlain and NumEntry. The first one comes without arrow buttons,
+and the second one uses the FireButton widget (which is also part of
+this distribution) for the arrow buttons. You can restrict the input
+further by specifying minimal and maximal values (-minvalue and
+-maxvalue) and the speed of the "scrolling" (-repeatdelay and
+-repeatinterval). see manpage and examples.
+
+<h3>Tk::HistEntry</h3>
+
+This is an entry remembering its former values in a history list. You
+can change to older values using the cursor up key, just like in
+readline-enabled applications like bash and tcsh. Additionally, it's
+possible to show the old entries in a pop-up listbox. To store a value
+in the history list, the addHistory method has to be called if
+appropriate (e.g. when pressing Return in the Entry or by clicking on
+a OK button). This module can be found in the Tk-HistEntry
+distribution.
+
+<h2>Photo extensions</h2>
+
+Core Perl/Tk has support for the image formats BMP, GIF, XPM, XBM and
+PPM. There are additional module for some other image formats:
+Tk::JPEG, TK::PNG and Tk::TIFF. Tk::JPEG contains a complete
+distribution with the Perl and C code and the code for the whole jpeg
+library. The other two modules require to have (probably shared)
+libraries installed: zlib and libpng for Tk::PNG, and libtiff for
+Tk::TIFF.
+
+<p>
+
+To use the new image formats, one have only to say<pre>use
+Tk::JPEG;</pre>. The new image handler is automatically installed and
+will be used when reading or writing a jpeg image. 
+
+</body></html>

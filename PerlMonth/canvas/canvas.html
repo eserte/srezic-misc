@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title>The Canvas Widget</title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>The Canvas Widget</h1>
+
+If somebody asks how to do a special thing with a Listbox, I advice
+them to use the HList widget. If there are demands for more
+complicated things, I would route them for the Canvas widget. You can
+probably do everything with the Canvas widget <tt>:-)</tt>
+
+<p>
+
+In drawing applications, there are two philosophies: there are the
+pixel-oriented applications like The Gimp or Photoshop, and there are
+vector-oriented ones, like xfig or Visio. The low-level drawing
+functions of graphic subsystems like the Windows GDI or X11 graphic
+primitives are using the first philosophy: you create a backing-store
+(in X11: a pixmap) and create lines, rectangles, circles, text in this
+backing-store. After creating the items, all information about them is
+lost: you can't resize a line easily or remove a filles circle and
+leaving all other items intact.
+
+<p>
+
+This is different in the vector-oriented philosophy. All information
+about created items is retained. So it's easy to remove or
+re-configure items after creation. It's even possible to identify
+items for event handling. Perl/Tk's Canvas widget uses the latter
+philosophy. In this article I will give a short introduction to this
+widget - it's too powerful to be fully described in these few lines.
+
+<h2>Creation</h2>
+
+Creating a canvas widget is straight forward:
+
+<pre>  use Tk;
+  $top = new MainWindow;
+  $canvas = $top->Canvas->pack;</pre>
+
+This will create an empty canvas widget with the default dimensions
+10cm&nbsp;x&nbsp;7cm (these numbers are only correct if the resolution
+of the X server is right, check the xdpyinfo(1) and X(1) manpages).
+Unlike most other Tk widgets, the Canvas widget does not resize itself
+if the its content requests a resize. You have to provide explicit
+values for the width and height:
+
+<pre>  $canvas->configure(-width => 640, -height => 480);</pre>
+
+This is only the size of the visible part of the canvas. The internal
+useable area is larger, in fact, it's unlimited, although you should
+not use items whose size exceeds 32767 pixels. To access the unvisible
+parts of the canvas, look below for the -scrollregion discussion.
+
+<h2>Items</h2>
+
+Now to the "vector-oriented" stuff, that is: how to draw something on
+the widget? In the following I will give a short description of the
+available items. For exact description of all available configuration
+options, refer to the Tk::Canvas manpage.
+
+<p>
+
+There are line, text, rectangle, polygon, arc, oval, bitmap, image and
+window items. All items are created by a similar method set:
+
+<pre>  $canvas->create<i>Itemtype</i>(<i>coordinates</i>, <i>configure options</i>);</pre>
+
+To create a line beginning at (10,20) and ending at (40,50) with the
+default style use:
+
+<pre>  $canvas->createLine(10,20,40,50);</pre>
+
+Note that the origin of the canvas is located in the upper left
+corner. Some item types, like texts or images, accept only one
+coordinate pair. Other, like the line item, require at least two
+coordinate pairs (there is no upper limit).
+<p>
+Configure options are appended after the coordinates, e.g. to set the
+width of the outline of a rectangle to 3 pixels:
+
+<pre>  $canvas->createRectangle(10,10,50,50, -width => 3);</pre>
+
+Most possible configure options are common for several item types.
+Here is a list of some of them:
+
+<ul>
+<li><tt>-fill => $color</tt>: This option will fill the item region for item
+types like rectangle, polygon, arc and oval. For others, it will set
+the foreground color. For the color, you can use either X11 color
+names (like "red" or "gray50") or the standard "#rrggbb" notation. To
+"unfill" a region, the color have to be set to undef.
+
+<li><tt>-outline => $color</tt>: This option only applies to item types, which
+have a fill region and a boundary. With -outline, the color of this
+boundary can be changed. By default, the outline is black while the
+region is unfilles.
+
+<li><tt>-stipple => $stipple</tt>: XXX
+
+<li><tt>-width => $width</tt>: For outlines and lines, this option
+specifies the width in pixels. By default, outlines have a width of
+one pixel.
+
+<li><tt>-anchor => $direction</tt>: Texts and images are by default
+centered to the given coordinate. It is probably common to set the
+upper left corner of the text or image to the given coordinate, if you
+want to do so, you have to set -anchor to "nw" (northwest).
+
+<li><tt>-tags => $tag</tt>: The argument to this option is either a
+string or a reference to a list of strings. With tags items can be
+grouped together.
+</ul>
+
+The return value of the create method is the id of the created item.
+This id can be used to change attributed of the item afterwards, or to
+identify an item in an event.
+<p>
+Almost everywhere ids can be used, tags can also be used. This is
+useful to change the attributes of a group of items, or to bind an
+event to them.
+<p>
+To change the attributes of an item, the itemconfigure method can be
+used.
+
+<p>
+There are two special tags: "current" and "all". The "current" tag
+specifies the current item in an event callback. "all" specifies all
+canvas items and can be used to bind an event to all items. For
+example, to clear the canvas, one can use:
+<pre>  $canvas->delete("all");</pre>
+<p>
+In the (not yet stable) newer versions of Tk (since 800.016), the dash
+patches by Jan Nijtmans are incorporated to the Canvas widget. This
+adds some additional features, like boolean search (the find method
+will be described in a later article) and additional options for the
+canvas items.
+<p>
+It is possible to create new canvas item types, but you have to do so
+in C. In the beta versions of Tk, there are two new canvas item types
+introduced: grid items and group items. With grid items, a (probably
+dashed) grid can be put onto the canvas. This grid has no limits, it
+covers the whole canvas. Group items are yet quite experimental; they
+are meant to be a means to group items together by not using the tags
+option. Grouped items can be, for example, moved by moving the master
+group item. 
+<p>
+
+* itemconfigure
+
+* the scrollregion
+
+* (next: binding events - tk::bind, canvasx, canvasy, a custom widget
+build on top of a checkbutton, printing, find, scale, raise/lower)
+
+</body></html>

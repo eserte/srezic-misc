@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Perl/Tk menus</h1>
+
+<img src="menu.gif"><br><br>
+
+Menus are a very common element in GUIs. There are some ways for
+creating menus in perl/Tk, which probably caused some confusion, so I
+will try to clarify this a little.
+
+<h2>The 402.004 way</h2>
+
+For the menubar, one can simply use a frame packed on the top of the
+main window and filled in the horizontal direction.
+<pre>
+    $menubar = $top->Frame->pack(-side => "top", -fill => "x");
+</pre>
+
+It's probably somewhat nicer to have the menubar distinguished from
+the remaining window, so use a border with a raised relief:
+<pre>
+    $menubar = $top->Frame
+                     (-relief => 'raised', -borderwidth => 2)
+                     ->pack(-side => "top", -fill => "x");
+</pre>
+
+The menubar is populated with menubuttons. A menubutton is a special
+button with a menu object attached on. On a click on a menubutton the
+corresponding menu is pulled down. A menubutton does not need
+necessarily to be part of a menubar; you can create a menubutton
+anywhere. This widget is also the foundation of the optionmenu widget
+(similar to a pull-down listbox, see the Tk::Optionmenu manpage).
+<pre>
+    my $f = $menubar->Menubutton(-text => 'File', -underline => 0);
+</pre>
+The value of the -text option is used as the label of the menubutton.
+The -underline option tells that the first character (the "F") is
+underlined and used for keyboard traversal of the menu. That is,
+pressing "Alt-F" will open the menu.
+<p>
+The return value <tt>$f</tt> is used to populate the menu with
+command labels:
+<pre>
+$f->command(-label => '~Open ...',    -command => \&open);
+$f->command(-label => '~New',         -command => \&new);
+$f->command(-label => '~Save',        -command => [\&save, 'default']);
+$f->command(-label => 'Save ~As ...', -command => [\&save, 'as'])
+</pre>
+
+The -command option specifies which subroutine to call on invoking the
+menu entry. For callbacks, one can use subroutine references,
+anonymous subroutines or an array reference with a subroutine
+reference as the first element and arguments in the remaining
+elements.
+<p>
+You can also use the -underline option to underline a character for
+keyboard traversal, but it's more convenient to use the tilde indicator
+as in the example above.
+<p>
+Beside of command entries, you can also create checkbutton,
+radiobutton, separator and cascade entries:
+<pre>
+    $file_menu->separator;
+    $file_menu->checkbutton(-label => "A checkbutton",
+			    -variable => \$cb);
+    $file_menu->radiobutton(-label => "Radiobutton A",
+			    -value => "A",
+			    -variable => \$rb);
+</pre>
+The cascade method creates a sub-menu, and it's also possible to
+create sub-sub-menus and so on. The method returns a menu object which
+can be populated with entries for the first-level menu. That is, this
+is only true for Tk800 and newer, for older versions of perl/Tk you
+have first to get the menu object from the -menu option:
+<pre>
+    my $export_menu = $file_menu->cascade(-label => "~Export");
+    $export_menu = $export_menu->cget(-menu);
+    $export_menu->command(-label => "~GIF", -command => sub { export("gif") });
+    $export_menu->command(-label => "~JPG", -command => sub { export("jpg") });
+    $export_menu->command(-label => "~BMP", -command => sub { export("bmp") });
+</pre>
+
+As a replacement for the frame widget, it's probably better to use the
+Tk::Menubar widget. The menubar does the packing automatically (also
+the packing of the menubuttons), so you don't have to pack it
+yourself. It's also a compatible way to use Tk800's native menus,
+but read on...
+<pre>
+    use Tk::Menubar;
+    $menubar = $top->Menubar;
+    $filemenu = $menubar->Menubutton(-text => "File");
+    ...
+</pre>
+
+<h2>The 800 way</h2>
+
+In Tcl/Tk 8.0, the effort was made to use native widgets on Win32 and
+Macintosh. Because of the different way using menus on these platforms
+(for example, the menubar on the Macintosh is on top of the screen
+rather than on top of the window), the menu creation method was
+changed. Old code will nevertheless run, but won't use the native menu
+methods.
+<p>
+The changes were also made in perl/Tk 800. Now menubuttons and the
+menubar are not used, instead the menubar is also created as a menu
+object. Toplevel widgets now have an option -menu to associate menus
+with them; these menus are displayed as menubars. Here's a short
+example for its use:
+<pre>
+    $menubar = $top->Menu;
+    my $file_menu = $menubar->cascade(-label => "~File");
+    my $edit_menu = $menubar->cascade(-label => "~Edit");
+    my $help_menu = $menubar->cascade(-label => "~Help");
+    $top->configure(-menu => $menubar);
+</pre>
+
+In Tk800, it's still possible to use the Tk::Menubar method described
+above. With this method, native menus are used and one remains
+compatible with Tk402.004.
+
+<h2>The perlish way</h2>
+
+There is also an alternative perl-only method to specify menu
+definitions using lists. A menu definition looks
+like this:
+<pre>
+    my $menuitems = 
+    [
+
+     [Cascade => "~File", -menuitems =>
+      [
+       [Button => "~New", -command => \&new],
+       [Separator => ""],
+       [Button => "~Open", -command => \&open],
+       [Button => "~Save", -command => \&open],
+     ...
+</pre>
+I think you get the point. The created definition is used to create a
+menu object with the -menuitems option. Then, the menu object is again
+attached to the toplevel widget with the -menu option:
+<pre>
+    $menubar = $top->Menu(-menuitems => $menuitems);
+    $top->configure(-menu => $menubar);
+</pre>
+
+<h2>Tear-offs</h2>
+
+Usually the first entry in the menu contains a dashed line. This is
+the so-called tear-off entry for displaying the menu as a stand-alone
+window. This is convenient if you have to select a menu entry very
+often or to select/deselect a series of checkbutton entries.
+<p>
+For windows users, this feature might be confusing, and in fact, this
+is not yet implemented for windows at all, so probably you want to disable
+the tear-off entries. This can be done with specifying the option
+<pre>
+        -tearoff => 0
+</pre>
+in the menu defintions or by setting a global value in the option
+database:
+<pre>
+        $top->optionAdd("*tearOff", "false");
+</pre>
+The use of the option database will be explained later, or read the
+documentation in the Tk::option manpage.
+
+<h2>Popup menus</h2>
+
+<img src="popupmenu.gif"><br><br>
+
+Often it's nice to create context-sensitive popup menus, which are
+activated by pressing the right button. The menu is created with the
+"Menu" method as above. To display the popup menu, the right button
+(&lt;Button-3&gt;) is bound to the Popup method:
+<pre>
+$top->bind("&lt;Button-3&gt;" => sub { $menu->Popup(-popover => "cursor",
+                                              -popanchor => 'nw') });
+</pre>
+The -popover option tells where to position the menu (here: under the
+cursor, but you can specify any widget), and the -popanchor that the
+upper left corner of the menu (the <b>n</b>orth<b>w</b>est) should
+appear under the cursor.
+
+<h2>Scripts and other references</h2>
+
+This is only a small subset of the secrets of menu creation, but
+sufficient for the most applications. For a more complete reference,
+the reader may look at the manual pages for Tk::Menu and
+Tk::Menu::Item.
+
+Here's a collection of sample scripts:
+<ul>
+<li><a href="oldstyle.pl">Creating menus with the "old-style" method</a>
+<li><a href="newstyle.pl">Creating menus with the "new-style" method</a>
+<li><a href="perlstyle.pl">Using the "-menuitems" method</a>
+<li><a href="popup.pl">Popup menus</a>
+</ul>
+
+For other references, you can look at the widget demonstration program
+(just type "widget" to execute the demonstration) for further menu
+examples. "tkpod", the Tk pod viewer (in the Tk-Pod distribution at
+CPAN) also makes use of popup menus.
+
+</body></html>

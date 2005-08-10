@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title>Create your own widgets</title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Create your own widgets</h1>
+
+Why creating new widgets? 
+
+<p>
+
+In Perl/Tk, there is a limited set of standard widgets. In the core Tk
+library, the following widgets exist: Button, Canvas, Checkbutton,
+Entry, Frame, Label, Listbox, Menu, Menubutton, Message, Scale,
+Scrollbar, Radiobutton, Text and Toplevel. These are implemented in C.
+
+<p>
+
+One would like to have more widgets than that. For example, there is
+no combobox-like widget in core Tk. Ideally, this widget would be
+created in the standard Perl/Tk way (that is, using the
+<tt>$parent-&gt;WidgetName(options...)</tt> notation). It should handle
+the standard Tk options like <tt>-background</tt>, <tt>-font</tt> and
+maybe some additional widget-specific options. It would be nice if
+some standard methods would do something meaningful with this new
+widget, e.g. the <tt>get</tt> method should return the current text of
+the combobox, just like in an entry widget.
+
+<p>
+
+To construct a combobox, one can use the standard widgets: label (for
+the description), entry (to hold the current selected value), button
+(to popup the list of options), frame (as a container for the label,
+entry and button widgets), listbox (for the list of options) and
+probably an additional toplevel window (because the listbox is usually
+displayed in an extra window).
+
+<p>
+
+A combobox implementation shipped with Perl/Tk is the
+<tt>BrowseEntry</tt> widget. It is implemented using the mentioned
+widgets. It's nearly transparent to use a browseentry, because it
+behaves like it should: as a combination of a listbox (thus
+understanding the <tt>insert</tt> and <tt>delete</tt> methods of a
+listbox) and an entry widget (so it's possible to bind a variable with
+<tt>-variable</tt> to the widget).
+
+<p>
+
+Basically it's possible to create new widgets by simply using standard
+object oriented mechanisms: a <tt>new</tt> method for creation of
+subwidgets and handling of options. Methods would delegate the task to
+certain subwidgets. But it's easier to use the standard mechanisms of
+Tk. It removes the burden of doing the same option and method handling
+over and over again.
+
+<h2>Custom widgets</h2>
+
+There are two kinds of custom widgets: composite widgets and derived
+widgets. Composite widgets are container widgets like
+<tt>Toplevel</tt>s or <tt>Frame</tt>s and contain other widgets in it,
+for example to form a dialog. Derived widgets are already existing
+widgets with additional or changed functionality.
+
+<p>
+
+You should be familiar with the object oriented concepts of Perl.
+There is the <tt>perltoot</tt> manpage included in the Perl
+distribution, which contains an object-oriented tutorial by Tom
+Christiansen. For a later reference, the <tt>Tk::mega</tt> manpage
+documents some of the methods needed for widget creation.
+
+<p>
+
+I will explain some concepts by pointing at the <tt>Tk::LabEntry</tt>
+widget, which is in the standard Perl/Tk distribution. This widget is
+rather small in code size, but contains a lot of magic behind the
+scenes.
+
+<h2>The LabEntry widget</h2>
+
+The LabEntry widget is a frame widget embedded with a label widget and
+an entry widget. In short, it's just an entry with a description label
+attached to a side.
+
+<p>
+
+<img src="composite.png">
+
+<p>
+
+Here's a script demonstrating the use of the LabEntry:
+
+<pre>
+  use Tk;
+  use Tk::LabEntry;
+  $top = new MainWindow;
+  $l=$top->LabEntry(-label => "Enter text: ",
+                    -labelPack => [ "side" => "left" ],
+                    -textvariable => \$foo,
+  		   )->pack;
+  MainLoop;
+</pre>
+
+The <tt>-label</tt> and <tt>-textvariable</tt> don't need further
+explanation. The <tt>-labelPack</tt> option controls the relative
+placement of the both subwidgets. By default, the label will be placed
+above the entry widget, but you can use every pack option to change
+this placement.
+
+<p>
+
+The original module code is <a href="LabEntry.pm.txt">here</a>. It's
+installed on your computer on a location like
+<tt>/usr/local/lib/perl5/site_perl/5.005/i386-freebsd/Tk/LabEntry.pm</tt>
+or similar.
+
+<p>
+
+And now the module code:
+
+<pre>
+  # Copyright (c) 1995-1999 Nick Ing-Simmons. All rights reserved.
+  # This program is free software; you can redistribute it and/or
+  # modify it under the same terms as Perl itself.
+  
+  package Tk::LabEntry;
+</pre>
+
+This is the obvious package declaration, beginning with the
+<tt>Tk::</tt> prefix. Note that the Tk namespace is officially owned
+by Nick Ing-Simmons. If you want to contribute Tk widgets, you should
+first discuss it on the Perl/Tk mailing list (see <a
+href="http://www.perl.com/pub/language/info/mailing-lists.html">the
+mailing list page</a> for subscription information).
+
+<pre>
+  use vars qw($VERSION);
+  $VERSION = '3.011';
+</pre>
+
+Nothing special about this variable, too. The <tt>$VERSION</tt>
+variable should be defined, both for your own version tracking and for
+the <tt>CPAN.pm</tt> module. So the <tt>CPAN.pm</tt> module can
+determine whether there is a newer version of the widget (for example
+when calling the "reinstall recommendations" function in the CPAN
+shell).
+
+<pre>
+  use base  qw(Tk::Frame);
+</pre>
+
+This line does two things: first it loads the <tt>Tk::Frame</tt>
+module. Second it puts the <tt>Tk::Frame</tt> to the <tt>@ISA</tt>
+list, making it a superclass of the current class.
+
+<pre>
+  use Tk::widgets qw(Label Entry);
+</pre>
+
+This command will preload the <tt>Tk::Label</tt> and
+<tt>Tk::Entry</tt> modules. It is not strictly necessary, as core Tk
+widgets are known to the system and autoloaded on demand.
+
+<pre>
+  Construct Tk::Widget 'LabEntry';
+</pre>
+
+This will construct a new widget with the name <tt>LabEntry</tt>, so
+you can say: <nobr><tt>$mainwindow-&gt;LabEntry</tt></nobr> or
+<nobr><tt>$frame-&gt;LabEntry</tt></nobr> to create a new LabEntry
+widget.
+
+<pre>
+  sub Populate
+</pre>
+
+The Populate method is the most important method for composite widget
+creation. This method should create all needed subwidgets and declare
+and/or handle arguments for the new widget.
+
+<pre>
+  {
+   # LabeledEntry constructor.
+   #
+   my($cw, $args) = @_;
+</pre>
+
+The Populate method excepts two arguments: the reference to the widget
+itself and a reference to the arguments hash. Remember that the widget
+itself is just a frame widget (because <tt>Tk::Frame</tt> is the
+superclass of this widget), which will get some additional
+functionality in this class.
+
+<pre>
+   $cw->SUPER::Populate($args);
+</pre>
+
+First, we call the Populate method of the superclass of this class.
+Since the LabEntry class is derived from the <tt>Tk::Frame</tt> class,
+this will call the <tt>Tk::Frame::Populate</tt> method. This is
+necessary so all options and create instructions for the frame widget
+are processed, too.
+
+<pre>
+   # Advertised subwidgets:  entry.
+   my $e = $cw->Entry();
+   $e->pack('-expand' => 1, '-fill' => 'both');
+</pre>
+
+These lines will create an Entry widget and pack it into the Frame
+widget. 
+
+<pre>
+   $cw->Advertise('entry' => $e );
+</pre>
+
+This "advertises" inner widgets to the outer world. Once the
+<tt>Tk::LabEntry</tt> widget is created, one can use the
+<tt>Subwidget</tt> method to access the inner widgets:
+<nobr><tt>$labentry-&gt;Subwidget("entry")</tt></nobr>. This is often
+useful if you want to manipulate the inner widgets directly.
+
+<p>
+
+<pre>
+   $cw->ConfigSpecs(DEFAULT => [$e]);
+</pre>
+
+Normal <tt>ConfigSpecs</tt> descriptions are far longer. This here
+contains only one entry, meaning that all configure options should be
+handled by the entry widget. I will show some other examples for the
+<tt>ConfigSpecs</tt> description later in this article.
+
+<pre>
+   $cw->Delegates(DEFAULT => $e);
+</pre>
+
+The <tt>ConfigSpecs</tt> description can be seen as an option delegation
+table. The <tt>Delegates</tt> description is a method delegation
+table. This describes which subwidgets will handle unknown method
+calls, that is, methods not handles by this module. In this case, all
+unknown method calls will go to the entry widget <tt>$e</tt>. For
+example, you can still use the entry method <tt>get</tt> to get parts
+of the entry text.
+
+<pre>
+   $cw->AddScrollbars($e) if (exists $args->{-scrollbars});
+  }
+</pre>
+
+The method <tt>AddScrollbars</tt> creates an additional scrollbar for
+the widget. If the LabEntry is created with
+<nobr><tt>-scrollbars => 's'</tt></nobr>,
+a horizontal scrollbar below the entry widget will be
+created.
+
+<pre>
+  1;
+</pre>
+
+Finally, like every Perl module, this one is closed with a true value.
+
+<p>
+
+In the module above, only the entry widget was actually created. But
+what about the label widget? Well, there is some magic in the frame
+widget itself. The frame widget understands the options
+<tt>-label</tt>, <tt>-labelVariable</tt> and <tt>-labelPack</tt>. The
+Populate method of the frame widget will take this options and create
+a label widget at the appropriate position (as given by labelPack).
+Remember that the Populate method of <tt>Tk::LabEntry</tt> calls the
+Populate method of the superclass.
+
+<h2>ConfigSpecs and Delegates</h2>
+
+The ConfigSpecs in the LabEntry widget was very short. A typical
+ConfigSpecs description looks like this:
+
+<pre>
+    $w->ConfigSpecs
+      (-repeatinterval => ['METHOD', 'repeatInterval', 'RepeatInterval', 50],
+       -repeatdelay    => ['METHOD', 'repeatDelay',    'RepeatDelay',   500],
+       -decbitmap      => ['METHOD', 'decBitmap',      'DecBitmap',
+                           $Tk::FireButton::DECBITMAP],
+       -incbitmap      => ['METHOD', 'incBitmap',      'IncBitmap',
+                           $Tk::FireButton::INCBITMAP],
+       -bell           => ['METHOD', 'bell', 'Bell', undef],
+       -background     => ['DESCENDANTS', 'background', 'Background', undef],
+       -foreground     => ['DESCENDANTS', 'foreground', 'Foreground', undef],
+       -precommand     => ['CALLBACK',    'preCommand', 'PreCommand', undef],
+       -command        => ['CALLBACK',    'command',    'Command',    undef],
+       -variable       => ['METHOD',      'variable',   'Variable',   undef],
+       -value          => ['METHOD',      'value',      'Value',      undef],
+       -data           => ['PASSIVE',     'data',       'Data',       undef],
+      );
+</pre>
+
+The argument to ConfigSpecs is a hash. The keys (beginning with a
+dash) specify the options the widget should handle. With the special
+key DEFAULT, non-specified options will be delegated to another
+subwidget.
+
+<p>
+
+The values of the hash are references to four-element arrays. The first
+element is the type of option. A common type is 'PASSIVE', which means
+that the configuration value will simply be stored in the Configure
+hash of the widget. Other types are 'METHOD' (handling of the option
+will be done with a method of the same one), 'CALLBACK' (argument is a
+callback, that is, an anoymous subroutine or a Perl/Tk styled
+callback), 'DESCENDANTS' (option handling is delegated to the
+subwidgets). A complete list of types can be found in the
+<tt>Tk::configspec</tt> manpage.
+
+<p>
+
+The second and thirs elements are the name and class of the option for
+retrieval from the option database. Normally that's the option name
+capitalized (in the case of the name the first letter is always
+lowercase). The fourth value is the predefined value for this option
+or <tt>undef</tt>.
+
+<p>
+
+To use the option database specifications, one can use the X11
+resource database under Unix or the <tt>optionAdd</tt> method from the
+Perl/Tk script itself (the above ConfigSpecs description is from the
+<tt>Tk::Date</tt> widget):
+
+<pre>
+$top->optionAdd("*mydate.repeatInterval", 10, "userDefault");
+$top->optionAdd("*mydate.repeatDelay", 100, "userDefault");
+$d = $top->Date(Name => "mydate")->pack;
+</pre>
+
+<h2>Populate</h2>
+
+As a short summary, the typical tasks done in the Populate method are:
+
+<ul>
+<li>Declare method arguments
+<li>Call Populate method of superclass
+<li>Handle creation-time-only arguments
+<li>Create and advertise subwidgets
+<li>ConfigSpecs
+<li>Method delegation
+</ul>
+
+<h2>Derived widgets</h2>
+
+Derived widgets are handled slightly different from composite widgets.
+For reference, here is a silly example widget called <a
+href="ScrollLabel.pm.txt">ScrollLabel</a> included (along with a <a
+href="test.pl.txt">test script</a> for this widget).
+
+<p>
+
+For derived widgets, you have also to include the <tt>Tk::Derived</tt>
+module to the <tt>@ISA</tt> path of the widget (for frame- and
+toplevel-based widgets this is done automatically). Therefore the "use
+base" line should look like this:
+<pre>
+use base qw(Tk::Derived Tk::Label);
+</pre>
+
+<p>
+
+The <tt>Populate</tt> section is rather short. There is no creation of
+subwidgets (after all, it's only a derived widget), just some argument
+handling. In <tt>ScrollLabel</tt>'s <tt>Populate</tt> method, the
+setting of the <tt>-anchor</tt> option is forced to "w". In the
+<tt>ConfigSpecs</tt> description, a new option
+<tt>-repeatinterval</tt> with a default of 100 ms is added.
+
+<p>
+
+That's basically all. There are two methods <tt>start</tt> and
+<tt>stop</tt> to control the scrolling of the label. The repeat
+interval is determined by simply calling <tt>cget</tt> on the
+<tt>-repeatinterval</tt> option. Note that every Tk widget object is a
+blessed hash, which can be populated by custom keys (unless they start
+with an underscore - these are reserved for internal Tk use). Here the
+"Repeat" key is used to store the id of the repeated callback.
+
+<h2>Internals: The creation chain</h2>
+
+At last here's a short list of the methods called while creating a
+widget instance to get an idea what's going on in the internals of Tk.
+
+<p>
+
+New widget instances are created by calling a method on the parent
+widget: <nobr><tt>$parent-&gt;<it>WidgetName</it>(...)</tt></nobr>.
+The <it>WidgetName</it> method does not exist and therefore is handled
+by the autoloader. The AUTOLOAD function tries to load the widget
+module (unless already loaded) and calls the <tt>new</tt> method of
+this widget.
+
+<p>
+
+The default <tt>new</tt> method calls the following methods:
+
+<pre>
+Tk::Widget::new
+  Tk::Widget::ClassInit (overrideable --- Carry out class bindings (or whatever))
+  Tk_cmd (get the sub for the creation of the core tk widget...
+          this dives into C code)
+  Tk::Widget::SetBindtags (set the bindtags for this widget, overrideable)
+  Tk::Widget::InitObject (overrideable)
+    InitObject is in normal or non-derived widgets empty
+    in derived (composite) widgets InitObject calls:
+      Tk::Widget::Populate (overrideable)
+      Tk::Derived::ConfigSpecs
+</pre>
+
+</body></html>

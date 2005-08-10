@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+
+use Tk;
+use Tk::LabEntry;
+use FileHandle;
+use strict;
+
+my $gnuplot_path = "/usr/local/bin/gnuplot";
+my $tempfile     = "/tmp/bla-%d.ps";
+my $psprintprg   = "lpr -Pps %s";
+
+my(@function) = ('sin(x)');
+my($x_from, $x_to, $y_from, $y_to);
+
+my $top = new MainWindow;
+
+my $gnuplot;
+
+my($command, @cmd_history, $cmd_index);
+my $funcframebox = $top->Frame->pack(-anchor => 'w', -fill => 'both',
+				     -expand => 1);
+my @funcframe;
+my $funcframeno = -1;
+my $funcentry = funcadd();
+$funcframe[0]->Button(-text => '+',
+		      -command => \&funcadd
+		     )->pack(-side => 'left');
+$funcframe[0]->Button(-text => '-',
+		      -command => \&funcdel
+		     )->pack(-side => 'left');
+
+my $xframe = $top->Frame->pack(-anchor => 'w', -fill => 'x', -expand => 1);
+$xframe->LabEntry(-label => 'X from',
+		  -textvariable => \$x_from,
+		  -width => 6,
+		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+$xframe->LabEntry(-label => 'to',
+		  -textvariable => \$x_to,
+		  -width => 6,
+		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+
+my $yframe = $top->Frame->pack(-anchor => 'w', -fill => 'x', -expand => 1);
+$yframe->LabEntry(-label => 'Y from',
+		  -textvariable => \$y_from,
+		  -width => 6,
+		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+$yframe->LabEntry(-label => 'to',
+		  -textvariable => \$y_to,
+		  -width => 6,
+		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+
+my $directframe = $top->Frame->pack(-anchor => 'w');
+$directframe->Label(-text => "Command:")->pack(-side => 'left');
+my $directentry = $directframe->Entry(-textvariable => \$command,
+				      -width => 30);
+$directentry->pack(-side => 'left');
+$directentry->bind('<Return>',
+		   sub {
+		       push(@cmd_history, $command);
+		       $gnuplot->print("$command\n");
+		       undef $command;
+		       $cmd_index = $#cmd_history+1;
+		   });
+$directentry->bind('<Up>',
+		   sub {
+		       if ($cmd_index > 0) {
+			   $cmd_index--;
+			   $command = $cmd_history[$cmd_index];
+		       } else {
+			   $top->bell;
+		       }
+		   });
+$directentry->bind('<Down>',
+		   sub {
+		       if ($cmd_index < $#cmd_history) {
+			   $cmd_index++;
+			   $command = $cmd_history[$cmd_index];
+		       } elsif ($cmd_index == $#cmd_history + 1) {
+			   $top->bell;
+		       } else {
+			   undef $command;
+			   $cmd_index = $#cmd_history+1;
+		       }
+		   });
+
+
+my $butframe = $top->Frame->pack(-anchor => 'w');
+my $plotbutton = $butframe->Button(-text => 'Plot',
+				   -command => \&plot);
+$plotbutton->pack(-side => 'left');
+$butframe->Button(-text => 'Print',
+		  -command => \&psprint)->pack(-side => 'left');
+$butframe->Button(-text => 'Quit',
+		  -command => \&quit)->pack(-side => 'left');
+$top->protocol('WM_DELETE_WINDOW', \&quit);
+
+$gnuplot = 
+  new FileHandle ("| $gnuplot_path -geometry +" . ($top->reqwidth+6) ."+0");
+$gnuplot->autoflush(1);
+$gnuplot->print("set zeroaxis\n");
+
+$top->bind("<Return>",
+	   sub { $plotbutton->invoke if $top->focusCurrent ne $directentry });
+
+MainLoop;
+
+sub autorange {
+    my $margin = shift;
+    $margin eq '' ? '*' : $margin;
+}
+
+sub plot {
+    $gnuplot->print('set xrange [' .
+		    autorange($x_from) . ":" . autorange($x_to) . 
+		    "]\nset yrange [" .
+		    autorange($y_from) . ':' . autorange($y_to) .
+		    "]\n");
+    my @functions;
+    foreach (@function) {
+	push(@functions, $_) if $_ ne '';
+    }
+    $gnuplot->print("plot " . join(", ", @functions), "\n")
+      if @functions;
+}
+
+sub psprint {
+    my $tempfile = sprintf $tempfile, $$;
+    $top->Busy;
+    plot();
+    $gnuplot->print(<<EOF);
+set term postscript
+set output "$tempfile"
+replot
+set output
+set term x11
+EOF
+    system(sprintf($psprintprg, $tempfile));
+    $top->Unbusy;
+}
+
+sub funcadd {
+    $funcframeno++;
+    $funcframe[$funcframeno] = $funcframebox->Frame->pack(-anchor => 'w', 
+							  -fill => 'x',
+							  -expand => 1);
+    my $funcentry 
+      = $funcframe[$funcframeno]->LabEntry
+	(-label => 'Funktion:',
+	 -textvariable => \$function[$funcframeno],
+	 -labelPack => [-side => 'left']);
+    $funcentry->pack(-side => 'left');
+    $funcentry->focus; # geht nicht, wenn von Button aus aufgerufen
+    $funcentry;
+}
+
+sub funcdel {
+    if ($funcframeno > 0) {
+	$funcframe[$funcframeno]->destroy;
+	pop @function;
+	$funcframeno--;
+    }
+}
+
+sub quit {
+    $gnuplot->close;
+    $top->destroy;
+}

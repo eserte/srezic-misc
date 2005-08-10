@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Advanced listboxes with Tk::HList</h1>
+
+The common listbox widget in Perl/Tk is handy in its usage, but
+limited in its capabilities. There are many demands in the <tt><a
+href="news:comp.lang.perl.tk">comp.lang.perl.tk</a></tt> newsgroup for
+features like multiple columns or different display styles for listbox
+items.
+
+<p>
+
+One answer to these questions is the <tt>Tk::HList</tt> widget.
+<tt>HList</tt> is the hierarchical list widget of Perl/Tk. This widget
+first appeared in Ioi Kim Lam's Tix widget set for Tcl/Tk and is part
+of the Perl/Tk core.
+
+<p>
+
+Some features of <tt>HList</tt> are:
+<ul>
+ <li>hierarchical trees (this is not covered by this article)
+ <li>multiple columns
+ <li>headers
+ <li>display items
+ <li>extended binding options
+ <li>associate data with list items
+</ul>
+
+<h2>Basic usage</h2>
+
+The script <a href="basic.pl">basic.pl</a> shows a short example for
+the usage of a <tt>HList</tt> widget. Note that you have to insert the
+line <pre>    use&nbsp;Tk::HList;</pre> to use this widget. The creation
+of a <tt>HList</tt> does not differ from other Perl/Tk widgets:
+<pre>    $hl = $top->HList->pack;</pre>
+
+<p>
+
+<tt>HList</tt> entries are inserted with the <tt>add</tt> method. You
+have to specify an entry path for each <tt>HList</tt> entry. Entry
+paths are just unique names for each list item (the term "path" is
+used because <tt>HList</tt> was designed to display trees like
+directory structures). If you don't care, you can simply use a counter
+for the entry path, like I did in the example. The sorting of the
+entries is by default determined by the lexically order of the entry
+paths. You can also use the options <tt>-at</tt>, <tt>-before</tt> or
+<tt>after</tt> to set the position in another way. Here's an example:<p>
+
+Add an entry with the string "Bla" and the entry path "bla" into the
+<tt>HList</tt>:
+<pre>    $hl->add("bla", -text => "Bla");</pre>
+Add an entry with the string "Foo" before "bla":
+<pre>    $hl->add("foo", -before => "bla", -text => "Foo");</pre>
+Add an entry with the string "abc" after "bla":
+<pre>    $hl->add("abc", -after => "bla", -text => "abc");</pre>
+Add an entry at the the second position (indexes start at zero):
+<pre>    $hl->add("def", -at => 1, -text => "def");</pre>
+
+<p>
+
+<h2>Multiple columns</h2>
+
+<a name="fixedfont">With</a> the standard <tt>Listbox</tt> widget, one
+could only create multiple columns by using a fixed font with fixed
+record lengths for each listbox item.
+
+<p>
+
+With <tt>HList</tt>, you can supply the -columns option at the
+creation of a HList to create a multi-column listbox. See the script
+<a href="multicol.pl">multicol.pl</a> for an example.
+
+<p>
+
+In a multi-column <tt>HList</tt>, the <tt>add</tt> method will set the
+first column of an entry. The other columns are created with the
+<tt>itemCreate</tt> method:
+
+<pre>$hl->itemCreate($entry, $column, -text => $text);</pre>
+
+The column indexing starts at zero. It's also possible to use the
+<tt>itemCreate</tt> method to set the first column instead of the
+<tt>add</tt> method (which would be a more orthogonal approach).
+
+<h2>List headers</h2>
+
+When using multiple columns, it would be nice to have headers for these
+columns. It is possible to use the first row as the header, but if you
+have a scrolled <tt>HList</tt>, this row could go out of sight. So
+it's better to configure <tt>HList</tt> to use real headers. At
+creation time, add this line to enable headers: <pre>-header => 1</pre>
+
+<p>
+
+The header items are created with the <tt>headerCreate</tt> method.
+The syntax is similar to the <tt>itemCreate</tt> method, except that
+there is no <tt>$entry</tt> argument. Here's an example script (<a
+href="header.pl">header.pl</a>).
+
+<p>
+
+<img src="header.png">
+
+<h2>Various styles</h2>
+
+You are not limited to only display text in a <tt>HList</tt>. The
+option <tt><a name="itemstyle">-itemtype</a></tt> controls, whether
+images and/or text should be displayed. The allowed values are
+<tt>text</tt> (default), <tt>image</tt>, <tt>imagetext</tt>, to
+display text and an image to the left, and <tt>window</tt>, to display
+arbitrary widgets. For an example using images and texts, look at the
+script <a href="imagetext.pl">imagetext.pl</a>.
+
+<p>
+<img src="imagetext.png">
+<p>
+
+Moreover, you can assign individual styles to each <tt>HList</tt>
+item. This is done using the Tix concept <b>Display Items</b>. There is
+a manpage <b>Tk::DItem</b> describing this concept and providing
+examples. 
+
+<p>
+
+For using display items, first include the <tt>ItemStyle</tt> module:
+<pre>    use Tk::ItemStyle;</pre>
+
+After that you can create new styles. Styles can be used by more than
+one item, so create equal styles only once.
+<pre>
+    $style = $hl->ItemStyle("text",
+                            -foreground => "red",
+                            -background => "green",
+                            -font => "Times 24");
+</pre>
+The first argument (here: "text") specifies the validity of the style
+definition,
+which have to match the <a href="#itemstyle">itemstyle</a> defintion.
+To use this style, supply the <tt>-style</tt> option to an <tt>add</tt> or
+<tt>itemCreate</tt> method:
+<pre>
+    $hl->add("foo", -style => $style, -text => "Text");
+</pre>
+Or to re-configure an existing <tt>HList</tt> item:
+<pre>
+    $l->itemConfigure("foo", 0, -style => $style);
+</pre>
+
+Some further examples can be found in <a href="ditem.pl">ditem.pl</a>.
+
+<h2>Other conveniences</h2>
+With the standard listbox widget, mouse and key bindings have to be
+defined with the <tt>bind</tt> method. <tt>HList</tt> has two
+parameters <tt>-browsecmd</tt> and <tt>-command</tt>, which simplify
+the addition of callbacks. Both options accept a standard Perl/Tk
+callback (e.g. an anonymous subroutine) as its parameters. The
+<tt>-command</tt> callback will be called if the user double-clicks on
+an entry. The <tt>-browsecmd</tt> callback will be called if the user
+"browses" through the list, that is, either single clicks on a list
+entry or moves the anchor with the arrow keys. The complete binding
+description can be found at the <tt>Tk::HList</tt> manpage.
+
+<p>
+
+With the <tt>-data</tt> option, it is possible to bind data to list
+entries. The data argument can be any perl scalar, so array and hash
+references are allowed, too. Data can be retrieved with the
+<tt>info("data")</tt> method:
+<pre>
+    $hl = $top->HList->pack;
+    # Set entry and data
+    $hl->add("abc",
+             -text => "An entry",
+             -data => ["associated", "data"],
+            );
+    # Retrieve data
+    use Data::Dumper;
+    print Data::Dumper->Dump([$hl->info("data", "abc")], ['data']), "\n";
+</pre>
+
+<h2>Alternatives</h2>
+
+There are some other alternatives to get similar functionality of
+<tt>Hlist</tt>'s. If you don't mind the appearance, for multiple
+columns one can use the fixed-font approach described <a
+href="fixedfont">above</a>. Another method is to use a <tt>Text</tt>
+widget with the <tt>-tabs</tt> option. This option sets tabular stops
+which can be used to define multiple columns. The example below will
+set two tab stops at 2cm and 4cm:
+<pre>
+    use Tk;
+    $top = new MainWindow;
+    $txt = $top->Text(-tabs => [qw/2c 4c/])->pack;
+    $txt->insert("end",
+                 "X\tY\tX*Y\n" .
+                 "1\t1\t1\n" .
+                 "2\t2\t4\n" .
+                 "3\t3\t9\n" .
+                 "4\t4\t16\n");
+    MainLoop;
+</pre>
+If you are familiar wih <tt>Text</tt> widgets, this could be the way to
+go. The common <tt>Text</tt> tag mechanisms are available for
+representing different styles.
+
+<p>
+
+The <tt>Tk::TiedListbox</tt> by Andrew Allen (at CPAN in the <a
+href="ftp://ftp.cpan.org/pub/perl/CPAN/authors/id/ACH/Tk-Contrib-0.07.tar.gz">Tk-Contrib</a>
+distribution) provides a way to tie the scrolling of two or more
+listboxes. That way multi-column listboxes can be emulated by placing
+several <tt>TiedListbox</tt>es side by side.
+
+<p>
+
+There is another module which appeared in the perl/Tk mailinglist by
+Greg London called <tt>TextList</tt>. This module emulates the
+<tt>Tk::Listbox</tt> behaviour with a <tt>Text</tt> widget. That is,
+all method calls are the same as in <tt>Tk::Listbox</tt>, but the user
+can additionaly use the tag mechanism of <tt>Text</tt> widgets.
+
+<p>
+
+Damion K. Wilson has contributed another multi-column listbox in his 
+<a
+href="ftp://ftp.cpan.org:/pub/perl/CPAN/authors/id/D/DK/DKWILSON">Tk-DKW</a>
+package, called <tt>Tk::Columns</tt>. Additional features are headers and
+resizable column width (with the technique used for instance in the
+Netscape mail program). By clicking a header, the listbox gets sorted
+by this column. The API is simpler than that of <tt>HList</tt>: for
+inserting a row with three columns one would simply write:
+<pre>    $Columns->insert ('end', 'List', 'Row', 'Contents');</pre>
+
+Here's a screenshot of a <tt>Tk::Columns</tt> demonstration script:
+
+<img src="columns.pl">
+
+<p>
+
+That's all! As you see, there is always a great variety to achieve a
+goal with Perl/Tk.
+
+</body></html>
+

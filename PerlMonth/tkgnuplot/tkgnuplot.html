@@ -1,0 +1,383 @@
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>A sample application with perl/Tk: tkgnuplot</h1>
+
+After Steve O. Lidie's introduction to perl/Tk in the previous issue
+of PerlMonth, what about a simple and small application, maybe a GUI
+wrapper for <a
+href="ftp://ftp.gnuplot.vt.edu/pub/gnuplot">gnuplot</a>? So here we
+go. But first a note for Windows users: this will only work for Unix,
+since this application uses pipes, which are not implemented in the
+Windows version of perl. Anyway, gnuplot for Windows comes already
+with a GUI, so this application wouldn't be of use anyway.
+<p>
+OK, let's begin. The <a href="tkgnuplot1">first version</a> of
+tkgnuplot is very simple. It only offers an entry field to input the
+function to plot and two buttons for starting the plot and quitting
+the program. So here it is: <br><br>
+<img src="tkgnuplot1.gif">
+<p>
+<pre>
+    #!/usr/bin/perl
+    
+    use Tk;
+    use Tk::LabEntry;
+    use FileHandle;
+    use strict;
+    
+    my $gnuplot_path = "/usr/local/bin/gnuplot";
+</pre>
+
+Note that you have to change the <tt>$gnuplot_path</tt> variable to
+reflect the path to the gnuplot executable.
+<p>
+<pre>
+    my $top = new MainWindow;
+    
+    my $function = "sin(x)";
+    
+    my $funcentry = $top->LabEntry
+      (-label        => 'Function:',
+       -textvariable => \$function,
+       -labelPack    => [-side => 'left'])->pack;
+</pre>
+
+The <b>LabEntry</b> widget is a composite widget holding an entry and
+an associated label. This widget is meant as a convenience, otherwise,
+one would create a frame and put the label and entry widget manually.
+With LabEntry you have only to specify the label text with the
+<tt>-label</tt> option and the position of the label relative to the
+entry with the <tt>-labelPack</tt> option. The argument of this option
+is a reference to an array with the same options one would supply to
+pack. Try to find out by replacing '<tt>left</tt>' with
+'<tt>right</tt>', '<tt>top</tt>' or '<tt>bottom</tt>'.
+<p>
+<pre>
+    my $butframe   = $top->Frame->pack(-anchor => 'w');
+    my $plotbutton = $butframe->Button(-text => 'Plot',
+    				   -command => \&plot,
+    				  )->pack(-side => 'left');
+    $butframe->Button(-text => 'Quit',
+    		  -command => \&quit,
+    		 )->pack(-side => 'left');
+    $top->protocol('WM_DELETE_WINDOW', \&quit);
+</pre>
+
+The next maybe unfamiliar line is the one with the <tt>$top->protocol</tt>
+method. With this method it is possible to supply a callback, which
+gets called if the user closes the window. It is not crucial to have
+this method called, as Tk always defines a standard callback for
+closing windows, but in this case, it is necessary to quit gnuplot
+gracefully. More information for the <tt>$top->protocol</tt> method is in the
+<b>Tk::Wm</b> manpage.
+<p>
+<pre>
+    my $gnuplot = new FileHandle("| $gnuplot_path");
+    $gnuplot->autoflush(1);
+</pre>
+Next, tkgnuplot starts gnuplot and records the associated file handle
+in the variable <tt>$gnuplot</tt>. The file handle is set to autoflush, so we
+assure that all commands we send to gnuplot will executed immediately.
+<p>
+<pre>
+    $top->bind("&lt;Return>", sub { $plotbutton->invoke });
+    MainLoop;
+</pre>
+As a convenience, the RETURN key will start the plot as if the user
+has clicked on the Plot button. This is done in the <tt>$top->bind</tt> line.
+<p>
+<pre>
+    sub plot {
+        $gnuplot->print("plot $function\n") if $function ne '';
+    }
+</pre>
+The plotting is done in the plot subroutine. This subroutine just
+sends "<tt>plot $function</tt>" to the gnuplot process, which will
+create a X11 window and output the plot.
+<p>
+<pre>
+    sub quit {
+        $gnuplot->close;
+        $top->destroy;
+    }
+</pre>
+Finally, the quit subroutine closes the file handle to the gnuplot
+process and destroys the main window.
+<p>
+Easy, isn't it?
+<p>
+The <a href="tkgnuplot2">second version</a> implements some additional
+features like
+<ul>
+ <li>multiple plots
+ <li>ranges
+ <li>command entry with history
+ <li>printing
+</ul>
+<br>
+<img src="tkgnuplot2.gif">
+<p>
+<pre>
+    #!/usr/bin/perl
+    
+    use Tk;
+    use Tk::LabEntry;
+    use FileHandle;
+    use strict;
+    
+    my $gnuplot_path = "/usr/local/bin/gnuplot";
+    my $tempfile     = "/tmp/gnuplot-%d.ps";
+    my $psprintprg   = "lpr -Pps %s";
+</pre>
+
+Here are two new configuration variables. <tt>$tempfile</tt> is the
+path to the generated postscript file and should live in a temporary
+directory. <tt>$psprintprg</tt> is a command to print the plot to a
+postscript printer. The <tt>%s</tt> is a placeholder for the printed
+file. It is possible to use a postscript viewer like <a
+href="ftp://ftp.cs.wisc.edu/ghost/aladdin/gs550/">ghostscript</a> or
+<a href="ftp://thep.physik.uni-mainz.de/pub/gv/unix/">gv</a> instead
+of lpr.
+
+<pre>    
+    my(@function) = ('sin(x)');
+    my($x_from, $x_to, $y_from, $y_to);
+
+    my $top = new MainWindow;
+    
+    my $gnuplot;
+    
+    my($command, @cmd_history, $cmd_index);
+    my $funcframebox = $top->Frame->pack(-anchor => 'w', -fill => 'both',
+    				     -expand => 1);
+    my @funcframe;
+    my $funcframeno = -1;
+    my $funcentry = funcadd();
+    $funcframe[0]->Button(-text => '+',
+    		      -command => \&funcadd
+    		     )->pack(-side => 'left');
+    $funcframe[0]->Button(-text => '-',
+    		      -command => \&funcdel
+    		     )->pack(-side => 'left');
+</pre>
+
+There are two new buttons labeled with plus and minus. These buttons
+call the subroutines funcadd and funcdel, which create or delete a new
+entry for the input of a function definition.
+
+<pre>    
+    my $xframe = $top->Frame->pack(-anchor => 'w', -fill => 'x', -expand => 1);
+    $xframe->LabEntry(-label => 'X from',
+    		  -textvariable => \$x_from,
+    		  -width => 6,
+    		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+    $xframe->LabEntry(-label => 'to',
+    		  -textvariable => \$x_to,
+    		  -width => 6,
+    		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+    
+    my $yframe = $top->Frame->pack(-anchor => 'w', -fill => 'x', -expand => 1);
+    $yframe->LabEntry(-label => 'Y from',
+    		  -textvariable => \$y_from,
+    		  -width => 6,
+    		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+    $yframe->LabEntry(-label => 'to',
+    		  -textvariable => \$y_to,
+    		  -width => 6,
+    		  -labelPack => [-side => 'left'])->pack(-side => 'left');
+</pre>
+
+Here is another set of LabEntries for the x- and y-range of the plot.
+
+<pre>    
+    my $directframe = $top->Frame->pack(-anchor => 'w');
+    $directframe->Label(-text => "Command:")->pack(-side => 'left');
+    my $directentry = $directframe->Entry(-textvariable => \$command,
+    				      -width => 30);
+    $directentry->pack(-side => 'left');
+    $directentry->bind('&lt;Return>',
+    		   sub {
+    		       push(@cmd_history, $command);
+    		       $gnuplot->print("$command\n");
+    		       undef $command;
+    		       $cmd_index = $#cmd_history+1;
+    		   });
+    $directentry->bind('&lt;Up>',
+    		   sub {
+    		       if ($cmd_index > 0) {
+    			   $cmd_index--;
+    			   $command = $cmd_history[$cmd_index];
+    		       } else {
+    			   $top->bell;
+    		       }
+    		   });
+    $directentry->bind('&lt;Down>',
+    		   sub {
+    		       if ($cmd_index &lt; $#cmd_history) {
+    			   $cmd_index++;
+    			   $command = $cmd_history[$cmd_index];
+    		       } elsif ($cmd_index == $#cmd_history + 1) {
+    			   $top->bell;
+    		       } else {
+    			   undef $command;
+    			   $cmd_index = $#cmd_history+1;
+    		       }
+    		   });
+</pre>
+
+<tt>$directentry</tt> is the entry widget for typing raw gnuplot
+commands. So you can type "<tt>plot sin(x)</tt>" directly in this
+entry and press RETURN to execute the command. The RETURN key also
+puts the command in the command history. You can browse with the UP
+and DOWN cursor keys through the history.
+
+At CPAN, there is also a history entry widget called <a
+href="http://www.perl.com/CPAN/modules/by-module/Tk">Tk::HistEntry</a>.
+
+<pre>    
+    my $butframe   = $top->Frame->pack(-anchor => 'w');
+    my $plotbutton = $butframe->Button(-text => 'Plot',
+    				   -command => \&plot,
+    				  )->pack(-side => 'left');
+    $butframe->Button(-text => 'Print',
+    		  -command => \&psprint,
+    		 )->pack(-side => 'left');
+    $butframe->Button(-text => 'Quit',
+    		  -command => \&quit,
+    		 )->pack(-side => 'left');
+    $top->protocol('WM_DELETE_WINDOW', \&quit);
+    
+    $gnuplot = new FileHandle ("| $gnuplot_path");
+    $gnuplot->autoflush(1);
+    
+    $top->bind("&lt;Return>",
+    	   sub { $plotbutton->invoke if $top->focusCurrent ne $directentry });
+</pre>
+
+Note the small change to the RETURN key binding. As the command entry
+also uses the RETURN key, we have to protect the binding of the global
+RETURN key from executing while the focus is in the command entry
+widget. <tt>$top->focusCurrent</tt> returns the reference of the
+widget which posseses the focus, so we can easily determine which of
+the two callbacks to call.
+
+<pre>
+    MainLoop;
+    
+    sub autorange {
+        my $margin = shift;
+        $margin eq '' ? '*' : $margin;
+    }
+
+    sub plot {
+        $gnuplot->print('set xrange [' .
+    		        autorange($x_from) . ":" . autorange($x_to) . 
+    		        "]\nset yrange [" .
+       		        autorange($y_from) . ':' . autorange($y_to) .
+        		"]\n");
+        my @functions;
+        foreach (@function) {
+    	    push(@functions, $_) if $_ ne '';
+        }
+        $gnuplot->print("plot " . join(", ", @functions), "\n")
+          if @functions;
+    }
+</pre>
+
+The plot subroutine now sets the x- and y-ranges according to the
+values in the range LabEntries. If a range entry is empty, then the
+autorange subroutine will return <tt>*</tt>, which means
+auto-determine range.
+
+All non-empty functions are joined into one plot string for gnuplot to
+execute.
+
+<pre>    
+    sub psprint {
+        my $tempfile = sprintf $tempfile, $$;
+        $top->Busy;
+        plot();
+        $gnuplot->print(&lt;&lt;EOF);
+    set term postscript
+    set output "$tempfile"
+    replot
+    set output
+    set term x11
+    EOF
+        system(sprintf($psprintprg, $tempfile));
+        $top->Unbusy;
+    }
+</pre>
+
+Here is the print function. All this subroutine does is:
+<ul>
+ <li>Create a name for a new temporary file. The <tt>$$</tt> is used
+ variable to get unique names among several tkgnuplot processes. It
+ would also be possible to use the <b>tmpnam</b> function of the
+ <b>POSIX</b> module. 
+ <li>Set the perl/Tk window into a busy state. The <b>Busy</b> method changes
+ the cursor to a sandbox and refuses all keyboard and mouse events
+ until the <b>Unbusy</b> method is called.
+ <li>Plot the current function using plot().
+ <li>Send commands to gnuplot to create a postscript file of the
+ current plot. We temporarily switch the terminal driver to
+ "postscript" and the output to the temporary file. After plotting,
+ the settings are restored to use the x11 terminal driver and no output
+ file.
+ <li>Use <tt>$psprintprg</tt> to print the postscript file.
+</ul>
+
+<pre>
+    sub funcadd {
+        $funcframeno++;
+        $funcframe[$funcframeno] = $funcframebox->Frame->pack(-anchor => 'w', 
+    							      -fill => 'x',
+    							      -expand => 1);
+        my $funcentry 
+          = $funcframe[$funcframeno]->LabEntry
+    	(-label => 'Function:',
+    	 -textvariable => \$function[$funcframeno],
+    	 -labelPack => [-side => 'left']);
+        $funcentry->pack(-side => 'left');
+        $funcentry->focus;
+        $funcentry;
+    }
+    
+    sub funcdel {
+        if ($funcframeno > 0) {
+    	    $funcframe[$funcframeno]->destroy;
+    	    pop @function;
+    	    $funcframeno--;
+        }
+    }
+</pre>
+
+Adding new widgets to a running application is easy - simply pack a
+new widget and you're done. There is a container frame
+<tt>$funcframebox</tt> to get the widget in the right place.
+<p>
+The <b>destroy</b> method is called to get rid of the new widgets.
+
+<pre>
+    sub quit {
+        $gnuplot->close;
+        $top->destroy;
+    }
+</pre>
+
+There are many ways to connect perl with gnuplot. Another is the use
+of the lowlevel graphics driver <a
+href="http://www.perl.com/CPAN/modules/by-module/Term">Term::Gnuplot</a>.
+The <a
+href="http://www.perl.com/CPAN/modules/by-module/Chart">Chart::GnuPlot</a>
+module is a complete wrapper to the gnuplot commands. There is also <a
+href="http://user.cs.tu-berlin.de/~eserte/src/gnuplot/">perl/Tk
+driver</a> for gnuplot to create plots which can be included directly
+in perl/Tk. It's also possible to use the xlib terminal driver of
+gnuplot and translate the issued commands to create lines in the
+Canvas widget.
+
+</body></html>

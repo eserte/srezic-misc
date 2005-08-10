@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+<title>File dialogs</title>
+</head>
+<body>
+
+<h1>File dialogs</h1>
+
+This month's article will deal with the ability of Perl/Tk to select
+files and directories. It seems to be state of the art that selecting
+files is not done within a mere entry widget, but rather with compound
+widgets showing available files and directories, possible in a tree
+structure.
+
+<h2>getOpenFile/getSaveFile</h2>
+
+<img src="getopenfile.png"><p>
+
+The standard methods in Perl/Tk for displaying file dialogs are
+<tt>getOpenFile</tt> (for opening existing files) and
+<tt>getSaveFile</tt> (for selecting a name for a non-existing file).
+These methods will use - if possible - a native interface. That is, on
+Windows the standard file dialog and on Macintosh (if there will be
+ever a port of Perl/Tk for the Mac) too. In Unix/X11, there is no
+standard file dialog (note that Tk is built on top of Xlib, so KDE/Qt,
+CDE/Motif and GNOME/Gtk widgets are not available). In this case, the
+dialog is a mega widget written in Perl (which, as shown below, can
+also be used for other platforms).
+
+<p>
+
+<tt>getOpenFile</tt>/<tt>getSaveFile</tt> is easy to use: just say
+
+<pre> $top->getOpenFile;</pre>
+
+or
+
+<pre> $top->getSaveFile;</pre>
+
+The execution of the program will stop at this point and a file dialog
+will be displayed. After selecting Open/Save or Cancel, the method
+call will return the selected file name or an empty string.
+
+<p>
+
+There are a couple of extra options which are described in the
+<tt>Tk::getOpenFile</tt> manual page. An example script using more
+options can be found <a href="getopenfile.pl">here</a>. The
+<tt>-filetypes</tt> option can be used to specify a number of filters
+(e.g. show only perl files with the file extension .pl). These filters
+are displayed in an option menu widget. It is good practice to always
+include an entry "All files", which matches every file in the current
+directory. The first entry in the <tt>-filetypes</tt> argument is the
+default entry. If <tt>-filetypes</tt> is omitted, the file dialog will
+show every file.
+
+<p>
+
+The Windows user is usually familiar with the use of the standard file
+dialog. Using the X11 file dialog is quite similar. There is an
+additional feature which is especially useful in mouse-less usage. By
+switching the focus to the icon list (this is done by hitting
+Shift-Tab once), it is possible to type the wanted file name. While
+typing, the selection moves to match an appropriate file name. Hitting
+return will accept the active selection as the return value of the
+dialog.
+
+<h2>Tk::FileSelect</h2>
+
+<img src="fileselect.png"><p>
+
+Back in the old Tk 400.xxx days, there was only the
+<tt>Tk::FileSelect</tt> widget available. It's still in the newer
+Perl/Tk distributions, and it has some limitations, but also its
+advantages.
+
+<p>
+
+First, <a href="fileselect.pl">here</a> is an example for the usage of
+the FileSelect dialog. This example shows one of the advantages of
+this widget: you can change the names of the labels, which make it
+more suitable for internationalisation (in the example the labels were
+changed to carry german names). The set of label options is not
+complete (yet), but will hopefully in the future.
+
+<p>
+
+You can also specify a <tt>-verify</tt> option to check if the
+selected file meets your specifications. The argument is a list of the
+standard perl file tests (like ['-r', '-T'], to restrict to readable
+text files). This option can also be used to restrict FileSelect to
+"DirSelect", by changing the verify option to ['-d'] (here is an <a
+href="fileselectdir.pl">example</a>). I will discuss later another way
+for selecting directories.
+
+<p>
+
+The options of <tt>Tk::FileSelect</tt> are poorly documented, so here
+is a short overview of possible options:
+<ul>
+<li>-directory: the directory which will be displayed at start
+<li>-initialfile: the initially selected file
+<li>-filter: only the matching files will be shown (pattern is a shell
+glob)
+<li>-filelabel, -filelistlabel, -dirlabel, -dirlistlabel: change the
+labels for i18n
+<li>-verify: see above
+<li>-width/-height: the dimension of the directory and file listboxes
+</ul>
+
+The forthcoming versions of <tt>Tk::FileSelect</tt> will contain
+<tt>-command</tt> and <tt>-transient</tt> options to enable non-dialog
+use of the widget.
+
+<p>
+
+Note that <tt>Tk::FileSelect</tt> is partially broken in the newer
+Tk's (that is the beta ones: from 800.016 to 800.018), but this will
+change in the next releases.
+
+<p>
+
+If you want to use <tt>Tk::FileSelect</tt> as the default file dialog,
+then you can say
+
+<pre>    use Tk::FileSelect 'as_default';</pre>
+
+This will cause to change the
+<tt>getOpenFile</tt>/<tt>getSaveFile</tt> methods to use the
+FileSelect widget from now on.
+
+
+<h2>Tk::Dirlist</h2>
+
+<img src="dirlist.png"><p>
+
+A lesser known widget in the Perl/Tk distribution is
+<tt>Tk::Dirlist</tt>. It's a widget displaying a tree of directories
+and files, beginning from the root to a specified directory (or the
+current directory). This widget is not a dialog, so you have to do the
+packing (or gridding) yourself. It also has no bindings to user
+interaction, but since the widget is derived from <tt>Tk::HList</tt>,
+the <tt>-command</tt> and <tt>-browsecmd</tt> options can be used. <a
+href="dirlist.pl">Here</a> is a short but complete example for the use
+of Tk::Dirlist.
+
+<h2>Tk::FBox</h2>
+
+It is also possible to use <tt>Tk::FBox</tt>, which is the widget
+serving <tt>getOpenFile</tt> and <tt>getSaveFile</tt> behind the
+scenes. <tt>Tk::FBox</tt> can be configured with all the options
+<tt>getOpenFile</tt> takes and the additional option <tt>-type</tt>,
+which should be either <tt>open</tt> or <tt>save</tt>. After creating
+the widget, it can be shown with the <tt>Show</tt> method, as nearly
+every Perl/Tk dialog. Using <tt>Tk::FBox</tt> directly is probably
+useless on X11, but another file dialog alternative on Win32. <a
+href="fbox.pl">Here</a> is an example usage of <tt>Tk::FBox</tt>.
+
+<h2>Dialog for directories: Tk::DirTree</h2>
+
+<img src="dirtree.png"><p>
+
+One way for selecting directories was already discussed (the -d verify
+option of <tt>Tk::FileSelect</tt>). In the Perl/Tk distribution, there
+is another widget specifically dealing with directories:
+<tt>Tk::DirTree</tt>. This widget is not a dialog, so you have to
+create a toplevel window and embed this widget in it, and also use
+<tt>waitVariable</tt> to block execution until the user made a choice
+(Note: <tt>waitVariable</tt> waits until the referenced variable
+changes its value. While waiting, the event mechanism of Tk is not
+blocked, so you can click on other buttons etc.). In the <a
+href="dirtree.pl">example script</a> this usage is demonstrated. The
+widget is configured to change the directory with a single click and
+to select a directory with a double click (or by clicking the Ok
+button which will use the last selected directory). If you don't like
+this behaviour, you can easily change the code so that double-clicks
+open the selected directory, and the Ok button is the only way to
+confirm a selection. This is also described in the sample script.
+
+<h2>More on CPAN</h2>
+
+If you're still not satisfied with these alternatives, there are more
+choices on CPAN: <tt>Tk::FileDialog</tt>, which, by author's taste,
+looks nicer than <tt>Tk::FileSelect</tt> and <tt>Tk::SelFile</tt>.
+The <tt>Tk:FileEntry</tt> widget is a combination of an entry with a
+button, which pops up a file dialog on request (this is similar to the
+HTTP upload button in HTML forms, as it is used in the Netscape
+browser).
+
+
+</body></html>

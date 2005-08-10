@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Drag and drop with Perl/Tk</h1>
+
+A useful interface for communication between GUI programs is the
+<i>drag and drop</i> facility. This interface can also be used for
+actions inside an application, e.g. for moving items from one place to
+another. Perl/Tk supports drag and drop, and since the documentation
+in the distribution is a little sparse on this topic, I will provide
+some information in this article.
+
+<p>
+
+A user who wants to implement drag and drop in his Perl/Tk application
+has to deal with the following concepts:
+<ul>
+<li>The drag source: the widget where a drag action starts (by
+pressing the mouse button on the item to be moved and moving the
+mouse).
+
+<li>The drag token: this is a widget, which is moved by the
+mouse cursor from one location to another. This can be a label with
+text or an image.
+
+<li>The dropsite: this is a widget in the GUI which will accept drops.
+</ul>
+
+<p>
+
+In Perl/Tk, two types of drag and drops are implemented: local drops
+and drops from other applications. Local drops work on all supported
+platforms. Drops between applications are not standardized, so there
+is a number of drag and drop protocols. Perl/Tk supports these
+protocols: <i>Sun</i>, <i>XDND</i>, <i>KDE</i> and <i>Win32</i>. The
+Sun protocol is supported since the old 400.xxx days. Win32 support is
+added in the version 800.005, while the KDE and XDND support is fairly
+new: they appeared in the latest 800.015 release. KDE drag and drop is
+used by the KDE file manager <i>kfm</i>. XDND is a protocol developed
+by <a href="mailto:jafl@alice.wonderland.caltech.edu">John Lindal</a>
+and is used in GNOME. It is expected that KDE will also switch to XDND
+in the future.
+
+<p>
+
+The drag and drop interface is fairly low-level, as it works using X11
+selections. There are some limitations (the interface only works for
+single files and does not support anything else than filenames, that
+is, drops using URLs in KDE will not work). There is also rumor that
+there will be changes in the Tcl/Tk core to support drag and drop, so
+it is likely that this changes will appear some day in Perl/Tk, too.
+Nevertheless, the current interface in Perl/Tk is working and useful.
+
+<h2>Local drops</h2> <img src="localdnd.png"><p> Here is a <a
+href="localdnd.pl">sample script</a> for local drag and drop. In this
+example two listboxes are created. Items from the left listbox can be
+dragged to the left one.
+
+<p>
+For local drops we need either the source and the target side, so both
+drag and drop modules should be included in the script:
+<tt>Tk::DragDrop</tt> (for the source) and <tt>Tk::DropSite</tt> (for
+the target). The source side is defined by calling the
+<tt>DragDrop</tt> method on the source widget. The following options
+should be set:
+<ul>
+<li><tt>-event</tt> for the event starting a drag action, usually
+<tt>&lt;B1-Motion&gt;</tt>, meaning when pressing the left mouse
+button and moving the cursor.
+<li><tt>-sitetypes</tt> to specify the drag and drop protocol. As we use
+local drops, we have to set this option to <tt>Local</tt>.
+<li><tt>-startcommand</tt> specifies the callback which is executed
+when starting a drag.
+</ul>
+The <tt>DragDrop</tt> method returns a "token", which is a
+<tt>Label</tt> widget for the text or image displayed during the drag
+action.
+
+<p>
+The target widget is called with the <tt>DropSite</tt> method. The
+<tt>-droptypes</tt> option is used to register the drop type this
+widget is accepting (here we use again <tt>Local</tt>) and the
+<tt>-dropcommand</tt> option is set to a callback which is executed
+when a drop occured.
+
+<p>
+In the example script, the <tt>StartDrag</tt> is called when a drag is
+started. This subroutine is responsible for setting the content of the
+drag token with the <tt>configure</tt> method. In the sample script,
+the current item of the listbox is determined with the
+<tt>nearest</tt> method. After that the token is placed at the current
+cursor position and activated with <tt>raise</tt> and
+<tt>deiconify</tt>. Further processing is done in the
+<tt>FindSite</tt> method, which is responsible for highlighting the
+token over a dropsite and to handle a drop action.
+
+<p>
+The <tt>Drop</tt> function of the example script accepts a drop and
+performs an action. Here it uses the text value of the token to add
+another item to the right listbox.
+
+
+<h2>Remote drops</h2>
+
+A <a href="extdnd.pl">sample script</a> for accepting drops from an
+external application, e.g. the KDE file manager or the Windows
+explorer.
+
+<p>
+For accepting drops from an external application, for example a file
+manager, only a drop site has to be defined. So it's sufficient to
+include only <tt>Tk::DropSite</tt>. The command to accept drops is the
+same as in the example above for local drops. The list of drop types
+should list all dnd protocols which should be accepted, that is Win32
+if running on Windows, otherwise KDE, XDND and Sun.
+<p>
+The accepting callback receives an additional argument which is the
+name of a selection. This selection is used to get the filename of the
+drop. For Win32 dnd, we have to look at the "STRING" property, while
+for all other protocols, the property name is "FILE_NAME". In case of
+an error (because the property is not defined), the selection get is
+done in an <tt>eval</tt> block.
+
+<h2>Additional methods</h2>
+For the source side, the following callbacks can be set:
+<ul>
+<li>-entercommand: Called if a dropsite is entered.
+<li>-motioncommand: Called if the token is moved over a dropsite.
+</ul>
+
+<h2>Short summary</h2>
+
+Here is a short summary for using the drag and drop methods:
+
+<pre>
+# load code for using the source side
+use Tk::DragDrop;
+
+# load code for using the target side
+use Tk::DropSite;
+
+# define the source side
+$target->DropSite(-dropcommand => \&amp;drop_handler,
+                  -droptypes   => ['KDE','XDND','Sun','Win32','Local'],
+		 );
+
+# define the target side
+$source->DragDrop(-event => '&lt;B1-Motion&gt;',
+                  -sitetypes   => ['KDE','XDND','Sun','Win32','Local'],
+		  -startcommand => \&amp;drag_handler,
+		  -entercommand => \&amp;enter_handler,
+		  -motioncommand => \&amp;motion_handler,
+                 );
+
+# used in the drag_handler
+$token->FindSite($xpos, $ypos, $event);
+
+</pre>
+
+More information can be found in the <tt>DragDrop</tt> directory in
+the source distribution of Perl/Tk. There are some sample scripts:
+<tt>local_test</tt>, <tt>motion_test</tt> and <tt>site_test</tt>. And
+if there are still open questions: use the force, read the source!
+
+<h1>Notes</h1>
+
+<h2>DnD with Tk::HList</h2> (2002-02-20)
+
+<p>Look at this <a href="hlistdnd.pl">sample script</a> for drag and
+drop with <tt>Tk::HList</tt>. You have to set the <tt>-selectmode</tt> of the
+HList to <tt>dragdrop</tt>. There are more complicated issues, like dealing
+with trees or multiple columns.
+
+</body></html>

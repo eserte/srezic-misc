@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN"> <!-- -*-html-*- -->
+<html><head>
+<title></title>
+<link rev=made href="mailto:eserte@cs.tu-berlin.de">
+</head>
+<body>
+<h1>Help!</h1>
+
+Don't let the user alone with your Perl/Tk application. It's quite
+easy to implement some help functions with existing modules. This
+article will discuss three of them: <tt>Tk::Balloon</tt>,
+<tt>Tk::Pod</tt> and <tt>Tk::ContextHelp</tt>.
+
+<h2>Tk::Balloon</h2>
+
+<img src="balloon.png"> A balloon in a Perl/Tk application.
+
+<p>
+
+A familiar help facility in most Windows and Macintosh programs is the
+"tool tips" window, or, in the terminology of Perl/Tk, the help
+balloon. This is a small window with a help message popping up if the
+user leaves the mouse cursor over a widget for a short time.
+Additionally, if there is a status bar, the help message is also
+displayed in it. The standard Perl/Tk module <tt>Tk::Balloon</tt>
+provides this feature.
+
+<p>
+
+To use it, the balloon object first has to be created:
+<pre>    $balloon = $top->Balloon(-statusbar => $status_bar_widget);
+</pre>
+This will create a hidden balloon, which is technically a borderless
+toplevel widget (to get it borderless, the <tt>overrideredirect</tt>
+method is used, see the <tt>Tk::Wm</tt> man page). The
+<tt>-statusbar</tt> argument is optional. It can be set to a widget
+object which understands the <tt>-text</tt> or <tt>-textvariable</tt>
+option, like (typically) a <tt>Label</tt>, a <tt>Button</tt>, or a
+<tt>Message</tt> widget.
+
+<p>
+
+Now, to associate a part of the GUI with a help message, we have to
+use the attach method to the wanted widget:
+<pre>    $balloon->attach($widget, -msg => "A help message");
+</pre>
+There are three types of message options. The <tt>-msg</tt> option
+specifies the message for both the balloon and the status bar, and
+with <tt>-balloonmsg</tt> and <tt>-statusmsg</tt> it is possible to
+differentiate those messages.
+
+<p>
+
+For <tt>Canvas</tt> and <tt>Menu</tt> widgets, there is an additional
+special mode. For a <tt>Canvas</tt> widget, it is possible to attach
+messages to individual canvas items. For menus, each menu entry can
+get an individual balloon message (note that probably this will <b>not</b>
+work on Windows). To use this feature, the argument to <tt>-msg</tt>
+should be a hash with the canvas item numbers or tag strings as the
+keys and the messages as the values. For menus, the argument should be
+an array with the first message attached to the first menu entry and
+so on (however, keep in mind that the first menu entry is often the
+tear-off entry). Examples for this usage can be found in the
+SYNOPSIS section of the <tt>Tk::Balloon</tt> manual page.
+
+<h2>The forgotten help menu</h2>
+
+The last entry of a menu bar in a common gui application, is a help
+menu. It's almost always there, but often there is not much
+information in it. At least, there should be an "About" entry
+providing copyright, version and author information. Better, if there
+is an entry for the manual of the application.
+
+<p>
+
+You are programming in Perl, so there's a chance you are familiar with
+the Pod documentation format. There is a number of Pod utilities
+bundled with the core Perl, so there is always a chance to get the
+documentation in a format you like.
+
+<p>
+
+To display Pod documentation, there are some naïve approaches:
+<ul>
+<li>Use a Tk::Text window with the output of <tt>pod2text</tt>
+<li>Convert the Pod documentation to html (for example with the
+<tt>pod2html</tt> utility) and display the html file with Netscape
+(or lynx or w3m or kfm or chimera or mosaic...)
+<li>There are a lot of other (external) help manual browsers, like
+xman or tkman. 
+</ul>
+
+But I think a better way is to use the Perl/Tk module
+<tt>Tk::Pod</tt>...
+
+<h2>Tk::Pod</h2>
+
+<tt>Tk::Pod</tt> is a Pod browser written in Perl/Tk. This module is
+not in the standard Perl/Tk distribution. You have to fetch it from
+the <a href="http://www.cpan.org/modules/by-module/Tk">CPAN</a>.
+
+<!-- <a
+???>Here</a> are some instructions how to install modules from CPAN.-->
+
+Look at a <a href="tkpod.png">screenshot</a> of a <tt>Tk::Pod</tt>
+window.
+
+<p>
+
+<tt>Tk::Pod</tt> is in fact a hypertext browser. Links in the Pod
+documentation (which are marked with <nobr><tt>L&lt; ...
+&gt;</tt></nobr>) are functional: you can jump to references inside
+the Pod and to other Pods.
+
+<p>
+
+You can search the document. Moreover, if <tt>Text::English</tt> is
+installed and a fulltext index of the perl documentation is built,
+a query over the whole installed perl documentation is possible.
+
+<p>
+
+Additionally, there is a menu displaying the structure of the
+document, thus it's possible to jump quickly to different sections.
+
+<p>
+
+These features make <tt>Tk::Pod</tt> also a good choice for reading
+perl documentation instead of <tt>man</tt> or <tt>perldoc</tt>.
+Together with the module, the program <tt>tkpod</tt> is installed as a
+standalone Pod viewer.
+
+Here is an example for Pod use: this defines a menu entry for
+the manual:
+
+<pre>
+use FindBin;
+use Tk;
+...
+
+$help_menu->command
+  (-label => "~Documentation",
+   -command => sub {
+       eval {
+           require Tk::Pod;
+           Tk::Pod->Dir($FindBin::RealBin);
+           $top->Pod(-file => $FindBin::RealScript . ".pod",
+                     -title => 'Documentation for this program');
+       };
+       if ($@) {
+           my $r;
+           my $doc_html = "$FindBin::RealBin/$FindBin::RealScript.html";
+           my $url;
+           if (defined $doc_html && -r $doc_html) {
+               $url = "file:$doc_html";
+	       system("netscape $url&");
+           }
+       }
+   },
+  );
+</pre>
+
+(A complete example script can be found <a href="tkpodex.pl">here</a>)<p>
+
+For explanation: the <tt>FindBin</tt> module helps to find the current
+position of the running script. <tt>$FindBin::RealBin</tt> will be set
+to the directory of the running script (not the current working
+directory!) and <tt>$FindBin::RealScript</tt> will contain the
+basename of the running script. There are also versions of these
+variables without the "Real", which will contain the values without
+all links resolved. The code above assumes that the documentation is
+in a separat file with the extension ".pod". Of course, the
+documentation can also be embedded in the perl script.
+
+<p>
+
+The menu entry handler will first try to see if <tt>Tk::Pod</tt> is
+installed. Therefore an <tt>eval</tt> block is put around the
+<tt>require</tt> statement, to prevent any error messages. With
+<tt>Tk::Pod->Dir</tt>, an additional search directory for Pods is set
+to the directory containg the running script - assuming that the Pod
+is in the same directory (otherwise, only <tt>$ENV{PATH}</tt> and
+<tt>@INC</tt> is searched for Pods). Then a new Pod widget is created
+with the contents of the appropriate Pod file (the <tt>-file</tt>
+option).
+
+<p>
+
+In case that the <tt>Tk::Pod</tt> is not installed or there were other
+errors in the processing, the program tries a fall back: it checks
+whether there is a html documentation file in the same directory. If
+there is one, then Netscape is called with this file. You can adjust
+the <tt>system</tt> line to your liking, e.g. calling "xterm -e lynx
+$url&" or "xterm -e w3m $url&" for your favorite text-oriented web
+browser. Note that the "&" is necessary to prevent the blocking of the
+Perl/Tk program; otherwise, it won't react to any user input unless
+the web browser is shut down.
+
+<h2>Tk::ContextHelp</h2>
+
+The last module described in this article is somewhat like a
+combination of the previous two. It can be used to attach widgets to
+individual help messages, but it can also use <tt>Tk::Pod</tt> to
+display the appropriate parts of the documentation. This help facility
+is similar to the one in Windows 95: There is a context help button.
+By clicking this button, the cursor changes and now displays a
+question mark next to the arrow. If the user moves the mouse to a
+widget without a context help entry, then the question mark is crossed
+to show that there is no help for this topic available. Otherwise the
+user can click on the widget and a <tt>Tk::Pod</tt> window will pop up
+with the appropriate topic. In case <tt>Tk::Pod</tt> is not installed,
+a <tt>Tk::Text</tt> widget will be shown instead with the output of
+<tt>pod2text</tt>.
+
+<p>
+
+Although this is a Windows technique, this module will not work on
+Windows. This is because <tt>Tk::ContextHelp</tt> uses the
+<tt>Tk::InputO</tt> widget, which is only available for the X11
+version of Perl/Tk.
+
+<p>
+
+The coding is similar as in <tt>Tk::Balloon</tt>. Widgets can be
+<tt>attache()</tt>d to the <tt>Tk::ContextHelp</tt> object. To
+attach a widget to a section in the Pod file, use the <tt>-pod</tt>
+option. The argument should be a regular expression matching
+text in the pod, e.g. the section header. For example, to jump to the
+foo widget section, you have to write:
+<pre>    $contexthelp->attach($widget, -pod => '^\s*FOO WIDGET');</pre>
+and the corresponding Pod section will look like:
+<pre>=head2 FOO WIDGET</pre>.
+
+<p>
+There are two methods <tt>activate</tt> and <tt>deactivate</tt>, to
+turn the help system on and off. The module has also a method for
+creating a convenience button for turning the help system on/off. To
+use this button, write:
+<pre>    $contexthelp->HelpButton($top)->pack;</pre>
+
+<p>
+
+This was a short introduction to some help facilities in Perl/Tk. Of
+course, you should consult the manual pages for detailed information.
+You can also think of other ways to display the documentation, e.g.
+using a native Perl/Tk WWW browser (at CPAN, there is
+<tt>Tk::Web</tt>).
+
+</body></html>

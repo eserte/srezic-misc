@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+
+use Tk;
+use Tk::LabEntry;
+use FileHandle;
+use strict;
+
+my $gnuplot_path = "/usr/local/bin/gnuplot";
+
+my $top = new MainWindow;
+
+my $function = "sin(x)";
+
+my $funcentry = $top->LabEntry
+  (-label        => 'Function:',
+   -textvariable => \$function,
+   -labelPack    => [-side => 'left'])->pack;
+
+my $butframe   = $top->Frame->pack(-anchor => 'w');
+my $plotbutton = $butframe->Button(-text => 'Plot',
+				   -command => \&plot,
+				  )->pack(-side => 'left');
+$butframe->Button(-text => 'Quit',
+		  -command => \&quit,
+		 )->pack(-side => 'left');
+$top->protocol('WM_DELETE_WINDOW', \&quit);
+
+my $gnuplot = new FileHandle("| $gnuplot_path");
+$gnuplot->autoflush(1);
+
+$top->bind("<Return>", sub { $plotbutton->invoke });
+
+MainLoop;
+
+sub plot {
+    $gnuplot->print("plot $function\n") if $function ne '';
+}
+
+sub quit {
+    $gnuplot->close;
+    $top->destroy;
+}
