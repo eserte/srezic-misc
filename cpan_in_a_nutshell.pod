@@ -454,13 +454,23 @@ L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
 
 =head1 File type detection
 
+L<File::Type> uses exclusively an internal database. In its
+documentation it explains its advantages over L<File::MimeInfo> and
+L<File::MMagic>.
+
 L<MIME::Types>: the name may be misleading --- the module is just an
 file extension - mime type mapping. The module is not looking at
 file's magic. It is supposed to work just like the MIME type
 recognition of Apache.
 
-Look at L<File::MMagic>, L<File::MimeInfo::Magic> and L<File::Type>
-XXX.
+L<File::MimeInfo::Magic> needs the mime-info database from the
+freedesktop project.
+
+L<File::MMagic> uses either an small internal database (with about 100
+file formats) or the host's magic file as found in F</etc/magic> or
+elsewhere. Unfortunately the location of the magic file is different
+from system to system, so it would be nice if there was an
+E<quot>auto-detectE<quot> option.
 
 =head1 File system
 
