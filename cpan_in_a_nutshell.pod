@@ -635,3 +635,8 @@ L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
 string and getting an answer. Has a lot of useful options (defaults,
 input filters ...).
 
+=head1 Iterators
+
+Check for L<Iterator> and L<Object::Realize::Later> (lazy
+evaluation???). L<Object::Iterate> introduces an B<iterate> method to
+loop conveniently over a list-like object.
