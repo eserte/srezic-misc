@@ -329,6 +329,10 @@ L<LWP::UserAgent>: use this for doing requests in the WWW space
 L<LWP::Simple>: use this if you want an very simple interface
 L<IO::All>: for an even simpler interface
 
+There are other light-weight HTTP implementations, which are not
+complete as LWP, but smaller in size and module number and probably
+also faster. These are L<HTTP::Lite> and L<HTTP::Client>.
+
 libnet (L<Net::FTP>) etc. (more low-level, has FTP, but no HTTP (?),
 POP3, SMTP etc.).
 
