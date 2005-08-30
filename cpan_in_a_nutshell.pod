@@ -644,3 +644,12 @@ input filters ...).
 Check for L<Iterator> and L<Object::Realize::Later> (lazy
 evaluation???). L<Object::Iterate> introduces an B<iterate> method to
 loop conveniently over a list-like object.
+
+=head1 Free disk space
+
+L<Filesys::DiskSpace>: no usage of external commands, just using
+syscalls. Support seems to be stalled since many years (there are test
+failures and old bug reports on rt.cpan.org).
+
+Check and compare the following modules: L<Filesys::Df>,
+L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
