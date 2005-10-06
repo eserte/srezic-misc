@@ -383,6 +383,8 @@ L<Mail::Cclient> also gives access to various mailbox formats
 (including IMAP mail accounts). The module relies on an additional C
 library.
 
+L<Mail::IMAPTalk> is an IMAP client interface.
+
 =head1 Templating systems
 
 A comparison of web centered templating systems can be found at
