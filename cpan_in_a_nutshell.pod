@@ -242,11 +242,16 @@ graph as gif or postscript or Perl/Tk canvas output or ...
 
 L<Image::LibRSVG> converts svg graphics into popular image formats.
 
-=head1 Graphic utitilies
+=head1 Image information
 
 L<Image::Size> and L<Image::Info> may be used to get information about
 an image file (like size, mime format etc.). I had some exotic jpegs
 which did not work with Image::Info, but worked with Image::Size.
+
+L<Image::EXIF> is an interface to EXIF information. Some EXIF
+information can also be found in L<Image::Info>. There's also
+L<Image::ExifTool>, which is (contrary to Image::EXIF) written in pure
+perl.
 
 =head1 Charts
 
