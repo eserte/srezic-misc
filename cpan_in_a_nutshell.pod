@@ -662,3 +662,14 @@ failures and old bug reports on rt.cpan.org).
 
 Check and compare the following modules: L<Filesys::Df>,
 L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
+
+=head1 Debugging
+
+=head2 Tracing
+
+Simple tracing can be done with L<Devel::Trace>. L<Devel::TraceCalls>
+allows programmable tracing by subs or packages. The
+L<Devel::CallTrace> module is another one, which includes in its Pod
+documentation a list of similar modules, so look there for a short
+description for any of them.
+
