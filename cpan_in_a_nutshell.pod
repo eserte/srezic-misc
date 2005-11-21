@@ -447,6 +447,9 @@ L<VCS> and others. Look which one is the best nowadays XXX.
 To get ordered hashes, use either L<Tie::IxHash>,
 L<Tie::InsertOrderHash> or L<Tie::Hash::Indexed>.
 
+For case insensitive hashes, use either L<Tie::CPHash> or
+L<Hash::Case>.
+
 =head1 Regexp tools
 
 L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
