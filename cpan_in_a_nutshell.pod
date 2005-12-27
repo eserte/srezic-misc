@@ -408,10 +408,6 @@ L<HTML::Template::Compiled> uses the same templating language as
 L<HTML::Template>, but internally compiles the template to perl code,
 so it's faster in persistent systems (about 2-4x).
 
-Soon to come: L<HTML::Template::Compiled> is a version of
-L<HTML::Template> which uses perl code internally and thus should be
-faster than the original.
-
 L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
 template. Small and useful.
 
