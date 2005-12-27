@@ -391,6 +391,8 @@ L<Mail::IMAPTalk> is an IMAP client interface.
 
 A comparison of web centered templating systems can be found at
 L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
+And here's another one:
+L<http://www.perl.com/lpt/a/2001/08/21/templating.html>.
 
 =head2 Standalone templating systems
 
