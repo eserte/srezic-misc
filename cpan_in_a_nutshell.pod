@@ -418,14 +418,16 @@ using the same API for all.
 
 =head2 Apache
 
-L<Apache::ASP>, to be used in conjuction with L<mod_perl>.
+L<Apache::ASP> a framework with a jsp/asp-like templating system (XXX
+check), to be used in conjuction with L<mod_perl>.
 
 EmbPerl (L<HTML::Embperl>). More than just templating XXX?
 
 Mason (L<HTML::Mason>). More than just templating XXX?
 
-L<Apache::ASP>: a framework with a jsp/asp-like templating system XXX
-check.
+L<Apache::SimpleTemplate>, a mod_perl handler for using jsp/asp-like
+templates. It seems to be rather lightweight in comparison to
+Apache::ASP.
 
 =head1 Web Frameworks
 
