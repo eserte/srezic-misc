@@ -513,7 +513,10 @@ L<File::Find::Rule> is different XXX. Many plugins.
 
 Since 5.8.0, this can be done with three-arg L<open|perlfunc/open> and
 a scalar ref instead of a filename. For former perl versions, use
-either L<IO::Scalar> or L<IO::Stringy> (XXX correct?).
+either L<IO::Scalar> or L<IO::String>. See
+L<http://cpanratings.perl.org/dist/IO-String> for a rating which
+compares IO::String and IO::Scalar (where the former seems to be
+better than the latter).
 
 =head1 PDF creation
 
