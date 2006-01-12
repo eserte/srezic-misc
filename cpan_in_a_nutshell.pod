@@ -116,7 +116,16 @@ much faster than Tk::Table.
 
 L<YAML> is neat: it's human readable, portable across languages, but
 unfortunately the Perl implementation is buggy so that's unusable
-(other than for configuration files).
+(other than for configuration files). Also the syntax became very
+complex.
+
+L<YAML::Syck> is a C based parser for the YAML language.
+
+L<JSON> is a human readable format which is based on javascript
+syntax. It's not so complex as YAML, but has the other advantages of
+YAML.
+
+L<JSON::Syck> is a C based parser for the JSON language.
 
 L<Storable> is in the core since 5.7.3. It's fast (because implemented
 in XS and using a binary format), but it's not human readable. The
@@ -143,12 +152,19 @@ from/to XML. As usually with XML, the output is very verbose and
 probably slower than other modules. It's possible to include a DTD in
 the generated XML document. There's no support for code references.
 
+L<XML::Simple> can also be used for serializing/deserializing.
+
 L<Data::Serializer> is a meta class for handling a couple of
 serialization methods together with encryption, compression and
 checksumming.
 
 L<FreezeThaw> is ancient, pure-perl, and much slower than other
 modules.
+
+A benchmark with results can be found here:
+L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>.
+More modules are mentioned there not covered here: L<RPC::XML>,
+L<Convert::Bencode>, L<Convert::Bencode_XS>.
 
 =head1 Config/Ini files
 
