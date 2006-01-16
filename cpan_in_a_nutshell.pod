@@ -90,7 +90,8 @@ L<Tk::Date>: a highly configurable text only entry widgets.
 
 L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
 
-L<Tk::DatePick>: not yet tested
+L<Tk::DatePick>: a date widget which is only selectable using
+back/forward buttons (one for each date, month, year).
 
 L<Tk::MiniCalendar>: the calendar view looks like Tk::DateEntry, but
 the widget is not linked to a BrowseEntry widget.
