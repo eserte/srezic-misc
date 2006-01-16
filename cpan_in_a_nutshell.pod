@@ -92,6 +92,9 @@ L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
 
 L<Tk::DatePick>: not yet tested
 
+L<Tk::MiniCalendar>: the calendar view looks like Tk::DateEntry, but
+the widget is not linked to a BrowseEntry widget.
+
 =head2 (Multicolumn) Listboxes, Tables
 
 L<Tk::Listbox>: a core Tk widget. Cannot use multiple columns, other
