@@ -458,6 +458,15 @@ L<Maypole>. A MVC system for Apache or cgi-bin.
 See also L<HTML::Mason> and maybe L<Apache::ASP>, which are more than just
 templating systems (is this true XXX?).
 
+=head2 CMS
+
+L<Contentment> --- a perl based Web CMS (check it XXX).
+
+L<WE_Framework> --- together with L<webeditor> a CMS for small to
+middle static sites with a focus on: multi-language sites, editors are
+constrained to pre-defined templates, Template-Toolkit based, database
+is Berkeley DB.
+
 =head1 Versioning control systems
 
 L<VCS> and others. Look which one is the best nowadays XXX.
