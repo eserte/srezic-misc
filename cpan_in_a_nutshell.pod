@@ -181,7 +181,8 @@ L<savevars>: my own pragma module for conveniently storing and
 retrieving a configuration.
 
 L<Config::IniFiles>: most people recommend this module for Windows-ini
-styled configuration files.
+styled configuration files. More modules in this game: L<Config::Tiny>
+and L<Config::IniHash>.
 
 L<XML::Simple>: out-of-the-box serialization is not possible without
 fiddling with a lot of options
