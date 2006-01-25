@@ -488,6 +488,9 @@ L<Hash::Case>.
 L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
 modules doing similar things.
 
+A list with regexp tools can be found here:
+L<http://perlmonks.org/?node_id=399498>.
+
 =head1 Module installation
 
 The classic module is L<CPAN>, which comes with core perl. Someday,
@@ -711,4 +714,14 @@ allows programmable tracing by subs or packages. The
 L<Devel::CallTrace> module is another one, which includes in its Pod
 documentation a list of similar modules, so look there for a short
 description for any of them.
+
+=head1 AI
+
+A long link list for AI and NLP stuff can be found here:
+L<http://perlmonks.org/?node_id=399498>.
+
+=head1 Bio
+
+A long link list for Bioinformatics stuff can be found here:
+L<http://perlmonks.org/?node_id=399498>.
 
