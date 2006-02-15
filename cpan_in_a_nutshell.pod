@@ -256,6 +256,9 @@ like libpng and libjpeg installed on your system. The version number
 of Imager is still 0.something, so expect that things do not work as
 expected.
 
+L<Image::Imlib2>: apparently an interface to the imlib2 library. Not
+tested yet.
+
 Not a perl module, but still usable from a perl script/module is
 netpbm (to be found on sourceforge). netpbm is a collection of filter
 programs which can be piped together. For example: to resize a gif
