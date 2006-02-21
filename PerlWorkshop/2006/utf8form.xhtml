@@ -1,0 +1,13 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>utf-8 form test</title>
+  </head>
+  <body>
+    <form action="http://localhost:1211" method="post" enctype="multipart/form-data">
+      <p>
+	<textarea name="text" cols="80" rows="5">äöü&#x20ac;</textarea>
+	<input type="submit" value="Send" />
+      </p>
+    </form>
+  </body>
+</html>

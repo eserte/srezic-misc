@@ -1,0 +1,139 @@
+Perl und Unicode (wahlweise: Perl und UTF-8 oder Perl und Encodings)
+
+Perl 5.8.x hat inzwischen eine brauchbare Unicode-Unterstützung
+bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
+sogar Experten werden immer wieder von Unwägbarkeiten überrascht. Der
+Vortrag wird Hilfe zur Selbsthilfe bei Unicode-Problemen bieten und
+Hinweise zur Benutzung von Unicode in populären Modulen wie DBI, Tk,
+HTML::*, CGI, XML::* geben.
+
+Unicode, UTF-8, Encodings
+
+======================================================================
+
+BRAINSTORMING
+
+Kochrezepte/Strategien:
+
+- Regeln: so früh wie möglich nach "Perl-Characters" konvertieren, so
+  spät wie möglich nach "Octets" im richtigen Encoding konvertieren.
+  Bei der eingehenden Konvertierung die Fragen beantworten: macht das
+  Perl-System/Modul die Konvertierung bereits für mich? Kann ich es
+  leicht einstellen (binmode FH, ":encoding(...)")?
+
+- Sich klarmachen: was ist die "Außenwelt" (I/O mit Terminal, Dateien,
+  Netzverbindungen), externe Module, Datenbanken
+
+- Binary matters! Warum auch Unix-Programmierer jetzt binmode()
+  brauchen.
+
+- Warnzeichen beachten (wide characters...)
+
+- Sachen, die nur für binäre Daten gedacht sind (pack/unpack,
+  Digest::*, ...)
+
+- "use utf8" ist nicht die Lösung! Was dieses Pragma macht (und sein
+  Geschwisterchen "use encoding ..."
+
+- Fehler erkennen. Ein geübtes Auge erkennt deutsche utf8-encodierte
+  Umlaute, die binär auftauchen.
+
+- Tools: Devel::Peek. od -c/hexdump? Editoren, Terminals etc. nicht
+  unbedingt trauen.
+
+- Langfristige Strategien: immer utf-8 einplanen ... 
+
+- Weitere Module: Tk, DBI/DBD::mysql, mysql mit unicode-Settings,
+  HTML::Entities, Digest::MD5 ...
+
+- Was ist Unicode? Einfache Erklärung: ein Mapping von Zeichen auf
+  Zahl (code point). Zufällig entsprechen das Mapping auf die Zahlen 0
+  - 127 dem altbekannten ASCII, und das Mapping 0 - 255 ISO-8859-1.
+  Dabei ist nichts über das Encoding gesagt.
+
+- Regexp? \p{...}, \p{IsAlpha} vs. \w, locale, Unicode properties
+
+  "Use of locales with Unicode is discouraged." (perlunicode.pod)
+
+- substr(), index(), length(), regexps funktionieren wie erwartet nur
+  auf Characters, nicht auf Octets (es sei denn, man möchte die Daten
+  "binär" behandeln)
+
+- Referenzen: perldoc (perluniintro, ...), Sourcecode:
+  lib/unicore/NamesList.txt (auch installiert), ext/Encode/ucm/*.ucm
+
+- Combinining characters -> Unicode::Normalize
+
+- UTF-8: variable Breite 1 - 4 Zeichen (theroretisch auch mehr
+  möglich)
+
+- fixed-width encodings (UTF32/UCS-2/4)
+  nearly fixed-width: UTF-16 (besides the surrogates)
+
+- BOMs (können die überhaupt funktionieren wegen des Shebangs?),
+  Surrogates
+
+- perluniintro: "Starting from Perl 5.8.0, the use of use utf8 is no
+  longer necessary." (perluniintro.pod) (Legende!) Die Daten wissen
+  selbst, ob sie als utf-8 behandeln werden soll oder nicht, nicht
+  (ein Block) im Skript.
+
+- "Perl supports both pre-5.6 strings of eight-bit native bytes, and
+  strings of Unicode characters. The principle is that Perl tries to
+  keep its data as eight-bit bytes for as long as possible, but as
+  soon as Unicodeness cannot be avoided, the data is transparently
+  upgraded to Unicode." (perluniintro.pod)
+
+  Das bedeutet: wenn man ein "ä" hat, kann es intern als ein Byte mit
+  dem Wert 228 kodiert sein oder mit zwei Bytes mit den Werten 0xc3
+  und 0x14 (das entspricht der utf-8-Kodierung).
+
+- Unicode erzeugen: \x{....}, chr(....), pack("U", ...), \N{.......}
+  (mit "use charnames"). Als utf8 im Skript kodieren (zusammen mit
+  "use utf8").
+
+- uc/lc/... auf utf8-Strings: nach Unicode-Regeln (für deutsche
+  Umlaute reicht es) (Anomalie: verhält sich unterschiedlich, ob
+  utf-8-Bit gesetzt oder nicht!). Siehe auch m{...}i!
+
+- read: characters
+  seek/sysseek/sysread/tell: bytes
+
+- Sortierung? (Anscheinend wird Byte-Semantik verwendet!)
+
+- "Such data may come from filehandles, from calls to external
+  programs, from information provided by the system (such as %ENV), or
+  from literals and constants in the source text." (perlunicode.pod)
+
+- Wo gibt's keine automatische Umwandlung: bei der Kommunikation mit
+  dem Betriebssystem (Filesystem, Environment, cmdline args (mit -C
+  umschaltbar)).
+
+Laut "perlunicode.pod":
+
+* chdir, chmod, chown, chroot, exec, link, lstat, mkdir, rename, rmdir, stat, symlink, truncate, unlink, utime, -X
+
+* %ENV
+
+* glob (aka the <*>)
+
+* open, opendir, sysopen
+
+* qx (aka the backtick operator), system
+
+* readdir, readlink
+
+- XS! Es passiert nicht automatisch!
+
+- Speed! Wenn's darauf ankommt, byte semantics verwenden!
+
+- utf8::upgrade($string): macht nichts bei utf-8-Strings, upgraded by
+  Byte-Strings
+
+- CGI: Kein Standard (sprich Content-type mit charset), wie die Daten
+  bei einem GET/POST geschickt werden (außer: man verwendet das
+  Encoding der Seite, auf der sich das Formular befindet)
+
+  -> param() liefert Octets, die manuell nach Characters umgewandelt
+     werden müssen
+
