@@ -9,14 +9,15 @@ use Template;
 
 use FindBin;
 my $tt = Template->new(
-		       LOAD_TEMPLATES => [ Template::Provider::Encoding->new ],
+		       LOAD_TEMPLATES => [ Template::Provider::Encoding->new(ABSOLUTE => 1) ],
 		       STASH => Template::Stash::ForceUTF8->new,
 		      );
-binmode STDOUT, ":utf8";
+#binmode STDOUT, ":utf8";
 #binmode STDOUT, ":encoding(iso-8859-1)";
+binmode STDOUT, ":encoding(iso-8859-2)";
 my $res;
 $tt->process(
-	     "sample.tt",
+	     "$FindBin::RealBin/sample.tt",
 	     { name => "Slaven Rezi\N{LATIN SMALL LETTER C WITH ACUTE}" },
 	     \$res
 	    )
