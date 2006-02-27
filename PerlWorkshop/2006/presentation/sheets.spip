@@ -136,6 +136,86 @@
     </p>
   </data>
 
+  <subchapter>UTF-8</subchapter>
+  <data>
+    <p>
+      Ein populäres Encoding ist UTF-8. UTF-8 kann den gesamten
+      zurzeit relevanten Unicode-Zeichensatz abdecken und hat eine
+      variable Länge pro Zeichen: ein bis sechs Bytes. Durch die
+      variable Länge hat man den Vorteil, dass, falls man vorzugsweise
+      lateinische Buchstaben verwendet, wenig (Speicher-)Platz
+      verbraucht wird. Der Nachteil ist, dass einige
+      Stringoperationen, die bei einem Encoding mit fixer Breite den
+      Aufwand O(1) haben, langsamer sind und den Aufwand O(n) haben.
+    </p>
+  </data>
+
+  <subchapter>UCS-2, UCS-4</subchapter>
+  <data>
+    <p>
+      Weitere Encodings sind UCS-2 und UCS4. Diese verwenden eine fixe Länge
+      pro Zeichen (zwei bzw. vier Bytes pro Zeichen). Die Vor- und Nachteile
+      von UTF-8 kehren sich hier also um. UCS-2 kann zudem nicht den
+      gesamten Unicode-Zeichenraum abbilden.
+    </p>
+  </data>
+
+  <chapter>Unicode-Unterstützung in Perl</chapter>
+  <subchapter>Begriffe</subchapter>
+  <data>
+    <p>
+      Die Begriffe Unicode und UTF-8 werden bei der Arbeit mit Perl
+      häufig gleichbedeutend behandelt. Das liegt daran, dass als
+      internes Encoding Perl UTF-8 verwendet. Dass intern tatsächlich
+      UTF-8 verwendet wird, muss dem Perl-Programmierer nicht bekannt
+      sein. Der Programmierer arbeitet nur mit Unicode-Zeichen.
+      Theoretisch könnten die Perl-Interna auf UCS-4 umgestellt
+      werden; auf bestehende Skripte sollte diese Änderung keine
+      Auswirkung haben (natürlich gibt es auch hier Ausnahmen, siehe
+      Encode manpage (Messing with Perl's Internals).
+    </p>
+  </data>
+
+  <chapter>Strategien/Kochrezepte</chapter>
+  <subchapter>Warum die Probleme?</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  In den Vor-Unicode-Zeiten war ein Zeichen = ein Byte. Das
+	  heißt Textdaten und binäre Daten konnten gleich behandelt
+	  werden (mit der Ausnahme der Newline-Behandlung bei
+	  DOS/Windows-Systemen). Mit Unicode ist das vorbei; man muss
+	  immer genau wissen, ob man Text- oder binäre Daten vor sich
+	  hat.
+	</li>
+	<li>
+	  Legacy/verschiedene Encodings. Oft hat man es als
+	  Programmierer noch immer mit Daten zu tun, die nicht in
+	  UTF-8 vorliegen. UTF-8 ist zwar ein Encoding, dass in der
+	  Praxis bevorzugt verwendet wird, aber nicht das einzig
+	  erlaubte. Bei extern vorliegenden Daten muss man also genau
+	  wissen, in welchem Encoding sie vorliegen.
+	</li>
+	<li>
+	  Schnittstellen, die nicht mit Unicode umgehen können.
+	  Während Perl, sobald die Daten korrekt geflaggt sind, mit
+	  Unicode recht gut umgehen kann, können es die meisten
+	  externen (C-)Bibliotheken nicht. Jedes verwendete XS-Modul
+	  ist also ein potentieller Problemfall.
+	</li>
+	<li>
+	  Anomalien innerhalb von Perl, die teilweise der
+	  Rückwärtskompatbilität zu Vor-Unicode-Zeiten geschuldet ist.
+	</li>
+	<li>
+	  UTF-8-Bugs. Das Verwenden der neuesten Perl- und
+	  Modulversionen hilft oft.
+	</li>
+      </ul>
+    </p>
+  </data>
+
   <chapter>XXX</chapter>
   <subchapter>XXX</subchapter>
   <data>
@@ -148,4 +228,342 @@
     </p>
   </data>
 
+  <subchapter>Ein-/Ausgabe</subchapter>
+  <data>
+    <p>
+      Wenn es sich bei der Kommunikation mit der Außenwelt um I/O handelt,
+      kann man die Features der PerlIO-Layer verwenden. Beim Einlesen
+      schreibt man lediglich:
+
+      <pre>
+	open $fh, "&lt;:encoding(...)", $dateiname;
+      </pre>
+
+      und beim Schreiben:
+
+      <pre>
+	open $fh, "&gt;:encoding(...)", $dateiname;
+      </pre>
+
+    </p>
+    <p>
+      Als Encoding wählt man dasjenige, das von der Außenwelt kommt bzw.
+      dort erwartet wird. Wenn das Encoding UTF-8 ist, kann man direkt den
+      utf8-Layer verwenden:
+
+      <pre>
+	open $fh, "&lt;:utf8", $dateiname;
+	open $fh, "&gt;:utf8", $dateiname;
+      </pre>
+    </p>
+    <p>
+      Wenn binäre Daten eingelesen oder ausgegeben werden sollen,
+      sollte man jetzt immer, auch als Unix-Programmierer, binmode()
+      verwenden. Dadurch wird das versehentliche Einlesen/Ausgeben des
+      Datenstroms als UTF-8 verhindert werden (siehe auch
+      PERL_UNICODE-Environment-Variable in <tt>perlrun</tt> bzw. die
+      Option <tt>-C</tt> von Perl).
+    </p>
+  </data>
+
+  <subchapter>Binäre Daten</subchapter>
+  <data>
+    <p>
+      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
+      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
+      Ergebnissen für gleiche Daten bekommen, die sich nur darin
+      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
+      Generell ist es hier sicherer, mit Octets zu arbeiten.
+    </p>
+    <p>
+      In eine ähnliche Kategorie fallen die Digest::*-Module, die auch
+      nur für binäre Daten definiert sind. <tt>Digest::MD5</tt>
+      beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
+      von 255 verwendet werden. Auch hier ist die Lösung: Umwandeln
+      nach Octets.
+    </p>
+  </data>
+
+  <subchapter>Das Programm selbst</subchapter>
+  <data>
+    <p>
+      Wenn das Programm selbst in UTF-8 geschrieben ist, muss das
+      utf8-Pragma eingeschaltet werden:
+      <pre>
+	use utf8;
+      </pre>
+    </p>
+  </data>
+
+  <chapter>Debugging</chapter>
+  <subchapter>Devel::Peek</subchapter>
+  <data>
+    <p>
+      Woran erkennt man, ob Daten als Characters oder Octets
+      vorliegen? Man kann mit dem Standard-Modul <tt>Devel::Peek</tt>
+      in die interne Repäsentation von Daten nachschauen:
+
+      <pre>
+	perl -MDevel::Peek -e "Dump qq{a}"
+      </pre>
+
+      ergibt:
+
+      <pre>
+    SV = PV(0x811e088) at 0x811ddfc
+      REFCNT = 1
+      FLAGS = (POK,READONLY,pPOK)
+      PV = 0x8120a9c "a"\0
+      CUR = 1
+      LEN = 4
+      </pre>
+
+      Hier sehen wir, dass es sich um ein Skalar handelt (SV = Scalar
+      Value) und dass der Inhalt des Skalars "ä" ist (zu sehen in PV =
+      Pointer Value, Zeichendaten).
+    </p>
+    <p>
+      Zum Vergleich eine Ausgabe mit einem dem Euro-Zeichen, bei dem
+      das UTF-8-Flag gesetzt ist:
+
+      <pre>
+    perl -MDevel::Peek -e "Dump qq{\x{20ac}}"
+      </pre>
+
+      <pre>
+    SV = PV(0x811a598) at 0x811a210
+      REFCNT = 1
+      FLAGS = (POK,READONLY,pPOK,UTF8)
+      PV = 0x81192f0 "\342\202\254"\0 [UTF8 "\x{20ac}"]
+      CUR = 3
+      LEN = 4
+      </pre>
+
+      Auch hier sehen wir ein SV mit einigen Unterschieden: in FLAGS
+      kommt nun "UTF8" vor, und in PV werden zwei Zeichenketten
+      angezeigt: einmal der Inhalt als Bytefolge (mit drei Zeichen),
+      sowie die UTF8-Übersetzung.
+    </p>
+    <p>
+      Am interessantesten ist der Zeichenbereich zwischen 128 und 255.
+      Hier gibt es Zeichen, die sowohl ohne als auch mit UTF-8
+      repräsentiert werden können. Einmal als Beispiel die deutschen
+      Umlaute ohne UTF-8-Flag:
+
+      <pre>
+    perl -MDevel::Peek -e "Dump qq{äöüÄÖÜß}"
+      </pre>
+
+      <pre>
+    SV = PV(0x811a598) at 0x811a210
+      REFCNT = 1
+      FLAGS = (POK,READONLY,pPOK)
+      PV = 0x81192f0 "\344\366\374\304\326\334\337"\0
+      CUR = 7
+      LEN = 8
+      </pre>
+    </p>
+    <p>
+      Und jetzt mit UTF-8-Flag, wobei die Funktion utf8::upgrade()
+      verwendet wird:
+
+      <pre>
+    perl -MDevel::Peek -e '$x = qq{äöüÄÖÜß}; utf8::upgrade($x); Dump $x'
+      </pre>
+
+      <pre>
+    SV = PV(0x811a460) at 0x811dae4
+      REFCNT = 1
+      FLAGS = (POK,pPOK,UTF8)
+      PV = 0x812d5a0 "\303\244\303\266\303\274\303\204\303\226\303\234\303\237"\0 [UTF8 "\x{e4}\x{f6}\x{fc}\x{c4}\x{d6}\x{dc}\x{df}"]
+      CUR = 14
+      LEN = 15
+      </pre>
+
+      Hier sieht man, dass die Byterepräsentation doppelt so viele
+      Bytes enthält, da jedes hier verwendete Zeichen mit zwei Bytes
+      kodiert ist.
+    </p>
+
+    <p>
+      Die beiden Strings mit und ohne UTF-8-Flag sind dennoch, was
+      Perl angeht, gleich:
+
+      <pre>
+    perl -e '$non_utf8 = $utf8 = qq{äöüÄÖÜß}; utf8::upgrade($x); print $non_utf8 eq $utf8, "\n"'
+    1
+      </pre>
+    </p>
+    <p>
+      Ein beliebter Fehler ist das "doppelte UTF-8-Encoding". Daten,
+      die schon mit dem UTF-8-Flag vorliegen, werden als
+      ISO-8859-1-Octets interpretiert und nochmals nach
+      Perl-Characters konvertiert:
+
+      <pre>
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	utf8::upgrade($x);
+	$x = decode("iso-8859-1", $x);
+	Dump $x;
+    '
+      </pre>
+    </p>
+    <p>
+      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
+      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
+      wird, kommt es auch zur Doppelung:
+
+      <pre>
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	Encode::from_to($x, "iso-8859-1", "utf-8");
+	utf8::upgrade($x);
+	Dump $x;
+    '
+      </pre>
+    </p>
+
+    <p>
+      Bei beiden Beispielen sieht das Ergebnis so aus, d.h. jedes
+      Zeichen ist nun mit vier Bytes kodiert worden.
+
+      <pre>
+    SV = PV(0x811a460) at 0x811a210
+      REFCNT = 1
+      FLAGS = (POK,pPOK,UTF8)
+      PV = 0x812c500 "\303\203\302\244\303\203\302\266\303\203\302\274"\0 [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
+      CUR = 12
+      LEN = 13
+      </pre>
+    </p>
+  </data>
+
+  <subchapter>Warnungen</subchapter>
+  <data>
+    <p>
+      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
+      auftaucht, hat Perl festgestellt, dass "Characters" dort
+      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
+      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
+      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
+    </p>
+  </data>
+
+  <chapter>Spezifische Module</chapter>
+  <subchapter>Tk</subchapter>
+  <data>
+    <p>
+      Seit der Version 804 sind die Interna von Tk auf UTF-8
+      umgestellt. Jeder String, der durch Tk geht, bekommt automatisch
+      das UTF-8-Flag gesetzt. Das führt zu Problemen, wenn die Daten
+      aus Tk weiter mit Modulen bearbeitet werden sollen, die noch
+      nicht mit UTF-8 umgehen können (zum Beispiel DBI/DBD::mysql).
+    </p>
+  </data>
+
+  <subchapter>DBI</subchapter>
+  <data>
+    <p>
+      DBI und die meisten DBD-Module, insbesondere DBD::mysql, können
+      mit UTF-8 nicht umgehen. Hier muss man selbst Hand anlegen und
+      die ein- und ausgehenden Daten wie oben beschrieben händisch
+      umwandeln.
+    </p>
+    <p>
+      Bei Postgres-Treiber DBD::Pg gibt es mit pg_enable_utf8 eine
+      experimentelle Option, ein- und ausgehende Daten als UTF-8 zu
+      markieren.
+    </p>
+  </data>
+
+  <subchapter>HTML</subchapter>
+  <data>
+    <p>
+      Wenn man Unicode-Zeichen in HTML verwenden will, hat man die
+      Möglichkeit, den "Charset" im Content-Type des
+      Dokuments als "utf-8" zu vermerken und UTF-8-Zeichen
+      als solche auszugeben (d.h. beim Ausgabe über PerlIO den
+      utf8-Layer wählen).
+    </p>
+    <p>
+      Eine defensivere Methode ist der Verzicht auf Ausgabe von Bytes
+      oberhalb 127 und die Verwendung von nummerischen HTML-Entities.
+      Das Modul <tt>HTML::Entities</tt> hilft hier:
+
+      <pre><![CDATA[
+    perl -w -MHTML::Entities=encode_entities_numeric -e '
+	$string = "äöü\x{20ac}";
+	print encode_entities_numeric($string, qq{<>&\"\x{80}-\x{fffd}});
+    '
+      ]]></pre>
+    </p>
+    <p>
+      Das Ergebnis:
+
+      <pre>
+    &#xE4;&#xF6;&#xFC;&#x20AC;    
+      </pre>
+    </p>
+    <p>
+      Aber auch bei dieser Methode sollte der Charset des Dokuments
+      als UTF-8 markiert werden.
+    </p>
+  </data>
+
+  <subchapter>CGI</subchapter>
+  <data>
+    <p>
+      Bei der Verwendung von HTTP-GET und HTTP-POST sehen die
+      Standards nur das Versenden von Octets vor, ohne dass man die
+      Möglichkeit hat, das Encoding zu markieren. Das tatsächlich
+      verwendete Encoding kann man nur aus der Kenntnis des Encodings
+      der versendenden Quelle wissen. Wenn also ein Formular auf einer
+      HTML-Seite, die das Charset UTF-8 hat, versendet wird, sind die
+      versendeten GET- oder POST-Daten auch in UTF-8 kodiert.
+    </p>
+    <p>
+      Die Funktion CGI::param() kann daher auch nur mit Octets
+      umgehen. Mit einer kleinen Schleife lassen sich die
+      Parameter-Keys und -Values leicht umwandeln (in diesem Beispiel
+      davon ausgehend, dass die Parameter in UTF-8 kodiert sind):
+
+      <pre>
+    perl -MCGI=param -MEncode -MData::Dumper -e '
+        for $key (param) {
+            $new_param{decode_utf8($key)} = [ map { decode_utf8($_) } param($key)];
+        }
+        warn Dumper \%new_param;
+    ' Ã¤Ã¶Ã¼=Ã¤Ã¶Ã¼
+      </pre>
+    </p>
+  </data>
+    
+  <chapter>Anhang</chapter>
+  <subchapter>Bibliographie</subchapter>
+  <data>
+    <p>
+      <dl>
+	<dt>Jarkko Hietaniemi</dt>
+	<dd><i>perluniintro</i> - Perl Unicode introduction</dd>
+      </dl>
+      <dl>
+	<dt>Perl5 Porters</dt>
+	<dd><i>perlunicode</i> - Unicode support in Perl</dd>
+      </dl>
+      <dl>
+	<dt>Nick Ing-Simmons and Dan Kogai</dt>
+	<dd><i>Encode</i> - character encodings conversion module</dd>
+      </dl>
+      <dl>
+	<dt>Perl5 Porters</dt>
+	<dd><i>utf8</i> - Perl pragma to enable/disable UTF-8 (or UTF-EBCDIC) in source code</dd>
+      </dl>
+      <dl>
+	<dt>Perl5 Porters</dt>
+	<dd><i>encoding</i> - allows you to write your script in non-ascii or
+	non-utf8</dd>
+      </dl>
+    </p>
+  </data>
 </spip>
