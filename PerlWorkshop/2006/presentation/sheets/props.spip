@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Was ist Unicode?</chapter>
+  <subchapter>Properties</subchapter>
+  <data>
+    <p>
+      Unicode kennt Zeichenklassen und Mappings für Groß-/Kleinschreibung.
+      <ul>
+	<li>Alpha</li>
+	<li>Alnum</li>
+	<li>ASCII</li>
+	<li>Space</li>
+	<li>Cntrl</li>
+	<li>Digit</li>
+	<li>Graph</li>
+	<li>Lower</li>
+	<li>Print</li>
+	<li>Punct</li>
+	<li>Space</li>
+	<li>Upper</li>
+	<li>Word</li>
+	<li>XDigit</li>
+      </ul>
+    </p>
+  </data>
+</spip>

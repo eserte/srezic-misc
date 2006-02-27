@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter></chapter>
+  <subchapter></subchapter>
+  <data>
+    <p>
+      <ul>
+	<li></li>
+      </ul>
+    </p>
+  </data>
+</spip>

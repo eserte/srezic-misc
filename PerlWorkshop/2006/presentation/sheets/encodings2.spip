@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Was ist Unicode?</chapter>
+  <subchapter>Encodings</subchapter>
+  <data>
+    <p>
+      Einige populäre Encodings:
+      <ul>
+	<li>US-ASCII</li>
+	<li>ISO-8859-1</li>
+	<li>CP1252</li>
+	<li>UTF-8</li>
+	<li>UTF-16</li>
+      </ul>
+    </p>
+  </data>
+</spip>

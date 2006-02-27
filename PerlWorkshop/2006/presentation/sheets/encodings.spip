@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Was ist Unicode?</chapter>
+  <subchapter>Encodings</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  Ein Encoding ist eine Zuordnungsvorschrift von Codepoints zu echten
+	  <i>Bytes</i> (oder <i>Octets</i>), die letztendlich auf
+	  dem Computer verwendet werden
+	</li>
+	<li>
+	  Diese Zuordnungsvorschriften können algorithmisch sein oder
+	  müssen, wenigstens teilweise, durch Zuordnungstabellen
+	  definiert werden.
+	</li>
+      </ul>
+    </p>
+  </data>
+</spip>

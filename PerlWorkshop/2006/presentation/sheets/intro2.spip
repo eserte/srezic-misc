@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Einführung</chapter>
+  <subchapter>Warum ist Unicode so schwer?</subchapter>
+  <data>
+    <p>
+    </p>
+{{{BREAK}}}
+    <p>
+    </p>
+{{{BREAK}}}
+    <p>
+      <ul>
+	<li>
+	  <tt>XML::Simple</tt>
+	</li>
+      </ul>
+    </p>
+{{{BREAK}}}
+    <p>
+    </p>
+  </data>
+</spip>

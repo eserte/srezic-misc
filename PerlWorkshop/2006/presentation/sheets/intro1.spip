@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Einführung</chapter>
+  <subchapter>Abstract</subchapter>
+  <data>
+    <p>
+      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
+      selbst der erfahrene Programmierer erlebt immer wieder
+      UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
+      Unicode-Problemen bieten und Hinweise zur Benutzung von Unicode in
+      populären Modulen wie DBI, Tk, HTML::*, CGI, XML::* geben.
+    </p>
+  </data>
+</spip>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Was ist Unicode?</chapter>
+  <subchapter>Alte Encodings</subchapter>
+  <data>
+    <p>
+      Unicode-Codepoints in Vergleich zu alten Encodings:
+      <table>
+	<tr>
+	  <th>Bereich</th>
+	  <th>entspricht</th>
+	</tr>
+	<tr>
+	  <td>0 .. 127</td>
+	  <td>US-ASCII</td>
+	</tr>
+	<tr>
+	  <td>0 .. 255</td>
+	  <td>ISO-8859-1</td>
+	</tr>
+      </table>
+    </p>
+  </data>
+</spip>

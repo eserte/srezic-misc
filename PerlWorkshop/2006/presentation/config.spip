@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spipconfig>
+    <shorttitle>Perl und Unicode</shorttitle>
+    <title>Perl und Unicode</title>
+    <author>Slaven Rezi&#x107;</author>
+    <date>Februar 2006</date>
+    <datadirectory>sheets</datadirectory>
+    <picturedirectory>pictures</picturedirectory>
+    <sourcedirectory>source</sourcedirectory>
+    <target>html</target>
+    <cssextension> #head { padding-bottom:12px; } </cssextension>
+    <files>
+        <file>intro1</file>
+        <file>unicode</file>
+        <file>ascii</file>
+        <file>props</file>
+        <file>encodings</file>
+        <file>encodings2</file>
+        <file>encodepm</file>
+    </files>
+
+    <contentsword>Inhaltsverzeichnis</contentsword>
+    <titleword>Titel</titleword>
+    <continueword>weiter</continueword>
+</spipconfig>

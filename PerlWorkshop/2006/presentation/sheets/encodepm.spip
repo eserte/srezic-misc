@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>XXX</chapter>
+  <subchapter>XXX</subchapter>
+  <data>
+    <p>
+      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
+      <ul>
+	<li>decode: Octets &#x2192; Perl-Characters</li>
+	<li>encode: Perl-Characters &#x2192; Octets</li>
+      </ul>
+    </p>
+  </data>
+</spip>
