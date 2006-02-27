@@ -2,7 +2,31 @@
 
 <spip>
   <chapter>Einführung</chapter>
-  <subchapter>Abstract</subchapter>
+  <subchapter>Abstract, Versuch 1</subchapter>
+  <data>
+    <p>
+      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
+      selbst der erfahrene Programmierer erlebt immer wieder
+      UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
+      Unicode-Problemen bieten und Hinweise zur Benutzung von Unicode in
+      populären Modulen wie DBI, Tk, HTML::*, CGI, XML::* geben.
+    </p>
+  </data>
+
+  <subchapter>Abstract, Versuch 2</subchapter>
+  <data>
+    <p>
+      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
+      selbst der erfahrene Programmierer erlebt immer wieder
+      UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
+      Unicode-Problemen bieten und Hinweise zur Benutzung von Unicode in
+      populären Modulen wie DBI, Tk, HTML::*, CGI, XML::* geben.
+    </p>
+  </data>
+
+  <subchapter>Abstract, Aaah!</subchapter>
   <data>
     <p>
       Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
@@ -216,8 +240,7 @@
     </p>
   </data>
 
-  <chapter>XXX</chapter>
-  <subchapter>XXX</subchapter>
+  <subchapter>Encode.pm</subchapter>
   <data>
     <p>
       Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
@@ -228,7 +251,7 @@
     </p>
   </data>
 
-  <subchapter>Ein-/Ausgabe</subchapter>
+  <subchapter>Ein-/Ausgabe: PerlIO</subchapter>
   <data>
     <p>
       Wenn es sich bei der Kommunikation mit der Außenwelt um I/O handelt,
@@ -256,6 +279,10 @@
 	open $fh, "&gt;:utf8", $dateiname;
       </pre>
     </p>
+  </data>
+
+  <subchapter>Ein-/Ausgabe: Binäre Daten</subchapter>
+  <data>
     <p>
       Wenn binäre Daten eingelesen oder ausgegeben werden sollen,
       sollte man jetzt immer, auch als Unix-Programmierer, binmode()
@@ -296,7 +323,7 @@
   </data>
 
   <chapter>Debugging</chapter>
-  <subchapter>Devel::Peek</subchapter>
+  <subchapter>Devel::Peek (1)</subchapter>
   <data>
     <p>
       Woran erkennt man, ob Daten als Characters oder Octets
@@ -322,6 +349,10 @@
       Value) und dass der Inhalt des Skalars "ä" ist (zu sehen in PV =
       Pointer Value, Zeichendaten).
     </p>
+  </data>
+
+  <subchapter>Devel::Peek (2)</subchapter>
+  <data>
     <p>
       Zum Vergleich eine Ausgabe mit einem dem Euro-Zeichen, bei dem
       das UTF-8-Flag gesetzt ist:
@@ -344,6 +375,10 @@
       angezeigt: einmal der Inhalt als Bytefolge (mit drei Zeichen),
       sowie die UTF8-Übersetzung.
     </p>
+  </data>
+    
+  <subchapter>Devel::Peek (3)</subchapter>
+  <data>
     <p>
       Am interessantesten ist der Zeichenbereich zwischen 128 und 255.
       Hier gibt es Zeichen, die sowohl ohne als auch mit UTF-8
@@ -363,6 +398,10 @@
       LEN = 8
       </pre>
     </p>
+  </data>
+
+  <subchapter>Devel::Peek (4)</subchapter>
+  <data>
     <p>
       Und jetzt mit UTF-8-Flag, wobei die Funktion utf8::upgrade()
       verwendet wird:
@@ -384,7 +423,10 @@
       Bytes enthält, da jedes hier verwendete Zeichen mit zwei Bytes
       kodiert ist.
     </p>
+  </data>
 
+  <subchapter>Devel::Peek (5)</subchapter>
+  <data>
     <p>
       Die beiden Strings mit und ohne UTF-8-Flag sind dennoch, was
       Perl angeht, gleich:
@@ -394,6 +436,10 @@
     1
       </pre>
     </p>
+  </data>
+
+  <subchapter>Devel::Peek (6)</subchapter>
+  <data>
     <p>
       Ein beliebter Fehler ist das "doppelte UTF-8-Encoding". Daten,
       die schon mit dem UTF-8-Flag vorliegen, werden als
@@ -409,6 +455,10 @@
     '
       </pre>
     </p>
+  </data>
+
+  <subchapter>Devel::Peek (7)</subchapter>
+  <data>
     <p>
       Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
       gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
@@ -423,7 +473,10 @@
     '
       </pre>
     </p>
+  </data>
 
+  <subchapter>Devel::Peek (8)</subchapter>
+  <data>
     <p>
       Bei beiden Beispielen sieht das Ergebnis so aus, d.h. jedes
       Zeichen ist nun mit vier Bytes kodiert worden.
@@ -436,6 +489,23 @@
       CUR = 12
       LEN = 13
       </pre>
+    </p>
+  </data>
+
+  <subchapter>Tools</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  Was zeigt mein Editor an?
+	</li>
+	<li>
+	  Was zeigt mein Terminal (xterm ...) an?
+	</li>
+	<li>
+	  hexdump, hd, od
+	</li>
+      </ul>
     </p>
   </data>
 
@@ -538,7 +608,37 @@
       </pre>
     </p>
   </data>
-    
+
+  <subchapter>Templating-Systeme</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  <b>Template-Toolkit</b>
+	  <ul>
+	    <li>
+	      <tt>Template::Provider::Encoding</tt> und
+	      <tt>Template::Stash::ForceUTF8</tt>
+	    </li>
+	    <li>
+	      Verwendung der <tt>RAWPERL</tt>-Direktive zusammen mit <tt>use utf8;</tt>
+	    </li>
+	  </ul>
+	</li>
+	<li>
+	  <b>HTML-Template</b>
+	  <ul>
+	    <li>out of the box</li>
+	  </ul>
+	</li>
+      </ul>
+    </p>
+  </data>
+
+  <chapter>Danke!</chapter>
+  <subchapter>Danke!</subchapter>
+  <data><p style="text-align:center;">Danke! Thank you! Merci! Hvala! d&#283;kuji! &#1089;&#1087;&#1072;&#1089;&#1080;&#1073;&#1086;! &#949;&#965;&#967;&#945;&#961;&#953;&#963;&#964;&#974;! </p></data>
+
   <chapter>Anhang</chapter>
   <subchapter>Bibliographie</subchapter>
   <data>
