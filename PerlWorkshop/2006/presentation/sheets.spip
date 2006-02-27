@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- Mode: nxml; coding: utf-8 -*- -->
+
+<spip>
+  <chapter>Einführung</chapter>
+  <subchapter>Abstract</subchapter>
+  <data>
+    <p>
+      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
+      selbst der erfahrene Programmierer erlebt immer wieder
+      UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
+      Unicode-Problemen bieten und Hinweise zur Benutzung von Unicode in
+      populären Modulen wie DBI, Tk, HTML::*, CGI, XML::* geben.
+    </p>
+  </data>
+
+  <subchapter>Was ist Unicode?</subchapter>
+  <data>
+    <p>
+      Zuordnung von allen Zeichen der Welt auf Zahlen
+    </p>
+    <p>
+      Im Perl-Sourcecode zu finden unter:
+      <tt>lib/unicore/NamesList.txt</tt>
+    </p>
+    <p>
+      Beispiele:
+      <table>
+	<tr>
+	  <th>Hexwert (Codepoint)</th>
+	  <th>Langer Name</th>
+	  <th>Ausgabe</th>
+	</tr>
+	<tr>
+	  <td>0x41</td>
+	  <td>LATIN CAPITAL LETTER A</td>
+	  <td>&#x41;</td>
+	</tr>
+	<tr>
+	  <td>0xDF</td>
+	  <td>LATIN SMALL LETTER SHARP S</td>
+	  <td>&#xDF;</td>
+	</tr>
+	<tr>
+	  <td>0x0106</td>
+	  <td>LATIN SMALL LETTER C WITH ACUTE</td>
+	  <td>&#x0107;</td>
+	</tr>
+	<tr>
+	  <td>0x03A9</td>
+	  <td>GREEK CAPITAL LETTER OMEGA</td>
+	  <td>&#x03A9;</td>
+	</tr>
+	<tr>
+	  <td>0x20AC</td>
+	  <td>EURO SIGN</td>
+	  <td>&#x20AC;</td>
+	</tr>
+      </table>
+    </p>
+  </data>
+
+  <subchapter>Alte Encodings</subchapter>
+  <data>
+    <p>
+      Unicode-Codepoints in Vergleich zu alten Encodings:
+      <table>
+	<tr>
+	  <th>Bereich</th>
+	  <th>entspricht</th>
+	</tr>
+	<tr>
+	  <td>0 .. 127</td>
+	  <td>US-ASCII</td>
+	</tr>
+	<tr>
+	  <td>0 .. 255</td>
+	  <td>ISO-8859-1</td>
+	</tr>
+      </table>
+    </p>
+  </data>
+
+  <subchapter>Properties</subchapter>
+  <data>
+    <p>
+      Unicode kennt Zeichenklassen und Mappings für Groß-/Kleinschreibung.
+      <ul>
+	<li>Alpha</li>
+	<li>Alnum</li>
+	<li>ASCII</li>
+	<li>Space</li>
+	<li>Cntrl</li>
+	<li>Digit</li>
+	<li>Graph</li>
+	<li>Lower</li>
+	<li>Print</li>
+	<li>Punct</li>
+	<li>Space</li>
+	<li>Upper</li>
+	<li>Word</li>
+	<li>XDigit</li>
+      </ul>
+    </p>
+  </data>
+
+  <subchapter>Encodings</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  Ein Encoding ist eine Zuordnungsvorschrift von Codepoints zu echten
+	  <i>Bytes</i> (oder <i>Octets</i>), die letztendlich auf
+	  dem Computer verwendet werden
+	</li>
+	<li>
+	  Diese Zuordnungsvorschriften können algorithmisch sein oder
+	  müssen, wenigstens teilweise, durch Zuordnungstabellen
+	  definiert werden.
+	</li>
+      </ul>
+    </p>
+  </data>
+
+  <subchapter>Encodings</subchapter>
+  <data>
+    <p>
+      Einige populäre Encodings:
+      <ul>
+	<li>US-ASCII</li>
+	<li>ISO-8859-1</li>
+	<li>CP1252</li>
+	<li>UTF-8</li>
+	<li>UTF-16</li>
+      </ul>
+    </p>
+  </data>
+
+  <chapter>XXX</chapter>
+  <subchapter>XXX</subchapter>
+  <data>
+    <p>
+      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
+      <ul>
+	<li>decode: Octets &#x2192; Perl-Characters</li>
+	<li>encode: Perl-Characters &#x2192; Octets</li>
+      </ul>
+    </p>
+  </data>
+
+</spip>

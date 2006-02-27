@@ -5,7 +5,7 @@
     <title>Perl und Unicode</title>
     <author>Slaven Rezi&#x107;</author>
     <date>Februar 2006</date>
-    <datadirectory>sheets</datadirectory>
+    <datafile>sheets.spip</datafile>
     <picturedirectory>pictures</picturedirectory>
     <sourcedirectory>source</sourcedirectory>
     <target>html</target>
