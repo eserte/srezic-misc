@@ -1,0 +1,4 @@
+[% RAWPERL -%]# -*- coding: utf-8 -*-
+use utf8;
+[% END -%]
+Viele Grüße, [% name %]!
