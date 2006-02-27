@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
+
+<head>
+    <title>Perl und Unicode - Debugging</title>
+    <link href="spip.css" rel="stylesheet" type="text/css" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="Author" content="Slaven Rezić" />
+    <meta name="Creator" content="spip" />
+</head>
+
+<body>
+    <div id="pagehead">
+        <h1 id="top"><a name="top"></a>
+            <div id="head">
+                <div style="float:left">
+                
+                </div>
+                <span id="headline">Perl und Unicode</span>
+                <div style="clear:both;"></div>
+            </div>
+            Devel::Peek (4)
+        </h1>
+
+        <div id="pagenav">
+            <div id="navl">
+                
+                <a href="output_0020_01.html#footer" accesskey="b">&lt;&lt;&lt;</a>
+                &nbsp;
+                
+                
+                <span class="navstealth">&lt;</span>
+                
+                &nbsp;
+            </div>
+            <div id="navr">
+                &nbsp;
+                
+                <span class="navstealth">&gt;</span>
+                
+                
+                &nbsp;
+                <a accesskey="n" href="output_0022_01.html" accesskey="f">&gt;&gt;&gt;</a>
+                
+            </div>
+            <div id="navm">
+                <a href="contents.html">Inhaltsverzeichnis</a>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="pagebody">
+        
+<p>
+      Und jetzt mit UTF-8-Flag, wobei die Funktion utf8::upgrade()
+      verwendet wird:
+
+      <pre>
+    perl -MDevel::Peek -e '
+        $x = qq{äöüÄÖÜß};
+        utf8::upgrade($x);
+        Dump $x;
+    '
+      </pre>
+
+      <pre>
+    SV = PV(0x811a460) at 0x811dae4
+      REFCNT = 1
+      FLAGS = (POK,pPOK,UTF8)
+      PV = 0x812d5a0 "\303\244\303\266\303\274\303\204\303\226
+         \303\234\303\237"\0
+         [UTF8 "\x{e4}\x{f6}\x{fc}\x{c4}\x{d6}\x{dc}\x{df}"]
+      CUR = 14
+      LEN = 15
+      </pre>
+
+      Hier sieht man, dass die Byterepräsentation doppelt so viele
+      Bytes enthält, da jedes hier verwendete Zeichen mit zwei Bytes
+      kodiert ist.
+    </p>
+    </div>
+    <a name="footer"></a>
+    <div id="pagefeet">
+        <div id="feetl">
+            
+            &nbsp;
+        </div>
+        <div id="feetr">
+            <a href="#top">^^</a>
+        </div>
+        <div id="feetm">
+            Copyright
+            Slaven Rezić
+            Februar 2006
+        </div>
+    </div>
+
+</body>
+</html>

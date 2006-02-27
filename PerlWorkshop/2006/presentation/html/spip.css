@@ -1,0 +1,345 @@
+/******************************************************************************
+* Background:                                                                 *
+******************************************************************************/
+body {
+    background-color:#FFF;
+    color:#000;
+    font-family:sans-serif, sans-serif;
+    font-size:16pt;
+    margin-left:3%;
+    margin-right:3%;
+}
+
+/******************************************************************************
+* pre:                                                                        *
+******************************************************************************/
+pre, tt {
+    font-family:monospace;
+    font-size:18pt;
+}
+
+/******************************************************************************
+* Pictures:                                                                   *
+******************************************************************************/
+img {
+    border:0;
+}
+img.bildimtext {
+    border:0;
+    margin-left:3px;
+    margin-right:3px;
+}
+
+/******************************************************************************
+* Pagetitle and big and small headers:                                        *
+******************************************************************************/
+p {
+    font-size:16pt;
+    font-family:sans-serif,sans-serif;
+    color:black;
+}
+
+h1 {
+    text-align:center;
+    font-size:36pt; /* 36pt ... xx-large */
+    font-weight:bold;
+    color:#00F;
+}
+
+h2,h3,h4,h5,h6 {
+    color:#00F;
+    font-weight:normal;
+    margin-bottom:0;
+}
+
+h2       {
+    font-size:x-large;
+}
+h3       {
+    font-size:large;
+}
+h4,h5,h6 {
+    font-size:medium;
+}
+
+
+/******************************************************************************
+* Links:                                                                      *
+******************************************************************************/
+a:link {
+    color:#00F;
+}
+a:visited {
+    color:#009;
+}
+a:hover {
+    color:#0F0;
+    background-color:#CCC;
+}
+a:active {
+    color:#F00;
+}
+
+
+/******************************************************************************
+* date                                                                        *
+******************************************************************************/
+.date {
+    color:#C0C;
+}
+
+
+/******************************************************************************
+* misc                                                                        *
+******************************************************************************/
+.center {
+    text-align:center;
+}
+div#picture {
+    float:right;
+    margin-left:5px;
+    margin-bottom:5px;
+}
+.pictureleft {
+    float:left;
+    margin-right:5px;
+    margin-bottom:5px;
+    margin-top:5px;
+}
+.pictureright {
+    float:right;
+    margin-left:5px;
+    margin-bottom:5px;
+    margin-top:5px;
+}
+.smaller {
+    font-size:smaller;
+}
+.smallest {
+    font-size:xx-small;
+}
+.black {
+    color:#000000;
+}
+.gray {
+    color:#808080;
+}
+.silver {
+    color:#C0C0C0;
+}
+.white {
+    color:#FFFFFF;
+}
+.purple {
+    color:#800080;
+}
+.fuchsia {
+    color:#FF00FF;
+}
+.maroon {
+    color:#800000;
+}
+.red {
+    color:#FF0000;
+}
+.olive {
+    color:#808000;
+}
+.yellow {
+    color:#FFFF00;
+}
+.green {
+    color:#008000;
+}
+.lime {
+    color:#00FF00;
+}
+.navy {
+    color:#000080;
+}
+.blue {
+    color:#0000FF;
+}
+.teal {
+    color:#008080;
+}
+.aqua {
+    color:#00FFFF;
+}
+.orange {
+    color:#FFA500;
+}
+
+
+
+/******************************************************************************
+* Hauptseitenaufteilung in Oben, Unten und Mitte                              *
+******************************************************************************/
+#pagehead {
+}
+#pagebody {
+    /*margin-top:50px;*/
+    /*background:blue;*/
+    /*height:100%;*/ /* no success */
+}
+#pagefeet {
+    clear:both;
+    margin-top:5px;
+    border-top:2px solid #999;
+    background-color:#999;
+    padding:5px 3px 8px 3px;
+}
+
+/******************************************************************************
+* title page
+******************************************************************************/
+#titleshorttitle {
+    font-size:44pt;
+}
+#titletitle {
+    font-size:33pt;
+}
+#titleauthor {
+    font-size:22pt;
+}
+#titledate {
+    font-size:17pt;
+}
+
+/******************************************************************************
+* navigation                                                                  *
+******************************************************************************/
+#pagenav {
+    background-color:#CCC;
+    padding:5px 3px 8px 3px;
+}
+#navl {
+    float:left;
+}
+#navr {
+    float:right;
+}
+#navm {
+    text-align:center;
+}
+
+div#pagenav div {
+    color:#C0C;
+    font-size:12pt;
+}
+div#pagenav a:link {
+    color:#00F;
+}
+div#pagenav a:visited {
+    color:#009;
+}
+div#pagenav a:hover {
+    color:#0F0;
+    background-color:#AAA;
+}
+div#pagenav a:active {
+    color:#F00;
+}
+
+.navstealth {
+    color:#CCC;
+    background-color:#CCC;
+}
+
+/******************************************************************************
+* pagefeet                                                                    *
+******************************************************************************/
+#feetl {
+    float:left;
+}
+#feetr {
+    float:right;
+}
+#feetm {
+    text-align:center;
+}
+
+// #pagefeet {
+//     position: fixed;
+//     bottom: 15px;
+//     left: 10px;
+//     right: 10px;
+//     z-index: 1;
+// }
+
+div#pagefeet div {
+    color:#000;
+    font-size:12pt;
+}
+div#pagefeet a:link {
+    color:#000;
+}
+div#pagefeet a:visited {
+    color:#009;
+}
+div#pagefeet a:hover {
+    color:#0F0;
+    background-color:#CCC;
+}
+div#pagefeet a:active {
+    color:#F00;
+}
+
+/******************************************************************************
+* two column 50%/50% layout:                                                  *
+******************************************************************************/
+.l5050 {
+    float:left;
+    margin:0;
+    padding:0 2%;
+    border:0;
+    height:100%;
+    width:50%; /* Box Model Hack */
+    voice-family:"\"}\"";
+    voice-family:inherit;
+    width:46%;
+    }
+    html>body .l5050 {
+    width:46%; /* Box Model Hack Ende */
+}
+.r5050 {
+    float:left;
+    margin:0;
+    padding:0 2%;
+    border:0;
+    width:50%; /* Box Model Hack */
+    voice-family:"\"}\"";
+    voice-family:inherit;
+    width:46%;
+    }
+    html>body .l5050 {
+    width:46%; /* Box Model Hack Ende */
+}
+
+
+/******************************************************************************
+* head                                                                        *
+******************************************************************************/
+#head {
+    color:#999;
+    background-color:#000;
+    font-size:24pt;
+    /*padding:8px 8px 12px 8px;*/
+    padding:8px 8px 3px 8px;
+    margin-bottom:10px;
+    /*text-align:left;*/
+}
+#headline {
+    color:#999;
+}
+
+td,th {
+    border:1px solid black;
+    border-collapse:collapse;
+    padding:4px;
+}
+
+
+ #head { padding-bottom:12px; } 
+
+

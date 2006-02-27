@@ -407,14 +407,20 @@
       verwendet wird:
 
       <pre>
-    perl -MDevel::Peek -e '$x = qq{äöüÄÖÜß}; utf8::upgrade($x); Dump $x'
+    perl -MDevel::Peek -e '
+        $x = qq{äöüÄÖÜß};
+        utf8::upgrade($x);
+        Dump $x;
+    '
       </pre>
 
       <pre>
     SV = PV(0x811a460) at 0x811dae4
       REFCNT = 1
       FLAGS = (POK,pPOK,UTF8)
-      PV = 0x812d5a0 "\303\244\303\266\303\274\303\204\303\226\303\234\303\237"\0 [UTF8 "\x{e4}\x{f6}\x{fc}\x{c4}\x{d6}\x{dc}\x{df}"]
+      PV = 0x812d5a0 "\303\244\303\266\303\274\303\204\303\226
+         \303\234\303\237"\0
+         [UTF8 "\x{e4}\x{f6}\x{fc}\x{c4}\x{d6}\x{dc}\x{df}"]
       CUR = 14
       LEN = 15
       </pre>
@@ -432,7 +438,11 @@
       Perl angeht, gleich:
 
       <pre>
-    perl -e '$non_utf8 = $utf8 = qq{äöüÄÖÜß}; utf8::upgrade($x); print $non_utf8 eq $utf8, "\n"'
+    perl -e '
+        $non_utf8 = $utf8 = qq{äöüÄÖÜß};
+        utf8::upgrade($x);
+        print $non_utf8 eq $utf8, "\n";
+    '
     1
       </pre>
     </p>
@@ -485,7 +495,9 @@
     SV = PV(0x811a460) at 0x811a210
       REFCNT = 1
       FLAGS = (POK,pPOK,UTF8)
-      PV = 0x812c500 "\303\203\302\244\303\203\302\266\303\203\302\274"\0 [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
+      PV = 0x812c500 "\303\203\302\244\303\203\302\266
+        \303\203\302\274"\0
+        [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
       CUR = 12
       LEN = 13
       </pre>
