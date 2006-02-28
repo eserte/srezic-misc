@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (2)
+            Devel::Peek (1)
         </h1>
 
         <div id="pagenav">
@@ -55,26 +55,28 @@
     <div id="pagebody">
         
 <p>
-      Zum Vergleich eine Ausgabe mit einem dem Euro-Zeichen, bei dem
-      das UTF-8-Flag gesetzt ist:
+      Woran erkennt man, ob Daten als Characters oder Octets
+      vorliegen? Man kann mit dem Standard-Modul <tt>Devel::Peek</tt>
+      in die interne Repäsentation von Daten nachschauen:
 
       <pre>
-    perl -MDevel::Peek -e "Dump qq{\x{20ac}}"
+	perl -MDevel::Peek -e "Dump qq{a}"
       </pre>
 
+      ergibt:
+
       <pre>
-    SV = PV(0x811a598) at 0x811a210
+    SV = PV(0x811e088) at 0x811ddfc
       REFCNT = 1
-      FLAGS = (POK,READONLY,pPOK,UTF8)
-      PV = 0x81192f0 "\342\202\254"\0 [UTF8 "\x{20ac}"]
-      CUR = 3
+      FLAGS = (POK,READONLY,pPOK)
+      PV = 0x8120a9c "a"\0
+      CUR = 1
       LEN = 4
       </pre>
 
-      Auch hier sehen wir ein SV mit einigen Unterschieden: in FLAGS
-      kommt nun "UTF8" vor, und in PV werden zwei Zeichenketten
-      angezeigt: einmal der Inhalt als Bytefolge (mit drei Zeichen),
-      sowie die UTF8-Übersetzung.
+      Hier sehen wir, dass es sich um ein Skalar handelt (SV = Scalar
+      Value) und dass der Inhalt des Skalars "ä" ist (zu sehen in PV =
+      Pointer Value, Zeichendaten).
     </p>
     </div>
     <a name="footer"></a>

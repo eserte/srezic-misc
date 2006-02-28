@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Ein-/Ausgabe: PerlIO
+            Encode.pm
         </h1>
 
         <div id="pagenav">
@@ -55,29 +55,17 @@
     <div id="pagebody">
         
 <p>
-      Wenn es sich bei der Kommunikation mit der Außenwelt um I/O handelt,
-      kann man die Features der PerlIO-Layer verwenden. Beim Einlesen
-      schreibt man lediglich:
-
+      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
+      <ul>
+	<li>decode: Octets → Perl-Characters</li>
+	<li>encode: Perl-Characters → Octets</li>
+      </ul>
       <pre>
-	open $fh, "&lt;:encoding(...)", $dateiname;
-      </pre>
-
-      und beim Schreiben:
-
-      <pre>
-	open $fh, "&gt;:encoding(...)", $dateiname;
-      </pre>
-
-    </p>
-<p>
-      Als Encoding wählt man dasjenige, das von der Außenwelt kommt bzw.
-      dort erwartet wird. Wenn das Encoding UTF-8 ist, kann man direkt den
-      utf8-Layer verwenden:
-
-      <pre>
-	open $fh, "&lt;:utf8", $dateiname;
-	open $fh, "&gt;:utf8", $dateiname;
+	use Encode qw(encode decode);
+	$octets = encode("iso-8859-15", "\x{20ac}");
+        # ergibt \244
+	$string = decode("utf-8", "\342\202\254");
+        # ergibt \x{20ac}
       </pre>
     </p>
     </div>

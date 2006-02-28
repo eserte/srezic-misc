@@ -5,7 +5,7 @@
   <subchapter>Abstract, Versuch 1</subchapter>
   <data>
     <p>
-      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      Mit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
       bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
       selbst der erfahrene Programmierer erlebt immer wieder
       UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
@@ -17,7 +17,7 @@
   <subchapter>Abstract, Versuch 2</subchapter>
   <data>
     <p>
-      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      Mit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
       bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
       selbst der erfahrene Programmierer erlebt immer wieder
       UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
@@ -29,7 +29,7 @@
   <subchapter>Abstract, Aaah!</subchapter>
   <data>
     <p>
-      Seit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
+      Mit der Version 5.8.0 hat Perl eine brauchbare Unicode-Unterstützung
       bekommen. Trotzdem ist die Arbeit damit alles andere als intuitiv und
       selbst der erfahrene Programmierer erlebt immer wieder
       UTF-8-Überraschungen.. Dieser Vortrag wird Hilfe zur Selbsthilfe bei
@@ -42,10 +42,6 @@
   <data>
     <p>
       Zuordnung von allen Zeichen der Welt auf Zahlen
-    </p>
-    <p>
-      Im Perl-Sourcecode zu finden unter:
-      <tt>lib/unicore/NamesList.txt</tt>
     </p>
     <p>
       Beispiele:
@@ -82,33 +78,44 @@
 	</tr>
       </table>
     </p>
+    <p>
+      Im Perl-Sourcecode zu finden unter:
+      <tt>lib/unicore/NamesList.txt</tt>
+    </p>
   </data>
 
   <subchapter>Alte Encodings</subchapter>
   <data>
     <p>
-      Unicode-Codepoints in Vergleich zu alten Encodings:
-      <table>
-	<tr>
-	  <th>Bereich</th>
-	  <th>entspricht</th>
-	</tr>
-	<tr>
-	  <td>0 .. 127</td>
-	  <td>US-ASCII</td>
-	</tr>
-	<tr>
-	  <td>0 .. 255</td>
-	  <td>ISO-8859-1</td>
-	</tr>
-      </table>
+      <ul>
+	<li>
+	  Kompatibilität zu existierenden populären "Charsets"
+	</li>
+	<li>
+	  Unicode-Codepoints in Vergleich zu alten Encodings:
+	  <table>
+	    <tr>
+	      <th>Bereich</th>
+	      <th>entspricht</th>
+	    </tr>
+	    <tr>
+	      <td>0 .. 127</td>
+	      <td>US-ASCII</td>
+	    </tr>
+	    <tr>
+	      <td>0 .. 255</td>
+	      <td>ISO-8859-1</td>
+	    </tr>
+	  </table>
+	</li>
+      </ul>
     </p>
   </data>
 
   <subchapter>Properties</subchapter>
   <data>
     <p>
-      Unicode kennt Zeichenklassen und Mappings für Groß-/Kleinschreibung.
+      Unicode kennt Zeichenklassen ...
       <ul>
 	<li>Alpha</li>
 	<li>Alnum</li>
@@ -125,10 +132,20 @@
 	<li>Word</li>
 	<li>XDigit</li>
       </ul>
+      ... und Mappings für Groß-/Kleinschreibung.
     </p>
   </data>
 
-  <subchapter>Encodings</subchapter>
+  <subchapter>Encodings (1)</subchapter>
+  <data>
+    <p>
+      Problem: Unicode definiert einen Zeichenbereich, der zurzeit bis
+      0x10FFFF reicht. Der Computer arbeitet aber mit Bytes: man ist
+      auf einen Zeichenbereich bis 0xFF eingeschränkt.
+    </p>
+  </data>
+
+  <subchapter>Encodings (2)</subchapter>
   <data>
     <p>
       <ul>
@@ -142,11 +159,14 @@
 	  müssen, wenigstens teilweise, durch Zuordnungstabellen
 	  definiert werden.
 	</li>
+	<li>
+	  Encodings müssen nicht den gesamten Unicode-Bereich abdecken.
+	</li>
       </ul>
     </p>
   </data>
 
-  <subchapter>Encodings</subchapter>
+  <subchapter>Encodings (3)</subchapter>
   <data>
     <p>
       Einige populäre Encodings:
@@ -163,24 +183,45 @@
   <subchapter>UTF-8</subchapter>
   <data>
     <p>
-      Ein populäres Encoding ist UTF-8. UTF-8 kann den gesamten
-      zurzeit relevanten Unicode-Zeichensatz abdecken und hat eine
-      variable Länge pro Zeichen: ein bis sechs Bytes. Durch die
-      variable Länge hat man den Vorteil, dass, falls man vorzugsweise
-      lateinische Buchstaben verwendet, wenig (Speicher-)Platz
-      verbraucht wird. Der Nachteil ist, dass einige
-      Stringoperationen, die bei einem Encoding mit fixer Breite den
-      Aufwand O(1) haben, langsamer sind und den Aufwand O(n) haben.
+      <ul>
+	<li>
+	  weitverbreitet (XML, perl)
+	</li>
+	<li>
+	  deckt den gesamten zurzeit relevanten Unicode-Zeichensatz ab (und hat noch Reserven!)
+	</li>
+	<li>
+	  variable Länge pro Unicode-Codepoint: ein bis sechs Bytes
+	</li>
+	<li>
+	  Vorteil: wenig (Speicher-)Platzverbrauch, falls man
+	  vorzugsweise lateinische oder alphabetische Buchstaben
+	  verwendet werden
+	</li>
+	<li>
+	  Nachteil: einige Stringoperationen werden langsamer
+	  (Operationen, die bei einem Encoding mit fixer Breite den Aufwand O(1) haben,
+	  können mit UTF-8 den Aufwand O(n) haben)
+	</li>
+      </ul>
     </p>
   </data>
 
   <subchapter>UCS-2, UCS-4</subchapter>
   <data>
     <p>
-      Weitere Encodings sind UCS-2 und UCS4. Diese verwenden eine fixe Länge
-      pro Zeichen (zwei bzw. vier Bytes pro Zeichen). Die Vor- und Nachteile
-      von UTF-8 kehren sich hier also um. UCS-2 kann zudem nicht den
-      gesamten Unicode-Zeichenraum abbilden.
+      <ul>
+	<li>
+	  fixe Länge pro Unicode-Codepoint (zwei bzw. vier Bytes pro Zeichen)
+	</li>
+	<li>
+	  die Vor- und Nachteile von UTF-8 kehren sich hier um
+	</li>
+	<li>
+	  UCS-2 kann zudem nicht den gesamten Unicode-Zeichenraum
+	  abbilden.
+	</li>
+      </ul>
     </p>
   </data>
 
@@ -248,6 +289,13 @@
 	<li>decode: Octets &#x2192; Perl-Characters</li>
 	<li>encode: Perl-Characters &#x2192; Octets</li>
       </ul>
+      <pre>
+	use Encode qw(encode decode);
+	$octets = encode("iso-8859-15", "\x{20ac}");
+        # ergibt \244
+	$string = decode("utf-8", "\342\202\254");
+        # ergibt \x{20ac}
+      </pre>
     </p>
   </data>
 
@@ -281,7 +329,7 @@
     </p>
   </data>
 
-  <subchapter>Ein-/Ausgabe: Binäre Daten</subchapter>
+  <subchapter>Ein-/Ausgabe: binmode</subchapter>
   <data>
     <p>
       Wenn binäre Daten eingelesen oder ausgegeben werden sollen,

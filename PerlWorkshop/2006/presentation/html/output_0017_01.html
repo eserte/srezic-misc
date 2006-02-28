@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Das Programm selbst
+            Binäre Daten
         </h1>
 
         <div id="pagenav">
@@ -55,11 +55,18 @@
     <div id="pagebody">
         
 <p>
-      Wenn das Programm selbst in UTF-8 geschrieben ist, muss das
-      utf8-Pragma eingeschaltet werden:
-      <pre>
-	use utf8;
-      </pre>
+      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
+      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
+      Ergebnissen für gleiche Daten bekommen, die sich nur darin
+      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
+      Generell ist es hier sicherer, mit Octets zu arbeiten.
+    </p>
+<p>
+      In eine ähnliche Kategorie fallen die Digest::*-Module, die auch
+      nur für binäre Daten definiert sind. <tt>Digest::MD5</tt>
+      beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
+      von 255 verwendet werden. Auch hier ist die Lösung: Umwandeln
+      nach Octets.
     </p>
     </div>
     <a name="footer"></a>

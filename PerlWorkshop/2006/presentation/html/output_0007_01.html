@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Encodings
+            Encodings (1)
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,9 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  Ein Encoding ist eine Zuordnungsvorschrift von Codepoints zu echten
-	  <i>Bytes</i> (oder <i>Octets</i>), die letztendlich auf
-	  dem Computer verwendet werden
-	</li>
-	<li>
-	  Diese Zuordnungsvorschriften können algorithmisch sein oder
-	  müssen, wenigstens teilweise, durch Zuordnungstabellen
-	  definiert werden.
-	</li>
-      </ul>
+      Problem: Unicode definiert einen Zeichenbereich, der zurzeit bis
+      0x10FFFF reicht. Der Computer arbeitet aber mit Bytes: man ist
+      auf einen Zeichenbereich bis 0xFF eingeschränkt.
     </p>
     </div>
     <a name="footer"></a>

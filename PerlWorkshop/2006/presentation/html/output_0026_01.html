@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Tools
+            Devel::Peek (8)
         </h1>
 
         <div id="pagenav">
@@ -55,17 +55,19 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  Was zeigt mein Editor an?
-	</li>
-	<li>
-	  Was zeigt mein Terminal (xterm ...) an?
-	</li>
-	<li>
-	  hexdump, hd, od
-	</li>
-      </ul>
+      Bei beiden Beispielen sieht das Ergebnis so aus, d.h. jedes
+      Zeichen ist nun mit vier Bytes kodiert worden.
+
+      <pre>
+    SV = PV(0x811a460) at 0x811a210
+      REFCNT = 1
+      FLAGS = (POK,pPOK,UTF8)
+      PV = 0x812c500 "\303\203\302\244\303\203\302\266
+        \303\203\302\274"\0
+        [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
+      CUR = 12
+      LEN = 13
+      </pre>
     </p>
     </div>
     <a name="footer"></a>

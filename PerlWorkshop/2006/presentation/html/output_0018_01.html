@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Debugging</title>
+    <title>Perl und Unicode - Strategien/Kochrezepte</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (1)
+            Das Programm selbst
         </h1>
 
         <div id="pagenav">
@@ -55,28 +55,11 @@
     <div id="pagebody">
         
 <p>
-      Woran erkennt man, ob Daten als Characters oder Octets
-      vorliegen? Man kann mit dem Standard-Modul <tt>Devel::Peek</tt>
-      in die interne Repäsentation von Daten nachschauen:
-
+      Wenn das Programm selbst in UTF-8 geschrieben ist, muss das
+      utf8-Pragma eingeschaltet werden:
       <pre>
-	perl -MDevel::Peek -e "Dump qq{a}"
+	use utf8;
       </pre>
-
-      ergibt:
-
-      <pre>
-    SV = PV(0x811e088) at 0x811ddfc
-      REFCNT = 1
-      FLAGS = (POK,READONLY,pPOK)
-      PV = 0x8120a9c "a"\0
-      CUR = 1
-      LEN = 4
-      </pre>
-
-      Hier sehen wir, dass es sich um ein Skalar handelt (SV = Scalar
-      Value) und dass der Inhalt des Skalars "ä" ist (zu sehen in PV =
-      Pointer Value, Zeichendaten).
     </p>
     </div>
     <a name="footer"></a>

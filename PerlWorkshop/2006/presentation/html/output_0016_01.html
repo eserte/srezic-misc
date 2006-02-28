@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Binäre Daten
+            Ein-/Ausgabe: binmode
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,12 @@
     <div id="pagebody">
         
 <p>
-      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
-      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
-      Ergebnissen für gleiche Daten bekommen, die sich nur darin
-      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
-      Generell ist es hier sicherer, mit Octets zu arbeiten.
-    </p>
-<p>
-      In eine ähnliche Kategorie fallen die Digest::*-Module, die auch
-      nur für binäre Daten definiert sind. <tt>Digest::MD5</tt>
-      beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
-      von 255 verwendet werden. Auch hier ist die Lösung: Umwandeln
-      nach Octets.
+      Wenn binäre Daten eingelesen oder ausgegeben werden sollen,
+      sollte man jetzt immer, auch als Unix-Programmierer, binmode()
+      verwenden. Dadurch wird das versehentliche Einlesen/Ausgeben des
+      Datenstroms als UTF-8 verhindert werden (siehe auch
+      PERL_UNICODE-Environment-Variable in <tt>perlrun</tt> bzw. die
+      Option <tt>-C</tt> von Perl).
     </p>
     </div>
     <a name="footer"></a>

@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (8)
+            Devel::Peek (7)
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,17 @@
     <div id="pagebody">
         
 <p>
-      Bei beiden Beispielen sieht das Ergebnis so aus, d.h. jedes
-      Zeichen ist nun mit vier Bytes kodiert worden.
+      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
+      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
+      wird, kommt es auch zur Doppelung:
 
       <pre>
-    SV = PV(0x811a460) at 0x811a210
-      REFCNT = 1
-      FLAGS = (POK,pPOK,UTF8)
-      PV = 0x812c500 "\303\203\302\244\303\203\302\266
-        \303\203\302\274"\0
-        [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
-      CUR = 12
-      LEN = 13
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	Encode::from_to($x, "iso-8859-1", "utf-8");
+	utf8::upgrade($x);
+	Dump $x;
+    '
       </pre>
     </p>
     </div>

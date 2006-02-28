@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Encode.pm
+            Warum die Probleme?
         </h1>
 
         <div id="pagenav">
@@ -55,10 +55,38 @@
     <div id="pagebody">
         
 <p>
-      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
       <ul>
-	<li>decode: Octets → Perl-Characters</li>
-	<li>encode: Perl-Characters → Octets</li>
+	<li>
+	  In den Vor-Unicode-Zeiten war ein Zeichen = ein Byte. Das
+	  heißt Textdaten und binäre Daten konnten gleich behandelt
+	  werden (mit der Ausnahme der Newline-Behandlung bei
+	  DOS/Windows-Systemen). Mit Unicode ist das vorbei; man muss
+	  immer genau wissen, ob man Text- oder binäre Daten vor sich
+	  hat.
+	</li>
+	<li>
+	  Legacy/verschiedene Encodings. Oft hat man es als
+	  Programmierer noch immer mit Daten zu tun, die nicht in
+	  UTF-8 vorliegen. UTF-8 ist zwar ein Encoding, dass in der
+	  Praxis bevorzugt verwendet wird, aber nicht das einzig
+	  erlaubte. Bei extern vorliegenden Daten muss man also genau
+	  wissen, in welchem Encoding sie vorliegen.
+	</li>
+	<li>
+	  Schnittstellen, die nicht mit Unicode umgehen können.
+	  Während Perl, sobald die Daten korrekt geflaggt sind, mit
+	  Unicode recht gut umgehen kann, können es die meisten
+	  externen (C-)Bibliotheken nicht. Jedes verwendete XS-Modul
+	  ist also ein potentieller Problemfall.
+	</li>
+	<li>
+	  Anomalien innerhalb von Perl, die teilweise der
+	  Rückwärtskompatbilität zu Vor-Unicode-Zeiten geschuldet ist.
+	</li>
+	<li>
+	  UTF-8-Bugs. Das Verwenden der neuesten Perl- und
+	  Modulversionen hilft oft.
+	</li>
       </ul>
     </p>
     </div>

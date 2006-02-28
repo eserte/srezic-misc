@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            UCS-2, UCS-4
+            UTF-8
         </h1>
 
         <div id="pagenav">
@@ -55,10 +55,27 @@
     <div id="pagebody">
         
 <p>
-      Weitere Encodings sind UCS-2 und UCS4. Diese verwenden eine fixe Länge
-      pro Zeichen (zwei bzw. vier Bytes pro Zeichen). Die Vor- und Nachteile
-      von UTF-8 kehren sich hier also um. UCS-2 kann zudem nicht den
-      gesamten Unicode-Zeichenraum abbilden.
+      <ul>
+	<li>
+	  weitverbreitet (XML, perl)
+	</li>
+	<li>
+	  deckt den gesamten zurzeit relevanten Unicode-Zeichensatz ab (und hat noch Reserven!)
+	</li>
+	<li>
+	  variable Länge pro Unicode-Codepoint: ein bis sechs Bytes
+	</li>
+	<li>
+	  Vorteil: wenig (Speicher-)Platzverbrauch, falls man
+	  vorzugsweise lateinische oder alphabetische Buchstaben
+	  verwendet werden
+	</li>
+	<li>
+	  Nachteil: einige Stringoperationen werden langsamer
+	  (Operationen, die bei einem Encoding mit fixer Breite den Aufwand O(1) haben,
+	  können mit UTF-8 den Aufwand O(n) haben)
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

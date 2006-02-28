@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (6)
+            Devel::Peek (5)
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,16 @@
     <div id="pagebody">
         
 <p>
-      Ein beliebter Fehler ist das "doppelte UTF-8-Encoding". Daten,
-      die schon mit dem UTF-8-Flag vorliegen, werden als
-      ISO-8859-1-Octets interpretiert und nochmals nach
-      Perl-Characters konvertiert:
+      Die beiden Strings mit und ohne UTF-8-Flag sind dennoch, was
+      Perl angeht, gleich:
 
       <pre>
-    perl -MEncode -MDevel::Peek -e '
-	$x = qq{äöü};
-	utf8::upgrade($x);
-	$x = decode("iso-8859-1", $x);
-	Dump $x;
+    perl -e '
+        $non_utf8 = $utf8 = qq{äöüÄÖÜß};
+        utf8::upgrade($x);
+        print $non_utf8 eq $utf8, "\n";
     '
+    1
       </pre>
     </p>
     </div>

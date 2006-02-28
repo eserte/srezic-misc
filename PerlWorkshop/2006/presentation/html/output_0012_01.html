@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Strategien/Kochrezepte</title>
+    <title>Perl und Unicode - Unicode-Unterstützung in Perl</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Warum die Probleme?
+            Begriffe
         </h1>
 
         <div id="pagenav">
@@ -55,39 +55,15 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  In den Vor-Unicode-Zeiten war ein Zeichen = ein Byte. Das
-	  heißt Textdaten und binäre Daten konnten gleich behandelt
-	  werden (mit der Ausnahme der Newline-Behandlung bei
-	  DOS/Windows-Systemen). Mit Unicode ist das vorbei; man muss
-	  immer genau wissen, ob man Text- oder binäre Daten vor sich
-	  hat.
-	</li>
-	<li>
-	  Legacy/verschiedene Encodings. Oft hat man es als
-	  Programmierer noch immer mit Daten zu tun, die nicht in
-	  UTF-8 vorliegen. UTF-8 ist zwar ein Encoding, dass in der
-	  Praxis bevorzugt verwendet wird, aber nicht das einzig
-	  erlaubte. Bei extern vorliegenden Daten muss man also genau
-	  wissen, in welchem Encoding sie vorliegen.
-	</li>
-	<li>
-	  Schnittstellen, die nicht mit Unicode umgehen können.
-	  Während Perl, sobald die Daten korrekt geflaggt sind, mit
-	  Unicode recht gut umgehen kann, können es die meisten
-	  externen (C-)Bibliotheken nicht. Jedes verwendete XS-Modul
-	  ist also ein potentieller Problemfall.
-	</li>
-	<li>
-	  Anomalien innerhalb von Perl, die teilweise der
-	  Rückwärtskompatbilität zu Vor-Unicode-Zeiten geschuldet ist.
-	</li>
-	<li>
-	  UTF-8-Bugs. Das Verwenden der neuesten Perl- und
-	  Modulversionen hilft oft.
-	</li>
-      </ul>
+      Die Begriffe Unicode und UTF-8 werden bei der Arbeit mit Perl
+      häufig gleichbedeutend behandelt. Das liegt daran, dass als
+      internes Encoding Perl UTF-8 verwendet. Dass intern tatsächlich
+      UTF-8 verwendet wird, muss dem Perl-Programmierer nicht bekannt
+      sein. Der Programmierer arbeitet nur mit Unicode-Zeichen.
+      Theoretisch könnten die Perl-Interna auf UCS-4 umgestellt
+      werden; auf bestehende Skripte sollte diese Änderung keine
+      Auswirkung haben (natürlich gibt es auch hier Ausnahmen, siehe
+      Encode manpage (Messing with Perl's Internals).
     </p>
     </div>
     <a name="footer"></a>

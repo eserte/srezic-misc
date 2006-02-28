@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Templating-Systeme
+            CGI
         </h1>
 
         <div id="pagenav">
@@ -55,26 +55,28 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  <b>Template-Toolkit</b>
-	  <ul>
-	    <li>
-	      <tt>Template::Provider::Encoding</tt> und
-	      <tt>Template::Stash::ForceUTF8</tt>
-	    </li>
-	    <li>
-	      Verwendung der <tt>RAWPERL</tt>-Direktive zusammen mit <tt>use utf8;</tt>
-	    </li>
-	  </ul>
-	</li>
-	<li>
-	  <b>HTML-Template</b>
-	  <ul>
-	    <li>out of the box</li>
-	  </ul>
-	</li>
-      </ul>
+      Bei der Verwendung von HTTP-GET und HTTP-POST sehen die
+      Standards nur das Versenden von Octets vor, ohne dass man die
+      Möglichkeit hat, das Encoding zu markieren. Das tatsächlich
+      verwendete Encoding kann man nur aus der Kenntnis des Encodings
+      der versendenden Quelle wissen. Wenn also ein Formular auf einer
+      HTML-Seite, die das Charset UTF-8 hat, versendet wird, sind die
+      versendeten GET- oder POST-Daten auch in UTF-8 kodiert.
+    </p>
+<p>
+      Die Funktion CGI::param() kann daher auch nur mit Octets
+      umgehen. Mit einer kleinen Schleife lassen sich die
+      Parameter-Keys und -Values leicht umwandeln (in diesem Beispiel
+      davon ausgehend, dass die Parameter in UTF-8 kodiert sind):
+
+      <pre>
+    perl -MCGI=param -MEncode -MData::Dumper -e '
+        for $key (param) {
+            $new_param{decode_utf8($key)} = [ map { decode_utf8($_) } param($key)];
+        }
+        warn Dumper \%new_param;
+    ' Ã¤Ã¶Ã¼=Ã¤Ã¶Ã¼
+      </pre>
     </p>
     </div>
     <a name="footer"></a>

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Unicode-Unterstützung in Perl</title>
+    <title>Perl und Unicode - Einführung</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Begriffe
+            UCS-2, UCS-4
         </h1>
 
         <div id="pagenav">
@@ -55,15 +55,18 @@
     <div id="pagebody">
         
 <p>
-      Die Begriffe Unicode und UTF-8 werden bei der Arbeit mit Perl
-      häufig gleichbedeutend behandelt. Das liegt daran, dass als
-      internes Encoding Perl UTF-8 verwendet. Dass intern tatsächlich
-      UTF-8 verwendet wird, muss dem Perl-Programmierer nicht bekannt
-      sein. Der Programmierer arbeitet nur mit Unicode-Zeichen.
-      Theoretisch könnten die Perl-Interna auf UCS-4 umgestellt
-      werden; auf bestehende Skripte sollte diese Änderung keine
-      Auswirkung haben (natürlich gibt es auch hier Ausnahmen, siehe
-      Encode manpage (Messing with Perl's Internals).
+      <ul>
+	<li>
+	  fixe Länge pro Unicode-Codepoint (zwei bzw. vier Bytes pro Zeichen)
+	</li>
+	<li>
+	  die Vor- und Nachteile von UTF-8 kehren sich hier um
+	</li>
+	<li>
+	  UCS-2 kann zudem nicht den gesamten Unicode-Zeichenraum
+	  abbilden.
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>
