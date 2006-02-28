@@ -1,18 +1,6 @@
 #!/usr/bin/perl -w
 # -*- perl -*-
 
-#
-# $Id: tk.pl,v 1.1 2006/02/21 22:42:07 eserte Exp $
-# Author: Slaven Rezic
-#
-# Copyright (C) 2006 Slaven Rezic. All rights reserved.
-# This program is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
-#
-# Mail: slaven@rezic.de
-# WWW:  http://www.rezic.de/eserte/
-#
-
 use Tk 804;
 use Devel::Peek;
 
