@@ -748,6 +748,21 @@
     </p>
   </data>
 
+  <subchapter>XML::*</subchapter>
+  <data>
+    <p>
+      am Beispiel von <tt>XML::LibXML</tt>
+      <ul>
+	<li>
+	  Einlesen: Octets genügen!
+	</li>
+	<li>
+	  Ausgabe: Tweaks nötig
+	</li>
+      </ul>
+    </p>
+  </data>
+
   <subchapter>Digest::*</subchapter>
   <data>
     <p>

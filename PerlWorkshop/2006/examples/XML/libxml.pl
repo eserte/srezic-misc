@@ -1,6 +1,7 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # -*- Mode: perl; coding: raw-text -*-
 
+use warnings;
 use XML::LibXML;
 use Devel::Peek;
 
@@ -10,6 +11,7 @@ $xml_utf8 = <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <test>äöüÄÖÜß</test>
 EOF
+# Euro: €
 
 $xml_iso_8859_1 = <<EOF;
 <?xml version="1.0" encoding="iso-8859-1"?>
