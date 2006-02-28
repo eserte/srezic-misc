@@ -21,13 +21,13 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Templating-Systeme
+            Digest::*
         </h1>
 
         <div id="pagenav">
             <div id="navl">
                 
-                <a href="output_0034_01.html#footer" accesskey="b">&lt;&lt;&lt;</a>
+                <a href="output_0035_01.html#footer" accesskey="b">&lt;&lt;&lt;</a>
                 &nbsp;
                 
                 
@@ -42,7 +42,7 @@
                 
                 
                 &nbsp;
-                <a accesskey="n" href="output_0036_01.html" accesskey="f">&gt;&gt;&gt;</a>
+                <a accesskey="n" href="output_0037_01.html" accesskey="f">&gt;&gt;&gt;</a>
                 
             </div>
             <div id="navm">
@@ -57,22 +57,15 @@
 <p>
       <ul>
 	<li>
-	  <b>Template-Toolkit</b>
-	  <ul>
-	    <li>
-	      <tt>Template::Provider::Encoding</tt> und
-	      <tt>Template::Stash::ForceUTF8</tt>
-	    </li>
-	    <li>
-	      Verwendung der <tt>RAWPERL</tt>-Direktive zusammen mit <tt>use utf8;</tt>
-	    </li>
-	  </ul>
+	  Digest::*-Module, sind nur für binäre Daten definiert
 	</li>
 	<li>
-	  <b>HTML-Template</b>
-	  <ul>
-	    <li>out of the box</li>
-	  </ul>
+	  <tt>Digest::MD5</tt>
+	  beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
+	  von 255 verwendet werden
+	</li>
+	<li>
+	  Lösung: vor dem Verwenden einer Digest::*-Funktion Daten nach Octets umwandeln
 	</li>
       </ul>
     </p>

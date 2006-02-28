@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Binäre Daten
+            Ein-/Ausgabe: PerlIO
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,30 @@
     <div id="pagebody">
         
 <p>
-      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
-      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
-      Ergebnissen für gleiche Daten bekommen, die sich nur darin
-      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
-      Generell ist es hier sicherer, mit Octets zu arbeiten.
+      Wenn es sich bei der Kommunikation mit der Außenwelt um I/O handelt,
+      kann man die Features der PerlIO-Layer verwenden. Beim Einlesen
+      schreibt man lediglich:
+
+      <pre>
+	open $fh, "&lt;:encoding(...)", $dateiname;
+      </pre>
+
+      und beim Schreiben:
+
+      <pre>
+	open $fh, "&gt;:encoding(...)", $dateiname;
+      </pre>
+
     </p>
 <p>
-      In eine ähnliche Kategorie fallen die Digest::*-Module, die auch
-      nur für binäre Daten definiert sind. <tt>Digest::MD5</tt>
-      beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
-      von 255 verwendet werden. Auch hier ist die Lösung: Umwandeln
-      nach Octets.
+      Als Encoding wählt man dasjenige, das von der Außenwelt kommt bzw.
+      dort erwartet wird. Wenn das Encoding UTF-8 ist, kann man direkt den
+      utf8-Layer verwenden:
+
+      <pre>
+	open $fh, "&lt;:utf8", $dateiname;
+	open $fh, "&gt;:utf8", $dateiname;
+      </pre>
     </p>
     </div>
     <a name="footer"></a>

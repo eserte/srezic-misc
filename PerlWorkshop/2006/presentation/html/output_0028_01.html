@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Warnungen
+            Rückwärtskompatibilität (1)
         </h1>
 
         <div id="pagenav">
@@ -55,11 +55,16 @@
     <div id="pagebody">
         
 <p>
-      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
-      auftaucht, hat Perl festgestellt, dass "Characters" dort
-      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
-      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
-      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
+      <ul>
+	<li>
+	  "alte" Zeichen im Bereich 0..255 ohne und mit UTF-8-Flag
+	  sind gleich
+	</li>
+	<li>
+	  deshalb braucht man nicht darauf achten, ob das UTF-8-Flag
+	  gesetzt ist, wenn man nur mit ISO-8859-1 arbeiten möchte
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

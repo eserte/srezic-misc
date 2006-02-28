@@ -55,15 +55,19 @@
     <div id="pagebody">
         
 <p>
-      Die Begriffe Unicode und UTF-8 werden bei der Arbeit mit Perl
-      häufig gleichbedeutend behandelt. Das liegt daran, dass als
-      internes Encoding Perl UTF-8 verwendet. Dass intern tatsächlich
-      UTF-8 verwendet wird, muss dem Perl-Programmierer nicht bekannt
-      sein. Der Programmierer arbeitet nur mit Unicode-Zeichen.
-      Theoretisch könnten die Perl-Interna auf UCS-4 umgestellt
-      werden; auf bestehende Skripte sollte diese Änderung keine
-      Auswirkung haben (natürlich gibt es auch hier Ausnahmen, siehe
-      Encode manpage (Messing with Perl's Internals).
+      Unicode vs. UTF-8:
+      <ul>
+	<li>
+	  beide Begriffe werden bei der Arbeit mit Perl
+	  häufig gleichbedeutend behandelt
+	</li>
+	<li>
+	  Perl verwendet intern UTF-8
+	</li>
+	<li>
+	  es hätte auch UCS-4 sein können
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

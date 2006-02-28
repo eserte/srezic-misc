@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Ein-/Ausgabe: binmode
+            Encode.pm
         </h1>
 
         <div id="pagenav">
@@ -55,12 +55,18 @@
     <div id="pagebody">
         
 <p>
-      Wenn binäre Daten eingelesen oder ausgegeben werden sollen,
-      sollte man jetzt immer, auch als Unix-Programmierer, binmode()
-      verwenden. Dadurch wird das versehentliche Einlesen/Ausgeben des
-      Datenstroms als UTF-8 verhindert werden (siehe auch
-      PERL_UNICODE-Environment-Variable in <tt>perlrun</tt> bzw. die
-      Option <tt>-C</tt> von Perl).
+      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
+      <ul>
+	<li>decode: Octets → Perl-Characters</li>
+	<li>encode: Perl-Characters → Octets</li>
+      </ul>
+      <pre>
+	use Encode qw(encode decode);
+	$octets = encode("iso-8859-15", "\x{20ac}");
+        # ergibt \244
+	$string = decode("utf-8", "\342\202\254");
+        # ergibt \x{20ac}
+      </pre>
     </p>
     </div>
     <a name="footer"></a>

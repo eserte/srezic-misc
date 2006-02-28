@@ -148,16 +148,19 @@
   <subchapter>Encodings (2)</subchapter>
   <data>
     <p>
+      Encoding:
       <ul>
 	<li>
-	  Ein Encoding ist eine Zuordnungsvorschrift von Codepoints zu echten
-	  <i>Bytes</i> (oder <i>Octets</i>), die letztendlich auf
-	  dem Computer verwendet werden
+	  Zuordnungsvorschrift von Codepoints auf echte <i>Bytes</i>
+	  (oder <i>Octets</i>), die letztendlich auf dem Computer
+	  verwendet werden
 	</li>
 	<li>
-	  Diese Zuordnungsvorschriften können algorithmisch sein oder
-	  müssen, wenigstens teilweise, durch Zuordnungstabellen
-	  definiert werden.
+	  Zuordnungsvorschrift kann algorithmisch definiert sein
+	</li>
+	<li>
+	  Zuordnungsvorschrift kann, ggfs. teilweise, durch
+	  Zuordnungstabellen definiert sein
 	</li>
 	<li>
 	  Encodings müssen nicht den gesamten Unicode-Bereich abdecken.
@@ -195,8 +198,7 @@
 	</li>
 	<li>
 	  Vorteil: wenig (Speicher-)Platzverbrauch, falls man
-	  vorzugsweise lateinische oder alphabetische Buchstaben
-	  verwendet werden
+	  vorzugsweise lateinische Buchstaben verwendet werden
 	</li>
 	<li>
 	  Nachteil: einige Stringoperationen werden langsamer
@@ -229,53 +231,81 @@
   <subchapter>Begriffe</subchapter>
   <data>
     <p>
-      Die Begriffe Unicode und UTF-8 werden bei der Arbeit mit Perl
-      häufig gleichbedeutend behandelt. Das liegt daran, dass als
-      internes Encoding Perl UTF-8 verwendet. Dass intern tatsächlich
-      UTF-8 verwendet wird, muss dem Perl-Programmierer nicht bekannt
-      sein. Der Programmierer arbeitet nur mit Unicode-Zeichen.
-      Theoretisch könnten die Perl-Interna auf UCS-4 umgestellt
-      werden; auf bestehende Skripte sollte diese Änderung keine
-      Auswirkung haben (natürlich gibt es auch hier Ausnahmen, siehe
-      Encode manpage (Messing with Perl's Internals).
+      Unicode vs. UTF-8:
+      <ul>
+	<li>
+	  beide Begriffe werden bei der Arbeit mit Perl
+	  häufig gleichbedeutend behandelt
+	</li>
+	<li>
+	  Perl verwendet intern UTF-8
+	</li>
+	<li>
+	  es hätte auch UCS-4 sein können
+	</li>
+      </ul>
     </p>
   </data>
 
   <chapter>Strategien/Kochrezepte</chapter>
-  <subchapter>Warum die Probleme?</subchapter>
+  <subchapter>Warum die Probleme? (1)</subchapter>
   <data>
     <p>
       <ul>
 	<li>
-	  In den Vor-Unicode-Zeiten war ein Zeichen = ein Byte. Das
-	  heißt Textdaten und binäre Daten konnten gleich behandelt
+	  in Vor-Unicode-Zeiten: ein Zeichen = ein Byte (jedenfalls in
+	  der westlichen Welt)
+	</li>
+	<li>
+	  Textdaten und binäre Daten konnten gleich behandelt
 	  werden (mit der Ausnahme der Newline-Behandlung bei
-	  DOS/Windows-Systemen). Mit Unicode ist das vorbei; man muss
-	  immer genau wissen, ob man Text- oder binäre Daten vor sich
-	  hat.
+	  DOS/Windows-Systemen)
 	</li>
 	<li>
-	  Legacy/verschiedene Encodings. Oft hat man es als
-	  Programmierer noch immer mit Daten zu tun, die nicht in
-	  UTF-8 vorliegen. UTF-8 ist zwar ein Encoding, dass in der
-	  Praxis bevorzugt verwendet wird, aber nicht das einzig
-	  erlaubte. Bei extern vorliegenden Daten muss man also genau
-	  wissen, in welchem Encoding sie vorliegen.
+	  mit Unicode ist das vorbei; man muss immer genau wissen, ob
+	  man Text- oder binäre Daten vor sich hat
 	</li>
 	<li>
-	  Schnittstellen, die nicht mit Unicode umgehen können.
-	  Während Perl, sobald die Daten korrekt geflaggt sind, mit
-	  Unicode recht gut umgehen kann, können es die meisten
-	  externen (C-)Bibliotheken nicht. Jedes verwendete XS-Modul
-	  ist also ein potentieller Problemfall.
+	  und bei Textdaten muss man wissen, in welchem Encoding sie
+	  vorliegen
 	</li>
+	<li>
+	  nicht alles ist UTF-8!
+	</li>
+      </ul>
+    </p>
+  </data>
+
+  <subchapter>Warum die Probleme? (2)</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  Schnittstellen, die nicht mit Unicode umgehen können
+	</li>
+	<li>
+	  Perl (sobald die Daten korrekt geflaggt sind) kann mit
+	  Unicode recht gut umgehen, aber&#xa0;&#x2026;
+	</li>
+	<li>
+	  die meisten externen (C-)Bibliotheken nicht; ergo ist jedes
+	  verwendete XS-Modul ein potentieller Problemfall
+	</li>
+      </ul>
+    </p>
+  </data>
+
+  <subchapter>Warum die Probleme? (3)</subchapter>
+  <data>
+    <p>
+      <ul>
 	<li>
 	  Anomalien innerhalb von Perl, die teilweise der
-	  Rückwärtskompatbilität zu Vor-Unicode-Zeiten geschuldet ist.
+	  Rückwärtskompatbilität zu Vor-Unicode-Zeiten geschuldet ist
 	</li>
 	<li>
-	  UTF-8-Bugs. Das Verwenden der neuesten Perl- und
-	  Modulversionen hilft oft.
+	  UTF-8-Bugs &#x2192; das Verwenden der neuesten Perl- und
+	  Modulversionen hilft oft!
 	</li>
       </ul>
     </p>
@@ -332,30 +362,26 @@
   <subchapter>Ein-/Ausgabe: binmode</subchapter>
   <data>
     <p>
-      Wenn binäre Daten eingelesen oder ausgegeben werden sollen,
-      sollte man jetzt immer, auch als Unix-Programmierer, binmode()
-      verwenden. Dadurch wird das versehentliche Einlesen/Ausgeben des
-      Datenstroms als UTF-8 verhindert werden (siehe auch
-      PERL_UNICODE-Environment-Variable in <tt>perlrun</tt> bzw. die
-      Option <tt>-C</tt> von Perl).
-    </p>
-  </data>
-
-  <subchapter>Binäre Daten</subchapter>
-  <data>
-    <p>
-      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
-      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
-      Ergebnissen für gleiche Daten bekommen, die sich nur darin
-      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
-      Generell ist es hier sicherer, mit Octets zu arbeiten.
-    </p>
-    <p>
-      In eine ähnliche Kategorie fallen die Digest::*-Module, die auch
-      nur für binäre Daten definiert sind. <tt>Digest::MD5</tt>
-      beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
-      von 255 verwendet werden. Auch hier ist die Lösung: Umwandeln
-      nach Octets.
+      <ul>
+	<li>
+	  beim Einlesen oder Ausgeben von binären Daten eingelesen:
+	  immer, auch als Unix-Programmierer, binmode()
+	  verwenden
+	</li>
+	<li>
+	  dadurch kein versehentliches Einlesen/Ausgeben des
+	  Datenstroms als UTF-8
+	</li>
+	<li>
+	  <tt>PERL_UNICODE</tt>-Environment-Variable
+	</li>
+	<li>
+	  Perls Option <tt>-C</tt>
+	</li>
+	<li>
+	  perl 5.8.0 und UTF-8-Locales
+	</li>
+      </ul>
     </p>
   </data>
 
@@ -518,26 +544,7 @@
   <subchapter>Devel::Peek (7)</subchapter>
   <data>
     <p>
-      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
-      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
-      wird, kommt es auch zur Doppelung:
-
-      <pre>
-    perl -MEncode -MDevel::Peek -e '
-	$x = qq{äöü};
-	Encode::from_to($x, "iso-8859-1", "utf-8");
-	utf8::upgrade($x);
-	Dump $x;
-    '
-      </pre>
-    </p>
-  </data>
-
-  <subchapter>Devel::Peek (8)</subchapter>
-  <data>
-    <p>
-      Bei beiden Beispielen sieht das Ergebnis so aus, d.h. jedes
-      Zeichen ist nun mit vier Bytes kodiert worden.
+      Jedes Zeichen ist nun mit vier Bytes kodiert worden.
 
       <pre>
     SV = PV(0x811a460) at 0x811a210
@@ -569,14 +576,49 @@
     </p>
   </data>
 
-  <subchapter>Warnungen</subchapter>
+
+  <!-- XXX wohin hiermit? -->
+  <subchapter>Rückwärtskompatibilität (1)</subchapter>
   <data>
     <p>
-      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
-      auftaucht, hat Perl festgestellt, dass "Characters" dort
-      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
-      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
-      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
+      <ul>
+	<li>
+	  "alte" Zeichen im Bereich 0..255 ohne und mit UTF-8-Flag
+	  sind gleich
+	</li>
+	<li>
+	  deshalb braucht man nicht darauf achten, ob das UTF-8-Flag
+	  gesetzt ist, wenn man nur mit ISO-8859-1 arbeiten möchte
+	</li>
+      </ul>
+    </p>
+  </data>
+
+  <subchapter>Rückwärtskompatibilität (2)</subchapter>
+  <data>
+    <p>
+      nun ja, fast
+    </p>
+  </data>
+
+  <subchapter>Rückwärtskompatibilität (3)</subchapter>
+  <data>
+    <p>
+      Einige Features sind nur verwendbar, wenn das UTF-8-Flag
+      eingeschaltet ist:
+      <ul>
+	<li>
+	  <tt>lc</tt>, <tt>uc</tt>
+	</li>
+	<li>
+	  Zeichenklassen wie <tt>\w</tt> (locale vs.
+	  Unicode-Properties)
+	</li>
+	<li>
+	  zum Zusichern, dass das UTF-8-Flag gesetzt ist:
+	  <tt>utf8::upgrade</tt>
+	</li>
+      </ul>
     </p>
   </data>
 
@@ -584,26 +626,35 @@
   <subchapter>Tk</subchapter>
   <data>
     <p>
-      Seit der Version 804 sind die Interna von Tk auf UTF-8
-      umgestellt. Jeder String, der durch Tk geht, bekommt automatisch
-      das UTF-8-Flag gesetzt. Das führt zu Problemen, wenn die Daten
-      aus Tk weiter mit Modulen bearbeitet werden sollen, die noch
-      nicht mit UTF-8 umgehen können (zum Beispiel DBI/DBD::mysql).
+      <ul>
+	<li>
+	  seit Version 804 sind die Interna auf UTF-8 umgestellt
+	</li>
+	<li>
+	  jeder String, der durch Tk geht, bekommt automatisch das
+	  UTF-8-Flag gesetzt
+	</li>
+	<li>
+	  problematisch, wenn die Daten aus Tk weiter mit Modulen
+	  bearbeitet werden sollen, die noch nicht mit UTF-8 umgehen
+	  können (zum Beispiel <tt>DBI</tt>/<tt>DBD::mysql</tt>)
+	</li>
+      </ul>
     </p>
   </data>
 
   <subchapter>DBI</subchapter>
   <data>
     <p>
-      DBI und die meisten DBD-Module, insbesondere DBD::mysql, können
-      mit UTF-8 nicht umgehen. Hier muss man selbst Hand anlegen und
-      die ein- und ausgehenden Daten wie oben beschrieben händisch
-      umwandeln.
+      <tt>DBI</tt> und die meisten <tt>DBD</tt>-Module, auch
+      <tt>DBD::mysql</tt>, können mit UTF-8 nicht umgehen. Hier muss
+      man selbst Hand anlegen und die ein- und ausgehenden Daten
+      händisch per <tt>Encode</tt> umwandeln.
     </p>
     <p>
-      Bei Postgres-Treiber DBD::Pg gibt es mit pg_enable_utf8 eine
-      experimentelle Option, ein- und ausgehende Daten als UTF-8 zu
-      markieren.
+      Beim Postgres-Treiber <tt>DBD::Pg</tt> gibt es mit
+      <tt>pg_enable_utf8</tt> eine experimentelle Option, ein- und
+      ausgehende Daten als UTF-8 zu markieren.
     </p>
   </data>
 
@@ -621,18 +672,19 @@
       oberhalb 127 und die Verwendung von nummerischen HTML-Entities.
       Das Modul <tt>HTML::Entities</tt> hilft hier:
 
-      <pre><![CDATA[
+      <pre>
     perl -w -MHTML::Entities=encode_entities_numeric -e '
 	$string = "äöü\x{20ac}";
-	print encode_entities_numeric($string, qq{<>&\"\x{80}-\x{fffd}});
+	print encode_entities_numeric
+            ($string, qq{&lt;&gt;&amp;\"\x{80}-\x{fffd}});
     '
-      ]]></pre>
+      </pre>
     </p>
     <p>
       Das Ergebnis:
 
       <pre>
-    &#xE4;&#xF6;&#xFC;&#x20AC;    
+    &amp;#xE4;&amp;#xF6;&amp;#xFC;&amp;#x20AC;    
       </pre>
     </p>
     <p>
@@ -661,7 +713,8 @@
       <pre>
     perl -MCGI=param -MEncode -MData::Dumper -e '
         for $key (param) {
-            $new_param{decode_utf8($key)} = [ map { decode_utf8($_) } param($key)];
+            $new_param{decode_utf8($key)} =
+               [ map { decode_utf8($_) } param($key)];
         }
         warn Dumper \%new_param;
     ' Ã¤Ã¶Ã¼=Ã¤Ã¶Ã¼
@@ -695,9 +748,28 @@
     </p>
   </data>
 
+  <subchapter>Digest::*</subchapter>
+  <data>
+    <p>
+      <ul>
+	<li>
+	  Digest::*-Module, sind nur für binäre Daten definiert
+	</li>
+	<li>
+	  <tt>Digest::MD5</tt>
+	  beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
+	  von 255 verwendet werden
+	</li>
+	<li>
+	  Lösung: vor dem Verwenden einer Digest::*-Funktion Daten nach Octets umwandeln
+	</li>
+      </ul>
+    </p>
+  </data>
+
   <chapter>Danke!</chapter>
   <subchapter>Danke!</subchapter>
-  <data><p style="text-align:center;">Danke! Thank you! Merci! Hvala! d&#283;kuji! &#1089;&#1087;&#1072;&#1089;&#1080;&#1073;&#1086;! &#949;&#965;&#967;&#945;&#961;&#953;&#963;&#964;&#974;! </p></data>
+  <data><p style="text-align:center;">Danke! Thank you! Merci! Hvala! D&#283;kuji! &#1089;&#1087;&#1072;&#1089;&#1080;&#1073;&#1086;! &#949;&#965;&#967;&#945;&#961;&#953;&#963;&#964;&#974;! </p></data>
 
   <chapter>Anhang</chapter>
   <subchapter>Bibliographie</subchapter>
@@ -726,4 +798,46 @@
       </dl>
     </p>
   </data>
+
+  <chapter>Zugabe</chapter>
+  <subchapter>Binäre Daten</subchapter>
+  <data>
+    <p>
+      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
+      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
+      Ergebnissen für gleiche Daten bekommen, die sich nur darin
+      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
+      Generell ist es hier sicherer, mit Octets zu arbeiten.
+    </p>
+  </data>
+
+  <subchapter>Devel::Peek (6b)</subchapter>
+  <data>
+    <p>
+      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
+      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
+      wird, kommt es auch zur Doppelung:
+
+      <pre>
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	Encode::from_to($x, "iso-8859-1", "utf-8");
+	utf8::upgrade($x);
+	Dump $x;
+    '
+      </pre>
+    </p>
+  </data>
+
+  <subchapter>Warnungen</subchapter>
+  <data>
+    <p>
+      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
+      auftaucht, hat Perl festgestellt, dass "Characters" dort
+      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
+      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
+      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
+    </p>
+  </data>
+
 </spip>

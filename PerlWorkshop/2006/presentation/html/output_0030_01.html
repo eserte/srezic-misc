@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Spezifische Module</title>
+    <title>Perl und Unicode - Debugging</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            DBI
+            Rückwärtskompatibilität (3)
         </h1>
 
         <div id="pagenav">
@@ -55,15 +55,21 @@
     <div id="pagebody">
         
 <p>
-      DBI und die meisten DBD-Module, insbesondere DBD::mysql, können
-      mit UTF-8 nicht umgehen. Hier muss man selbst Hand anlegen und
-      die ein- und ausgehenden Daten wie oben beschrieben händisch
-      umwandeln.
-    </p>
-<p>
-      Bei Postgres-Treiber DBD::Pg gibt es mit pg_enable_utf8 eine
-      experimentelle Option, ein- und ausgehende Daten als UTF-8 zu
-      markieren.
+      Einige Features sind nur verwendbar, wenn das UTF-8-Flag
+      eingeschaltet ist:
+      <ul>
+	<li>
+	  <tt>lc</tt>, <tt>uc</tt>
+	</li>
+	<li>
+	  Zeichenklassen wie <tt>\w</tt> (locale vs.
+	  Unicode-Properties)
+	</li>
+	<li>
+	  zum Zusichern, dass das UTF-8-Flag gesetzt ist:
+	  <tt>utf8::upgrade</tt>
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Spezifische Module</title>
+    <title>Perl und Unicode - Zugabe</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,13 +21,13 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Templating-Systeme
+            Warnungen
         </h1>
 
         <div id="pagenav">
             <div id="navl">
                 
-                <a href="output_0034_01.html#footer" accesskey="b">&lt;&lt;&lt;</a>
+                <a href="output_0040_01.html#footer" accesskey="b">&lt;&lt;&lt;</a>
                 &nbsp;
                 
                 
@@ -42,7 +42,7 @@
                 
                 
                 &nbsp;
-                <a accesskey="n" href="output_0036_01.html" accesskey="f">&gt;&gt;&gt;</a>
+                <span class="navstealth">&gt;&gt;&gt;</span>
                 
             </div>
             <div id="navm">
@@ -55,26 +55,11 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  <b>Template-Toolkit</b>
-	  <ul>
-	    <li>
-	      <tt>Template::Provider::Encoding</tt> und
-	      <tt>Template::Stash::ForceUTF8</tt>
-	    </li>
-	    <li>
-	      Verwendung der <tt>RAWPERL</tt>-Direktive zusammen mit <tt>use utf8;</tt>
-	    </li>
-	  </ul>
-	</li>
-	<li>
-	  <b>HTML-Template</b>
-	  <ul>
-	    <li>out of the box</li>
-	  </ul>
-	</li>
-      </ul>
+      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
+      auftaucht, hat Perl festgestellt, dass "Characters" dort
+      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
+      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
+      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
     </p>
     </div>
     <a name="footer"></a>

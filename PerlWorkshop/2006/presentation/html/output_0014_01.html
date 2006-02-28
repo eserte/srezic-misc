@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Encode.pm
+            Warum die Probleme? (2)
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,19 @@
     <div id="pagebody">
         
 <p>
-      Zum Konvertieren benutzt man <tt>Encode.pm</tt>.
       <ul>
-	<li>decode: Octets → Perl-Characters</li>
-	<li>encode: Perl-Characters → Octets</li>
+	<li>
+	  Schnittstellen, die nicht mit Unicode umgehen können
+	</li>
+	<li>
+	  Perl (sobald die Daten korrekt geflaggt sind) kann mit
+	  Unicode recht gut umgehen, aber …
+	</li>
+	<li>
+	  die meisten externen (C-)Bibliotheken nicht; ergo ist jedes
+	  verwendete XS-Modul ein potentieller Problemfall
+	</li>
       </ul>
-      <pre>
-	use Encode qw(encode decode);
-	$octets = encode("iso-8859-15", "\x{20ac}");
-        # ergibt \244
-	$string = decode("utf-8", "\342\202\254");
-        # ergibt \x{20ac}
-      </pre>
     </p>
     </div>
     <a name="footer"></a>
