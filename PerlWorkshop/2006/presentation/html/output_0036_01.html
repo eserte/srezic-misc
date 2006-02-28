@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Digest::*
+            XML::*
         </h1>
 
         <div id="pagenav">
@@ -55,17 +55,13 @@
     <div id="pagebody">
         
 <p>
+      am Beispiel von <tt>XML::LibXML</tt>
       <ul>
 	<li>
-	  Digest::*-Module, sind nur für binäre Daten definiert
+	  Einlesen: Octets genügen!
 	</li>
 	<li>
-	  <tt>Digest::MD5</tt>
-	  beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
-	  von 255 verwendet werden
-	</li>
-	<li>
-	  Lösung: vor dem Verwenden einer Digest::*-Funktion Daten nach Octets umwandeln
+	  Ausgabe: Tweaks nötig
 	</li>
       </ul>
     </p>
