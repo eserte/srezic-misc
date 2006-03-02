@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Das Programm selbst
+            Ein-/Ausgabe: binmode
         </h1>
 
         <div id="pagenav">
@@ -55,11 +55,24 @@
     <div id="pagebody">
         
 <p>
-      Wenn das Programm selbst in UTF-8 geschrieben ist, muss das
-      utf8-Pragma eingeschaltet werden:
-      <pre>
-	use utf8;
-      </pre>
+      <ul>
+	<li>
+	  beim Einlesen oder Ausgeben von binären Daten eingelesen:
+	  immer, auch als Unix-Programmierer, binmode()
+	  verwenden
+	</li>
+	<li>
+	  dadurch kein versehentliches Einlesen/Ausgeben des
+	  Datenstroms als UTF-8
+	</li>
+	<li>
+	  <tt>PERL_UNICODE</tt>-Environment-Variable bzw. Perl-Option
+	  <tt>-C</tt>
+	</li>
+	<li>
+	  perl 5.8.0 und UTF-8-Locales
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

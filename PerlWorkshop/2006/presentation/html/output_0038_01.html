@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Danke!</title>
+    <title>Perl und Unicode - Spezifische Module</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Danke!
+            Digest::*
         </h1>
 
         <div id="pagenav">
@@ -54,7 +54,21 @@
 
     <div id="pagebody">
         
-<p style="text-align:center;">Danke! Thank you! Merci! Hvala! Děkuji! спасибо! ευχαριστώ! </p>
+<p>
+      <ul>
+	<li>
+	  Digest::*-Module, sind nur für binäre Daten definiert
+	</li>
+	<li>
+	  <tt>Digest::MD5</tt>
+	  beispielsweise stirbt, wenn Zeichen mit einem Codepoint oberhalb
+	  von 255 verwendet werden
+	</li>
+	<li>
+	  Lösung: vor dem Verwenden einer Digest::*-Funktion Daten nach Octets umwandeln
+	</li>
+      </ul>
+    </p>
     </div>
     <a name="footer"></a>
     <div id="pagefeet">

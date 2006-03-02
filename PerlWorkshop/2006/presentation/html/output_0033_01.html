@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            HTML
+            DBI
         </h1>
 
         <div id="pagenav">
@@ -55,35 +55,15 @@
     <div id="pagebody">
         
 <p>
-      Wenn man Unicode-Zeichen in HTML verwenden will, hat man die
-      Möglichkeit, den "Charset" im Content-Type des
-      Dokuments als "utf-8" zu vermerken und UTF-8-Zeichen
-      als solche auszugeben (d.h. beim Ausgabe über PerlIO den
-      utf8-Layer wählen).
+      <tt>DBI</tt> und die meisten <tt>DBD</tt>-Module, auch
+      <tt>DBD::mysql</tt>, können mit UTF-8 nicht umgehen. Hier muss
+      man selbst Hand anlegen und die ein- und ausgehenden Daten
+      händisch per <tt>Encode</tt> umwandeln.
     </p>
 <p>
-      Eine defensivere Methode ist der Verzicht auf Ausgabe von Bytes
-      oberhalb 127 und die Verwendung von nummerischen HTML-Entities.
-      Das Modul <tt>HTML::Entities</tt> hilft hier:
-
-      <pre>
-    perl -w -MHTML::Entities=encode_entities_numeric -e '
-	$string = "äöü\x{20ac}";
-	print encode_entities_numeric
-            ($string, qq{&lt;&gt;&amp;\"\x{80}-\x{fffd}});
-    '
-      </pre>
-    </p>
-<p>
-      Das Ergebnis:
-
-      <pre>
-    &amp;#xE4;&amp;#xF6;&amp;#xFC;&amp;#x20AC;    
-      </pre>
-    </p>
-<p>
-      Aber auch bei dieser Methode sollte der Charset des Dokuments
-      als UTF-8 markiert werden.
+      Beim Postgres-Treiber <tt>DBD::Pg</tt> gibt es mit
+      <tt>pg_enable_utf8</tt> eine experimentelle Option, ein- und
+      ausgehende Daten als UTF-8 zu markieren.
     </p>
     </div>
     <a name="footer"></a>

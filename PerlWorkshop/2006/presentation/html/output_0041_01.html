@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (6b)
+            Binäre Daten
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,11 @@
     <div id="pagebody">
         
 <p>
-      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
-      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
-      wird, kommt es auch zur Doppelung:
-
-      <pre>
-    perl -MEncode -MDevel::Peek -e '
-	$x = qq{äöü};
-	Encode::from_to($x, "iso-8859-1", "utf-8");
-	utf8::upgrade($x);
-	Dump $x;
-    '
-      </pre>
+      Es gibt Perl-Funktionen, die primär für binäre Daten gedacht
+      sind, wie pack/unpack. Hier kann es zu unterschiedlichen
+      Ergebnissen für gleiche Daten bekommen, die sich nur darin
+      unterscheiden, ob das UTF-8-Flag gesetzt ist oder nicht.
+      Generell ist es hier sicherer, mit Octets zu arbeiten.
     </p>
     </div>
     <a name="footer"></a>

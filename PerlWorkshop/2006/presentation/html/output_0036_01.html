@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            XML::*
+            Templating-Systeme
         </h1>
 
         <div id="pagenav">
@@ -55,13 +55,24 @@
     <div id="pagebody">
         
 <p>
-      am Beispiel von <tt>XML::LibXML</tt>
       <ul>
 	<li>
-	  Einlesen: Octets genügen!
+	  <b>Template-Toolkit</b>
+	  <ul>
+	    <li>
+	      <tt>Template::Provider::Encoding</tt> und
+	      <tt>Template::Stash::ForceUTF8</tt>
+	    </li>
+	    <li>
+	      Verwendung der <tt>RAWPERL</tt>-Direktive zusammen mit <tt>use utf8;</tt>
+	    </li>
+	  </ul>
 	</li>
 	<li>
-	  Ausgabe: Tweaks nötig
+	  <b>HTML-Template</b>
+	  <ul>
+	    <li>out of the box</li>
+	  </ul>
 	</li>
       </ul>
     </p>

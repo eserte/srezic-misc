@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            CGI
+            HTML
         </h1>
 
         <div id="pagenav">
@@ -55,29 +55,36 @@
     <div id="pagebody">
         
 <p>
-      Bei der Verwendung von HTTP-GET und HTTP-POST sehen die
-      Standards nur das Versenden von Octets vor, ohne dass man die
-      Möglichkeit hat, das Encoding zu markieren. Das tatsächlich
-      verwendete Encoding kann man nur aus der Kenntnis des Encodings
-      der versendenden Quelle wissen. Wenn also ein Formular auf einer
-      HTML-Seite, die das Charset UTF-8 hat, versendet wird, sind die
-      versendeten GET- oder POST-Daten auch in UTF-8 kodiert.
+      Wenn man Unicode-Zeichen in HTML verwenden will, hat man die
+      Möglichkeit, den "Charset" im Content-Type des
+      Dokuments als "utf-8" zu vermerken und UTF-8-Zeichen
+      als solche auszugeben (d.h. beim Ausgabe über PerlIO den
+      utf8-Layer wählen).
     </p>
 <p>
-      Die Funktion CGI::param() kann daher auch nur mit Octets
-      umgehen. Mit einer kleinen Schleife lassen sich die
-      Parameter-Keys und -Values leicht umwandeln (in diesem Beispiel
-      davon ausgehend, dass die Parameter in UTF-8 kodiert sind):
+      Eine defensivere Methode ist der Verzicht auf Ausgabe von Bytes
+      oberhalb des Codepoints 127 und die Verwendung von nummerischen
+      HTML-Entities.
+      Das Modul <tt>HTML::Entities</tt> hilft hier:
 
       <pre>
-    perl -MCGI=param -MEncode -MData::Dumper -e '
-        for $key (param) {
-            $new_param{decode_utf8($key)} =
-               [ map { decode_utf8($_) } param($key)];
-        }
-        warn Dumper \%new_param;
-    ' Ã¤Ã¶Ã¼=Ã¤Ã¶Ã¼
+    perl -w -MHTML::Entities=encode_entities_numeric -e '
+	$string = "äöü\x{20ac}";
+	print encode_entities_numeric
+            ($string, qq{&lt;&gt;&amp;\"\x{80}-\x{fffd}});
+    '
       </pre>
+    </p>
+<p>
+      Das Ergebnis:
+
+      <pre>
+    &amp;#xE4;&amp;#xF6;&amp;#xFC;&amp;#x20AC;    
+      </pre>
+    </p>
+<p>
+      Aber auch bei dieser Methode sollte der Charset des Dokuments
+      als UTF-8 markiert werden.
     </p>
     </div>
     <a name="footer"></a>

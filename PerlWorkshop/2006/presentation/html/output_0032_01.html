@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            DBI
+            Tk
         </h1>
 
         <div id="pagenav">
@@ -55,15 +55,20 @@
     <div id="pagebody">
         
 <p>
-      <tt>DBI</tt> und die meisten <tt>DBD</tt>-Module, auch
-      <tt>DBD::mysql</tt>, können mit UTF-8 nicht umgehen. Hier muss
-      man selbst Hand anlegen und die ein- und ausgehenden Daten
-      händisch per <tt>Encode</tt> umwandeln.
-    </p>
-<p>
-      Beim Postgres-Treiber <tt>DBD::Pg</tt> gibt es mit
-      <tt>pg_enable_utf8</tt> eine experimentelle Option, ein- und
-      ausgehende Daten als UTF-8 zu markieren.
+      <ul>
+	<li>
+	  seit Version 804 sind die Interna auf UTF-8 umgestellt
+	</li>
+	<li>
+	  jeder String, der durch Tk geht, bekommt automatisch das
+	  UTF-8-Flag gesetzt
+	</li>
+	<li>
+	  problematisch, wenn die Daten aus Tk weiter mit Modulen
+	  bearbeitet werden sollen, die noch nicht mit UTF-8 umgehen
+	  können (zum Beispiel <tt>DBI</tt>/<tt>DBD::mysql</tt>)
+	</li>
+      </ul>
     </p>
     </div>
     <a name="footer"></a>

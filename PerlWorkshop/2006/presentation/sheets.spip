@@ -220,7 +220,7 @@
 	  die Vor- und Nachteile von UTF-8 kehren sich hier um
 	</li>
 	<li>
-	  UCS-2 kann zudem nicht den gesamten Unicode-Zeichenraum
+	  UCS-2 kann nicht den gesamten Unicode-Zeichenraum
 	  abbilden.
 	</li>
       </ul>
@@ -270,6 +270,9 @@
 	  vorliegen
 	</li>
 	<li>
+	  Unterscheidung zwischen <i>Octets</i> und <i>Characters</i>
+ 	</li>
+	<li>
 	  nicht alles ist UTF-8!
 	</li>
       </ul>
@@ -289,7 +292,7 @@
 	</li>
 	<li>
 	  die meisten externen (C-)Bibliotheken nicht; ergo ist jedes
-	  verwendete XS-Modul ein potentieller Problemfall
+	  verwendete XS-Modul ein potenzieller Problemfall
 	</li>
       </ul>
     </p>
@@ -308,6 +311,19 @@
 	  Modulversionen hilft oft!
 	</li>
       </ul>
+    </p>
+  </data>
+
+  <subchapter>Literale</subchapter>
+  <data>
+    <p>
+      verschiedene Möglichkeiten, Unicode-Literale in Perl-Programmen unterzubringen:
+      <pre>
+	"\x{20ac}"; # Unicode-Codepoint als Hexzahl
+        "\N{EURO SIGN}"; # langer Name, benötigt "use charnames"
+        chr(0x20ac);
+        use utf8; # und dann UTF-8 verwenden
+      </pre>
     </p>
   </data>
 
@@ -373,10 +389,8 @@
 	  Datenstroms als UTF-8
 	</li>
 	<li>
-	  <tt>PERL_UNICODE</tt>-Environment-Variable
-	</li>
-	<li>
-	  Perls Option <tt>-C</tt>
+	  <tt>PERL_UNICODE</tt>-Environment-Variable bzw. Perl-Option
+	  <tt>-C</tt>
 	</li>
 	<li>
 	  perl 5.8.0 und UTF-8-Locales
@@ -514,7 +528,7 @@
       <pre>
     perl -e '
         $non_utf8 = $utf8 = qq{äöüÄÖÜß};
-        utf8::upgrade($x);
+        utf8::upgrade($utf8);
         print $non_utf8 eq $utf8, "\n";
     '
     1
@@ -567,7 +581,7 @@
 	  Was zeigt mein Editor an?
 	</li>
 	<li>
-	  Was zeigt mein Terminal (xterm ...) an?
+	  Was zeigt mein Terminal (xterm -u8 oder +u8 ...) an?
 	</li>
 	<li>
 	  hexdump, hd, od
@@ -669,7 +683,8 @@
     </p>
     <p>
       Eine defensivere Methode ist der Verzicht auf Ausgabe von Bytes
-      oberhalb 127 und die Verwendung von nummerischen HTML-Entities.
+      oberhalb des Codepoints 127 und die Verwendung von nummerischen
+      HTML-Entities.
       Das Modul <tt>HTML::Entities</tt> hilft hier:
 
       <pre>
@@ -757,7 +772,7 @@
 	  Einlesen: Octets genügen!
 	</li>
 	<li>
-	  Ausgabe: Tweaks nötig
+	  Ausgabe: Tweaks notwendig
 	</li>
       </ul>
     </p>

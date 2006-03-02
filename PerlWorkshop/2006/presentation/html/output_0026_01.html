@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (7)
+            Devel::Peek (6)
         </h1>
 
         <div id="pagenav">
@@ -55,17 +55,18 @@
     <div id="pagebody">
         
 <p>
-      Jedes Zeichen ist nun mit vier Bytes kodiert worden.
+      Ein beliebter Fehler ist das "doppelte UTF-8-Encoding". Daten,
+      die schon mit dem UTF-8-Flag vorliegen, werden als
+      ISO-8859-1-Octets interpretiert und nochmals nach
+      Perl-Characters konvertiert:
 
       <pre>
-    SV = PV(0x811a460) at 0x811a210
-      REFCNT = 1
-      FLAGS = (POK,pPOK,UTF8)
-      PV = 0x812c500 "\303\203\302\244\303\203\302\266
-        \303\203\302\274"\0
-        [UTF8 "\x{c3}\x{a4}\x{c3}\x{b6}\x{c3}\x{bc}"]
-      CUR = 12
-      LEN = 13
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	utf8::upgrade($x);
+	$x = decode("iso-8859-1", $x);
+	Dump $x;
+    '
       </pre>
     </p>
     </div>

@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Devel::Peek (3)
+            Devel::Peek (2)
         </h1>
 
         <div id="pagenav">
@@ -55,23 +55,26 @@
     <div id="pagebody">
         
 <p>
-      Am interessantesten ist der Zeichenbereich zwischen 128 und 255.
-      Hier gibt es Zeichen, die sowohl ohne als auch mit UTF-8
-      repräsentiert werden können. Einmal als Beispiel die deutschen
-      Umlaute ohne UTF-8-Flag:
+      Zum Vergleich eine Ausgabe mit einem dem Euro-Zeichen, bei dem
+      das UTF-8-Flag gesetzt ist:
 
       <pre>
-    perl -MDevel::Peek -e "Dump qq{äöüÄÖÜß}"
+    perl -MDevel::Peek -e "Dump qq{\x{20ac}}"
       </pre>
 
       <pre>
     SV = PV(0x811a598) at 0x811a210
       REFCNT = 1
-      FLAGS = (POK,READONLY,pPOK)
-      PV = 0x81192f0 "\344\366\374\304\326\334\337"\0
-      CUR = 7
-      LEN = 8
+      FLAGS = (POK,READONLY,pPOK,UTF8)
+      PV = 0x81192f0 "\342\202\254"\0 [UTF8 "\x{20ac}"]
+      CUR = 3
+      LEN = 4
       </pre>
+
+      Auch hier sehen wir ein SV mit einigen Unterschieden: in FLAGS
+      kommt nun "UTF8" vor, und in PV werden zwei Zeichenketten
+      angezeigt: einmal der Inhalt als Bytefolge (mit drei Zeichen),
+      sowie die UTF8-Übersetzung.
     </p>
     </div>
     <a name="footer"></a>

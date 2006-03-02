@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Ein-/Ausgabe: binmode
+            Ein-/Ausgabe: PerlIO
         </h1>
 
         <div id="pagenav">
@@ -55,26 +55,30 @@
     <div id="pagebody">
         
 <p>
-      <ul>
-	<li>
-	  beim Einlesen oder Ausgeben von binären Daten eingelesen:
-	  immer, auch als Unix-Programmierer, binmode()
-	  verwenden
-	</li>
-	<li>
-	  dadurch kein versehentliches Einlesen/Ausgeben des
-	  Datenstroms als UTF-8
-	</li>
-	<li>
-	  <tt>PERL_UNICODE</tt>-Environment-Variable
-	</li>
-	<li>
-	  Perls Option <tt>-C</tt>
-	</li>
-	<li>
-	  perl 5.8.0 und UTF-8-Locales
-	</li>
-      </ul>
+      Wenn es sich bei der Kommunikation mit der Außenwelt um I/O handelt,
+      kann man die Features der PerlIO-Layer verwenden. Beim Einlesen
+      schreibt man lediglich:
+
+      <pre>
+	open $fh, "&lt;:encoding(...)", $dateiname;
+      </pre>
+
+      und beim Schreiben:
+
+      <pre>
+	open $fh, "&gt;:encoding(...)", $dateiname;
+      </pre>
+
+    </p>
+<p>
+      Als Encoding wählt man dasjenige, das von der Außenwelt kommt bzw.
+      dort erwartet wird. Wenn das Encoding UTF-8 ist, kann man direkt den
+      utf8-Layer verwenden:
+
+      <pre>
+	open $fh, "&lt;:utf8", $dateiname;
+	open $fh, "&gt;:utf8", $dateiname;
+      </pre>
     </p>
     </div>
     <a name="footer"></a>

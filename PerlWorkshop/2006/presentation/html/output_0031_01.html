@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="de" lang="de">
 
 <head>
-    <title>Perl und Unicode - Spezifische Module</title>
+    <title>Perl und Unicode - Debugging</title>
     <link href="spip.css" rel="stylesheet" type="text/css" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="Author" content="Slaven Rezić" />
@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Tk
+            Rückwärtskompatibilität (3)
         </h1>
 
         <div id="pagenav">
@@ -55,18 +55,19 @@
     <div id="pagebody">
         
 <p>
+      Einige Features sind nur verwendbar, wenn das UTF-8-Flag
+      eingeschaltet ist:
       <ul>
 	<li>
-	  seit Version 804 sind die Interna auf UTF-8 umgestellt
+	  <tt>lc</tt>, <tt>uc</tt>
 	</li>
 	<li>
-	  jeder String, der durch Tk geht, bekommt automatisch das
-	  UTF-8-Flag gesetzt
+	  Zeichenklassen wie <tt>\w</tt> (locale vs.
+	  Unicode-Properties)
 	</li>
 	<li>
-	  problematisch, wenn die Daten aus Tk weiter mit Modulen
-	  bearbeitet werden sollen, die noch nicht mit UTF-8 umgehen
-	  können (zum Beispiel <tt>DBI</tt>/<tt>DBD::mysql</tt>)
+	  zum Zusichern, dass das UTF-8-Flag gesetzt ist:
+	  <tt>utf8::upgrade</tt>
 	</li>
       </ul>
     </p>

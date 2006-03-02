@@ -21,7 +21,7 @@
                 <span id="headline">Perl und Unicode</span>
                 <div style="clear:both;"></div>
             </div>
-            Warnungen
+            Devel::Peek (6b)
         </h1>
 
         <div id="pagenav">
@@ -42,7 +42,7 @@
                 
                 
                 &nbsp;
-                <span class="navstealth">&gt;&gt;&gt;</span>
+                <a accesskey="n" href="output_0043_01.html" accesskey="f">&gt;&gt;&gt;</a>
                 
             </div>
             <div id="navm">
@@ -55,11 +55,18 @@
     <div id="pagebody">
         
 <p>
-      Warnzeichen beachten! Wenn eine Warnung "Wide character in ..."
-      auftaucht, hat Perl festgestellt, dass "Characters" dort
-      verwendet werden, wo "Octets" erwartet werden. In diesem Fall
-      entweder manuell mit <tt>Encode::encode</tt> konvertieren, oder,
-      wenn möglich, PerlIO-Layer wie oben beschrieben verwenden.
+      Oder Octets, die als UTF-8 vorliegen, aber das UTF-8-Flag nicht
+      gesetzt haben. Wenn fälschlicherweise utf8::upgrade verwendet
+      wird, kommt es auch zur Doppelung:
+
+      <pre>
+    perl -MEncode -MDevel::Peek -e '
+	$x = qq{äöü};
+	Encode::from_to($x, "iso-8859-1", "utf-8");
+	utf8::upgrade($x);
+	Dump $x;
+    '
+      </pre>
     </p>
     </div>
     <a name="footer"></a>
