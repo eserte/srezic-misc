@@ -466,6 +466,10 @@ L<Maypole>. A MVC system for Apache or cgi-bin.
 See also L<HTML::Mason> and maybe L<Apache::ASP>, which are more than just
 templating systems (is this true XXX?).
 
+=head2 CGI based frameworks
+
+L<CGI::Application>
+
 =head2 CMS
 
 L<Contentment> --- a perl based Web CMS (check it XXX).
