@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: utrace_stat,v 1.1 2006/03/28 22:48:25 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 1999,2002,2006 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: srezic@cpan.org
+# WWW:  http://user.cs.tu-berlin.de/~eserte/
+#
+
+use strict;
+use Getopt::Long;
+
+my $mem = 0;
+my $total_mem = 0;
+my %malloc;
+my %opt;
+
+GetOptions(\%opt, "p") or die "usage: $0 [-p]";
+
+while(<>) {
+    if (!$opt{"p"} && /^(?:\s*\d+\s\S+\s)(?:CALL|RET)\s+utrace/) {
+	# skip
+    } elsif (/^(\s*\d+\s\S+\s)USER\s+(\d+)\s+(.*)/) {
+	my($pre) = $1;
+	my(@v) = split(/\s+/, $3);
+	my $l = $2;
+	if ($l == 12) { # malloc et al.
+	    my $sign;
+	    if (join("",@v[3,2,1,0]) eq "00000000") { # alloc
+		my $size = hex(join("",@v[7,6,5,4]));
+		my $ptr  = hex(join("",@v[11,10,9,8]));
+		if ($size == 0 && $ptr == 0) {
+		    printf "${pre}malloc init\n";
+		} else {
+		    $mem += $size;
+		    $total_mem += $size;
+		    $malloc{$ptr} = $size;
+		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr;
+		}
+	    } else { # free/realloc
+		my $r    = hex(join("",@v[11,10,9,8]));
+		my $size = hex(join("",@v[7,6,5,4]));
+		my $ptr  = hex(join("",@v[3,2,1,0]));
+		if ($r == 0 && $size == 0) { # free
+		    if (!exists $malloc{$ptr}) {
+			warn "free: No malloc for $ptr detected?";
+		    } else {
+			$mem -= $malloc{$ptr};
+			my $bytes = delete $malloc{$ptr};
+			printf "${pre}free(0x%08x) ($bytes bytes)\n", $ptr, $bytes;
+		    }
+		} else { # realloc
+		    if (!exists $malloc{$ptr}) {
+			warn "realloc: No malloc for $ptr detected?";
+		    } else {
+			$mem -= $malloc{$ptr};
+			$total_mem -= $malloc{$ptr};
+			delete $malloc{$ptr};
+			$mem += $size;
+			$total_mem += $size;
+			$malloc{$r} = $size;
+			printf "${pre}realloc(0x%08x, %d) => 0x%08x\n", $ptr, $size, $r;
+		    }
+		}
+	    }
+	} else {
+	    warn "Unhandled USER $l";
+	}
+    } else {
+	print $_;
+    }
+}
+
+printf "Still allocated memory: %d\n", $mem;
+printf "Total allocated memory: %d\n", $total_mem;
+
+__END__
