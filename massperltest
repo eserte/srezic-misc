@@ -1,0 +1,199 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Cwd;
+use Getopt::Long;
+use File::Spec;
+use Fcntl qw(LOCK_EX LOCK_NB);
+
+sub outerrsum;
+
+use vars qw($curr_dir);
+
+my $log;
+my $prereqinst;
+my $summary = "";
+my $rcfile = "$ENV{HOME}/.massperltestrc";
+my $truncate_log;
+my $v;
+my $lockfile;
+my $perl = $^X;
+
+my %rc;
+
+if (!GetOptions("log|logfile=s" => \$log,
+		"truncatelog!" => \$truncate_log,
+		"prereqinst!" => \$prereqinst,
+		"rc=s" => \$rcfile,
+		"v!" => \$v,
+		"lockfile=s" => \$lockfile,
+		"perl=s" => \$perl,
+	       )) {
+    die <<EOF;
+usage: $0 [-v] [-log logfile] [-truncatelog] [-prereqinst]
+          [-rc rcfile] [-lockfile lockfile] [-perl perl] [directory ...]
+
+-v:                 Be verbose.
+-log logfile:       Use the named logfile instead the default
+		    $log.
+-truncatelog:       Truncate the logfile first (otherwise the log is appended).
+-prereqinst:	    Use the mkprereqinst script to make sure all dependencies
+		    are loaded.
+-rc rcfile:	    Store defaults in another file instead of
+		    $rcfile.
+		    If an empty file is specified, then no rcfile is used.
+-lockfile lockfile: Use a lockfile to prevent multiple runs.
+
+EOF
+}
+
+my %Config;
+for my $key (qw(archname version make)) {
+    chomp(my $out = `$perl -V:$key`);
+    ($Config{$key}) = $out =~ m{$key='(.*)'};
+}    
+
+if (!$log) {
+    $log = "/tmp/massperltest-for-$<-on-$Config{archname}-with-$Config{version}.log";
+}
+
+my @directories = @ARGV;
+if (!@directories) {
+    @directories = grep { -d $_ } glob("*");
+}
+
+if (defined $lockfile) {
+    open(LOCK, "> $lockfile") or die "Can't write to $lockfile: $!";
+    flock LOCK, LOCK_EX|LOCK_NB or die "$lockfile is locked";
+}
+
+read_rc();
+if (defined $rc{currdir}) {
+    for my $i (0 .. $#directories) {
+	my $dir = $directories[$i];
+	if ($dir eq $rc{currdir} && $i > 0) {
+	    @directories = @directories[$i .. $#directories, 0 .. $i-1];
+	    last;
+	}
+    }
+}
+
+truncate $log, 0
+    if $truncate_log;
+
+outlog("="x70);
+outlog("= " . scalar(localtime));
+
+my $thisdir = cwd;
+my $redirect = " >>$log 2>&1 ";
+for my $dir (@directories) {
+    outerrsum sprintf "%-30s ", "$dir...";
+    chdir $thisdir or die $!;
+    if (!-d $dir) {
+	outerrsum "skip (no dir)\n";
+	next;
+    }
+    if ($dir =~ m{^(CVS|RCS|\.svn)$}) {
+	outerrsum "skip (VCS directory)\n";
+	next;
+    }
+    if (!chdir $dir) {
+	outlog("Can't chdir to $dir: $!");
+	next;
+    }
+    if (!-e "Makefile.PL") {
+	outerrsum "no Makefile.PL\n";
+	next;
+    }
+
+    outlog("="x70);
+    outlog("= $dir");
+    $curr_dir = $dir;
+    if (-e "Makefile") {
+	system("$Config{make} clean >/dev/null 2>&1");
+	die "make clean signalled" if ($? & 127 == 2);
+    }
+    my $cmd = "$perl Makefile.PL $redirect <" . File::Spec->devnull;
+    if ($prereqinst) {
+	$cmd .= " && sudo $perl $ENV{HOME}/bin/sh/mkprereqinst -exec -execopts=-q";
+    }
+    $cmd .= " && $Config{make} all test $redirect <" . File::Spec->devnull;
+    print STDERR "$cmd\n" if $v;
+    system($cmd);
+    die "make clean signalled" if ($? & 127 == 2);
+    if ($? == 0) {
+	outerrsum "OK\n";
+    } else {
+	outerrsum "failed\n";
+    }
+}
+$curr_dir = undef;
+
+END {
+    outlog("="x70);
+    outlog("Summary:");
+    outlog($summary);
+
+    # Remember current directory
+    $rc{currdir} = $curr_dir;
+
+    write_rc();
+}
+
+sub outlog {
+    my $logentry = shift;
+    open(LOG, ">>$log") or do {
+	warn "Can't append to $log: $!";
+	return;
+    };
+    print LOG "$logentry\n";
+    close LOG;
+}
+
+sub outerrsum {
+    my $msg = shift;
+    print STDERR $msg;
+    $summary .= $msg;
+}
+
+sub read_rc {
+    return if !$rcfile;
+    if (!eval {	require YAML; 1 }) {
+	warn "YAML is needed to read $rcfile\n";
+	return;
+    }
+
+    if (open(RC, $rcfile)) {
+	flock(RC, LOCK_EX) or die $!;
+	local $/ = undef;
+	my $buf = <RC>;
+	close RC;
+
+	my $rc = eval { YAML::Load($buf) };
+	if ($rc) {
+	    %rc = %$rc;
+	} else {
+	    warn "Cannot read YAML data from $rcfile\n";
+	}
+    }
+}
+
+sub write_rc {
+    return if !$rcfile;
+    if (!eval { require YAML; 1 }) {
+	warn "YAML is needed to write $rcfile\n";
+	return;
+    }
+
+    if (open(RC, "> $rcfile")) {
+	flock(RC, LOCK_EX) or die $!;
+	my $yaml = YAML::Dump(\%rc);
+	print RC $yaml;
+	close RC;
+    } else {
+	warn "Cannot write to $rcfile: $!";
+    }
+    
+}
+
+1;
