@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-our $VERSION = sprintf("%d.%02d", q$Revision: 1.3 $ =~ /(\d+)\.(\d+)/);
+our $VERSION = sprintf("%d.%02d", q$Revision: 1.1 $ =~ /(\d+)\.(\d+)/);
 
 use DB_File;
 use Encode;
