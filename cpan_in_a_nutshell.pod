@@ -341,6 +341,12 @@ L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
 Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
 perl module. Former modules were L<WeakRef> ...
 
+=head2 Tracing
+
+L<Carp::Indeed>: turns every warn/die into a stack trace including
+used parameters. Seems to be more powerful than L<Acme::JavaTrace> and
+L<Devel::SimpleTrace>, which do not dump parameters.
+
 =head1 Wiki
 
 L<CGI::Wiki>: nice, modular, not out-of-the-box, but relatively easily
