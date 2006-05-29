@@ -188,6 +188,12 @@ L<Config::INI::Simple>.
 L<XML::Simple>: out-of-the-box serialization is not possible without
 fiddling with a lot of options
 
+L<Config::Model>: a configuration framework for parsing and analyzing
+all kinds of configuration file. Includes generating a curses screen
+to let the user input the options. Have many features like automatic
+comment creation, help screens, different levels
+(novice/intermediate/...).
+
 =head2 Serialization to other languages
 
 L<Data::JavaScript> from perl to javascript, can handle circular
