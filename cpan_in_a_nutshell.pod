@@ -73,7 +73,7 @@ with a higher level GUI toolkit like Tk.
 
 Low level: L<Curses>.
 
-Higher level: L<CDK>, L<Curses::UI>.
+Higher level: L<CDK>, L<Curses::UI>, L<Curses::Widgets>.
 
 =head1 GUI builder
 
