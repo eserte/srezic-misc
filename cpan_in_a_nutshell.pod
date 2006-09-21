@@ -28,6 +28,10 @@ easier tests, is_deeply from Test::More should suffice.
 L<Test::Without::Module>: emulate the non-existance of modules (e.g. for
 optional features).
 
+L<Test::LongString> helps in comparing long strings by only showing
+relevant output. L<Test::Differences> may also used for this: it shows
+the differences in complex objects in a diff style.
+
 =head2 WWW and HTML related test modules
 
 L<Test::HTTPStatus>: a very simple module for just checking the return
