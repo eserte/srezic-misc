@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: throughput,v 1.1 2006/03/30 06:41:38 eserte Exp $
+# $Id: throughput,v 1.2 2006/10/27 23:09:12 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2000 Slaven Rezic. All rights reserved.
@@ -20,7 +20,8 @@ use strict;
 use vars qw($default_dev);
 
 #$default_dev = "ippp0" unless defined $default_dev;
-$default_dev = "isp0" unless defined $default_dev;
+#$default_dev = "isp0" unless defined $default_dev;
+$default_dev = "vr0" unless defined $default_dev;
 
 sub new {
     my($class, %args) = @_;
@@ -59,6 +60,10 @@ sub create_canvas {
 	$max_baud = 16000 unless defined $max_baud; # Maximum der Baud-Anzeige
 	$step = 500; # für gestrichelte Linie
 	$step2 = 1000; # für Baud-Text
+    } elsif ($dev =~ /vr0/) { # XXX for me locally: DSL
+	$max_baud = 200000 unless defined $max_baud;
+	$step = 5000;
+	$step2 = 10000;
     } else { # Ethernet etc.
 	$max_baud = 1_000_000 unless defined $max_baud; # Maximum der Baud-Anzeige
 #XXX automatisch feststellen, siehe tics-code
@@ -79,7 +84,8 @@ sub create_canvas {
 			      )->pack(-expand => 1, -fill => 'both');
     my $baud = 0;
     for(my $x = 0; $x<=$canvas_width; $x+=$incr) {
-	my $baud_text = sprintf("%.1f", $baud/1000);
+	my $baud_k = $baud/1000;
+	my $baud_text = sprintf(($baud_k==int($baud_k) ? "%d" : "%.1f"), $baud_k);
 	$baud_text =~ /^(.*)$/; # untaint (why?)
 	$baud_text = $1;
 	$canvas->createLine($x, 0, $x, $self->{-height}, -fill => 'grey70');
