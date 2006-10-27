@@ -1,0 +1,344 @@
+#!/usr/bin/env perl
+# -*- perl -*-
+
+#
+# $Id: playm3u,v 1.1 2006/10/27 23:06:54 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2000 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: eserte@cs.tu-berlin.de
+# WWW:  http://user.cs.tu-berlin.de/~eserte/
+#
+
+use Getopt::Long;
+use POSIX qw(setsid);
+use strict;
+
+# REPO BEGIN
+# REPO NAME save_pwd /home/e/eserte/work/srezic-repository 
+# REPO MD5 0f7791cf8e3b62744d7d5cfbd9ddcb07
+
+=head2 save_pwd(sub { ... })
+
+=for category File
+
+Save the current directory and assure that outside the block the old
+directory will still be valid.
+
+=cut
+
+sub save_pwd (&) {
+    my $code = shift;
+    require Cwd;
+    my $pwd = Cwd::cwd();
+    eval {
+	$code->();
+    };
+    my $err = $@;
+    chdir $pwd or die "Can't chdir back to $pwd: $!";
+    die $err if $err;
+}
+# REPO END
+
+my $rec = 1;
+my $mp3_player;
+my @mp3_player_args;
+my $playm3u_server_file = "$ENV{HOME}/.playm3u_server";
+my $server_mode = 1;
+my $do_play = 1;
+my $client_cmd;
+my $v;
+my $all_music_dir = "/usr/www/audio";
+
+if (!GetOptions("r|recurse!"          => \$rec,
+		"player|mp3player=s" => \$mp3_player,
+		"server!" => \$server_mode,
+		"play!" => \$do_play,
+		"client=s" => \$client_cmd,
+		"allmusicdir=s" => \$all_music_dir,
+		"v" => \$v,
+	       ),
+   ) {
+    die "usage...";
+}
+
+if (defined $client_cmd) {
+    use IO::Socket::UNIX;
+    my $sock = IO::Socket::UNIX->new(TYPE => SOCK_STREAM,
+				     Peer => $playm3u_server_file,
+				    );
+    if (!$sock) {
+	# start server, wait and retry once
+	unlink $playm3u_server_file;
+	if (fork == 0) {
+	    exec("xterm", "-geometry", "80x10-0-0", "-font", "5x7", "-e",
+		 $^X, $0, "-server", $all_music_dir);
+	    die $!;
+	}
+	for (1..5*10) {
+	    last if (-e $playm3u_server_file);
+	    select undef,undef,undef,0.1;
+	}
+	$sock = IO::Socket::UNIX->new(TYPE => SOCK_STREAM,
+				      Peer => $playm3u_server_file,
+				     );
+	die "Server not running? $!" if !$sock;
+    }
+    my $cmd = $client_cmd."\n";
+    if ($v) {
+	warn "Sending <$cmd> to server <$playm3u_server_file>\n";
+    }
+    $sock->print($cmd);
+    $sock->close;
+    exit 0;
+}
+
+if (!defined $mp3_player) {
+    $mp3_player = find_player() || "mpg123";
+}
+
+#@mp3_player_args = ("-r" => 22500, '--buffer' => 1024);
+#@mp3_player_args = ('-v', '--buffer' => 1024);
+@mp3_player_args = ('-v');
+
+my $exit_next;
+$SIG{USR1} = sub { $exit_next = 1 };
+$SIG{QUIT} = sub { exit };
+
+my @list;
+if (defined $ARGV[0] && -T $ARGV[0] && @ARGV == 1) {
+    open(F, $ARGV[0]) or die;
+    while(<F>) {
+	chomp;
+	push @list, $_;
+    }
+    close F;
+} elsif (defined $ARGV[0]) {
+    for my $arg (@ARGV) {
+	if (-d $arg) {
+	    push @list, list_mp3_in_dir($arg, $rec);
+	} else {
+	    push @list, $arg;
+	}
+    }
+} else {
+    @list = list_mp3_in_dir(".", $rec);
+}
+
+sub list_mp3_in_dir {
+    my($dir, $recurse) = @_;
+    my @files;
+    save_pwd {
+	chdir $dir or die "Can't chdir to $dir: $!";
+	if (!$recurse) {
+	    @files = glob("*.mp3");
+	} else {
+	    require File::Find;
+	    $File::Find::dont_use_nlink = 1; # cdrom!
+	    File::Find::find
+		    (sub { push @files, File::Spec->catfile($dir, $File::Find::name) if /\.mp3$/ }, ".");
+	}
+    };
+    @files;
+}
+
+srand();
+
+my @res;
+while(@list) {
+    my $r = rand();
+    my $index = int($r * ($#list+1));
+    push @res, $list[$index];
+    splice(@list, $index, 1);
+}
+
+if ($server_mode) {
+    if (!@res) {
+	die "No audio files to play";
+    }
+
+    use IO::Socket::UNIX;
+    require Event;
+
+    my $res_i = 0;
+
+    unlink $playm3u_server_file;
+    my $sock = IO::Socket::UNIX->new(Type => SOCK_STREAM,
+				     Local => $playm3u_server_file,
+				     Listen => 1,
+				    );
+    chmod 0600 => $playm3u_server_file;
+    die "Cannot create $playm3u_server_file server: $!" if !$sock;
+
+    warn "Created server <$playm3u_server_file>\n" if $v;
+    warn "Found " . scalar(@res) . " files to play\n" if $v;    
+
+    my $state = "playing";
+    my $current_pid;
+    my($rdr,$wtr);
+    my $pipe_watcher;
+
+    my $play;
+
+    my $exited = sub {
+	my($event) = @_;
+	warn "Process exited, move to next song...\n" if $v;
+	$res_i++;
+	if ($res_i > $#res) {
+	    $res_i = 0;
+	}
+	undef $current_pid;
+	$play->();
+    };
+
+    $play = sub {
+	if (defined $current_pid && kill 0 => $current_pid) {
+	    warn "Will kill pid <$current_pid>...\n" if $v;
+	    my $pid = $current_pid;
+	    undef $current_pid;
+	    kill TERM => -$pid;
+	} else {
+	    warn "No current pid available\n" if $v;
+	}
+	close $rdr if $rdr;
+	close $wtr if $wtr;
+	pipe($rdr,$wtr);
+	my $pid = fork;
+	if (!defined $pid) {
+	    die "Forking failed: $!";
+	}
+	if (!$pid) { # child
+	    close $rdr;
+	    setsid;
+	    warn "File index is <$res_i>\n" if $v;
+	    my $f = $res[$res_i];
+	    my @cmd = ($mp3_player, @mp3_player_args, $f);
+	    warn "@cmd...\n";
+	    select undef,undef,undef,1;#wait a little for /dev/dsp to settle
+	    system @cmd;
+	    print $wtr "Ready\n";
+	    exit(0);
+	} else {
+	    close $wtr;
+	    $current_pid = $pid;
+	    warn "Current pid is <$current_pid>\n" if $v;
+	    $pipe_watcher->cancel if $pipe_watcher;
+	    $pipe_watcher = Event->io(fd => $rdr,
+				      cb => $exited);
+	}
+    };
+
+    Event->io(fd => $sock,
+	      cb => sub {
+		  my $new_sock = $sock->accept;
+		  my $cmd = <$new_sock>;
+		  chomp $cmd;
+		  $new_sock->close;
+		  warn "Found command <$cmd>\n" if $v;
+		  if ($cmd eq 'play_pause') {
+		      if (defined $current_pid) {
+			  if ($state eq 'playing') {
+			      warn "State was $state, now pausing pid <$current_pid>...\n" if $v;
+			      kill STOP => -$current_pid;
+			      $state = 'pausing';
+			  } else {
+			      warn "State was $state, now playing pid <$current_pid>...\n" if $v;
+			      kill CONT => -$current_pid;
+			      $state = 'playing';
+			  }
+		      }
+		  } elsif ($cmd eq 'prev') {
+		      $res_i--;
+		      if ($res_i < 0) {
+			  $res_i = $#res;
+		      }
+		      $play->();
+		  } elsif ($cmd eq 'next') {
+		      $res_i++;
+		      if ($res_i > $#res) {
+			  $res_i = 0;
+		      }
+		      $play->();
+		  } elsif ($cmd eq 'stop') {
+		      if (defined $current_pid) {
+			  kill KILL => -$current_pid;
+		      }
+		      warn "exiting...";
+		      exit 0;
+		  } else {
+		      warn "unrecognized cmd <$cmd>";
+		  }
+	      }
+	     );
+
+    if ($do_play) {
+	$play->();
+    }
+
+    Event::loop();
+
+} else {
+    foreach my $f (@res) {
+	warn "$f...\n";
+	system($mp3_player, @mp3_player_args, $f);
+	exit if (($? & 127) == 2); # exit on INT
+	#      my $pid = fork;
+	#      if ($pid == 0) {
+	#  	exec $mp3_player, @mp3_player_args, $f;
+	#  	die $!;
+	#      }
+	#      {
+	#  	local %SIG;
+	#  	$SIG{INT} = sub { kill 9 => $pid };
+	#  	waitpid($pid,0);
+	#      }
+	#      select(undef, undef, undef, 0.3);
+	#      if ($exit_next) {
+	#  	exit;
+	#      }
+    }
+}
+
+sub find_player {
+    foreach my $player (qw/mpg123 kmp3player amp/) {
+	return $player if is_in_path($player);
+    }
+    undef;
+}
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/e/eserte/src/repository 
+# REPO MD5 1b42243230d92021e6c361e37c9771d1
+
+=head2 is_in_path($prog)
+
+=for category File
+
+Return the pathname of $prog, if the program is in the PATH, or undef
+otherwise.
+
+=cut
+
+sub is_in_path {
+    my($prog) = @_;
+    #return $prog if (file_name_is_absolute($prog) and -f $prog and -x $prog);
+    require Config;
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    return "$_\\$prog"
+		if (-x "$_\\$prog.bat" ||
+		    -x "$_\\$prog.com" ||
+		    -x "$_\\$prog.exe");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
+
+__END__
