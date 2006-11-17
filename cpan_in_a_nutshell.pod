@@ -170,7 +170,8 @@ L<FreezeThaw> is ancient, pure-perl, and much slower than other
 modules.
 
 A benchmark with results can be found here:
-L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>.
+L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl> (this was originally 
+L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
 More modules are mentioned there not covered here: L<RPC::XML>,
 L<Convert::Bencode>, L<Convert::Bencode_XS>.
 
