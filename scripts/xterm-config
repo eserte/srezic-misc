@@ -1,0 +1,68 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: xterm-config,v 1.1 2006/11/24 21:52:29 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2006 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+# Plethora of xterm control sequences:
+# http://rtfm.etla.org/xterm/ctlseq.html
+
+use strict;
+use Getopt::Long;
+
+use constant BEL => "";
+use constant ESC => "";
+
+use constant IND => ESC . "D"; # Index
+use constant NEL => ESC . "E"; # Next Line
+use constant HTS => ESC . "H"; # Tab Set
+use constant RI  => ESC . "M"; # Reverse Index
+use constant SS2 => ESC . "N"; # Single Shift Select of G2 Character Set: affects next character only
+use constant SS3 => ESC . "O"; # Single Shift Select of G3 Character Set: affects next character only
+use constant DCS => ESC . "P"; # Device Control String
+use constant SPA => ESC . "V"; # Start of Guarded Area
+use constant EPA => ESC . "W"; # End of Guarded Area
+use constant SOS => ESC . "X"; # Start of String
+use constant DECID => ESC . "Z"; # Return Terminal ID Obsolete form of CSI c (DA).
+use constant CSI => ESC . "["; # Control Sequence Introducer
+use constant ST  => ESC . "\\"; # String Terminator
+use constant OSC => ESC . "]";
+use constant PM  => ESC . "^"; # Privacy Message
+use constant APC => ESC . "_"; # Application Program Command
+
+my %o;
+GetOptions(\%o,
+	   "iconname=s",
+	   "title=s",
+	   "fg|foreground=s",
+	   "bg|background=s",
+	   "textcursor=s",
+	   "mousefg|mouseforeground=s",
+	   "mousebg|mousebackground=s",
+	   "tekfg|tekforeground=s",
+	   "tekbg|tekbackground=s",
+	   "highlightcolor=s",
+	  )
+    or die "usage?";
+
+print OSC . "1;$o{iconname}" . BEL if defined $o{iconname};
+print OSC . "2;$o{title}" . BEL if defined $o{title};
+print OSC . "10;$o{fg}" . BEL if defined $o{fg};
+print OSC . "11;$o{bg}" . BEL if defined $o{bg};
+print OSC . "12;$o{textcursor}" . BEL if defined $o{textcursor};
+print OSC . "13;$o{mousefg}" . BEL if defined $o{mousefg};
+print OSC . "14;$o{mousebg}" . BEL if defined $o{mousebg};
+print OSC . "15;$o{tekfg}" . BEL if defined $o{tekfg};
+print OSC . "16;$o{tekbg}" . BEL if defined $o{tekbg};
+print OSC . "17;$o{highlightcolor}" . BEL if defined $o{highlightcolor};
+
+__END__
