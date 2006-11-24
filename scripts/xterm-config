@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xterm-config,v 1.2 2006/11/24 22:59:53 eserte Exp $
+# $Id: xterm-config,v 1.3 2006/11/24 23:47:22 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006 Slaven Rezic. All rights reserved.
@@ -22,38 +22,38 @@ use Getopt::Long;
 use constant BEL => "";
 use constant ESC => "";
 
-#use constant IND => ESC . "D"; # Index
-use constant IND => chr 0x84;
-#use constant NEL => ESC . "E"; # Next Line
-use constant NEL => chr 0x85;
-#use constant HTS => ESC . "H"; # Tab Set
-use constant HTS => chr 0x88;
-#use constant RI  => ESC . "M"; # Reverse Index
-use constant RI  => chr 0x8d;
-#use constant SS2 => ESC . "N"; # Single Shift Select of G2 Character Set: affects next character only
-use constant SS2 => chr 0x8e;
-#use constant SS3 => ESC . "O"; # Single Shift Select of G3 Character Set: affects next character only
-use constant SS3 => chr 0x8f;
-#use constant DCS => ESC . "P"; # Device Control String
-use constant DCS => chr 0x90;
-#use constant SPA => ESC . "V"; # Start of Guarded Area
-use constant SPA => chr 0x96;
-#use constant EPA => ESC . "W"; # End of Guarded Area
-use constant EPA => chr 0x97;
-#use constant SOS => ESC . "X"; # Start of String
-use constant SOS => chr 0x98;
-#use constant DECID => ESC . "Z"; # Return Terminal ID Obsolete form of CSI c (DA).
-use constant DECID => chr 0x9a;
-#use constant CSI => ESC . "["; # Control Sequence Introducer
-use constant CSI => chr 0x9b;
-#use constant ST  => ESC . "\\"; # String Terminator
-use constant ST  => chr 0x9c;
-#use constant OSC => ESC . "]";
-use constant OSC => chr 0x9d;
-#use constant PM  => ESC . "^"; # Privacy Message
-use constant PM  => chr 0x9e;
-#use constant APC => ESC . "_"; # Application Program Command
-use constant APC => chr 0x9f;
+use constant IND_7   => ESC . "D"; # Index
+use constant IND     => chr 0x84;
+use constant NEL_7   => ESC . "E"; # Next Line
+use constant NEL     => chr 0x85;
+use constant HTS_7   => ESC . "H"; # Tab Set
+use constant HTS     => chr 0x88;
+use constant RI_7    => ESC . "M"; # Reverse Index
+use constant RI	     => chr 0x8d;
+use constant SS2_7   => ESC . "N"; # Single Shift Select of G2 Character Set: affects next character only
+use constant SS2     => chr 0x8e;
+use constant SS3_7   => ESC . "O"; # Single Shift Select of G3 Character Set: affects next character only
+use constant SS3     => chr 0x8f;
+use constant DCS_7   => ESC . "P"; # Device Control String
+use constant DCS     => chr 0x90;
+use constant SPA_7   => ESC . "V"; # Start of Guarded Area
+use constant SPA     => chr 0x96;
+use constant EPA_7   => ESC . "W"; # End of Guarded Area
+use constant EPA     => chr 0x97;
+use constant SOS_7   => ESC . "X"; # Start of String
+use constant SOS     => chr 0x98;
+use constant DECID_7 => ESC . "Z"; # Return Terminal ID Obsolete form of CSI c (DA).
+use constant DECID   => chr 0x9a;
+use constant CSI_7   => ESC . "["; # Control Sequence Introducer
+use constant CSI     => chr 0x9b;
+use constant ST_7    => ESC . "\\"; # String Terminator
+use constant ST	     => chr 0x9c;
+use constant OSC_7   => ESC . "]";
+use constant OSC     => chr 0x9d;
+use constant PM_7    => ESC . "^"; # Privacy Message
+use constant PM	     => chr 0x9e;
+use constant APC_7   => ESC . "_"; # Application Program Command
+use constant APC     => chr 0x9f;
 
 my %o;
 GetOptions(\%o,
@@ -99,9 +99,16 @@ GetOptions(\%o,
 	   "font=s",
 	   "nextfont",
 	   "prevfont",
+	   "report=s",
+	   "debugreport",
+	   "resize=i",
 	  )
     or die "usage?";
 die "usage?" if (@ARGV);
+
+END {
+    Term::ReadKey::ReadMode(0) if defined &Term::ReadKey::ReadMode;
+}
 
 print BEL if $o{bell};
 
@@ -148,7 +155,7 @@ if (defined $o{scrollregion}) {
     } else {
 	my($top,$bottom) = split /,/, $o{scrollregion};
 	for ($top, $bottom) {
-	    die "Not a number: $top\n" if !/^\d+$/;
+	    die "Not a number: $_\n" if !/^\d*$/;
 	}
 	print CSI . $top . ";" . $bottom . "r";
     }
@@ -172,6 +179,11 @@ print CSI . "6t" if $o{lower};
 print CSI . "7t" if $o{refresh};
 print CSI . "9;0t" if $o{unmaximize}; # does not work?
 print CSI . "9;1t" if $o{maximize}; # does not work?
+if ($o{resize}) {
+    die "-resize parameter must be at least 24\n"
+	if $o{resize} < 24 || $o{resize} !~ /^\d+$/;
+    print CSI . $o{resize} . 't';
+}
 
 print OSC .  "1;$o{iconname}" . BEL if defined $o{iconname};
 print OSC .  "2;$o{title}" . BEL if defined $o{title};
@@ -187,5 +199,49 @@ print OSC . "17;$o{highlightcolor}" . BEL if defined $o{highlightcolor};
 print OSC . "50;#$o{font}" . BEL if defined $o{font};
 print OSC . "50;#-" . BEL if $o{prevfont};
 print OSC . "50;#+" . BEL if $o{nextfont};
+
+if ($o{report}) {
+    if ($o{report} eq 'cgeometry') {
+	my($h,$w) = report_cgeometry();
+	print $w."x".$h."\n";
+    } else {
+	my $sub = "report_" . $o{report};
+	no strict 'refs';
+	my(@args) = &$sub;
+	print join(" ", @args), "\n";
+    }
+}
+
+sub report ($$) {
+    my($cmd, $rx) = @_;
+
+    require Term::ReadKey;
+    Term::ReadKey::ReadMode(5);
+
+    my $debug = $o{debugreport};
+
+    open my $TTY, "+<", "/dev/tty" or die "Cannot open terminal: $!";
+    syswrite $TTY, $cmd;
+    my $res = "";
+    my @args;
+    while() {
+	sysread $TTY, my $ch, 1 or die "Cannot sysread: $!";
+	print STDERR ord($ch)." " if $debug;
+	$res .= $ch;
+	last if (@args = $res =~ $rx);
+    }
+
+    Term::ReadKey::ReadMode(0);
+    @args;
+}
+
+sub report_status { report CSI.'5n', qr{0n} }
+sub report_cursorpos { report CSI.'6n', qr{(\d+);(\d+)R} }
+sub report_windowpos { report CSI.'13t', qr{;(\d+);(\d+)t} }
+sub report_geometry  { report CSI.'14t', qr{;(\d+);(\d+)t} }
+sub report_cgeometry { report CSI.'18t', qr{;(\d+);(\d+)t} }
+sub report_cscreengeom { report CSI.'19t', qr{;(\d+);(\d+)t} }
+sub report_iconlabel { report CSI.'20t', qr{L(.*?)(?:\Q@{[ST]}\E|\Q@{[ST_7]}\E)} }
+sub report_title     { report CSI.'21t', qr{l(.*?)(?:\Q@{[ST]}\E|\Q@{[ST_7]}\E)} }
 
 __END__
