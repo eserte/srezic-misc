@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xterm-config,v 1.1 2006/11/24 21:52:29 eserte Exp $
+# $Id: xterm-config,v 1.2 2006/11/24 22:59:53 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006 Slaven Rezic. All rights reserved.
@@ -22,22 +22,38 @@ use Getopt::Long;
 use constant BEL => "";
 use constant ESC => "";
 
-use constant IND => ESC . "D"; # Index
-use constant NEL => ESC . "E"; # Next Line
-use constant HTS => ESC . "H"; # Tab Set
-use constant RI  => ESC . "M"; # Reverse Index
-use constant SS2 => ESC . "N"; # Single Shift Select of G2 Character Set: affects next character only
-use constant SS3 => ESC . "O"; # Single Shift Select of G3 Character Set: affects next character only
-use constant DCS => ESC . "P"; # Device Control String
-use constant SPA => ESC . "V"; # Start of Guarded Area
-use constant EPA => ESC . "W"; # End of Guarded Area
-use constant SOS => ESC . "X"; # Start of String
-use constant DECID => ESC . "Z"; # Return Terminal ID Obsolete form of CSI c (DA).
-use constant CSI => ESC . "["; # Control Sequence Introducer
-use constant ST  => ESC . "\\"; # String Terminator
-use constant OSC => ESC . "]";
-use constant PM  => ESC . "^"; # Privacy Message
-use constant APC => ESC . "_"; # Application Program Command
+#use constant IND => ESC . "D"; # Index
+use constant IND => chr 0x84;
+#use constant NEL => ESC . "E"; # Next Line
+use constant NEL => chr 0x85;
+#use constant HTS => ESC . "H"; # Tab Set
+use constant HTS => chr 0x88;
+#use constant RI  => ESC . "M"; # Reverse Index
+use constant RI  => chr 0x8d;
+#use constant SS2 => ESC . "N"; # Single Shift Select of G2 Character Set: affects next character only
+use constant SS2 => chr 0x8e;
+#use constant SS3 => ESC . "O"; # Single Shift Select of G3 Character Set: affects next character only
+use constant SS3 => chr 0x8f;
+#use constant DCS => ESC . "P"; # Device Control String
+use constant DCS => chr 0x90;
+#use constant SPA => ESC . "V"; # Start of Guarded Area
+use constant SPA => chr 0x96;
+#use constant EPA => ESC . "W"; # End of Guarded Area
+use constant EPA => chr 0x97;
+#use constant SOS => ESC . "X"; # Start of String
+use constant SOS => chr 0x98;
+#use constant DECID => ESC . "Z"; # Return Terminal ID Obsolete form of CSI c (DA).
+use constant DECID => chr 0x9a;
+#use constant CSI => ESC . "["; # Control Sequence Introducer
+use constant CSI => chr 0x9b;
+#use constant ST  => ESC . "\\"; # String Terminator
+use constant ST  => chr 0x9c;
+#use constant OSC => ESC . "]";
+use constant OSC => chr 0x9d;
+#use constant PM  => ESC . "^"; # Privacy Message
+use constant PM  => chr 0x9e;
+#use constant APC => ESC . "_"; # Application Program Command
+use constant APC => chr 0x9f;
 
 my %o;
 GetOptions(\%o,
@@ -51,11 +67,115 @@ GetOptions(\%o,
 	   "tekfg|tekforeground=s",
 	   "tekbg|tekbackground=s",
 	   "highlightcolor=s",
+	   "bell",
+	   "cs=s",
+	   "fullreset",
+	   "softreset",
+	   "smoothscroll!", # no visual effect
+	   "reverse|reversevideo!",
+	   "origin!",
+	   "wraparound!",
+	   "autorepeat!",
+	   "formfeed!",
+	   "showcursor!",
+	   "showscrollbar!", # rxvt
+	   "tektronix!",
+	   "marginbell!",
+	   "reversewraparound!",
+	   "backsendsdelete!",
+	   "bottomscrolltty!", # rxvt
+	   "bottomscrollkey!", # rxvt
+	   "metasendsesc|metasendsescape!",
+	   "scrollregion=s",
+	   "deiconify",
+	   "iconify",
+	   "geometry=s",
+	   "raise",
+	   "lower",
+	   "refresh|x11refresh",
+	   "maximize",
+	   "unmaximize",
+	   "xproperty|x11property=s",
+	   "font=s",
+	   "nextfont",
+	   "prevfont",
 	  )
     or die "usage?";
+die "usage?" if (@ARGV);
 
-print OSC . "1;$o{iconname}" . BEL if defined $o{iconname};
-print OSC . "2;$o{title}" . BEL if defined $o{title};
+print BEL if $o{bell};
+
+CS_SWITCH: {
+    if (defined $o{cs}) {
+	print ESC . '%G', last if $o{cs} =~ m{^utf-?8$}i;
+	print ESC . '%@', last if $o{cs} =~ m{^(latin-?1|iso-?8859-?1)$}i;
+	warn "Unhandled -cs parameter $o{cs}\n";
+    }
+}
+
+print ESC . "c" if $o{fullreset};
+
+{
+    my %DECSET = qw(smoothscroll 4
+		    reverse 5
+		    origin 6
+		    wraparound 7
+		    autorepeat 8
+		    formfeed 18
+		    showcursor 25
+		    showscrollbar 30
+		    tektronix 38
+		    marginbell 44
+		    reversewraparound 45
+		    backsendsdelete 67
+		    bottomscrolltty 1010
+		    bottomscrollkey 1011
+		    metasendsesc 1036
+		   );
+    while(my($optname, $Pm) = each %DECSET) {
+	if (defined $o{$optname}) {
+	    my $onoff = $o{$optname} ? 'h' : 'l';
+	    print CSI . '?' . $Pm . $onoff;
+	}
+    }
+}
+
+print CSI . '!p' if $o{softreset};
+
+if (defined $o{scrollregion}) {
+    if ($o{scrollregion} eq '' || $o{scrollregion} eq 'default') {
+	print CSI . 'r';
+    } else {
+	my($top,$bottom) = split /,/, $o{scrollregion};
+	for ($top, $bottom) {
+	    die "Not a number: $top\n" if !/^\d+$/;
+	}
+	print CSI . $top . ";" . $bottom . "r";
+    }
+}
+
+print CSI . "1t" if $o{deiconify};
+print CSI . "2t" if $o{iconify};
+
+if (defined $o{geometry}) {
+    if (my($w,$h,$wc,$hc,$x,$y) = $o{geometry} =~ m{^(?:(\d+)x(\d+)|(\d+)cx(\d+)c)(?:\+(\d+)\+(\d+))$}) {
+	print CSI."3;".$x.";".$y."t" if defined $x;
+	print CSI."4;".$h.";".$w."t" if defined $h; # does not work?
+	print CSI."8;".$hc.";".$wc."t" if defined $hc; # does not work?
+    } else {
+	die "Cannot parse geometry string, must be width x height+x+y\n";
+    }
+}
+
+print CSI . "5t" if $o{raise};
+print CSI . "6t" if $o{lower};
+print CSI . "7t" if $o{refresh};
+print CSI . "9;0t" if $o{unmaximize}; # does not work?
+print CSI . "9;1t" if $o{maximize}; # does not work?
+
+print OSC .  "1;$o{iconname}" . BEL if defined $o{iconname};
+print OSC .  "2;$o{title}" . BEL if defined $o{title};
+print OSC .  "3;$o{xproperty}" . BEL if defined $o{xproperty};    
 print OSC . "10;$o{fg}" . BEL if defined $o{fg};
 print OSC . "11;$o{bg}" . BEL if defined $o{bg};
 print OSC . "12;$o{textcursor}" . BEL if defined $o{textcursor};
@@ -64,5 +184,8 @@ print OSC . "14;$o{mousebg}" . BEL if defined $o{mousebg};
 print OSC . "15;$o{tekfg}" . BEL if defined $o{tekfg};
 print OSC . "16;$o{tekbg}" . BEL if defined $o{tekbg};
 print OSC . "17;$o{highlightcolor}" . BEL if defined $o{highlightcolor};
+print OSC . "50;#$o{font}" . BEL if defined $o{font};
+print OSC . "50;#-" . BEL if $o{prevfont};
+print OSC . "50;#+" . BEL if $o{nextfont};
 
 __END__
