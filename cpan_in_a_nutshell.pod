@@ -675,7 +675,9 @@ L<Class::Accessor>: stable. Has varians for fast access
 L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
 
 L<accessors>: simple syntax, has also some variants. Test suite spits
-a lot of warnings.
+a lot of warnings. A possible downside is that the internal hash
+members are preceded with a dash. This makes serialized objects (e.g.
+as YAML) not-so-nice to read and write.
 
 L<Class::AccessorMaker>: ???
 
