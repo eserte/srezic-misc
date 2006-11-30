@@ -125,9 +125,12 @@ much faster than Tk::Table.
 L<YAML> is neat: it's human readable, portable across languages, but
 unfortunately the Perl implementation is buggy so that's unusable
 (other than for configuration files). Also the syntax became very
-complex.
+complex. (The note about bugginess might be outdated, should check the
+recent versions)
 
-L<YAML::Syck> is a C based parser for the YAML language.
+L<YAML::Syck> is a C based parser for the YAML language. It's API
+compatible with L<YAML> (has the same Load/Dump methods), but it's not
+as configurable as L<YAML>. Performace seems to be quite good.
 
 L<JSON> is a human readable format which is based on javascript
 syntax. It's not so complex as YAML, but has the other advantages of
