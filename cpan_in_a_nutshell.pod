@@ -120,6 +120,19 @@ but slow on large tables, as each cell is represented by a widget.
 L<Tk::TableMatrix>: an XS extension to create tables. Complete and
 much faster than Tk::Table.
 
+=head2 Error handling
+
+If the standard Tk module L<Tk::ErrorDialog> is loaded, then fatal
+errors (only) will go into a dialog instead to STDERR.
+
+L<Tk::Stderr> redirects B<all> STDERR output to a toplevel window. The
+window may be iconified and will auto-deiconify if there's new STDERR
+output.
+
+L<Tk::Carp> works similar to C<CGI::Carp> by redirecting warn and die
+calls, in this case to Tk dialogs. Note that this module does not
+catch STDERR (unlike Tk::Stderr).
+
 =head1 Serialization
 
 L<YAML> is neat: it's human readable, portable across languages, but
