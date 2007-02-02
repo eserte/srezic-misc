@@ -246,10 +246,24 @@ easily fit into the hash/array/scalar world of Perl.
 L<XML::Parser::EasyTree>: like C<XML::Parser> with Tree style, but the
 generated tree is more readable.
 
+L<XML::Parser::Lite>: a pure perl implementing a complete XML parser,
+without any other dependencies.
+
+L<XML::Tiny> is also a pure perl parser implementing parsing of a
+rather deliberately chosen subset of XML. Therefore, especially if you
+don't have control over the XML source, it is not recommended to use
+it in real production (and if you have control over the source, most
+times it is preferable to use another data serialization format like
+YAML, JSON, Storable or so).
+
+L<XML::SAX::PurePerl>: a pure perl XML parser with SAX2 interface
+
 =head2 Parser/Generators
 
-L<XML::LibXML>, an interface to the libxml2 library. Used the SAX
-parser --- low-level work, but worked OK.
+L<XML::LibXML>, an interface to the libxml2 library. The library comes
+with a number of methods to access an XML document: the SAX parser,
+which feels rather low-level, but is OK; also accessing through DOM
+with XPath support.
 
 L<XML::Simple>, a high-level interface. For serious work there's a
 lot of options to fiddle with, but the documentation is extensive and
