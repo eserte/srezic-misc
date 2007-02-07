@@ -178,6 +178,13 @@ the generated XML document. There's no support for code references.
 
 L<XML::Simple> can also be used for serializing/deserializing.
 
+L<XML::Smart> --- the bad point about XML::Simple is, that one has to
+carefully specify what goes into a hash or array or scalar, otherwise
+the structure of the resulting data structure is somewhat undefined.
+L<XML::Smart> tries to solve this problem by using an universal data
+type which can be used either as hash or array or scalar. However, I
+never tried this module in reality.
+
 L<Data::Serializer> is a meta class for handling a couple of
 serialization methods together with encryption, compression and
 checksumming.
@@ -190,6 +197,15 @@ L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hanse
 L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
 More modules are mentioned there not covered here: L<RPC::XML>,
 L<Convert::Bencode>, L<Convert::Bencode_XS>.
+
+=head2 Serialization to other languages
+
+L<Data::JavaScript> from perl to javascript, can handle circular
+structures, but output is quite verbose
+
+L<Data::JavaScript::Anon> from perl to javascript, cannot handle
+circular references, but the output is terse compared to
+Data::JavaScript
 
 =head1 Config/Ini files
 
@@ -214,19 +230,6 @@ all kinds of configuration file. Includes generating a curses screen
 to let the user input the options. Have many features like automatic
 comment creation, help screens, different levels
 (novice/intermediate/...).
-
-=head2 Serialization to other languages
-
-L<Data::JavaScript> from perl to javascript, can handle circular
-structures, but output is quite verbose
-
-L<Data::JavaScript::Anon> from perl to javascript, cannot handle
-circular references, but the output is terse compared to
-Data::JavaScript
-
-L<YAML>, see above.
-
-L<XML::Simple>, see above and below.
 
 =head1 XML related modules
 
