@@ -143,7 +143,10 @@ recent versions)
 
 L<YAML::Syck> is a C based parser for the YAML language. It's API
 compatible with L<YAML> (has the same Load/Dump methods), but it's not
-as configurable as L<YAML>. Performace seems to be quite good.
+as configurable as L<YAML>. Performace seems to be quite good, also it
+seems to be more standard-compliant as L<YAML>. For example, there's
+no way to get L<YAML> dump/load utf-8 files, but in L<YAML::Syck> it's
+at least configurable.
 
 L<JSON> is a human readable format which is based on javascript
 syntax. It's not so complex as YAML, but has the other advantages of
