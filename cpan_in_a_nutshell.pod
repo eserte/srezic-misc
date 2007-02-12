@@ -356,9 +356,12 @@ object persistance modules.
 
 =head1 Database Abstractions
 
-L<Class::DBI> is popular. There are also L<Alzabo>, L<Rose::DB>. See
-also L<http://poop.sourceforge.net/>, as database abstraction layers
-and object persistence systems are mostly the same thing.
+L<Class::DBI> is popular. An offspring of this module is
+L<DBIx::Class>. There are also L<Alzabo>, L<Rose::DB>. See also
+L<http://poop.sourceforge.net/>, as database abstraction layers and
+object persistence systems are mostly the same thing. Unfortunately
+this page is somewhat outdated (from 2003) and it does not even
+mention L<DBIx::Class>.
 
 =head1 File database systems
 
