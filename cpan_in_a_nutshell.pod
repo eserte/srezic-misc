@@ -32,6 +32,9 @@ L<Test::LongString> helps in comparing long strings by only showing
 relevant output. L<Test::Differences> may also used for this: it shows
 the differences in complex objects in a diff style.
 
+To hide modules for testing purposes, there are two modules available:
+L<Devel::Hide> and L<Test::Without::Module>.
+
 =head2 WWW and HTML related test modules
 
 L<Test::HTTPStatus>: a very simple module for just checking the return
