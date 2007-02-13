@@ -33,7 +33,8 @@ relevant output. L<Test::Differences> may also used for this: it shows
 the differences in complex objects in a diff style.
 
 To hide modules for testing purposes, there are two modules available:
-L<Devel::Hide> and L<Test::Without::Module>.
+L<Devel::Hide> and L<Test::Without::Module>. The latter has some
+problems with Tk, so prefer the first one.
 
 =head2 WWW and HTML related test modules
 
