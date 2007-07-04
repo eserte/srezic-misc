@@ -367,6 +367,30 @@ object persistence systems are mostly the same thing. Unfortunately
 this page is somewhat outdated (from 2003) and it does not even
 mention L<DBIx::Class>.
 
+=head1 SQL Abstrations
+
+=head2 Schema handling
+
+L<SQL::Translator> seems to do everyhing: schema translation from
+everything to everything, including diagrams and creating diffs. The
+object model seems to be clean, separating parsers, producers, filters
+and schema objects. Unfortunately it has also everything as PREREQ_PM,
+including GD, GraphViz, Excel-related modules... Supported database
+engines are MySQL, Oracle, PostgreSQL, SQLite and many others.
+
+L<MySQL::Diff> has a limited task of showing differences between two
+mysql schemas (either from file or from a database) and create a
+series of ALTER TABLE statements to bring one schema to the other.
+Development to this module has stopped a lot of years ago, meaning
+that newer MySQL versions (4.x, 5.x ...) are not supported without
+manual tweaks.
+
+L<DBIx::DBSchema> may me used for translating an existing database
+schema (which will be read from a database) and create SQL statements
+for another database engine. Supported database engines are MySQL,
+PostgreSQL and SQLite, while Sybase and Oracle are partially supported
+(from the docs).
+
 =head1 File database systems
 
 File database systems or dbm systems are simple database systems with
@@ -398,16 +422,38 @@ L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
 
 =head1 Development, Perl Interna
 
-=head2 Weak references
-
-Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
-perl module. Former modules were L<WeakRef> ...
-
 =head2 Tracing
+
+Simple tracing can be done with L<Devel::Trace>. L<Devel::TraceCalls>
+allows programmable tracing by subs or packages. The
+L<Devel::CallTrace> module is another one, which includes in its Pod
+documentation a list of similar modules, so look there for a short
+description for any of them.
 
 L<Carp::Indeed>: turns every warn/die into a stack trace including
 used parameters. Seems to be more powerful than L<Acme::JavaTrace> and
 L<Devel::SimpleTrace>, which do not dump parameters.
+
+=head2 Profiling
+
+L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
+scripts, saw segmentation faults and garbled profile files). Profiles
+on sub basis.
+
+L<Devel::FastProf> and L<Devel::SmallProf>: profilers on line basis.
+The first one has less impact on the execution time of the script
+(according to the author, 3 to 5 times slower) and has less profiling
+output, and the latter is much slower (about 50x), but has more
+profiling output.
+
+There are other profilers, which are untested: L<Devel::Profiler>,
+some apache-specific profilers like L<Apache::Profiler>,
+L<Devel::Profile>, L<Devel::DProfLB>, L<DashProfiler> ...
+
+=head2 Weak references
+
+Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
+perl module. Former modules were L<WeakRef> ...
 
 =head1 Wiki
 
@@ -782,16 +828,6 @@ failures and old bug reports on rt.cpan.org).
 
 Check and compare the following modules: L<Filesys::Df>,
 L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
-
-=head1 Debugging
-
-=head2 Tracing
-
-Simple tracing can be done with L<Devel::Trace>. L<Devel::TraceCalls>
-allows programmable tracing by subs or packages. The
-L<Devel::CallTrace> module is another one, which includes in its Pod
-documentation a list of similar modules, so look there for a short
-description for any of them.
 
 =head1 AI
 
