@@ -439,15 +439,16 @@ L<Devel::SimpleTrace>, which do not dump parameters.
 
 =head2 Profiling
 
-L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
-scripts, saw segmentation faults and garbled profile files). Profiles
-on sub basis.
-
 L<Devel::FastProf> and L<Devel::SmallProf>: profilers on line basis.
 The first one has less impact on the execution time of the script
 (according to the author, 3 to 5 times slower) and has less profiling
 output, and the latter is much slower (about 50x), but has more
-profiling output.
+profiling output. At least Devel::FastProf turns out to be quite
+useful.
+
+L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
+scripts, saw segmentation faults and garbled profile files). Profiles
+only on sub basis.
 
 There are other profilers, which are untested: L<Devel::Profiler>,
 some apache-specific profilers like L<Apache::Profiler>,
