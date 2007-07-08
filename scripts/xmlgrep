@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.1 2007/07/08 18:07:20 eserte Exp $
+# $Id: xmlgrep,v 1.2 2007/07/08 18:07:24 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006 Slaven Rezic. All rights reserved.
@@ -17,14 +17,16 @@ use strict;
 use Getopt::Long;
 use XML::LibXML;
 
-my $p = XML::LibXML->new;
-
 my %opt;
-GetOptions(\%opt, "as-xml!")
+GetOptions(\%opt, "as-xml!", "parse-html!")
     or die "usage!";
 
 my $xpath = shift @ARGV;
 my @files = @ARGV;
+
+my $p = XML::LibXML->new;
+$p->pedantic_parser(0);
+$p->recover(1);
 
 if (@files) {
     for my $file (@files) {
@@ -38,8 +40,19 @@ if (@files) {
 
 sub xmlgrep {
     my($fh) = @_;
-    my $doc = $p->parse_fh($fh)
-	or return;
+    my $buf = do {
+	local $/;
+	<$fh>;
+    };
+
+    my $doc;
+    if ($opt{"parse-html"}) {
+	$doc = $p->parse_html_string($buf);
+    } else {
+	$doc = $p->parse_string($buf);
+    }
+    $doc or return;
+
     my $root = $doc->documentElement;
     for my $node ($root->findnodes($xpath)) {
 	if ($opt{"as-xml"}) {

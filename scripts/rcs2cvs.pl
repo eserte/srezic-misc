@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: rcs2cvs.pl,v 1.1 2007/07/08 18:12:05 eserte Exp $
+# $Id: rcs2cvs.pl,v 1.2 2007/07/08 18:12:09 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2004 Slaven Rezic. All rights reserved.
@@ -15,6 +15,7 @@
 
 use VCS;
 use File::Basename;
+use File::Spec;
 
 # REPO BEGIN
 # REPO NAME system_or_print /home/e/eserte/src/repository 
@@ -62,22 +63,43 @@ sub system_or_print {
 use Getopt::Long;
 
 $do_exec = 1;
+# XXX -n only works for flat directories
 GetOptions("n" => sub { $do_exec = 0 }) or die "usage!";
 
+my $old_dir = shift || die "Old RCS directory?";
+my $new_dir = shift || die "New RCS directory?";
+
+$old_dir = File::Spec->rel2abs($old_dir)
+    if !File::Spec->file_name_is_absolute;
+$new_dir = File::Spec->rel2abs($new_dir)
+    if !File::Spec->file_name_is_absolute;
+
 # VCS::Rcs assumes that every file in the given directory is RCS-controlled
-my $old = VCS::Dir->new("vcs://localhost/VCS::Rcs/home/e/eserte/trash/bench2");
-my $new = VCS::Dir->new("vcs://localhost/VCS::Cvs/home/e/eserte/trash/perl-bench");
+my $old = VCS::Dir->new("vcs://localhost/VCS::Rcs" . $old_dir);
+my $new = VCS::Dir->new("vcs://localhost/VCS::Cvs" . $new_dir);
 
 copy_vcs($old, $new);
 
 sub copy_vcs {
     my($old, $new) = @_;
     for my $o ($old->content) {
+	my $dir = $new->path;
+	chdir $dir or die "Can't chdir to $dir: $!";
 	if ($o->isa("VCS::Dir")) {
-	    die "NYI";
+	    (my $base = $o->path) =~ s{/+$}{};
+	    $base = basename $base;
+	    if (!$do_exec) {
+		print STDERR "mkdir $base...\n";
+		print STDERR "cvs add $base...\n";
+	    } else {
+		mkdir $base or die "Can't create $base: $!";
+		system("cvs", "add", $base);
+		die "Can't add $base" if $? != 0;
+	    }
+	    copy_vcs(VCS::Dir->new($old->url . "/$base"),
+		     VCS::Dir->new($new->url . "/$base"));
 	} else {
-	    my($dir, $base) = ($new->path, basename($o->path));
-	    chdir $dir or die "Can't chdir to $dir: $!";
+	    my $base = basename($o->path);
 	    my $first = 1;
 	    for my $v ($o->versions) {
 		my $text = $v->text;
