@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.2 2007/07/08 18:07:24 eserte Exp $
+# $Id: xmlgrep,v 1.3 2007/07/08 18:07:28 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006 Slaven Rezic. All rights reserved.
@@ -54,6 +54,7 @@ sub xmlgrep {
     $doc or return;
 
     my $root = $doc->documentElement;
+    # my @result = map { $_->textContent } $root->findnodes($path);
     for my $node ($root->findnodes($xpath)) {
 	if ($opt{"as-xml"}) {
 	    print $node->toString, "\n";
@@ -64,3 +65,24 @@ sub xmlgrep {
 }
 
 __END__
+use XML::LibXML;
+
+my $path = shift @ARGV;
+my $p = XML::LibXML->new;
+
+if (@ARGV) {
+    for my $file (@ARGV) {
+        my $doc = $p->parse_file($file);
+        print map { "$_\n" } find_result($doc);
+    }
+} else {
+    my $doc = $p->parse_fh(\*STDIN);
+    print map { "$_\n" } find_result($doc);
+}
+        
+sub find_result {
+    my $doc = shift;
+    my $root = $doc->documentElement();
+    my @result = map { $_->textContent } $root->findnodes($path);
+    @result;
+}
