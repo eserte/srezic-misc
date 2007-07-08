@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: rcs2cvs.pl,v 1.4 2007/07/08 18:12:23 eserte Exp $
+# $Id: rcs2cvs.pl,v 1.6 2007/07/08 18:12:29 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2004 Slaven Rezic. All rights reserved.
@@ -36,6 +36,42 @@ standard error. If Tk is running and there is a LogWindow, then the command
 string is logged to this widget.
 
 =cut
+
+# REPO BEGIN
+# REPO NAME copy_stat /home/e/eserte/work/srezic-repository 
+# REPO MD5 f567def1f7ce8f3361e474b026594660
+
+=head2 copy_stat($src, $dest)
+
+=for category File
+
+Copy stat information (owner, group, mode and time) from one file to
+another. If $src is an array reference, then this is used as the
+source stat information.
+
+=cut
+
+sub copy_stat {
+    my($src, $dest) = @_;
+    my @stat = ref $src eq 'ARRAY' ? @$src : stat($src);
+    die "Can't stat $src: $!" if !@stat;
+
+    chmod $stat[2], $dest
+	or warn "Can't chmod $dest to " . sprintf("0%o", $stat[2]) . ": $!";
+    chown $stat[4], $stat[5], $dest
+	or do {
+	    my $save_err = $!; # otherwise it's lost in the get... calls
+	    warn "Can't chown $dest to " .
+		 (getpwuid($stat[4]))[0] . "/" .
+                 (getgrgid($stat[5]))[0] . ": $save_err";
+	};
+    utime $stat[8], $stat[9], $dest
+	or warn "Can't utime $dest to " .
+	        scalar(localtime $stat[8]) . "/" .
+		scalar(localtime $stat[9]) .
+		": $!";
+}
+# REPO END
 
 use vars qw($do_exec); # our in 5.6.0
 
@@ -72,7 +108,7 @@ $do_exec = 1;
 GetOptions("n" => sub { $do_exec = 0 }) or die "usage!";
 
 my $old_dir = shift || die "Old RCS directory?";
-my $new_dir = shift || die "New RCS directory?";
+my $new_dir = shift || die "New CVS directory?";
 
 $old_dir = File::Spec->rel2abs($old_dir)
     if !File::Spec->file_name_is_absolute($old_dir);
@@ -121,6 +157,7 @@ sub copy_vcs {
 		    binmode $OUT;
 		    print $OUT $text;
 		    close $OUT;
+		    copy_stat($o->path, $base);
 		}
 
 		if ($first) {
