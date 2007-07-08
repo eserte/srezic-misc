@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: rcs2cvs.pl,v 1.3 2007/07/08 18:12:19 eserte Exp $
+# $Id: rcs2cvs.pl,v 1.4 2007/07/08 18:12:23 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2004 Slaven Rezic. All rights reserved.
@@ -75,9 +75,9 @@ my $old_dir = shift || die "Old RCS directory?";
 my $new_dir = shift || die "New RCS directory?";
 
 $old_dir = File::Spec->rel2abs($old_dir)
-    if !File::Spec->file_name_is_absolute;
+    if !File::Spec->file_name_is_absolute($old_dir);
 $new_dir = File::Spec->rel2abs($new_dir)
-    if !File::Spec->file_name_is_absolute;
+    if !File::Spec->file_name_is_absolute($new_dir);
 
 # VCS::Rcs assumes that every file in the given directory is RCS-controlled
 my $old = VCS::Dir->new("vcs://localhost/VCS::Rcs" . $old_dir);
@@ -97,14 +97,20 @@ sub copy_vcs {
 		print STDERR "mkdir $base...\n";
 		print STDERR "cvs add $base...\n";
 	    } else {
-		mkdir $base or die "Can't create $base: $!";
-		system("cvs", "add", $base);
-		die "Can't add $base" if $? != 0;
+		if (!-d $base) {
+		    mkdir $base or die "Can't create $base: $!";
+		    system("cvs", "add", $base);
+		    die "Can't add $base" if $? != 0;
+		}
 	    }
 	    copy_vcs(VCS::Dir->new($old->url . "/$base"),
 		     VCS::Dir->new($new->url . "/$base"));
 	} else {
 	    my $base = basename($o->path);
+	    if (-e $base) {
+		print STDERR "Skipping $base...\n";
+		next;
+	    }
 	    my $first = 1;
 	    for my $v ($o->versions) {
 		my $text = $v->text;
