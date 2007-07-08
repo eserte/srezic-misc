@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.8 2007/07/08 18:18:43 eserte Exp $
+# $Id: xmlgrep,v 1.9 2007/07/08 18:21:20 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007 Slaven Rezic. All rights reserved.
@@ -15,6 +15,7 @@
 
 use strict;
 use Getopt::Long;
+use File::Basename qw(basename);
 
 my %opt;
 GetOptions(\%opt,
@@ -22,6 +23,10 @@ GetOptions(\%opt,
 	   "parse-html|parsehtml!",
 	  )
     or usage();
+
+if (basename($0) =~ m{htmlgrep}) {
+    $opt{'parse-html'} = 1;
+}
 
 my $xpath = shift @ARGV;
 my @files = @ARGV;
@@ -96,12 +101,17 @@ xmlgrep - grep for XML or HTML files using XPath patterns
 =head1 SYNOPSIS
 
     xmlgrep [-as-xml] [-parse-html] xpath [file ...]
+    htmlgrep xpath [file ...]
 
 =head1 EXAMPLES
 
 Get all <a> links:
 
     xmlgrep -parse-html '/html/body//a/@href' some.html
+
+or
+
+    htmlgrep '/html/body//a/@href' some.html
 
 =head1 AUTHOR
 
