@@ -25,8 +25,9 @@ README). Simple to use.
 L<Test::Deep>: compare deep structures with a lot of features. For
 easier tests, is_deeply from Test::More should suffice.
 
-L<Test::Without::Module>: emulate the non-existance of modules (e.g. for
-optional features).
+L<Test::Without::Module>: emulate the non-existance of modules (e.g.
+for optional features). Modules with similar functionality:
+L<Devel::Hide>, L<Module::Mask>.
 
 L<Test::LongString> helps in comparing long strings by only showing
 relevant output. L<Test::Differences> may also used for this: it shows
