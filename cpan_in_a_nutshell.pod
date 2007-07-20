@@ -27,15 +27,13 @@ easier tests, is_deeply from Test::More should suffice.
 
 L<Test::Without::Module>: emulate the non-existance of modules (e.g.
 for optional features). Modules with similar functionality:
-L<Devel::Hide>, L<Module::Mask>.
+L<Devel::Hide>, L<Module::Mask>. L<Test::Without::Module> has some
+problems with Tk, so prefer the L<Devel::Hide>. L<Module::Mask> not
+tested yet.
 
 L<Test::LongString> helps in comparing long strings by only showing
 relevant output. L<Test::Differences> may also used for this: it shows
 the differences in complex objects in a diff style.
-
-To hide modules for testing purposes, there are two modules available:
-L<Devel::Hide> and L<Test::Without::Module>. The latter has some
-problems with Tk, so prefer the first one.
 
 =head2 WWW and HTML related test modules
 
