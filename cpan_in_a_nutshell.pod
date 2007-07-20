@@ -509,6 +509,8 @@ Apache server see L<mod_perl> and the CGI support in Apache.
 
 =head2 Mail
 
+=head3 Sending and Receiving
+
 L<Mail::Send> and L<Mail::Mailer> are used for composing and sending
 simple messages. The modules are old and work somehow, but one has to
 actually read the source rather than the documentation to learn all
@@ -532,6 +534,14 @@ L<Mail::Cclient> also gives access to various mailbox formats
 library.
 
 L<Mail::IMAPTalk> is an IMAP client interface.
+
+=head3 Generating
+
+The mentioned modules have mostly only support for generating plain
+messages without MIME and attachments. For more complex emails with
+attachments you need something like L<MIME::Lite>, L<MIME::Tools> or
+L<Email::MIME>. There are claims that at least L<MIME::Lite> is buggy>
+and that L<Email::MIME> should be preferred.
 
 =head1 Templating systems
 
