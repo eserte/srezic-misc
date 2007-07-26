@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.9 2007/07/08 18:21:20 eserte Exp $
+# $Id: xmlgrep,v 1.10 2007/07/26 21:44:20 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007 Slaven Rezic. All rights reserved.
@@ -20,6 +20,7 @@ use File::Basename qw(basename);
 my %opt;
 GetOptions(\%opt,
 	   "as-xml|asxml!",
+	   "as-html|ashtml!",
 	   "parse-html|parsehtml!",
 	  )
     or usage();
@@ -73,7 +74,19 @@ sub xmlgrep {
     # my @result = map { $_->textContent } $root->findnodes($path);
     for my $node ($root->findnodes($xpath)) {
 	if ($opt{"as-xml"}) {
+	    if ($opt{'parse-html'}) {
+		die "Output of XML for parsed HTML is not implemented";
+	    }
 	    print $node->toString, "\n";
+	} elsif ($opt{"as-html"}) {
+	    if (!$opt{'parse-html'}) {
+		die "Output of HTML for parsed XML is not implemented";
+	    }
+	    if ($node->can('getValue')) { # for HTML::TreeBuilder::XPath::Attribute
+		print $node->getValue, "\n";
+	    } else {
+		print $node->as_HTML, "\n";
+	    }
 	} else {
 	    if ($node->can("to_literal")) {
 		print $node->to_literal, "\n";
