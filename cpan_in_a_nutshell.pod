@@ -134,6 +134,11 @@ L<Class::AccessorMaker>: ???
 L<Sort::Key> is (according to the author) the fastest way to sort an
 array by key.
 
+=head2 Weak references
+
+Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
+perl module. Former modules were L<WeakRef> ...
+
 =head1 Database Interfaces
 
 =head2 Object persistance
@@ -203,11 +208,6 @@ of L<SDBM_File>.
 L<DB_File::Lock> adds a locking layer to L<DB_File>.
 
 L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
-
-=head3 Weak references
-
-Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
-perl module. Former modules were L<WeakRef> ...
 
 =head2 Search/fulltext engines
 
