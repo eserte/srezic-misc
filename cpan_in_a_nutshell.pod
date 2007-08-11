@@ -1,145 +1,13 @@
-=head1 Test modules
+=head1 Data and Data Types
 
-=head2 Generic test modules
-
-A comprehensive overview of test modules can be found at
-L<http://qa.perl.org/test-modules.html> (An overview of the testing
-modules available on CPAN).
-
-Recommended Test module: L<Test::More>. Provides more functionality,
-better extensibility and more diagnostics than the old L<Test> module.
-Downside: Test::More is part of the core only since 5.7.3.
-
-Worthwhile additions to Test::More: L<Test::Differences> to display a
-diff-like output of the comparison of two strings or data structures.
-
-L<Test::NoWarnings>: make sure that there are no warnings generated in
-your test suite. This is the opposite of Test::Warn.
-
-L<Test::Warn>: test the creation of warnings.
-
-L<Test::Distribution>: test if a distribution is correct and complete
-(POD checking, all modules compile, existance of standard files like
-README). Simple to use.
-
-L<Test::Deep>: compare deep structures with a lot of features. For
-easier tests, is_deeply from Test::More should suffice.
-
-L<Test::Without::Module>: emulate the non-existance of modules (e.g.
-for optional features). Modules with similar functionality:
-L<Devel::Hide>, L<Module::Mask>. L<Test::Without::Module> has some
-problems with Tk, so prefer the L<Devel::Hide>. L<Module::Mask> not
-tested yet.
-
-L<Test::LongString> helps in comparing long strings by only showing
-relevant output. L<Test::Differences> may also used for this: it shows
-the differences in complex objects in a diff style.
-
-=head2 WWW and HTML related test modules
-
-L<Test::HTTPStatus>: a very simple module for just checking the return
-value (status code) of an URL.
-
-L<Test::URI>: Check various parts of Uniform Resource Locators.
-
-L<Test::HTML::Content>: Perl extension for testing HTML output (e.g.
-expected links, content, xpath ...).
-
-L<Test::HTML::Lint>: make lint tests to HTML.
-
-L<Test::HTML::Tidy>: similar to Test::HTML::Lint, but uses the
-external tidy library.
-
-L<Test::WWW::Mechanize>: bring WWW::Mechanize and Test::More together
-
-L<Test::WWW::Simple>: simple content tests.
-
-L<CGI::Test>: ???
-
-=head2 Other test modules
-
-L<Test::XML>: Compare XML in perl tests.
-
-=head1 List/Array modules
+=head2 List/Array modules
 
 Handy utility functions can be found in the core module (since 5.7.3)
 L<List::Util>. Functions missing in this module are gathered in the
 CPAN module L<List::MoreUtils>. This module also obsoletes the CPAN
 modules L<List::MoreUtil> and L<List::Utils>.
 
-=head1 GUI toolkits
-
-L<Tk> is mature and runs on X11, Windows and MacOSX under XDarwin.
-Further alternatives are: L<Wx>, L<Gtk2>, L<Qt>, L<Prima>,
-L<Win32::GUI> etc. (A GUI toolkit comparison can be found at
-L<http://www.perlmonks.org/?node_id=108708>). L<X11::Protocol> for a
-low-level interface to the X11 windowing system --- good in conjuction
-with a higher level GUI toolkit like Tk.
-
-L<Qt> is only for the library version 2.0, while the current version
-is at 4.0.
-
-=head1 Console based GUI toolkits
-
-Low level: L<Curses>.
-
-Higher level: L<CDK>, L<Curses::UI>, L<Curses::Widgets>.
-
-=head1 GUI builder
-
-For L<Tk>: L<ZooZ> is actively developed. It is not exactly of the
-type "drag'n'drop", but seems to be useful. L<specPerl> (not on CPAN)
-is old, but probably useful. L<guido> (on Sourceforge) hast no active
-development anymore, and is not in a useful state.
-
-=head1 Tk widgets
-
-=head2 Date widgets
-
-L<Tk::Date>: a highly configurable text only entry widgets.
-
-L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
-
-L<Tk::DatePick>: a date widget which is only selectable using
-back/forward buttons (one for each date, month, year).
-
-L<Tk::MiniCalendar>: the calendar view looks like Tk::DateEntry, but
-the widget is not linked to a BrowseEntry widget.
-
-=head2 (Multicolumn) Listboxes, Tables
-
-L<Tk::Listbox>: a core Tk widget. Cannot use multiple columns, other
-than defining a fixed font a fake multiple columns. Since Tk804 it's
-possible to define a limited set of per-entry configuration
-(foreground color, others?).
-
-L<Tk::HList>: a core Perl/Tk widget, which has headers (through
-L<Tk::ResizeButton> also clickable and useable to resize columns),
-multiple columns, different styles for every cell, the possibility to
-use widgets or images in cells.
-
-L<Tk::MListbox>: XXX, are there others?
-
-L<Tk::Table>: a pure Perl/Tk table implemenentation. Rather complete,
-but slow on large tables, as each cell is represented by a widget.
-
-L<Tk::TableMatrix>: an XS extension to create tables. Complete and
-much faster than Tk::Table.
-
-=head2 Error handling
-
-If the standard Tk module L<Tk::ErrorDialog> is loaded, then fatal
-errors (only) will go into a dialog instead to STDERR.
-
-L<Tk::Stderr> redirects B<all> STDERR output to a toplevel window. The
-window may be iconified and will auto-deiconify if there's new STDERR
-output.
-
-L<Tk::Carp> works similar to C<CGI::Carp> by redirecting warn and die
-calls, in this case to Tk dialogs. Note that this module does not
-catch STDERR (unlike Tk::Stderr).
-
-=head1 Serialization
+=head2 Serialization
 
 L<YAML> is neat: it's human readable, portable across languages, but
 unfortunately the Perl implementation is buggy so that's unusable
@@ -207,7 +75,7 @@ L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
 More modules are mentioned there not covered here: L<RPC::XML>,
 L<Convert::Bencode>, L<Convert::Bencode_XS>.
 
-=head2 Serialization to other languages
+=head3 Serialization to other languages
 
 L<Data::JavaScript> from perl to javascript, can handle circular
 structures, but output is quite verbose
@@ -216,84 +84,308 @@ L<Data::JavaScript::Anon> from perl to javascript, cannot handle
 circular references, but the output is terse compared to
 Data::JavaScript
 
-=head1 Config/Ini files
+=head2 Hash tools
 
-L<YAML> is both good for (de)serialization and config files. API is
-very simple to use. Note the overwhelming bug list on
-L<http://rt.cpan.org>, but for normal configuration files it should
-work OK.
+To get ordered hashes, use either L<Tie::IxHash>,
+L<Tie::InsertOrderHash> or L<Tie::Hash::Indexed>.
 
-L<savevars>: my own pragma module for conveniently storing and
-retrieving a configuration.
+For case insensitive hashes, use either L<Tie::CPHash> or
+L<Hash::Case>.
 
-L<Config::IniFiles>: most people recommend this module for Windows-ini
-styled configuration files. More modules in this game:
-L<Config::Tiny>, L<Config::IniHash>, L<Config::Mini>, and
-L<Config::INI::Simple>.
+=head2 Iterators
 
-L<XML::Simple>: out-of-the-box serialization is not possible without
-fiddling with a lot of options
+Check for L<Iterator> and L<Object::Realize::Later> (lazy
+evaluation???). L<Object::Iterate> introduces an B<iterate> method to
+loop conveniently over a list-like object.
 
-L<Config::Model>: a configuration framework for parsing and analyzing
-all kinds of configuration file. Includes generating a curses screen
-to let the user input the options. Have many features like automatic
-comment creation, help screens, different levels
-(novice/intermediate/...).
+=head2 Date and time modules
 
-=head1 XML related modules
+A classic one is L<Date::Calc>, a rather complete implementation of
+date/time functions with a functional (somewhat non-perlish naming)
+und object-oriented interfaces. It's written in C, so there's also a
+pure perl replacement L<Date::Pcalc>.
 
-Best reference is probably L<http://perl-xml.sourceforge.net/>,
-containing the Perl XML FAQ.
+The standard perl functions and modules: time, localtime, strftime and
+mktime in L<POSIX>, L<Time::Local>.
 
-Some benchmarks can be found at
-L<http://www.xmltwig.com/article/simple_benchmark/>.
+Other efforts are: L<DateTime>, L<Time::Piece>, L<Date::Handler>,
+L<Date::Manip> ... A description of the many date and time modules may
+be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
 
-=head2 Parser
+=head2 Class support
 
-L<XML::Parser>: the mother of all XML processing modules. It works,
-though on a very low level (if you compare with other fields Perl is
-strong). I suspect it's just the fact that a DOM/XML tree does not
-easily fit into the hash/array/scalar world of Perl.
+=head3 Autogenerating accessors
 
-L<XML::Parser::EasyTree>: like C<XML::Parser> with Tree style, but the
-generated tree is more readable.
+L<Class::Struct>: in the perl core, has a strange syntax and I
+remember other issues (no backward compatibility).
 
-L<XML::Parser::Lite>: a pure perl implementing a complete XML parser,
-without any other dependencies.
+L<Class::Accessor>: stable. Has varians for fast access
+L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
 
-L<XML::Tiny> is also a pure perl parser implementing parsing of a
-rather deliberately chosen subset of XML. Therefore, especially if you
-don't have control over the XML source, it is not recommended to use
-it in real production (and if you have control over the source, most
-times it is preferable to use another data serialization format like
-YAML, JSON, Storable or so).
+L<accessors>: simple syntax, has also some variants. Test suite spits
+a lot of warnings. A possible downside is that the internal hash
+members are preceded with a dash. This makes serialized objects (e.g.
+as YAML) not-so-nice to read and write.
 
-L<XML::SAX::PurePerl>: a pure perl XML parser with SAX2 interface
+L<Class::AccessorMaker>: ???
 
-=head2 Parser/Generators
+=head2 Sorting
 
-L<XML::LibXML>, an interface to the libxml2 library. The library comes
-with a number of methods to access an XML document: the SAX parser,
-which feels rather low-level, but is OK; also accessing through DOM
-with XPath support.
+L<Sort::Key> is (according to the author) the fastest way to sort an
+array by key.
 
-L<XML::Simple>, a high-level interface. For serious work there's a
-lot of options to fiddle with, but the documentation is extensive and
-marks the options which are important and which are not.
+=head1 Database Interfaces
 
-L<XML::Mini>, an implementation of a DOM-like API. Module seems to be
-buggy and unmaintained.
+=head2 Object persistance
 
-L<XML::Twig> is feature-rich, has support for in-memory and chunked
-parsing, xpath operations, good documentation, a section on
-competitors. The author admits that it is slower than XML::LibXML, but
-uses less memory. Never used it, though.
+L<Storable> (see above) and all other (de)serialization modules. See
+also L<http://poop.sourceforge.net> for a comprehensive list of perl
+object persistance modules.
 
-=head2 Utilities
+=head2 Database Abstractions
 
-L<Tk::XMLViewer> displays an XML tree in a Tk window.
+L<Class::DBI> is popular. An offspring of this module is
+L<DBIx::Class>. There are also L<Alzabo>, L<Rose::DB>. See also
+L<http://poop.sourceforge.net/>, as database abstraction layers and
+object persistence systems are mostly the same thing. Unfortunately
+this page is somewhat outdated (from 2003) and it does not even
+mention L<DBIx::Class>.
 
-=head1 Graphic libraries
+=head2 SQL Abstrations
+
+=head3 Schema handling
+
+L<SQL::Translator> seems to do everyhing: schema translation from
+everything to everything, including diagrams and creating diffs. The
+object model seems to be clean, separating parsers, producers, filters
+and schema objects. Unfortunately it has also everything as PREREQ_PM,
+including GD, GraphViz, Excel-related modules... Supported database
+engines are MySQL, Oracle, PostgreSQL, SQLite and many others.
+
+L<MySQL::Diff> has a limited task of showing differences between two
+mysql schemas (either from file or from a database) and create a
+series of ALTER TABLE statements to bring one schema to the other.
+Development to this module has stopped a lot of years ago, meaning
+that newer MySQL versions (4.x, 5.x ...) are not supported without
+manual tweaks.
+
+L<DBIx::DBSchema> may me used for translating an existing database
+schema (which will be read from a database) and create SQL statements
+for another database engine. Supported database engines are MySQL,
+PostgreSQL and SQLite, while Sybase and Oracle are partially supported
+(from the docs).
+
+=head2 File database systems
+
+File database systems or dbm systems are simple database systems with
+usually just a key-value relation and only one table per file.
+
+A short overview of standard DBM systems which come with perl can be
+looked at the L<AnyDBM_File> manpage. L<DB_File> has the most "+" in
+the AnyDBM_File table, but has some problems: the database file format
+changes across berkeley db versions, and there are reportedly many
+problems with corrupted databases.
+
+L<DBM::Deep> is a pure-perl implementation which can also handle deep
+nested structures as values (other DBM implementations can only
+handle scalars as values).
+
+L<CDB_File> is a "constant" database. This means that generating the
+database is costly, but reading is very fast.
+
+To have L<MLDBM> sits on top of the other DBM implementations and
+enables storing of deep nested structures. Unlike L<DBM::Deep>,
+storing of object information is also possible.
+
+L<MLDBM::Sync::SDBM_File> can be used to overcome the size limitations
+of L<SDBM_File>.
+
+L<DB_File::Lock> adds a locking layer to L<DB_File>.
+
+L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
+
+=head3 Weak references
+
+Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
+perl module. Former modules were L<WeakRef> ...
+
+=head2 Search/fulltext engines
+
+L<WAIT>, a fulltext engine. L<CPAN> has support for this module.
+
+=head1 Development Support
+
+=head2 Test modules
+
+=head3 Generic test modules
+
+A comprehensive overview of test modules can be found at
+L<http://qa.perl.org/test-modules.html> (An overview of the testing
+modules available on CPAN).
+
+Recommended Test module: L<Test::More>. Provides more functionality,
+better extensibility and more diagnostics than the old L<Test> module.
+Downside: Test::More is part of the core only since 5.7.3.
+
+Worthwhile additions to Test::More: L<Test::Differences> to display a
+diff-like output of the comparison of two strings or data structures.
+
+L<Test::NoWarnings>: make sure that there are no warnings generated in
+your test suite. This is the opposite of Test::Warn.
+
+L<Test::Warn>: test the creation of warnings.
+
+L<Test::Distribution>: test if a distribution is correct and complete
+(POD checking, all modules compile, existance of standard files like
+README). Simple to use.
+
+L<Test::Deep>: compare deep structures with a lot of features. For
+easier tests, is_deeply from Test::More should suffice.
+
+L<Test::Without::Module>: emulate the non-existance of modules (e.g.
+for optional features). Modules with similar functionality:
+L<Devel::Hide>, L<Module::Mask>. L<Test::Without::Module> has some
+problems with Tk, so prefer the L<Devel::Hide>. L<Module::Mask> not
+tested yet.
+
+L<Test::LongString> helps in comparing long strings by only showing
+relevant output. L<Test::Differences> may also used for this: it shows
+the differences in complex objects in a diff style.
+
+=head3 WWW and HTML related test modules
+
+L<Test::HTTPStatus>: a very simple module for just checking the return
+value (status code) of an URL.
+
+L<Test::URI>: Check various parts of Uniform Resource Locators.
+
+L<Test::HTML::Content>: Perl extension for testing HTML output (e.g.
+expected links, content, xpath ...).
+
+L<Test::HTML::Lint>: make lint tests to HTML.
+
+L<Test::HTML::Tidy>: similar to Test::HTML::Lint, but uses the
+external tidy library.
+
+L<Test::WWW::Mechanize>: bring WWW::Mechanize and Test::More together
+
+L<Test::WWW::Simple>: simple content tests.
+
+L<CGI::Test>: ???
+
+=head3 Other test modules
+
+L<Test::XML>: Compare XML in perl tests.
+
+=head2 Development, Perl Interna
+
+=head3 Tracing
+
+Simple tracing can be done with L<Devel::Trace>. L<Devel::TraceCalls>
+allows programmable tracing by subs or packages. The
+L<Devel::CallTrace> module is another one, which includes in its Pod
+documentation a list of similar modules, so look there for a short
+description for any of them.
+
+L<Carp::Indeed>: turns every warn/die into a stack trace including
+used parameters. Seems to be more powerful than L<Acme::JavaTrace> and
+L<Devel::SimpleTrace>, which do not dump parameters.
+
+=head3 Profiling
+
+L<Devel::FastProf> and L<Devel::SmallProf>: profilers on line basis.
+The first one has less impact on the execution time of the script
+(according to the author, 3 to 5 times slower) and has less profiling
+output, and the latter is much slower (about 50x), but has more
+profiling output. At least Devel::FastProf turns out to be quite
+useful.
+
+L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
+scripts, saw segmentation faults and garbled profile files). Profiles
+only on sub basis.
+
+There are other profilers, which are untested: L<Devel::Profiler>,
+some apache-specific profilers like L<Apache::Profiler>,
+L<Devel::Profile>, L<Devel::DProfLB>, L<DashProfiler> ...
+
+=head2 Versioning control systems
+
+L<VCS> and others. Look which one is the best nowadays XXX.
+
+=head2 Regexp tools
+
+L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
+modules doing similar things.
+
+A list with regexp tools can be found here:
+L<http://perlmonks.org/?node_id=399498>.
+
+=head1 File Handle Input/Output
+
+=head2 IO
+
+=head3 Reading/writing to a scalar
+
+Since 5.8.0, this can be done with three-arg L<open|perlfunc/open> and
+a scalar ref instead of a filename. For former perl versions, use
+either L<IO::Scalar> or L<IO::String>. See
+L<http://cpanratings.perl.org/dist/IO-String> for a rating which
+compares IO::String and IO::Scalar (where the former seems to be
+better than the latter).
+
+=head1 File Name Systems Locking
+
+=head2 File type detection
+
+L<File::Type> uses exclusively an internal database. In its
+documentation it explains its advantages over L<File::MimeInfo> and
+L<File::MMagic>.
+
+L<MIME::Types>: the name may be misleading --- the module is just an
+file extension - mime type mapping. The module is not looking at
+file's magic. It is supposed to work just like the MIME type
+recognition of Apache.
+
+L<File::MimeInfo::Magic> needs the mime-info database from the
+freedesktop project.
+
+L<File::MMagic> uses either an small internal database (with about 100
+file formats) or the host's magic file as found in F</etc/magic> or
+elsewhere. Unfortunately the location of the magic file is different
+from system to system, so it would be nice if there was an
+E<quot>auto-detectE<quot> option.
+
+=head2 File system
+
+=head3 Copying files
+
+L<File::Copy> is in the core. There's no support for recursive copying
+or file attribute preservation.
+
+L<File::NCopy> is able to make recursive copies and preserve file
+attributes.
+
+L<File::Copy::Recursive> is an alternative module for copying files
+recursively.
+
+=head3 Walking a file hierarchy
+
+L<File::Find> is in the core. 
+
+L<File::Find::Rule> is different XXX. Many plugins.
+
+=head2 Free disk space
+
+L<Filesys::DiskSpace>: no usage of external commands, just using
+syscalls. Support seems to be stalled since many years (there are test
+failures and old bug reports on rt.cpan.org).
+
+Check and compare the following modules: L<Filesys::Df>,
+L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
+
+=head1 Graphics
+
+=head2 Graphic libraries
 
 The classic one is L<GD>. It is not exactly easy to install, because
 it has as libgd as a prerequisite, which is not always pre-installed.
@@ -331,7 +423,7 @@ graph as gif or postscript or Perl/Tk canvas output or ...
 
 L<Image::LibRSVG> converts svg graphics into popular image formats.
 
-=head1 Image information
+=head2 Image information
 
 L<Image::Size> and L<Image::Info> may be used to get information about
 an image file (like size, mime format etc.). I had some exotic jpegs
@@ -342,7 +434,7 @@ information can also be found in L<Image::Info>. There's also
 L<Image::ExifTool>, which is (contrary to Image::EXIF) written in pure
 perl.
 
-=head1 Charts
+=head2 Charts
 
 L<GD::Graph> is a nice package to create plots, charts, pie diagrams
 etc. via the L<GD> module.
@@ -350,127 +442,370 @@ etc. via the L<GD> module.
 L<Chart::ThreeD::Pie> is another module to create pie diagrams via
 L<GD>.
 
-=head1 Search/fulltext engines
+=head1 Mail and Usenet News
 
-L<WAIT>, a fulltext engine. L<CPAN> has support for this module.
+=head2 Sending and Receiving
 
-=head1 Object persistance
+L<Mail::Send> and L<Mail::Mailer> are used for composing and sending
+simple messages. The modules are old and work somehow, but one has to
+actually read the source rather than the documentation to learn all
+the caveats. There's no support for constructing MIME mails. There are
+multiple backends (sendmail, mail, smtp ...) built in.
 
-L<Storable> (see above) and all other (de)serialization modules. See
-also L<http://poop.sourceforge.net> for a comprehensive list of perl
-object persistance modules.
+L<Mail::Sendmail>: XXX check this one. Just for sending.
 
-=head1 Database Abstractions
+L<Net::SMTP>: A low-level module for accessing a SMTP server for
+sending mails. No support for constructing messages.
 
-L<Class::DBI> is popular. An offspring of this module is
-L<DBIx::Class>. There are also L<Alzabo>, L<Rose::DB>. See also
-L<http://poop.sourceforge.net/>, as database abstraction layers and
-object persistence systems are mostly the same thing. Unfortunately
-this page is somewhat outdated (from 2003) and it does not even
-mention L<DBIx::Class>.
+L<Mail::Sender> a higher-level module around Net::SMTP ??? 
 
-=head1 SQL Abstrations
+L<Mail::Box>: a comprehensive suite of mail manipulating modules. This
+include: message construction, mbox/mail folder manipulation
+(including access to POP3 mail accounts), sending mails. Support for
+MIME mails.
 
-=head2 Schema handling
+L<Mail::Cclient> also gives access to various mailbox formats
+(including IMAP mail accounts). The module relies on an additional C
+library.
 
-L<SQL::Translator> seems to do everyhing: schema translation from
-everything to everything, including diagrams and creating diffs. The
-object model seems to be clean, separating parsers, producers, filters
-and schema objects. Unfortunately it has also everything as PREREQ_PM,
-including GD, GraphViz, Excel-related modules... Supported database
-engines are MySQL, Oracle, PostgreSQL, SQLite and many others.
+L<Mail::IMAPTalk> is an IMAP client interface.
 
-L<MySQL::Diff> has a limited task of showing differences between two
-mysql schemas (either from file or from a database) and create a
-series of ALTER TABLE statements to bring one schema to the other.
-Development to this module has stopped a lot of years ago, meaning
-that newer MySQL versions (4.x, 5.x ...) are not supported without
-manual tweaks.
+=head2 Generating
 
-L<DBIx::DBSchema> may me used for translating an existing database
-schema (which will be read from a database) and create SQL statements
-for another database engine. Supported database engines are MySQL,
-PostgreSQL and SQLite, while Sybase and Oracle are partially supported
-(from the docs).
+The mentioned modules have mostly only support for generating plain
+messages without MIME and attachments. For more complex emails with
+attachments you need something like L<MIME::Lite>, L<MIME::Tools> or
+L<Email::MIME>. There are claims that at least L<MIME::Lite> is buggy>
+and that L<Email::MIME> should be preferred.
 
-=head1 File database systems
+=head1 Miscellaneous
 
-File database systems or dbm systems are simple database systems with
-usually just a key-value relation and only one table per file.
+=head2 Module installation
 
-A short overview of standard DBM systems which come with perl can be
-looked at the L<AnyDBM_File> manpage. L<DB_File> has the most "+" in
-the AnyDBM_File table, but has some problems: the database file format
-changes across berkeley db versions, and there are reportedly many
-problems with corrupted databases.
+The classic module is L<CPAN>, which comes with core perl. Someday,
+L<CPANPLUS> will be the successor of CPAN.pm some day (once it is
+stable etc.). L<CPAN::Mini> is a module for creating a minimal mirror
+of the CPAN repository.
 
-L<DBM::Deep> is a pure-perl implementation which can also handle deep
-nested structures as values (other DBM implementations can only
-handle scalars as values).
+=head2 Logic programming
 
-L<CDB_File> is a "constant" database. This means that generating the
-database is costly, but reading is very fast.
+A list can be found at
+L<http://www.perlmonks.org/index.pl?node_id=424075>. A discussion at
+L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
 
-To have L<MLDBM> sits on top of the other DBM implementations and
-enables storing of deep nested structures. Unlike L<DBM::Deep>,
-storing of object information is also possible.
+=head2 Building software
 
-L<MLDBM::Sync::SDBM_File> can be used to overcome the size limitations
-of L<SDBM_File>.
+L<ExtUtils::MakeMaker> is the old-fashioned standard way of building
+perl modules and applications. Unfortunately it depends on the
+existance of a C<make> tool on the system, so there's now a pure-perl
+solution in the beginnings: L<Module::Build>.
 
-L<DB_File::Lock> adds a locking layer to L<DB_File>.
+A C<make> replacement as a perl module: L<Make>, together with a
+command line tool C<pmake>.
 
-L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
+L<Commands::Guarded> is an interesting module for guarded execution of
+commands (better description!).
 
-=head1 Development, Perl Interna
+L<PANT> is meant as an C<ant> replacement to help to automate a build
+environment. It is usually used as a meta script which calls external
+C<make> commands and has some built-ins like NewerFile, CopyFile etc.
 
-=head2 Tracing
+L<Cons> is a make replacement. Cons files are written in pure perl.
 
-Simple tracing can be done with L<Devel::Trace>. L<Devel::TraceCalls>
-allows programmable tracing by subs or packages. The
-L<Devel::CallTrace> module is another one, which includes in its Pod
-documentation a list of similar modules, so look there for a short
-description for any of them.
+=head2 Parsers
 
-L<Carp::Indeed>: turns every warn/die into a stack trace including
-used parameters. Seems to be more powerful than L<Acme::JavaTrace> and
-L<Devel::SimpleTrace>, which do not dump parameters.
+See
+L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
+about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
+Perl-byacc.
 
-=head2 Profiling
+=head2 CRC
 
-L<Devel::FastProf> and L<Devel::SmallProf>: profilers on line basis.
-The first one has less impact on the execution time of the script
-(according to the author, 3 to 5 times slower) and has less profiling
-output, and the latter is much slower (about 50x), but has more
-profiling output. At least Devel::FastProf turns out to be quite
-useful.
+L<String::CRC32>: fast, written in C.
 
-L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
-scripts, saw segmentation faults and garbled profile files). Profiles
-only on sub basis.
+L<Digest::Crc32>: very slow, written in pure perl.
 
-There are other profilers, which are untested: L<Devel::Profiler>,
-some apache-specific profilers like L<Apache::Profiler>,
-L<Devel::Profile>, L<Devel::DProfLB>, L<DashProfiler> ...
+There are also L<Digest::CRC> and L<String::CRC>.
 
-=head2 Weak references
+=head2 Password generators
 
-Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
-perl module. Former modules were L<WeakRef> ...
+There are L<String::Random> and L<String::MkPasswd>.
 
-=head1 Wiki
+=head2 Logging
 
-L<CGI::Wiki>: nice, modular, not out-of-the-box, but relatively easily
-configurable.
+A good comparison can be found at:
+L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
 
-L<Kwiki>: popular.
+=head2 System administration
 
-L<http://www.twiki.org> (not a CPAN module). Also popular,
-feature-rich, slow.
+L<Sysadm::Install>: a box full of tools typical for automated
+installation tasks. Looks very nice.
 
-=head1 Network
+L<Commands::Guarded>: this is more a paradigma the a toolbox: every
+action has a should-condition and an action. So it's possible to
+restart a script after a previous failure and determining errors is
+not done by checking error coded, but by checking the
+should-condition.
 
-=head2 Client stuff
+=head2 Geo modules
+
+L<Geo::Coder::US> is an interface to the free US geo data.
+
+L<Geo::Google> is an interface to Google maps.
+
+=head2 Terminal input
+
+Use L<Term::Readkey> for one-key-at-a-time input (visible or
+invisible). Useful also for invisible password input.
+
+L<Term::ReadLine>: a perl module similar to readline. Enabled line
+editing and history handling. Comes in two flavours:
+L<Term::ReadLine::Perl> and L<Term::ReadLine::Gnu> (XXX what's the
+difference between those two?)
+
+L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
+string and getting an answer. Has a lot of useful options (defaults,
+input filters ...).
+
+=head2 AI
+
+A long link list for AI and NLP stuff can be found here:
+L<http://perlmonks.org/?node_id=399498>.
+
+=head2 Bio
+
+A long link list for Bioinformatics stuff can be found here:
+L<http://perlmonks.org/?node_id=399498>.
+
+=head1 Option Parameter Config Processing
+
+=head2 Config/Ini files
+
+L<YAML> is both good for (de)serialization and config files. API is
+very simple to use. Note the overwhelming bug list on
+L<http://rt.cpan.org>, but for normal configuration files it should
+work OK.
+
+L<savevars>: my own pragma module for conveniently storing and
+retrieving a configuration.
+
+L<Config::IniFiles>: most people recommend this module for Windows-ini
+styled configuration files. More modules in this game:
+L<Config::Tiny>, L<Config::IniHash>, L<Config::Mini>, and
+L<Config::INI::Simple>.
+
+L<XML::Simple>: out-of-the-box serialization is not possible without
+fiddling with a lot of options
+
+L<Config::Model>: a configuration framework for parsing and analyzing
+all kinds of configuration file. Includes generating a curses screen
+to let the user input the options. Have many features like automatic
+comment creation, help screens, different levels
+(novice/intermediate/...).
+
+=head1 String Language Text Processing
+
+=head2 XML related modules
+
+Best reference is probably L<http://perl-xml.sourceforge.net/>,
+containing the Perl XML FAQ.
+
+Some benchmarks can be found at
+L<http://www.xmltwig.com/article/simple_benchmark/>.
+
+=head3 Parser
+
+L<XML::Parser>: the mother of all XML processing modules. It works,
+though on a very low level (if you compare with other fields Perl is
+strong). I suspect it's just the fact that a DOM/XML tree does not
+easily fit into the hash/array/scalar world of Perl.
+
+L<XML::Parser::EasyTree>: like C<XML::Parser> with Tree style, but the
+generated tree is more readable.
+
+L<XML::Parser::Lite>: a pure perl implementing a complete XML parser,
+without any other dependencies.
+
+L<XML::Tiny> is also a pure perl parser implementing parsing of a
+rather deliberately chosen subset of XML. Therefore, especially if you
+don't have control over the XML source, it is not recommended to use
+it in real production (and if you have control over the source, most
+times it is preferable to use another data serialization format like
+YAML, JSON, Storable or so).
+
+L<XML::SAX::PurePerl>: a pure perl XML parser with SAX2 interface
+
+=head3 Parser/Generators
+
+L<XML::LibXML>, an interface to the libxml2 library. The library comes
+with a number of methods to access an XML document: the SAX parser,
+which feels rather low-level, but is OK; also accessing through DOM
+with XPath support.
+
+L<XML::Simple>, a high-level interface. For serious work there's a
+lot of options to fiddle with, but the documentation is extensive and
+marks the options which are important and which are not.
+
+L<XML::Mini>, an implementation of a DOM-like API. Module seems to be
+buggy and unmaintained.
+
+L<XML::Twig> is feature-rich, has support for in-memory and chunked
+parsing, xpath operations, good documentation, a section on
+competitors. The author admits that it is slower than XML::LibXML, but
+uses less memory. Never used it, though.
+
+=head3 Utilities
+
+L<Tk::XMLViewer> displays an XML tree in a Tk window.
+
+=head2 Templating systems
+
+A comparison of web centered templating systems can be found at
+L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
+And here's another one:
+L<http://www.perl.com/lpt/a/2001/08/21/templating.html>.
+
+=head3 Standalone templating systems
+
+There are too many around there. Just to name some:
+
+L<Template> (Template-Toolkit), a very popular and feature-rich
+system. Good documentation, good support.
+
+L<HTML::Template>, another popular system. Not so feature-rich like
+Template-Toolkit. Focus on HTML.
+
+L<HTML::Template::Compiled> uses the same templating language as
+L<HTML::Template>, but internally compiles the template to perl code,
+so it's faster in persistent systems (about 2-4x).
+
+L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
+template. Small and useful.
+
+=head3 Meta templating systems
+
+L<Any::Template> is a wrapper around the major templating systems
+using the same API for all.
+
+=head3 Apache
+
+L<Apache::ASP> a framework with a jsp/asp-like templating system (XXX
+check), to be used in conjuction with L<mod_perl>.
+
+EmbPerl (L<HTML::Embperl>). More than just templating XXX?
+
+Mason (L<HTML::Mason>). More than just templating XXX?
+
+L<Apache::SimpleTemplate>, a mod_perl handler for using jsp/asp-like
+templates. It seems to be rather lightweight in comparison to
+Apache::ASP.
+
+=head2 PDF creation
+
+L<PDF::Create> works. Best to use version 0.06 from sourceforge
+(project perl-pdf).
+
+
+L<PDF::API2> is big and complete. But its seems to be slower than
+PDF::Create, at least for my needs.
+
+There are some templating solutions (PDF::Reuse, PDF::Template). And
+there's also (non-perl) pdflatex!
+
+=head2 Approximate matching
+
+L<String::Approx> uses the Levenshtein edit distance. The core is
+implemented in C. Older versions of C<String::Approx> (version 2) also
+have a slower perl implementation.
+
+L<String::Similarity> returns a similarity index of two strings.
+
+L<String::Trigram> finds similar strings by trigram (or 1, 2, 4,
+etc.-gram) method.
+
+=head2 Stripping accents
+
+L<Text::Unidecode>: highly recommended, handles all Unicode
+characters. There are also L<Text::Unaccent> and
+L<Text::StripAccents>.
+
+=head1 User Interfaces
+
+=head2 GUI toolkits
+
+L<Tk> is mature and runs on X11, Windows and MacOSX under XDarwin.
+Further alternatives are: L<Wx>, L<Gtk2>, L<Qt>, L<Prima>,
+L<Win32::GUI> etc. (A GUI toolkit comparison can be found at
+L<http://www.perlmonks.org/?node_id=108708>). L<X11::Protocol> for a
+low-level interface to the X11 windowing system --- good in conjuction
+with a higher level GUI toolkit like Tk.
+
+L<Qt> is only for the library version 2.0, while the current version
+is at 4.0.
+
+=head2 Console based GUI toolkits
+
+Low level: L<Curses>.
+
+Higher level: L<CDK>, L<Curses::UI>, L<Curses::Widgets>.
+
+=head2 GUI builder
+
+For L<Tk>: L<ZooZ> is actively developed. It is not exactly of the
+type "drag'n'drop", but seems to be useful. L<specPerl> (not on CPAN)
+is old, but probably useful. L<guido> (on Sourceforge) hast no active
+development anymore, and is not in a useful state.
+
+=head2 Tk widgets
+
+=head3 Date widgets
+
+L<Tk::Date>: a highly configurable text only entry widgets.
+
+L<Tk::DateEntry>: a BrowseEntry-like widgets which pops up a calendar
+
+L<Tk::DatePick>: a date widget which is only selectable using
+back/forward buttons (one for each date, month, year).
+
+L<Tk::MiniCalendar>: the calendar view looks like Tk::DateEntry, but
+the widget is not linked to a BrowseEntry widget.
+
+=head3 (Multicolumn) Listboxes, Tables
+
+L<Tk::Listbox>: a core Tk widget. Cannot use multiple columns, other
+than defining a fixed font a fake multiple columns. Since Tk804 it's
+possible to define a limited set of per-entry configuration
+(foreground color, others?).
+
+L<Tk::HList>: a core Perl/Tk widget, which has headers (through
+L<Tk::ResizeButton> also clickable and useable to resize columns),
+multiple columns, different styles for every cell, the possibility to
+use widgets or images in cells.
+
+L<Tk::MListbox>: XXX, are there others?
+
+L<Tk::Table>: a pure Perl/Tk table implemenentation. Rather complete,
+but slow on large tables, as each cell is represented by a widget.
+
+L<Tk::TableMatrix>: an XS extension to create tables. Complete and
+much faster than Tk::Table.
+
+=head3 Error handling
+
+If the standard Tk module L<Tk::ErrorDialog> is loaded, then fatal
+errors (only) will go into a dialog instead to STDERR.
+
+L<Tk::Stderr> redirects B<all> STDERR output to a toplevel window. The
+window may be iconified and will auto-deiconify if there's new STDERR
+output.
+
+L<Tk::Carp> works similar to C<CGI::Carp> by redirecting warn and die
+calls, in this case to Tk dialogs. Note that this module does not
+catch STDERR (unlike Tk::Stderr).
+
+=head1 World Wide Web
+
+=head2 Client
 
 L<LWP>, L<LWP::UserAgent>, L<LWP::Simple> (higher level, has also HTTP
 methods, but no methods like POP3, SMTP).
@@ -498,7 +833,7 @@ look at http://rt.cpan.org and the overwhelming bug list).
 L<WWW::Mechanize::Shell> is a shell for driving WWW::Mechanize and
 creating scripts for this module.
 
-=head2 Server stuff
+=head2 Server
 
 L<HTTP::Proxy> to create a HTTP proxy.
 
@@ -506,85 +841,7 @@ L<HTTP::Daemon> for a pure perl HTTP daemon. Other pure perl http
 daemons: tinyhttpd, httpi (links missing). For perl support in the
 Apache server see L<mod_perl> and the CGI support in Apache.
 
-=head2 Mail
-
-=head3 Sending and Receiving
-
-L<Mail::Send> and L<Mail::Mailer> are used for composing and sending
-simple messages. The modules are old and work somehow, but one has to
-actually read the source rather than the documentation to learn all
-the caveats. There's no support for constructing MIME mails. There are
-multiple backends (sendmail, mail, smtp ...) built in.
-
-L<Mail::Sendmail>: XXX check this one. Just for sending.
-
-L<Net::SMTP>: A low-level module for accessing a SMTP server for
-sending mails. No support for constructing messages.
-
-L<Mail::Sender> a higher-level module around Net::SMTP ??? 
-
-L<Mail::Box>: a comprehensive suite of mail manipulating modules. This
-include: message construction, mbox/mail folder manipulation
-(including access to POP3 mail accounts), sending mails. Support for
-MIME mails.
-
-L<Mail::Cclient> also gives access to various mailbox formats
-(including IMAP mail accounts). The module relies on an additional C
-library.
-
-L<Mail::IMAPTalk> is an IMAP client interface.
-
-=head3 Generating
-
-The mentioned modules have mostly only support for generating plain
-messages without MIME and attachments. For more complex emails with
-attachments you need something like L<MIME::Lite>, L<MIME::Tools> or
-L<Email::MIME>. There are claims that at least L<MIME::Lite> is buggy>
-and that L<Email::MIME> should be preferred.
-
-=head1 Templating systems
-
-A comparison of web centered templating systems can be found at
-L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
-And here's another one:
-L<http://www.perl.com/lpt/a/2001/08/21/templating.html>.
-
-=head2 Standalone templating systems
-
-There are too many around there. Just to name some:
-
-L<Template> (Template-Toolkit), a very popular and feature-rich
-system. Good documentation, good support.
-
-L<HTML::Template>, another popular system. Not so feature-rich like
-Template-Toolkit. Focus on HTML.
-
-L<HTML::Template::Compiled> uses the same templating language as
-L<HTML::Template>, but internally compiles the template to perl code,
-so it's faster in persistent systems (about 2-4x).
-
-L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
-template. Small and useful.
-
-=head2 Meta templating systems
-
-L<Any::Template> is a wrapper around the major templating systems
-using the same API for all.
-
-=head2 Apache
-
-L<Apache::ASP> a framework with a jsp/asp-like templating system (XXX
-check), to be used in conjuction with L<mod_perl>.
-
-EmbPerl (L<HTML::Embperl>). More than just templating XXX?
-
-Mason (L<HTML::Mason>). More than just templating XXX?
-
-L<Apache::SimpleTemplate>, a mod_perl handler for using jsp/asp-like
-templates. It seems to be rather lightweight in comparison to
-Apache::ASP.
-
-=head1 Web Frameworks
+=head2 Web Frameworks
 
 L<Catalyst> --- The Elegant MVC Web Application Framework 
 
@@ -593,11 +850,11 @@ L<Maypole>. A MVC system for Apache or cgi-bin.
 See also L<HTML::Mason> and maybe L<Apache::ASP>, which are more than just
 templating systems (is this true XXX?).
 
-=head2 CGI based frameworks
+=head3 CGI based frameworks
 
 L<CGI::Application>
 
-=head2 CMS
+=head3 CMS
 
 L<Contentment> --- a perl based Web CMS (check it XXX).
 
@@ -606,254 +863,17 @@ middle static sites with a focus on: multi-language sites, editors are
 constrained to pre-defined templates, Template-Toolkit based, database
 is Berkeley DB.
 
-=head1 Versioning control systems
+=head2 Wiki
 
-L<VCS> and others. Look which one is the best nowadays XXX.
+L<CGI::Wiki>: nice, modular, not out-of-the-box, but relatively easily
+configurable.
 
-=head1 Hash tools
+L<Kwiki>: popular.
 
-To get ordered hashes, use either L<Tie::IxHash>,
-L<Tie::InsertOrderHash> or L<Tie::Hash::Indexed>.
+L<http://www.twiki.org> (not a CPAN module). Also popular,
+feature-rich, slow.
 
-For case insensitive hashes, use either L<Tie::CPHash> or
-L<Hash::Case>.
-
-=head1 Regexp tools
-
-L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
-modules doing similar things.
-
-A list with regexp tools can be found here:
-L<http://perlmonks.org/?node_id=399498>.
-
-=head1 Module installation
-
-The classic module is L<CPAN>, which comes with core perl. Someday,
-L<CPANPLUS> will be the successor of CPAN.pm some day (once it is
-stable etc.). L<CPAN::Mini> is a module for creating a minimal mirror
-of the CPAN repository.
-
-=head1 Logic programming
-
-A list can be found at
-L<http://www.perlmonks.org/index.pl?node_id=424075>. A discussion at
-L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
-
-=head1 File type detection
-
-L<File::Type> uses exclusively an internal database. In its
-documentation it explains its advantages over L<File::MimeInfo> and
-L<File::MMagic>.
-
-L<MIME::Types>: the name may be misleading --- the module is just an
-file extension - mime type mapping. The module is not looking at
-file's magic. It is supposed to work just like the MIME type
-recognition of Apache.
-
-L<File::MimeInfo::Magic> needs the mime-info database from the
-freedesktop project.
-
-L<File::MMagic> uses either an small internal database (with about 100
-file formats) or the host's magic file as found in F</etc/magic> or
-elsewhere. Unfortunately the location of the magic file is different
-from system to system, so it would be nice if there was an
-E<quot>auto-detectE<quot> option.
-
-=head1 File system
-
-=head2 Copying files
-
-L<File::Copy> is in the core. There's no support for recursive copying
-or file attribute preservation.
-
-L<File::NCopy> is able to make recursive copies and preserve file
-attributes.
-
-L<File::Copy::Recursive> is an alternative module for copying files
-recursively.
-
-=head2 Walking a file hierarchy
-
-L<File::Find> is in the core. 
-
-L<File::Find::Rule> is different XXX. Many plugins.
-
-=head1 IO
-
-=head2 Reading/writing to a scalar
-
-Since 5.8.0, this can be done with three-arg L<open|perlfunc/open> and
-a scalar ref instead of a filename. For former perl versions, use
-either L<IO::Scalar> or L<IO::String>. See
-L<http://cpanratings.perl.org/dist/IO-String> for a rating which
-compares IO::String and IO::Scalar (where the former seems to be
-better than the latter).
-
-=head1 PDF creation
-
-L<PDF::Create> works. Best to use version 0.06 from sourceforge
-(project perl-pdf).
-
-
-L<PDF::API2> is big and complete. But its seems to be slower than
-PDF::Create, at least for my needs.
-
-There are some templating solutions (PDF::Reuse, PDF::Template). And
-there's also (non-perl) pdflatex!
-
-=head1 Building software
-
-L<ExtUtils::MakeMaker> is the old-fashioned standard way of building
-perl modules and applications. Unfortunately it depends on the
-existance of a C<make> tool on the system, so there's now a pure-perl
-solution in the beginnings: L<Module::Build>.
-
-A C<make> replacement as a perl module: L<Make>, together with a
-command line tool C<pmake>.
-
-L<Commands::Guarded> is an interesting module for guarded execution of
-commands (better description!).
-
-L<PANT> is meant as an C<ant> replacement to help to automate a build
-environment. It is usually used as a meta script which calls external
-C<make> commands and has some built-ins like NewerFile, CopyFile etc.
-
-L<Cons> is a make replacement. Cons files are written in pure perl.
-
-=head1 Parsers
-
-See
-L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
-about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
-Perl-byacc.
-
-=head1 CRC
-
-L<String::CRC32>: fast, written in C.
-
-L<Digest::Crc32>: very slow, written in pure perl.
-
-There are also L<Digest::CRC> and L<String::CRC>.
-
-=head1 Password generators
-
-There are L<String::Random> and L<String::MkPasswd>.
-
-=head1 Approximate matching
-
-L<String::Approx> uses the Levenshtein edit distance. The core is
-implemented in C. Older versions of C<String::Approx> (version 2) also
-have a slower perl implementation.
-
-L<String::Similarity> returns a similarity index of two strings.
-
-L<String::Trigram> finds similar strings by trigram (or 1, 2, 4,
-etc.-gram) method.
-
-=head1 Stripping accents
-
-L<Text::Unidecode>: highly recommended, handles all Unicode
-characters. There are also L<Text::Unaccent> and
-L<Text::StripAccents>.
-
-=head1 Logging
-
-A good comparison can be found at:
-L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
-
-=head1 Sorting
-
-L<Sort::Key> is (according to the author) the fastest way to sort an
-array by key.
-
-=head1 Class support
-
-=head2 Autogenerating accessors
-
-L<Class::Struct>: in the perl core, has a strange syntax and I
-remember other issues (no backward compatibility).
-
-L<Class::Accessor>: stable. Has varians for fast access
-L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
-
-L<accessors>: simple syntax, has also some variants. Test suite spits
-a lot of warnings. A possible downside is that the internal hash
-members are preceded with a dash. This makes serialized objects (e.g.
-as YAML) not-so-nice to read and write.
-
-L<Class::AccessorMaker>: ???
-
-=head1 System administration
-
-L<Sysadm::Install>: a box full of tools typical for automated
-installation tasks. Looks very nice.
-
-L<Commands::Guarded>: this is more a paradigma the a toolbox: every
-action has a should-condition and an action. So it's possible to
-restart a script after a previous failure and determining errors is
-not done by checking error coded, but by checking the
-should-condition.
-
-=head1 Date and time modules
-
-A classic one is L<Date::Calc>, a rather complete implementation of
-date/time functions with a functional (somewhat non-perlish naming)
-und object-oriented interfaces. It's written in C, so there's also a
-pure perl replacement L<Date::Pcalc>.
-
-The standard perl functions and modules: time, localtime, strftime and
-mktime in L<POSIX>, L<Time::Local>.
-
-Other efforts are: L<DateTime>, L<Time::Piece>, L<Date::Handler>,
-L<Date::Manip> ... A description of the many date and time modules may
-be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
-
-=head1 Geo modules
-
-L<Geo::Coder::US> is an interface to the free US geo data.
-
-L<Geo::Google> is an interface to Google maps.
-
-=head1 Terminal input
-
-Use L<Term::Readkey> for one-key-at-a-time input (visible or
-invisible). Useful also for invisible password input.
-
-L<Term::ReadLine>: a perl module similar to readline. Enabled line
-editing and history handling. Comes in two flavours:
-L<Term::ReadLine::Perl> and L<Term::ReadLine::Gnu> (XXX what's the
-difference between those two?)
-
-L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
-string and getting an answer. Has a lot of useful options (defaults,
-input filters ...).
-
-=head1 Iterators
-
-Check for L<Iterator> and L<Object::Realize::Later> (lazy
-evaluation???). L<Object::Iterate> introduces an B<iterate> method to
-loop conveniently over a list-like object.
-
-=head1 Free disk space
-
-L<Filesys::DiskSpace>: no usage of external commands, just using
-syscalls. Support seems to be stalled since many years (there are test
-failures and old bug reports on rt.cpan.org).
-
-Check and compare the following modules: L<Filesys::Df>,
-L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
-
-=head1 AI
-
-A long link list for AI and NLP stuff can be found here:
-L<http://perlmonks.org/?node_id=399498>.
-
-=head1 Bio
-
-A long link list for Bioinformatics stuff can be found here:
-L<http://perlmonks.org/?node_id=399498>.
-
-=head1 URI handling
+=head2 URI handling
 
 L<URI> has full-flavored support for different URI schemes. One major
 problem: URI only supports the "&" query param separator and not the
@@ -863,3 +883,4 @@ correctly.
 
 L<CGI> has limited support for URI handling through the url() and
 query_string() functions and the new() constructor.
+
