@@ -308,6 +308,13 @@ There are other profilers, which are untested: L<Devel::Profiler>,
 some apache-specific profilers like L<Apache::Profiler>,
 L<Devel::Profile>, L<Devel::DProfLB>, L<DashProfiler> ...
 
+=head3 Memory tracing
+
+L<Devel::Leak>: counts used scalars, so it's possible to determine
+whether there's an increase of used SVs.
+
+L<Devel::Leak::Object> (was recommended at cpanratings).
+
 =head2 Versioning control systems
 
 L<VCS> and others. Look which one is the best nowadays XXX.
