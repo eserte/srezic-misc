@@ -131,6 +131,10 @@ as YAML) not-so-nice to read and write.
 
 L<Class::AccessorMaker>: ???
 
+For an explanation what L<Object::Tiny> does, see
+L<http://use.perl.org/~Alias/journal/34329>. The author claims that
+L<Object::Tiny> is smaller and faster than L<Class::Accessor::Fast>.
+
 =head2 Sorting
 
 L<Sort::Key> is (according to the author) the fastest way to sort an
