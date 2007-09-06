@@ -132,7 +132,8 @@ as YAML) not-so-nice to read and write.
 L<Class::AccessorMaker>: ???
 
 For an explanation what L<Object::Tiny> does, see
-L<http://use.perl.org/~Alias/journal/34329>. The author claims that
+L<http://use.perl.org/~Alias/journal/34329>. This module only
+implements read-only accessors, no mutators. The author claims that
 L<Object::Tiny> is smaller and faster than L<Class::Accessor::Fast>.
 
 =head2 Sorting
@@ -589,6 +590,14 @@ L<http://perlmonks.org/?node_id=399498>.
 
 A long link list for Bioinformatics stuff can be found here:
 L<http://perlmonks.org/?node_id=399498>.
+
+=head1 Networking Devices IPC
+
+=head2 Network Utilities
+
+L<Net::IP::Match::Regexp> is a module to match IP addresses against
+ranges. This module contains also a list of similar modules with a
+comparison.
 
 =head1 Option Parameter Config Processing
 
