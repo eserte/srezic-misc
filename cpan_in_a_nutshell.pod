@@ -442,7 +442,8 @@ L<Image::LibRSVG> converts svg graphics into popular image formats.
 
 L<Image::Size> and L<Image::Info> may be used to get information about
 an image file (like size, mime format etc.). I had some exotic jpegs
-which did not work with Image::Info, but worked with Image::Size.
+which did not work with Image::Info, but worked with Image::Size. The
+latest versions of Image::Info say that this module is deprecated.
 
 L<Image::EXIF> is an interface to EXIF information. Some EXIF
 information can also be found in L<Image::Info>. There's also
