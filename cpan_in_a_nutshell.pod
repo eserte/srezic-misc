@@ -867,6 +867,10 @@ Apache server see L<mod_perl> and the CGI support in Apache.
 
 =head2 Web Frameworks
 
+There's a wiki page some of the existing frameworks for web
+development:
+L<http://www.perlfoundation.org/perl5/index.cgi?web_frameworks>
+
 L<Catalyst> --- The Elegant MVC Web Application Framework 
 
 L<Maypole>. A MVC system for Apache or cgi-bin.
