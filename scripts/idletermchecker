@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.2 2007/09/24 22:35:47 eserte Exp $
+# $Id: idletermchecker,v 1.3 2007/09/24 22:35:51 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -38,7 +38,7 @@ while() {
     }
 
     system("alarm", "-nicedown");
-    system("tkmessage", "-buttons", "Continue:100,Abort:101", "No output anymore on terminal for $timeout seconds!");
+    system("tkmessage", "-bg", "red", "-fg", "white", "-buttons", "Continue:100,Abort:101", "No output anymore on terminal for $timeout seconds!");
     my $st = $?/256;
     if ($st == 101) {
 	last;
