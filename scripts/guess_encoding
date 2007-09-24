@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: guess_encoding,v 1.2 2007/09/24 22:35:27 eserte Exp $
+# $Id: guess_encoding,v 1.3 2007/09/24 22:35:31 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -13,14 +13,21 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
+# Which are the expected Unicode codepoints?
 my @expected_codepoints = (32..127,
 			   (map { ord } split //, "הצüִײÜß"),
 			   0x20ac,
 			  );
-my @expected_encodings = qw(cp1252 iso-8859-1 utf-8); # may be empty
+
+# Which are the expected encodings? May be empty, in this case
+# all to perl available encodings will be checked.
+my @expected_encodings = qw(cp1252 iso-8859-1 utf-8);
+
+# Text to analyze, specify in raw octets:
 my $octets_to_analyze = "Bla הצü \x80";
 
 ######################################################################
+# No user-servicable parts below this point.
 
 use strict;
 use Encode;
