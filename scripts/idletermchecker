@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.5 2007/09/24 22:36:00 eserte Exp $
+# $Id: idletermchecker,v 1.6 2007/09/24 22:36:03 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -23,27 +23,66 @@ use strict;
 use IO::Select;
 use Getopt::Long;
 
+my @terminals;
 my $timeout = 30; # mx.develooper.com is sloooow!
 GetOptions("timeout=i" => \$timeout)
     or die "usage!";
 
-my $s = IO::Select->new;
-$s->add(\*STDIN);
+if (@ARGV) {
+    @terminals = map { "/dev/tty$_" } @ARGV; # assume BSD
+    check_terminals(\@terminals);
+} else {
+    check_stdin();
+}
 
-while() {
+sub check_terminals {
+    my($terminals_ref) = @_;
+    my @terminals = @$terminals_ref;
     while() {
-	my @ready = $s->can_read($timeout);
-	if (!@ready) {
-	    last;
+	my @timeouted;
+	for my $terminal (@terminals) {
+	    my($mtime) = (stat($terminal))[9];
+	    if (!defined $mtime) {
+		die "Cannot get mtime for <$terminal>";
+	    }
+	    if (time-$mtime >= $timeout) {
+		push @timeouted, $terminal;
+	    }
 	}
-	while() {
-	    my $buf;
-	    last if sysread(STDIN, $buf, 256, 0) < 256;
+	if (@timeouted) {
+	    my $message = "No output anymore on terminal(s) <@timeouted> for $timeout seconds!";
+	    warn_message($message);
 	}
+	sleep 1;
     }
+}
+
+sub check_stdin {
+    my $s = IO::Select->new;
+    $s->add(\*STDIN);
+
+    while () {
+	while () {
+	    my @ready = $s->can_read($timeout);
+	    if (!@ready) {
+		last;
+	    }
+	    while () {
+		my $buf;
+		last if sysread(STDIN, $buf, 256, 0) < 256;
+	    }
+	}
+	my $message = "No output anymore on terminal for $timeout seconds!";
+	warn_message($message);
+    }
+}
+
+sub warn_message {
+    my $message = shift;
+    print STDERR "$message\n";
 
     system("alarm", "-nicedown");
-    system("tkmessage", "-bg", "red", "-fg", "white", "-buttons", "Continue:100,Abort:101", "No output anymore on terminal for $timeout seconds!");
+    system("tkmessage", "-bg", "red", "-fg", "white", "-buttons", "Continue:100,Abort:101", $message);
     my $st = $?/256;
     if ($st != 100) {
 	exit 0;
