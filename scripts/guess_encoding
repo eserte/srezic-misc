@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: guess_encoding,v 1.1 2007/09/24 22:35:00 eserte Exp $
+# $Id: guess_encoding,v 1.2 2007/09/24 22:35:27 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -13,15 +13,17 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
-use strict;
-use Encode;
-
 my @expected_codepoints = (32..127,
 			   (map { ord } split //, "äöüÄÖÜß"),
 			   0x20ac,
 			  );
 my @expected_encodings = qw(cp1252 iso-8859-1 utf-8); # may be empty
 my $octets_to_analyze = "Bla äöü \x80";
+
+######################################################################
+
+use strict;
+use Encode;
 
 if (!@expected_encodings) {
     @expected_encodings = Encode->encodings(":all");
