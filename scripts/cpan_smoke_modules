@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.6 2007/10/06 21:34:45 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.7 2007/10/06 21:47:38 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -15,7 +15,7 @@
 
 use strict;
 use Getopt::Long;
-my @perls = qw(perl5.8.8 perl5.10.0 perl5.6.2 perl5.00505);
+my @perls = qw(perl5.10.0 perl5.8.8 perl5.6.2 perl5.00505);
 my $do_action = "report";
 my $warntimeout = 60;
 my $n;
