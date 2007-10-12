@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: utrace_stat,v 1.1 2006/03/30 06:41:50 eserte Exp $
+# $Id: utrace_stat,v 1.2 2007/10/12 21:05:21 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2002,2006 Slaven Rezic. All rights reserved.
@@ -21,20 +21,48 @@ my $total_mem = 0;
 my %malloc;
 my %opt;
 
-GetOptions(\%opt, "p") or die "usage: $0 [-p]";
+GetOptions(\%opt, "p", "showleaks|l") or
+    die <<EOF;
+usage: $0 [-p] [-l]
+
+-p: show also raw utrace calls
+-l: show memory leaks at end
+
+Example usage:
+
+    env MALLOC_OPTIONS=U ktrace -tu command arguments
+    kdump | utrace_stat
+
+EOF
+
+my %long = (
+	    # 32 bit
+	    12 => [[reverse (0..3)],
+		   [reverse (4..7)],
+		   [reverse (8..11)],
+		  ],
+	    # 64 bit
+	    24 => [[reverse (0..7)],
+		   [reverse (8..15)],
+		   [reverse (16..23)],
+		  ],
+	   );
+my %zero = (12 => "0"x8,
+	    24 => "0"x16,
+	   );
 
 while(<>) {
-    if (!$opt{"p"} && /^(?:\s*\d+\s\S+\s)(?:CALL|RET)\s+utrace/) {
+    if (!$opt{"p"} && /^(?:\s*\d+\s\S+\s*)(?:CALL|RET)\s+utrace/) {
 	# skip
-    } elsif (/^(\s*\d+\s\S+\s)USER\s+(\d+)\s+(.*)/) {
+    } elsif (/^(\s*\d+\s\S+\s*)USER\s+(\d+)\s+(.*)/) {
 	my($pre) = $1;
 	my(@v) = split(/\s+/, $3);
 	my $l = $2;
-	if ($l == 12) { # malloc et al.
+	if ($l == 12 || $l == 24) { # malloc et al. (32 bit/64 bit)
 	    my $sign;
-	    if (join("",@v[3,2,1,0]) eq "00000000") { # alloc
-		my $size = hex(join("",@v[7,6,5,4]));
-		my $ptr  = hex(join("",@v[11,10,9,8]));
+	    if (join("",@v[@{$long{$l}[0]}]) eq $zero{$l}) { # alloc
+		my $size = hex(join("",@v[@{$long{$l}[1]}]));
+		my $ptr  = hex(join("",@v[@{$long{$l}[2]}]));
 		if ($size == 0 && $ptr == 0) {
 		    printf "${pre}malloc init\n";
 		} else {
@@ -44,10 +72,10 @@ while(<>) {
 		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr;
 		}
 	    } else { # free/realloc
-		my $r    = hex(join("",@v[11,10,9,8]));
-		my $size = hex(join("",@v[7,6,5,4]));
-		my $ptr  = hex(join("",@v[3,2,1,0]));
-		if ($r == 0 && $size == 0) { # free
+		my $r    = hex(join("",@v[@{$long{$l}[2]}]));
+		my $size = hex(join("",@v[@{$long{$l}[1]}]));
+		my $ptr  = hex(join("",@v[@{$long{$l}[0]}]));
+		if ($size == 0) { # free
 		    if (!exists $malloc{$ptr}) {
 			warn "free: No malloc for $ptr detected?";
 		    } else {
@@ -79,5 +107,13 @@ while(<>) {
 
 printf "Still allocated memory: %d\n", $mem;
 printf "Total allocated memory: %d\n", $total_mem;
+
+if ($opt{showleaks}) {
+    print "Memory leaks, sorted by size:\n";
+    print join "",
+	map { sprintf "0x%08x %d\n", $_, $malloc{$_} }
+	    sort { $malloc{$b} <=> $malloc{$a} }
+		keys %malloc;
+}
 
 __END__
