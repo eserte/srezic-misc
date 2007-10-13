@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: utrace_stat,v 1.2 2007/10/12 21:05:21 eserte Exp $
+# $Id: utrace_stat,v 1.3 2007/10/13 08:59:44 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2002,2006 Slaven Rezic. All rights reserved.
@@ -18,6 +18,7 @@ use Getopt::Long;
 
 my $mem = 0;
 my $total_mem = 0;
+my $peak_mem = 0;
 my %malloc;
 my %opt;
 
@@ -68,6 +69,9 @@ while(<>) {
 		} else {
 		    $mem += $size;
 		    $total_mem += $size;
+		    if ($mem > $peak_mem) {
+			$peak_mem = $mem;
+		    }
 		    $malloc{$ptr} = $size;
 		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr;
 		}
@@ -93,6 +97,9 @@ while(<>) {
 			$mem += $size;
 			$total_mem += $size;
 			$malloc{$r} = $size;
+			if ($mem > $peak_mem) {
+			    $peak_mem = $mem;
+			}
 			printf "${pre}realloc(0x%08x, %d) => 0x%08x\n", $ptr, $size, $r;
 		    }
 		}
@@ -106,6 +113,7 @@ while(<>) {
 }
 
 printf "Still allocated memory: %d\n", $mem;
+printf "Memory peak: %d\n", $peak_mem;
 printf "Total allocated memory: %d\n", $total_mem;
 
 if ($opt{showleaks}) {
