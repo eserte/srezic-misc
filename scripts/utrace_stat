@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: utrace_stat,v 1.3 2007/10/13 08:59:44 eserte Exp $
+# $Id: utrace_stat,v 1.4 2007/10/13 11:21:28 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2002,2006 Slaven Rezic. All rights reserved.
@@ -19,6 +19,8 @@ use Getopt::Long;
 my $mem = 0;
 my $total_mem = 0;
 my $peak_mem = 0;
+my $min_ptr;
+my $max_ptr;
 my %malloc;
 my %opt;
 
@@ -74,6 +76,12 @@ while(<>) {
 		    }
 		    $malloc{$ptr} = $size;
 		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr;
+		    if (!defined $min_ptr || $ptr < $min_ptr) {
+			$min_ptr = $ptr;
+		    }
+		    if (!defined $max_ptr || $ptr > $max_ptr) {
+			$max_ptr = $ptr;
+		    }
 		}
 	    } else { # free/realloc
 		my $r    = hex(join("",@v[@{$long{$l}[2]}]));
@@ -101,6 +109,12 @@ while(<>) {
 			    $peak_mem = $mem;
 			}
 			printf "${pre}realloc(0x%08x, %d) => 0x%08x\n", $ptr, $size, $r;
+			if (!defined $min_ptr || $r < $min_ptr) {
+			    $min_ptr = $r;
+			}
+			if (!defined $max_ptr || $r > $max_ptr) {
+			    $max_ptr = $r;
+			}
 		    }
 		}
 	    }
@@ -115,6 +129,7 @@ while(<>) {
 printf "Still allocated memory: %d\n", $mem;
 printf "Memory peak: %d\n", $peak_mem;
 printf "Total allocated memory: %d\n", $total_mem;
+printf "Delta: %d (0x%08x - 0x%08x)\n", $max_ptr-$min_ptr, $min_ptr, $max_ptr; 
 
 if ($opt{showleaks}) {
     print "Memory leaks, sorted by size:\n";
