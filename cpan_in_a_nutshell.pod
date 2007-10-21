@@ -323,6 +323,16 @@ whether there's an increase of used SVs.
 
 L<Devel::Leak::Object> (was recommended at cpanratings).
 
+=head3 Compatibility support
+
+L<Perl::MinimumVersion> determines the minimal required perl version
+for given perl code. Unfortunately it's far from perfect, many modern
+perl constructs are not yet recognizes. See
+L<http://rt.cpan.org/Public/Bug/Display.html?id=28916>.
+
+The C<corelist> script, part of the L<Module::CoreList> module
+distribution, knows when modules were part of the perl core, if ever.
+
 =head2 Versioning control systems
 
 L<VCS> and others. Look which one is the best nowadays XXX.
