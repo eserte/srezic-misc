@@ -335,7 +335,8 @@ distribution, knows when modules were part of the perl core, if ever.
 
 =head2 Versioning control systems
 
-L<VCS> and others. Look which one is the best nowadays XXX.
+L<VCS> (old, unmaintained), L<VCI> (new, at the moment actively
+developed) and others. Look which one is the best nowadays XXX.
 
 =head2 Regexp tools
 
