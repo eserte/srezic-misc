@@ -1,0 +1,78 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: cpan_diff_dists,v 1.1 2007/10/22 18:30:14 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2007 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use File::Spec qw();
+use File::Temp qw(tempdir);
+
+sub save_pwd (&);
+
+-f "Makefile" or die "No Makefile, please run Makefile.PL";
+
+chomp(my $distvname = `make -VDISTVNAME`); # assumes BSD make
+die "Cannot get DISTVNAME from Makefile, needs BSD make" if !$distvname;
+
+my $oldtgz = shift;
+if (!$oldtgz) {
+    die "Please specify old archive";
+}
+$oldtgz = File::Spec->rel2abs($oldtgz);
+
+my $tempdir;
+save_pwd {
+    $tempdir = tempdir(CLEANUP => 1);
+    chdir $tempdir or die "Cannot chdir to $tempdir: $!";
+    system("tar xfv $oldtgz"); # assume modern tar
+    if ($? != 0) {
+	die "Error while extracting $oldtgz";
+    }
+    $tempdir = File::Spec->rel2abs((glob("*"))[0]); # assume only one extracted directory
+};
+
+system("make", "distdir") == 0
+    or die "Error while running make distdir";
+
+-d $distvname or die "Expected directory <$distvname> after running make distdir";
+
+system("diff", "-up", $tempdir, $distvname);
+
+# REPO BEGIN
+# REPO NAME save_pwd /home/e/eserte/work/srezic-repository 
+# REPO MD5 0f7791cf8e3b62744d7d5cfbd9ddcb07
+
+=head2 save_pwd(sub { ... })
+
+=for category File
+
+Save the current directory and assure that outside the block the old
+directory will still be valid.
+
+=cut
+
+sub save_pwd (&) {
+    my $code = shift;
+    require Cwd;
+    my $pwd = Cwd::cwd();
+    eval {
+	$code->();
+    };
+    my $err = $@;
+    chdir $pwd or die "Can't chdir back to $pwd: $!";
+    die $err if $err;
+}
+# REPO END
+
+
+__END__
