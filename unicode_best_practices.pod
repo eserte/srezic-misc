@@ -1,0 +1,102 @@
+=head1 Unicode best practices
+
+=head2 Shebang/encoding prelude
+
+    #!/usr/bin/perl -CSL
+
+For pre-5.8.0 compatibility use instead:
+
+    eval q{use open ':locale';};
+
+=head2 Command line
+
+    use I18N::Langinfo qw(langinfo CODESET)
+    my $codeset = langinfo(CODESET);
+    for (@ARGV) {
+        $_ = Encode::encode($codeset, $_);
+    }
+
+=head2 File open
+
+    open FH, $filename or die $!;
+    eval q{binmode FH, ':encoding(...)'}; # without eval if only for
+					  # 5.8.0 and later
+
+=head2 LWP
+
+Get the HTTP response content:
+
+    $response->decoded_content
+
+XXX Encoding parameters XXX
+
+=head2 CGI parameters
+
+XXX unconfirmed:
+
+	# $q is a CGI object
+        my %new_param;
+        for my $key ($q->param) {
+            next if $q->upload($key);
+            my @vals;
+            for my $val ($q->param($key)) {
+                eval {
+                    my $test_val = $val;
+                    Encode::decode("utf-8", $test_val, Encode::FB_CROAK());
+                };
+                if (!$@) {
+                    $val = Encode::decode("utf-8", $val);
+                    utf8::downgrade($val);
+                }
+                push @vals, $val;
+            }
+            $new_param{$key} = \@vals;
+        }
+        $q->delete(keys %new_param);
+        while(my($k,$v) = each %new_param) {
+            $q->param($k,@$v);
+        }
+
+=head2 HTML
+
+Always declare charset as utf-8, either in the server configuration
+(Content-type: text/html: utf-8) and/or in a <meta> tag. Or use XHTML.
+
+=head2 DBI
+
+XXX (probably driver-specific)
+
+=head2 Digest::*
+
+Always turn the data into utf-8 encoded octets, unless you're sure
+that you always have only data with codepoints < 256.
+
+=head2 Mail
+
+If using MIME::Lite, then all mail headers must be encoded manually.
+Best is to use:
+
+    $_ = Encode::encode("MIME-B", $_);
+
+For the content, specify the charset in the type and encode the
+content, e.g.
+
+    Type => "text/plain; charset=utf-8",
+    Data => Encode::encode("utf-8", $content)
+
+=head2 XML
+
+If writing a XML::LibXML document, then explicitely encode to utf-8
+(though this smells like an XML::LibXML bug):
+
+    Encode::encode("utf-8", $document->toString);
+
+=head1 AUTHOR
+
+Slaven ReziE<0x107> <srezic@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2007 Slaven ReziE<0x107>. All rights reserved.
+This module is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
