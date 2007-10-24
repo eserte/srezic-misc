@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_check_versions,v 1.3 2007/10/22 19:48:53 eserte Exp $
+# $Id: cpan_check_versions,v 1.4 2007/10/24 20:59:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -20,6 +20,11 @@ use ExtUtils::Manifest qw(maniread);
 use ExtUtils::MM_Unix;
 use File::Compare qw(compare);
 use File::Spec qw();
+use Getopt::Long;
+
+my $q;
+GetOptions("q" => \$q)
+    or die "usage: $0 [-q]";
 
 sub save_pwd (&);
 
@@ -46,17 +51,23 @@ if (!$olddistdir) {
     $olddistdir = $best_dist->filename;
 }
 
-if ($olddistdir =~ m{\.(tar\.gz|tgz)$}) {
+if ($olddistdir =~ m{\.(tar\.gz|tgz|tar\.bz2)$}) {
     my $olddistfile = File::Spec->rel2abs($olddistdir);
     require File::Temp;
-    require Archive::Tar;
     my($tempdir) = File::Temp::tempdir(CLEANUP => 1);
     save_pwd {
 	chdir $tempdir or die "Can't chdir to $tempdir: $!";
-	my $tar = Archive::Tar->new;
-	$tar->read($olddistfile, 1)
-	    or die "Cannot open $olddistfile";
-	$tar->extract;
+
+	if ($olddistdir =~ m{\.tar\.bz2$}) {
+	    system("tar", "x".($q?"":"v")."f", $olddistfile) == 0
+		or die "Error while extracting $olddistfile: $?";
+	} else {
+	    require Archive::Tar;
+	    my $tar = Archive::Tar->new;
+	    $tar->read($olddistfile, 1)
+		or die "Cannot open $olddistfile";
+	    $tar->extract;
+	}
 	my(@extracted_files) = glob("*");
 	if (@extracted_files != 1) {
 	    die "Unexpected number of extracted files/directories: @extracted_files";
@@ -64,6 +75,10 @@ if ($olddistdir =~ m{\.(tar\.gz|tgz)$}) {
 	chdir $extracted_files[0] or die "Can't chdir to $extracted_files[0]: $!";
 	$olddistdir = cwd;
     };
+}
+
+if (!-d $olddistdir) {
+    die "<$olddistdir> must be a directory";
 }
 
 my $errors = 0;
@@ -75,7 +90,7 @@ for my $file (keys %$manifest) {
 	my $new_file = $distdir."/".$file;
 	my $old_file = $olddistdir."/".$file;
 	if (!-e $old_file) {
-	    warn "NOTE: $file is new...\n";
+	    warn "NOTE: $file is new...\n" if !$q;
 	    next;
 	}
 
