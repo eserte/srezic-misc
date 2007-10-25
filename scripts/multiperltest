@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: multiperltest,v 1.6 2007/10/22 22:33:29 eserte Exp $
+# $Id: multiperltest,v 1.7 2007/10/25 20:08:39 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2002,2004 Slaven Rezic. All rights reserved.
+# Copyright (C) 2002,2004,2007 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -117,9 +117,15 @@ if ($need_x_server) {
     $ENV{DISPLAY} = $xvfb_display;
 }
 
+my $xterm_title_prelude = "multiperltest: " . $basedistdir;
+my $success_line = "";
+my $current_perl_exe = "";
+
 foreach my $perl (@perl) {
     print STDERR "#" x 70, "\n";
     print STDERR "# " . $perl->{exec} . "...\n";
+    $current_perl_exe = $perl->{exec};
+    my_xterm_title();
     $perl->{success} = 0;
     local %ENV = %ENV;
     if ($perl->{env}) {
@@ -147,6 +153,10 @@ foreach my $perl (@perl) {
 	}
 	system("make","realclean");
     }
+
+    $success_line .= $perl->{success} ? '+' : '-';
+    $current_perl_exe = "";
+    my_xterm_title();
 }
 
 if (defined $xvfb_pid) {
@@ -155,6 +165,25 @@ if (defined $xvfb_pid) {
 
 
 print STDERR Data::Dumper->new([\@perl],[])->Indent(1)->Useqq(1)->Dump;
+
+sub my_xterm_title {
+    my $title = $xterm_title_prelude . " " . $success_line;
+    if ($current_perl_exe) {
+	$title .= " <$current_perl_exe>";
+	my $to_go = @perl - length($success_line) - 1;
+	if ($to_go > 0) {
+	    $title .= "(+$to_go)";
+	}
+    }
+    xterm_title($title);
+}
+
+sub xterm_title {
+    my $title = shift;
+    if (is_in_path("xterm-config")) {
+	system(qw(xterm-config -title), $title);
+    }
+}
 
 # REPO BEGIN
 # REPO NAME is_in_path /home/e/eserte/work/srezic-repository 
