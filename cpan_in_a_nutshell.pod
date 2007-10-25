@@ -346,6 +346,12 @@ modules doing similar things.
 A list with regexp tools can be found here:
 L<http://perlmonks.org/?node_id=399498>.
 
+=head1 Documentation
+
+=head2 Pod
+
+XXX podlators, Pod::Simple, various pod2html modules XXX
+
 =head1 File Handle Input/Output
 
 =head2 IO
