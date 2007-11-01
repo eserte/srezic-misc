@@ -569,6 +569,15 @@ There are L<String::Random> and L<String::MkPasswd>.
 A good comparison can be found at:
 L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
 
+=head2 Logfile parsing
+
+David Newcum lists in L<http://cpanratings.perl.org/user/interiot> a
+number of modules which do logfile parsing: L<Logfile::Access>,
+L<http://www.oreilly.com/catalog/perlwsmng/chapter/ch08.html>,
+L<Regexp::Log>, L<HTTPD::Log::Filter>, AWStats' awstats.pl,
+L<http://www.fourmilab.ch/fourmilog/archives/2005-03/000500.html>,
+and, as the worst example, L<Apache::ParseLog>.
+
 =head2 System administration
 
 L<Sysadm::Install>: a box full of tools typical for automated
