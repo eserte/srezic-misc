@@ -1,0 +1,35 @@
+#
+# $Id: SlayMakefile,v 1.1 2007/11/02 09:33:01 eserte Exp $
+#
+
+{
+    package MyPH;
+    use base 'Pod::Simple::HTML';
+    sub html_header_after_title {
+	my $self = shift;
+	if (@_) {
+	    $self->SUPER::html_header_after_title(@_);
+	} else {
+	    $self->SUPER::html_header_after_title . "\n<h1>CPAN in a nutshell</h1>";
+	}
+    }
+    sub html_footer {
+	my $self = shift;
+	if (@_) {
+	    $self->SUPER::html_footer(@_);
+	} else {
+	     "\n<h1>Author</h1>Slaven Rezi&#x107;" . $self->SUPER::html_footer;
+	}
+    }
+    sub force_title { "CPAN in a nutshell" }
+    sub index {1}
+    sub html_css { "http://search.cpan.org/s/style.css" }
+}
+
+all: cpan_in_a_nutshell.html
+
+cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod Makefile
+	{
+	    MyPH->parse_from_file("cpan_in_a_nutshell.pod", "cpan_in_a_nutshell.html");
+	    "";
+	}
