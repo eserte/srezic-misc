@@ -475,6 +475,17 @@ etc. via the L<GD> module.
 L<Chart::ThreeD::Pie> is another module to create pie diagrams via
 L<GD>.
 
+=head1 Language Extensions
+
+=head2 Exporting
+
+The standard way for exporting symbols from a package to another is
+the core module L<Exporter>. See L<Sub::Exporter/COMPARISONS>
+explaining the strengths and weaknesses of L<Exporter>,
+L<Exporter::Lite>, L<Exporter::Easy>, L<Exporter::Simple>,
+L<Perl6::Export>, L<Perl6::Export::Attrs>, L<Exporter::Renaming>,
+L<Class::Exporter>, L<Exporter::Tidy>.
+
 =head1 Mail and Usenet News
 
 =head2 Sending and Receiving
