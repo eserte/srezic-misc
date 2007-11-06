@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.1 2007/11/02 09:33:01 eserte Exp $
+# $Id: SlayMakefile,v 1.2 2007/11/06 21:28:38 eserte Exp $
 #
 
 {
@@ -26,10 +26,13 @@
     sub html_css { "http://search.cpan.org/s/style.css" }
 }
 
-all: cpan_in_a_nutshell.html
+all: permissions cpan_in_a_nutshell.html
 
 cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod Makefile
 	{
 	    MyPH->parse_from_file("cpan_in_a_nutshell.pod", "cpan_in_a_nutshell.html");
 	    "";
 	}
+
+permissions:
+	cd scripts && chmod ugo+rx *
