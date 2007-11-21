@@ -89,8 +89,9 @@ Data::JavaScript
 
 =head2 Hash tools
 
-To get ordered hashes, use either L<Tie::IxHash>,
-L<Tie::InsertOrderHash> or L<Tie::Hash::Indexed>.
+To get ordered hashes, use either L<Tie::IxHash> (which is old and
+seems to be rock-stable), L<Tie::InsertOrderHash> (has problems with
+older perls i.e. 5.005) or L<Tie::Hash::Indexed>.
 
 For case insensitive hashes, use either L<Tie::CPHash> or
 L<Hash::Case>.
@@ -103,6 +104,9 @@ loop conveniently over a list-like object.
 
 =head2 Date and time modules
 
+A complete implementation is offered by L<DateTime>, with a plethora
+of plugins and additions.
+
 A classic one is L<Date::Calc>, a rather complete implementation of
 date/time functions with a functional (somewhat non-perlish naming)
 und object-oriented interfaces. It's written in C, so there's also a
@@ -111,7 +115,7 @@ pure perl replacement L<Date::Pcalc>.
 The standard perl functions and modules: time, localtime, strftime and
 mktime in L<POSIX>, L<Time::Local>.
 
-Other efforts are: L<DateTime>, L<Time::Piece>, L<Date::Handler>,
+Other efforts are: L<Time::Piece>, L<Date::Handler>,
 L<Date::Manip> ... A description of the many date and time modules may
 be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
 
@@ -122,7 +126,7 @@ be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
 L<Class::Struct>: in the perl core, has a strange syntax and I
 remember other issues (no backward compatibility).
 
-L<Class::Accessor>: stable. Has varians for fast access
+L<Class::Accessor>: stable. Has variants for fast access
 L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
 
 L<accessors>: simple syntax, has also some variants. Test suite spits
@@ -413,7 +417,7 @@ syscalls. Support seems to be stalled since many years (there are test
 failures and old bug reports on rt.cpan.org).
 
 Check and compare the following modules: L<Filesys::Df>,
-L<Filesys::DiskFree>, L<Filesys::Statvfs>, L<Filesys::Statfs>.
+L<Filesys::DiskFree>, L<Filesys::Statvfs>.
 
 =head1 Graphics
 
