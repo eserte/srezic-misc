@@ -444,6 +444,9 @@ expected.
 L<Image::Imlib2>: apparently an interface to the imlib2 library. Not
 tested yet.
 
+L<Prima> is originally a GUI toolkit, but it can handle image
+operations also in a non-windowing environment.
+
 Not a perl module, but still usable from a perl script/module is
 netpbm (to be found on sourceforge). netpbm is a collection of filter
 programs which can be piped together. For example: to resize a gif
