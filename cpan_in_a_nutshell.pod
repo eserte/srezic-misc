@@ -724,6 +724,10 @@ parsing, xpath operations, good documentation, a section on
 competitors. The author admits that it is slower than XML::LibXML, but
 uses less memory. Never used it, though.
 
+L<XML::Bare> is, according to the docs, a fast XML parser which
+implements only a subset of XML. Its doc has a comparison table about
+the parsing performance of the existing XML parsers.
+
 =head3 Utilities
 
 L<Tk::XMLViewer> displays an XML tree in a Tk window.
