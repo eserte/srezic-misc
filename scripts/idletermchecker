@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.11 2007/11/17 09:12:10 eserte Exp $
+# $Id: idletermchecker,v 1.12 2007/11/29 20:57:32 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -27,6 +27,7 @@ use Getopt::Long;
 
 my @terminals;
 my $timeout = 30; # mx.develooper.com is sloooow!
+my $local_timeout;
 my $q; # be quiet on stderr
 GetOptions("timeout=i" => \$timeout,
 	   "q" => \$q,
@@ -45,17 +46,18 @@ sub check_terminals {
     my @terminals = @$terminals_ref;
     while() {
 	my @timeouted;
+	my $use_timeout = $local_timeout || $timeout;
 	for my $terminal (@terminals) {
 	    my($mtime) = (stat($terminal))[9];
 	    if (!defined $mtime) {
 		die "Cannot get mtime for <$terminal>";
 	    }
-	    if (time-$mtime >= $timeout) {
+	    if (time-$mtime >= $use_timeout) {
 		push @timeouted, $terminal;
 	    }
 	}
 	if (@timeouted) {
-	    my $message = "No output anymore on terminal(s) <@timeouted> for $timeout seconds!";
+	    my $message = "No output anymore on terminal(s) <@timeouted> for $use_timeout seconds!";
 	    my $do_exit = exit_dialog($message);
 	    if ($do_exit) {
 		my %timeouted = map {($_,1)} @timeouted;
@@ -97,6 +99,7 @@ sub check_stdin {
 
 sub exit_dialog {
     my($message) = @_;
+    undef $local_timeout;
     if (!$q) {
 	print STDERR "$message\n";
     }
@@ -105,9 +108,15 @@ sub exit_dialog {
 	system("alarm", "-nicedown");
     }
     if (is_in_path("tkmessage")) {
-	system("tkmessage", "-bg", "red", "-fg", "white", "-buttons", "Continue:100,Abort:101", $message);
+	system("tkmessage", "-bg", "red", "-fg", "white", "-buttons", "Continue:100,Abort:101,Later 1min:102,Later 5min:103,Later 30min:104", $message);
 	my $st = $?/256;
-	if ($st != 100) {
+	if ($st >= 102 || $st <= 104) {
+	    $local_timeout = {102 => 1*60,
+			      103 => 5*60,
+			      105 =>30*60,
+			     }->{$st};
+	    return 0;
+	} elsif ($st != 100) {
 	    return 1;
 	} else {
 	    return 0;
