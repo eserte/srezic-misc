@@ -11,11 +11,13 @@ modules L<List::MoreUtil> and L<List::Utils>.
 
 =head2 Serialization
 
-L<YAML> is neat: it's human readable, portable across languages, but
-unfortunately the Perl implementation is buggy so that's unusable
-(other than for configuration files). Also the syntax became very
-complex. (The note about bugginess might be outdated, should check the
-recent versions)
+=head3 YAML
+
+YAML as a format is neat: it's human readable, portable across
+languages, but unfortunately the pure perl implementation L<YAML> is
+buggy so that's unusable (other than for configuration files). Also
+the syntax became very complex. (The note about bugginess might be
+outdated, should check the recent versions)
 
 L<YAML::Syck> is a C based parser for the YAML language. It's API
 compatible with L<YAML> (has the same Load/Dump methods), but it's not
@@ -24,11 +26,44 @@ seems to be more standard-compliant as L<YAML>. For example, there's
 no way to get L<YAML> dump/load utf-8 files, but in L<YAML::Syck> it's
 at least configurable.
 
+L<YAML::Tiny> is a small parser/generator which only implements a
+subset of YAML.
+
+=head3 JSON/Javascript
+
 L<JSON> is a human readable format which is based on javascript
 syntax. It's not so complex as YAML, but has the other advantages of
 YAML.
 
 L<JSON::Syck> is a C based parser for the JSON language.
+
+L<JSON::Any> is a wrapper which uses any installed available JSON
+parser/generator.
+
+L<Data::JavaScript> from perl to javascript, can handle circular
+structures, but output is quite verbose.
+
+L<Data::JavaScript::Anon> from perl to javascript, cannot handle
+circular references, but the output is terse compared to
+Data::JavaScript
+
+=head3 XML
+
+L<XML::Dumper> is a serialisation module for dumping Perl objects
+from/to XML. As usually with XML, the output is very verbose and
+probably slower than other modules. It's possible to include a DTD in
+the generated XML document. There's no support for code references.
+
+L<XML::Simple> can also be used for serializing/deserializing.
+
+L<XML::Smart> --- the bad point about XML::Simple is, that one has to
+carefully specify what goes into a hash or array or scalar, otherwise
+the structure of the resulting data structure is somewhat undefined.
+L<XML::Smart> tries to solve this problem by using an universal data
+type which can be used either as hash or array or scalar. However, I
+never tried this module in reality.
+
+=head3 Standard-less formats
 
 L<Storable> is in the core since 5.7.3. It's fast (because implemented
 in XS and using a binary format), but it's not human readable. The
@@ -50,20 +85,6 @@ L<Data::Dump::Streamer> is maybe worthwhile to take a look on XXX.
 
 L<Data::Denter> is a predecessor of YAML.
 
-L<XML::Dumper> is a serialisation module for dumping Perl objects
-from/to XML. As usually with XML, the output is very verbose and
-probably slower than other modules. It's possible to include a DTD in
-the generated XML document. There's no support for code references.
-
-L<XML::Simple> can also be used for serializing/deserializing.
-
-L<XML::Smart> --- the bad point about XML::Simple is, that one has to
-carefully specify what goes into a hash or array or scalar, otherwise
-the structure of the resulting data structure is somewhat undefined.
-L<XML::Smart> tries to solve this problem by using an universal data
-type which can be used either as hash or array or scalar. However, I
-never tried this module in reality.
-
 L<Data::Serializer> is a meta class for handling a couple of
 serialization methods together with encryption, compression and
 checksumming.
@@ -77,15 +98,6 @@ the URL is not available, then try the archive URL
 L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
 More modules are mentioned there not covered here: L<RPC::XML>,
 L<Convert::Bencode>, L<Convert::Bencode_XS>.
-
-=head3 Serialization to other languages
-
-L<Data::JavaScript> from perl to javascript, can handle circular
-structures, but output is quite verbose
-
-L<Data::JavaScript::Anon> from perl to javascript, cannot handle
-circular references, but the output is terse compared to
-Data::JavaScript
 
 =head2 Hash tools
 
