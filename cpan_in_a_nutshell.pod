@@ -31,9 +31,9 @@ subset of YAML.
 
 =head3 JSON/Javascript
 
-L<JSON> is a human readable format which is based on javascript
-syntax. It's not so complex as YAML, but has the other advantages of
-YAML.
+JSON is a human readable format which is based on javascript syntax.
+It's not so complex as YAML, but has the other advantages of YAML. A
+pure perl implementation is L<JSON>.
 
 L<JSON::Syck> is a C based parser for the JSON language.
 
