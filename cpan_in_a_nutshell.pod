@@ -40,12 +40,13 @@ L<JSON::Syck> is a C based parser for the JSON language.
 L<JSON::Any> is a wrapper which uses any installed available JSON
 parser/generator.
 
-L<Data::JavaScript> from perl to javascript, can handle circular
-structures, but output is quite verbose.
+L<Data::JavaScript> serializes data structures from perl to
+javascript, can handle circular structures, but output is quite
+verbose.
 
-L<Data::JavaScript::Anon> from perl to javascript, cannot handle
-circular references, but the output is terse compared to
-Data::JavaScript
+L<Data::JavaScript::Anon> is also a serializer for perl data to
+javascript syntax, cannot handle circular references, but the output
+is more terse compared to Data::JavaScript.
 
 =head3 XML
 
