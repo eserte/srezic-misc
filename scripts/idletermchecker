@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.16 2007/11/30 21:54:06 eserte Exp $
+# $Id: idletermchecker,v 1.17 2007/11/30 22:25:19 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -26,8 +26,10 @@ use IO::Select;
 use Getopt::Long;
 
 my @terminals;
-my $timeout  = 30; # mx.develooper.com is sloooow!
-my $timeout2 = 60;
+my $default_timeout  = 30;
+my $default_timeout2 = 60;
+my $timeout  = $default_timeout;
+my $timeout2 = $default_timeout2;
 my $local_timeout;
 my $q; # be quiet on stderr
 my $do_tk;
@@ -39,6 +41,15 @@ GetOptions("t|timeout=i" => \$timeout,
 	   "geometry=s" => \$geometry,
 	  )
     or die "usage!";
+if ($timeout  != $default_timeout &&
+    $timeout2 == $default_timeout2) {
+    # keep delta:
+    $timeout2 += ($timeout - $default_timeout);
+}
+if ($timeout2 <= $timeout) {
+    # must be greater
+    $timeout2 = $timeout + 1;
+}
 
 if ($do_tk) {
     check_tk(@ARGV);
@@ -160,8 +171,32 @@ sub check_tk {
     my $mw = MainWindow->new;
     $mw->geometry($geometry) if $geometry;
     my %l;
+    my %f;
     for my $term (@terminals) {
-	$l{$term} = $mw->Label(-text => $term)->pack(-fill => 'x', -expand => 1);
+	my $f = $f{$term} = $mw->Frame->pack(-fill => 'x', -expand => 1);
+	$l{$term} = $f->Label(-text => $term)->pack(-side => "left", -fill => 'x');
+	$f->Button(-text => 'x',
+		   #-background => undef,
+		   -foreground => 'red',
+		   -padx => 0,
+		   -pady => 0,
+		   -relief => 'flat',
+		   -bd => 0,
+		   -command => sub {
+		       my $yesno = $f->messageBox(-type => "yesno",
+						  -message => "Remove watcher?");
+		       if ($yesno =~ m{^yes$}i) {
+			   @terminals = grep { $_ ne $term } @terminals;
+			   if (!@terminals) {
+			       $mw->messageBox(-message => "No more watchers, exiting...");
+			       $mw->update;
+			       sleep 1;
+			       $mw->destroy;
+			   } else {
+			       $f->destroy;
+			   }
+		       }
+		   })->pack(-side => "left");
     }
     $mw->iconify;
     while() {
@@ -183,7 +218,7 @@ sub check_tk {
 	my %timeouted = map{($_,1)} @timeouted;
 	my @non_timeouted = grep { !$timeouted{$_} } @terminals;
 	for my $term (@non_timeouted) {
-	    $l{$term}->configure(-background => 'green')
+	    $_->configure(-background => 'green') for $l{$term}, $f{$term};
 	}
 	if (@timeouted) {
 	    $mw->deiconify;
@@ -194,7 +229,7 @@ sub check_tk {
 		} else {
 		    $bg = sprintf "#%02x%02x00", 255*($age{$term}/$timeout2), (255-255*($age{$term}/$timeout2));
 		}
-		$l{$term}->configure(-background => $bg);
+		$_->configure(-background => $bg) for $l{$term}, $f{$term};
 	    }
 	} else {
 	    $mw->iconify;
