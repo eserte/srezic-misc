@@ -37,6 +37,9 @@ pure perl implementation is L<JSON>.
 
 L<JSON::Syck> is a C based parser for the JSON language.
 
+L<JSON::XS> is another C based parser/generator for JSON. It seems to
+be the only one which handles Unicode correctly.
+
 L<JSON::Any> is a wrapper which uses any installed available JSON
 parser/generator.
 
