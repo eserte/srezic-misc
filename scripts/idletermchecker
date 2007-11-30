@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.15 2007/11/30 21:49:59 eserte Exp $
+# $Id: idletermchecker,v 1.16 2007/11/30 21:54:06 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -26,13 +26,17 @@ use IO::Select;
 use Getopt::Long;
 
 my @terminals;
-my $timeout = 30; # mx.develooper.com is sloooow!
+my $timeout  = 30; # mx.develooper.com is sloooow!
+my $timeout2 = 60;
 my $local_timeout;
 my $q; # be quiet on stderr
 my $do_tk;
+my $geometry;
 GetOptions("t|timeout=i" => \$timeout,
+	   "t2|timeout2=i" => \$timeout2,
 	   "q" => \$q,
 	   "tk" => \$do_tk,
+	   "geometry=s" => \$geometry,
 	  )
     or die "usage!";
 
@@ -154,6 +158,7 @@ sub check_tk {
 
     require Tk;
     my $mw = MainWindow->new;
+    $mw->geometry($geometry) if $geometry;
     my %l;
     for my $term (@terminals) {
 	$l{$term} = $mw->Label(-text => $term)->pack(-fill => 'x', -expand => 1);
@@ -163,7 +168,6 @@ sub check_tk {
 	my @timeouted;
 	my %age;
 	my $use_timeout = $timeout;
-	my $timeout2 = $timeout ? $timeout*2 : 60;
 	for my $terminal (@terminals) {
 	    my($mtime) = (stat($terminal))[9];
 	    if (!defined $mtime) {
@@ -188,7 +192,7 @@ sub check_tk {
 		if ($age{$term} >= $timeout2) {
 		    $bg = "#ff0000";
 		} else {
-		    $bg = sprintf "#%02d%02d00", 255*($age{$term}/$timeout2), (255-255*($age{$term}/$timeout2));
+		    $bg = sprintf "#%02x%02x00", 255*($age{$term}/$timeout2), (255-255*($age{$term}/$timeout2));
 		}
 		$l{$term}->configure(-background => $bg);
 	    }
