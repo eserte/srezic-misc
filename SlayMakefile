@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.3 2007/11/22 21:07:45 eserte Exp $
+# $Id: SlayMakefile,v 1.4 2007/11/30 23:10:55 eserte Exp $
 #
 
 {
@@ -36,3 +36,5 @@ cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod SlayMakefile
 
 permissions:
 	cd scripts && chmod ugo+rx *
+	cd cgi && chmod ugo+rx *
+	chmod ugo+rx scripts cgi
