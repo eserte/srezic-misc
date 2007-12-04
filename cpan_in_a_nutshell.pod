@@ -776,6 +776,10 @@ so it's faster in persistent systems (about 2-4x).
 L<Text::ScriptTemplate>, a asp/jsp-like system to embed perl in a
 template. Small and useful.
 
+L<Template::Alloy> is, according to its documentation, a fast
+templating system which can emulate some of the other popular systems,
+including Template-Toolkit and HTML::Template.
+
 =head3 Meta templating systems
 
 L<Any::Template> is a wrapper around the major templating systems
