@@ -753,7 +753,11 @@ L<Tk::XMLViewer> displays an XML tree in a Tk window.
 A comparison of web centered templating systems can be found at
 L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
 And here's another one:
-L<http://www.perl.com/lpt/a/2001/08/21/templating.html>.
+L<http://www.perl.com/lpt/a/2001/08/21/templating.html>. Here's a
+benchmark:
+L<http://search.cpan.org/~rhandom/Template-Alloy-1.009/samples/benchmark/bench_various_templaters.pl>.
+The examples directory of L<HTML::Template::Compiled> also includes a
+benchmark script, but without numbers in it.
 
 =head3 Standalone templating systems
 
