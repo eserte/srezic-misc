@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.34 2007/11/30 09:03:31 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.35 2007/12/04 02:13:31 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -31,6 +31,7 @@ my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
 my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
 
+my @blacklist_author = qw(MLEHMANN);
 my @perls;
 my $pv;
 my $do_action = "test"; # and report
@@ -143,6 +144,7 @@ if (!@perls) {
     my @new_dist_or_mods;
     my %seen_dist;
     my %seen_mod;
+    my %blacklist_author = map{($_,1)} @blacklist_author;
     for my $dist_or_mod (@dist_or_mods) {
 	my $d_info = CPAN::DistnameInfo->new($dist_or_mod);
 	if (!$d_info || !$d_info->dist) {
@@ -154,6 +156,15 @@ if (!@perls) {
 		$seen_mod{$dist_or_mod}++;
 	    }
 	} else {
+	    my $cpanid = $d_info->cpanid;
+	    if (!$cpanid) {
+		# assume "short" distname
+		($cpanid) = $dist_or_mod =~ m{([^/]+)};
+	    }
+	    if ($cpanid && $blacklist_author{$cpanid}) {
+		warn "Remove blacklisted distribution " . $d_info->distvname . " from list...\n";
+		next;
+	    }
 	    my $dist_key = $d_info->dist."/".$d_info->maturity;
 	    if (!$d_info->dist) { # it's probably a mod name
 		push @new_dist_or_mods, $dist_or_mod;
@@ -166,6 +177,11 @@ if (!@perls) {
 	}
     }
     @dist_or_mods = @new_dist_or_mods;
+}
+
+if (!@dist_or_mods) {
+    warn "No distributions to test.\n";
+    exit 0;
 }
 
 if ($r) {
