@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.18 2007/11/30 22:33:04 eserte Exp $
+# $Id: idletermchecker,v 1.19 2007/12/04 00:14:15 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -199,7 +199,7 @@ sub check_tk {
 			       $f->destroy;
 			   }
 		       }
-		   })->pack(-side => "left");
+		   })->pack(-side => "right");
     };
     for my $term (@terminals) {
 	$add_term_sub->($term);
