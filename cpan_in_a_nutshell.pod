@@ -827,6 +827,12 @@ L<String::Similarity> returns a similarity index of two strings.
 L<String::Trigram> finds similar strings by trigram (or 1, 2, 4,
 etc.-gram) method.
 
+L<Text::LevenshteinXS> calculates the Levenshtein edit distance (which
+is used in String::Approx, for exampl) between two strings.
+
+Just for completeness: there's also the command line agrep, see
+L<http://en.wikipedia.org/wiki/Agrep>.
+
 =head2 Stripping accents
 
 L<Text::Unidecode>: highly recommended, handles all Unicode
