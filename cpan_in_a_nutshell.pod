@@ -175,6 +175,15 @@ array by key.
 Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
 perl module. Former modules were L<WeakRef> ...
 
+=head2 Cloning
+
+L<Storable> has the function B<dclone()>.
+
+L<Clone> is a module dedicated for cloning.
+
+L<Scalar::Util::Clone> is another clone module. Its documentation
+claims that it is faster than Storable's dclone.
+
 =head1 Database Interfaces
 
 =head2 Object persistance
