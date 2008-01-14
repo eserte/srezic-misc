@@ -847,8 +847,8 @@ L<http://en.wikipedia.org/wiki/Agrep>.
 =head2 Stripping accents
 
 L<Text::Unidecode>: highly recommended, handles all Unicode
-characters. There are also L<Text::Unaccent> and
-L<Text::StripAccents>.
+characters. There are also L<Text::Unaccent>,
+L<Text::StripAccents> and L<Text::Undiacritic>.
 
 =head1 User Interfaces
 
