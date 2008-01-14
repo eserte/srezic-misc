@@ -1,0 +1,181 @@
+--- NOT FOR PUBLIC USE! ---
+
+=head1 Kwalify - eine Schemasprache für Datenstrukturen
+
+=head2 Autor
+
+Slaven ReziE<0x0107>, C<< srezic@cpan.org >>
+
+=head2 Bio Slaven ReziE<0x0107>
+
+Slaven ReziE<0x0107> ist ein Informatiker und Perl-Hacker, der einigen
+durch sein Engagement bei Perl/Tk oder den Fahrradroutenplaner BBBike
+bekannt ist.
+
+=head2 Abstract
+
+Für XML-Daten besteht die Möglichkeit, Schemas zur Validierung von
+Datenstrukturen zu erstellen. Unter den möglichen Schemasprachen
+findet man DTD, XML Schema oder Relax NG.
+
+Für E<quot>normaleE<quot> Datenstrukturen, die meistens in dynamischen
+Sprachen verwendet werden und überwiegend mit den Typen @rray - %ash -
+$kalar gebaut werden, gibt es diese Möglichkeit nicht. Oder doch: es
+gibt Kwalify!
+
+=head2 Grundlagen
+
+Kwalify ist eine Schemasprache für YAML und JSON, die von Makoto
+Kuwata entwickelt wurde. Von ihm stammen auch in Ruby und Java
+geschriebene Validatoren. Vom Autor dieses Vortrags stammt eine
+Perl-Implementation, siehe L<http://search.cpan.org/dist/Kwalify>.
+
+=head2 Vergleich
+
+Auf der Kwalify-Seite von Kuwata befindet sich eine Tabelle, in der
+die Schemasprachen XML-Schema, RelaxNG und Kwalify verglichen werden.
+Hier wird die Mächtigkeit der Schemasprache und die
+E<quot>KostenE<quot> (Erstellung? Wartung? Verständnis? Lesbarkeit?)
+gegenübergestellt. Hier sieht man, dass XML::Schema vergleichsweise
+mächtig ist, dafür aber mit hohen E<quot>KostenE<quot> einhergeht. Die
+Mächtigkeit von Kwalify ist hingegen nicht so hoch, die Erstellung ist
+aber relativ billig.
+
+  schema	cover range	cost to pay	effectiveness
+  technology  	(A)  		(B)	  	(A)/(B)
+  -------------------------------------------------------------
+  XML Schema 	95% 		100% 		 0.95 (= 95/100)
+  RelaxNG 	80% 		 20% 		 4.0  (= 80/20)
+  Kwalify 	50% 		  5% 		10.0  (= 50/5)
+
+
+Weiterhin muss bedacht werden, dass bei der Verwendung von XML weitere
+Kosten entstehen, weil oft die XML-Struktur in eine äquivalente
+Datenstruktur umgewandelt werden muss. Normalerweise ist dafür
+manueller Aufwand notwendig (einfach XML::Simple verwenden geht
+nicht!), teilweise erheblicher (es gibt jetzt aber XML::Compile!). Bei
+der Verwendung von Kwalify und damit normaler Serialisierung entfällt
+das.
+
+=head2 Typen
+
+Die Schemasprache beherrscht grundlegende Perl-Typen:
+
+=over
+
+=item map
+
+-> Perl-Hash
+
+=item seq
+
+-> Perl-Array
+
+=item skalare Typen wie str, int, float etc.
+
+-> Perl-Skalar
+
+=back
+
+Weitere Möglichkeiten sind: Modifier wie E<quot>requiredE<quot>,
+Einschränkung auf Aufzählungen (enum) oder per regulären Ausdruck,
+Zahlenbereiche etc.
+
+In der Kwalify-Spezifikation ist auch E<quot>assertE<quot>
+spezifiziert, mit denen weitere Bedingungen mithilfe von Programmcode
+ausgedrückt werden können. Dies ist bislang nur in der
+Ruby-Implementation möglich und dort auch als
+E<quot>experimentellE<quot> gekennzeichnet.
+
+Weiterhin ist in der Ruby-Implementation die Erweiterung mittels
+Ableitens der Kwalify::Validate-Klasse möglich. In der
+Perl-Implementation ist dies mangels Dokumentation und konkreten
+Anwendungsfällen noch nicht möglich.
+
+=head2 Gebrauch
+
+Aus der Kommandozeile heraus (pkwalify wird bei der Installation von
+Kwalify.pm mit installiert):
+
+    $ pkwalify -f schemafile datafile
+
+Das Kommandozeilentool unterstützt YAML und JSON als Dateiformate.
+
+Aus dem Modul heraus:
+
+    use Kwalify 'validate';
+    # irgendwie Daten oder Schema einladen, z.B. mit YAML::Syck:
+    use YAML::Syck 'LoadFile';
+
+    if (eval { validate LoadFile($schemafile), LoadFile($datafile) }) {
+        say "Ok!";
+    } else {
+        say "Validation failed. Details:\n$@";
+    }
+
+=head2 Kein YAML, kein JSON
+
+Üblicherweise wird man ein Kwalify-Schema in YAML oder vielleicht auch
+JSON schreiben und gegen Daten validieren, die ebenfalls als YAML oder
+JSON vorhanden sind. Das ist aber kein Muss: sowohl Schema als auch
+Daten müssen letztendlich nur als Perl-Datenstruktur vorliegen. Das
+heißt, dass sowohl Schema als auch Daten auch als Data::Dumper-Dump,
+Storable, Bencode usw. vorliegen können, oder als niemals zu
+serialisierende Daten im Speicher. Es ist also auch möglich, Kwalify
+zu verwenden, um komplexe Argumente für Funktionsaufrufe zu
+validieren.
+
+=head2 Beispiele
+
+Ein Beispiel für ein Schema (hier: ein Ausschnitt aus dem
+META.yml-Schema):
+
+ type: map
+ mapping:
+   name:
+     type: text
+     required: yes
+   version:
+     type: text
+     pattern: /^[\d_]+(\.[\d_]+)*$/
+     required: yes
+   requires:
+     type: map
+     required: no
+     mapping:
+       =:
+         type: text
+         pattern: "/^((>|>=|==|!=|<|<=)\s*)?[\d_]+(\.[\d_]+)*(,\s*((>|>=|==|!=|<|<=)\s*)?[\d_]+(\.[\d_]+)*)*$/"
+         required: yes
+
+Eine validierende Beispiel-YAML-Datei:
+
+ name: Foo-Bar
+ version: 1.2.3
+ requires:
+   Bar::Baz: 0
+   LWP: <5.0
+
+Der Aufruf mit dem Kommandozeilen-Tool pkwalify ergibt:
+
+ $ pkwalify -f schema.yml sample.yml
+ sample.yml#0: valid.
+
+Eine nicht validierende Datei:
+
+ name: Foo-Bar
+ requires:
+   Bar::Baz: 0
+   LWP: <5.0
+
+Der Aufruf zeigt, wo der Fehler liegt:
+
+ $ pkwalify -f schema.yml invalid.yml
+ invalid.yml#0: INVALID
+  - [/] Expected required key `version'
+
+=head2 Siehe auch
+
+E<quot>distroprefsE<quot> bei CPAN.pm
+
+=cut
