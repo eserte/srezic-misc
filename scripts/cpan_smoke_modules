@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.40 2008/01/03 09:10:28 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.41 2008/01/15 20:45:06 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -42,7 +42,9 @@ my $use_sqlite = 1;
 my $fl;
 my $do_continue;
 my $do_recent;
+my $recent_url = 'ftp://ftp.funet.fi/pub/CPAN/authors/id/RECENT-2d.yaml';
 my $interactive;
+my $batch;
 my $all_perls;
 my $build_dir_reuse;
 my $split_dists = $^O eq 'MSWin32' ? 5 : undef;
@@ -58,7 +60,9 @@ GetOptions("n" => \$n,
 	   'fl=s' => \$fl,
 	   'c|cont|continue' => \$do_continue,
 	   'recent' => \$do_recent,
+	   'recenturl=s' => \$recent_url,
 	   'interactive!' => \$interactive,
+	   'batch!' => \$batch,
 	   'builddirreuse!' => \$build_dir_reuse,
 	   'splitdists=i' => \$split_dists,
 	  )
@@ -93,7 +97,6 @@ if ($do_continue || $do_recent) {
 	
     local $ENV{FTP_PASSIVE} = 1;
     my $ua = LWP::UserAgent->new;
-    my $recent_url = 'ftp://ftp.funet.fi/pub/CPAN/authors/id/RECENT-2d.yaml';
     my $resp = $ua->get($recent_url);
     if (!$resp->is_success) {
 	die "Cannot get successful request from $recent_url: " . $resp->status_line;
@@ -316,6 +319,11 @@ for my $perl (@perls) {
 	    unshift @cmd, "echo";
 	}
 	print STDERR "# @cmd\n";
+	local %ENV = %ENV;
+	if ($batch) {
+	    $ENV{PERL_MM_USE_DEFAULT} = 1;
+	    $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps};
+	}
 	system @cmd;
 	if ($? & 127) {
 	    die sprintf("Child died with signal %d, %s coredump\n",
