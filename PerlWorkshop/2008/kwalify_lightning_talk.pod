@@ -1,5 +1,3 @@
---- NOT FOR PUBLIC USE! ---
-
 =head1 Kwalify - eine Schemasprache für Datenstrukturen
 
 =head2 Autor
@@ -33,13 +31,13 @@ Perl-Implementation, siehe L<http://search.cpan.org/dist/Kwalify>.
 =head2 Vergleich
 
 Auf der Kwalify-Seite von Kuwata befindet sich eine Tabelle, in der
-die Schemasprachen XML-Schema, RelaxNG und Kwalify verglichen werden.
-Hier wird die Mächtigkeit der Schemasprache und die
-E<quot>KostenE<quot> (Erstellung? Wartung? Verständnis? Lesbarkeit?)
-gegenübergestellt. Hier sieht man, dass XML::Schema vergleichsweise
-mächtig ist, dafür aber mit hohen E<quot>KostenE<quot> einhergeht. Die
-Mächtigkeit von Kwalify ist hingegen nicht so hoch, die Erstellung ist
-aber relativ billig.
+vom Kwalify-Autor die Schemasprachen XML-Schema, RelaxNG und Kwalify
+verglichen werden. Hier wird die Mächtigkeit der Schemasprache und die
+E<quot>KostenE<quot> (für die Erstellung? Wartung? Verständnis?
+Lesbarkeit?) gegenübergestellt. Hier sieht man, dass XML::Schema
+vergleichsweise mächtig ist, dafür aber mit hohen E<quot>KostenE<quot>
+einhergeht. Die Mächtigkeit von Kwalify ist hingegen nicht so hoch,
+die Erstellung ist aber relativ billig.
 
   schema	cover range	cost to pay	effectiveness
   technology  	(A)  		(B)	  	(A)/(B)
@@ -52,14 +50,14 @@ aber relativ billig.
 Weiterhin muss bedacht werden, dass bei der Verwendung von XML weitere
 Kosten entstehen, weil oft die XML-Struktur in eine äquivalente
 Datenstruktur umgewandelt werden muss. Normalerweise ist dafür
-manueller Aufwand notwendig (einfach XML::Simple verwenden geht
+manueller Aufwand notwendig (einfach XML::Simple verwenden geht oft
 nicht!), teilweise erheblicher (es gibt jetzt aber XML::Compile!). Bei
-der Verwendung von Kwalify und damit normaler Serialisierung entfällt
-das.
+der Verwendung von Kwalify entfällt das, weil einfache
+(De)Serialisierung mittels YAML, JSON etc. verwendet werden kann.
 
 =head2 Typen
 
-Die Schemasprache beherrscht grundlegende Perl-Typen:
+Die Schemasprache beherrscht die grundlegenden Typen:
 
 =over
 
@@ -78,14 +76,13 @@ Die Schemasprache beherrscht grundlegende Perl-Typen:
 =back
 
 Weitere Möglichkeiten sind: Modifier wie E<quot>requiredE<quot>,
-Einschränkung auf Aufzählungen (enum) oder per regulären Ausdruck,
-Zahlenbereiche etc.
+Einschränkung auf Aufzählungen (enum), Zahlenbereiche oder per
+regulären Ausdruck etc.
 
-In der Kwalify-Spezifikation ist auch E<quot>assertE<quot>
-spezifiziert, mit denen weitere Bedingungen mithilfe von Programmcode
-ausgedrückt werden können. Dies ist bislang nur in der
-Ruby-Implementation möglich und dort auch als
-E<quot>experimentellE<quot> gekennzeichnet.
+In der Kwalify-Spezifikation ist auch E<quot>assertE<quot> aufgeführt.
+Damit können weitere Bedingungen mithilfe von Programmcode ausgedrückt
+werden. Dies ist bislang nur in der Ruby-Implementation möglich und
+dort auch als E<quot>experimentellE<quot> gekennzeichnet.
 
 Weiterhin ist in der Ruby-Implementation die Erweiterung mittels
 Ableitens der Kwalify::Validate-Klasse möglich. In der
@@ -177,5 +174,9 @@ Der Aufruf zeigt, wo der Fehler liegt:
 =head2 Siehe auch
 
 E<quot>distroprefsE<quot> bei CPAN.pm
+
+=head2 Fazit
+
+Noch ein Grund mehr, um auf XML zu verzichten!
 
 =cut
