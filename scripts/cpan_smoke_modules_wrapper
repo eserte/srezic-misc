@@ -29,10 +29,14 @@ cpansandtty=""
 for tty in /dev/tty[pq]*
 do
   user=`stat -f %Su $tty`
-  case $user in
-      cpansand) cpansandtty="$cpansandtty $tty" ;;
-  esac
+  lsof=`lsof $tty | wc -l`
+  if [ $lsof -gt 0 ]
+  then
+      case $user in
+	  cpansand) cpansandtty="$cpansandtty $tty" ;;
+      esac
+  fi
 done
-idletermchecker -tk $cpansandtty &
+~eserte/work/srezic-misc/scripts/idletermchecker -t 60 -t2 120 -tk $cpansandtty &
 
 tail -f ~/.cpanreporter/reports-sent.db
