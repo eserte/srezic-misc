@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+CPAN_SMOKE_MODULES=~eserte/work/srezic-misc/scripts/cpan_smoke_modules
+ALL_RECENT_FILE=/tmp/cpansand-RECENT.yml
+
+echo <<EOF
+Remember to run
+
+    cd ~/trash/RECENT && wget ftp://ftp.funet.fi/pub/CPAN/authors/id/RECENT-2d.yaml && chmod o+r RECENT-2d*
+
+first as eserte.
+Continue?
+EOF
+read yn
+
+perl -MList::MoreUtils=uniq -MYAML::Syck=LoadFile,Dump -e 'for (@ARGV) { push @x, @{ LoadFile($_) } } @x = grep { $_->{path} eq $last ? 0 : do { $last = $_->{path}; 1 } } sort { $b->{epoch} <=> $a->{epoch} } @x; print Dump(\@x) ' ~eserte/trash/RECENT/RECENT-2d*.yaml* > $(ALL_RECENT_FILE)
+
+xterm -e $(CPAN_SMOKE_MODULES) -recent -recenturl file:$(ALL_RECENT_FILE) -batch -continue -interactive -pv 5.10.0 &
+xterm -e $(CPAN_SMOKE_MODULES) -recent -recenturl file:$(ALL_RECENT_FILE) -batch -continue -interactive -pv 5.8.8 -r &
+sleep 1
+xterm -e $(CPAN_SMOKE_MODULES) -recent -recenturl file:$(ALL_RECENT_FILE) -batch -continue -interactive -pv 5.6.2 &
+xterm -e $(CPAN_SMOKE_MODULES) -recent -recenturl file:$(ALL_RECENT_FILE) -batch -continue -interactive -pv 5.00505 -r &
+xterm -e $(CPAN_SMOKE_MODULES) -recent -recenturl file:$(ALL_RECENT_FILE) -batch -continue -interactive -pv 5.10.0t -r &
