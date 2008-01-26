@@ -17,11 +17,11 @@ read yn
 
 perl -MList::MoreUtils=uniq -MYAML::Syck=LoadFile,Dump -e 'for (@ARGV) { push @x, @{ LoadFile($_) } } @x = grep { $_->{path} eq $last ? 0 : do { $last = $_->{path}; 1 } } sort { $b->{epoch} <=> $a->{epoch} } @x; print Dump(\@x) ' ~eserte/trash/RECENT/RECENT-2d*.yaml* > $ALL_RECENT_FILE
 
-xterm -geometry +0+0   -e $CPAN_SMOKE_MODULES -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.10.0 &
-xterm -geometry -0+0   -e $CPAN_SMOKE_MODULES -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.8.8 -r &
-xterm -geometry +0+338 -e $CPAN_SMOKE_MODULES -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.6.2 &
-xterm -geometry -0-338 -e $CPAN_SMOKE_MODULES -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.00505 -r &
-xterm -geometry +0-0   -e $CPAN_SMOKE_MODULES -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.10.0t -r &
+xterm -geometry +0+0   -e $CPAN_SMOKE_MODULES -warntimeout 0 -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.10.0 &
+xterm -geometry -0+0   -e $CPAN_SMOKE_MODULES -warntimeout 0 -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.8.8 -r &
+xterm -geometry +0+338 -e $CPAN_SMOKE_MODULES -warntimeout 0 -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.6.2 &
+xterm -geometry -0-338 -e $CPAN_SMOKE_MODULES -warntimeout 0 -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.00505 -r &
+xterm -geometry +0-0   -e $CPAN_SMOKE_MODULES -warntimeout 0 -recent -recenturl file:$ALL_RECENT_FILE -batch -c -interactive -wait -pv 5.10.0t -r &
 
 # Wait until all xterm are settled
 sleep 3
