@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.42 2008/01/26 09:40:39 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.43 2008/02/01 07:41:03 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -323,7 +323,7 @@ for my $perl (@perls) {
 	print STDERR "# @cmd\n";
 	local %ENV = %ENV;
 	if ($batch) {
-	    $ENV{PERL_MM_USE_DEFAULT} = 1;
+	    #$ENV{PERL_MM_USE_DEFAULT} = 1; --- currently bad idea ... turns CPAN::Reporter questions off
 	    $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps};
 	}
 	system @cmd;
@@ -348,7 +348,7 @@ if ($do_continue && @dist_or_mods) {
 }
 
 if ($wait) {
-    print STDERR "Enter RETURN to exit ";
+    print STDERR "Smoking finished, enter RETURN to exit: ";
     <STDIN>;
 }
 
