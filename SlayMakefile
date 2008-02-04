@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.5 2008/02/04 21:24:40 eserte Exp $
+# $Id: SlayMakefile,v 1.6 2008/02/04 21:25:08 eserte Exp $
 #
 
 {
@@ -40,8 +40,8 @@ permissions:
 	chmod ugo+rx scripts cgi
 
 rsync-cpantestersmatrix-stable:
-	rsync -av -e 'ssh -p 5022' ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike2.radzeit.de:/home/slaven/cpantestersmatrix.pl
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike2.radzeit.de:/home/slaven/cpantestersmatrix.pl
 
 rsync-cpantestersmatrix-devel:
-	rsync -av -e 'ssh -p 5022' ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike2.radzeit.de:/home/slaven/cpantestersmatrix2.pl
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike2.radzeit.de:/home/slaven/cpantestersmatrix2.pl
 
