@@ -148,7 +148,8 @@ be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
 =head3 Autogenerating accessors
 
 L<Class::Struct>: in the perl core, has a strange syntax and I
-remember other issues (no backward compatibility).
+remember other issues (no backward compatibility). Not very well
+suited for OO, it's more for C-struct like things.
 
 L<Class::Accessor>: stable. Has variants for fast access
 L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
@@ -164,6 +165,9 @@ For an explanation what L<Object::Tiny> does, see
 L<http://use.perl.org/~Alias/journal/34329>. This module only
 implements read-only accessors, no mutators. The author claims that
 L<Object::Tiny> is smaller and faster than L<Class::Accessor::Fast>.
+
+L<Moose> does everything for OO, it seems, including generating
+accessors.
 
 =head2 Sorting
 
