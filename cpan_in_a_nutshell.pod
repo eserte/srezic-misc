@@ -819,7 +819,7 @@ L<Apache::SimpleTemplate>, a mod_perl handler for using jsp/asp-like
 templates. It seems to be rather lightweight in comparison to
 Apache::ASP.
 
-=head2 PDF creation
+=head2 PDF handling
 
 L<PDF::Create> works. Best to use version 0.06 from sourceforge
 (project perl-pdf).
