@@ -824,9 +824,11 @@ Apache::ASP.
 L<PDF::Create> works. Best to use version 0.06 from sourceforge
 (project perl-pdf).
 
-
 L<PDF::API2> is big and complete. But its seems to be slower than
 PDF::Create, at least for my needs.
+
+In L<CAM::PDF>'s SEE ALSO Pod section there's a comparison between a
+couple of PDF-related modules.
 
 There are some templating solutions (PDF::Reuse, PDF::Template). And
 there's also (non-perl) pdflatex!
