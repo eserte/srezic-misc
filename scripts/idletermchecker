@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.19 2007/12/04 00:14:15 eserte Exp $
+# $Id: idletermchecker,v 1.20 2008/02/09 23:19:26 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -245,7 +245,10 @@ sub check_tk {
 	    $_->configure(-background => 'green') for $l{$term}, $f{$term};
 	}
 	if (@timeouted) {
-	    $mw->deiconify;
+	    if ($mw->state ne 'normal') {
+		$mw->deiconify;
+		$mw->raise;
+	    }
 	    for my $term (@timeouted) {
 		my $bg;
 		if ($age{$term} >= $timeout2) {
