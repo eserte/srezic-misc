@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><!-- -*- nxml-mode -*- -->
 
@@ -44,19 +45,120 @@
 
 
       <div class="slide">
-	<h1>[slide title]</h1>
+	<h1>Eine Schemasprache</h1>
 	<ul>
-	  <li>[point one]</li>
-	  <li>[point two]</li>
-	  <li>[point three]</li>
-	  <li>[point four]</li>
-	  <li>[point five]</li>
+	  <li>
+	    XML hat schon:<br /><br />
+	    <ul class="incremental" >
+	      <li>DTD</li>
+	      <li>XSD</li>
+	      <li>Relax NG</li>
+	      <li>...</li>
+	    </ul>
+	  </li>
 	</ul>
-	<div class="handout">
-<!--	  [any material that should appear in print but not on the slide]-->
+      </div>
+
+      <div class="slide">
+	<h1>Eine Schemasprache</h1>
+	<ul class="incremental">
+	  <li>
+	    Was verwendet man aber für<br/><br/>
+	    <ul class="incremental">
+	      <li>YAML</li>
+	      <li>JSON</li>
+	      <li><tt>%@$</tt></li>
+	      <li>?</li>
+	    </ul>
+	  </li>
+	  <li>
+	    Kwalify!
+	  </li>
+	</ul>
+      </div>
+
+      <div class="slide">
+	<h1>Ruby/Java -> Perl</h1>
+	<ul>
+	  <li>ursprünglich von Makoto Kuwata in Ruby und Java implementiert</li>
+	  <li>existiert als CPAN-Modul Kwalify</li>
+	</ul>
+	<ul>
+	  <li>verwendbar als Modul</li>
+	  <li>oder als Kommandozeilentool <tt>pkwalify</tt></li>
+	</ul>
+      </div>
+
+      <div class="slide">
+	<h1>Vergleich</h1>
+
+	<div>
+	  <table style="text-align:center; font-size:90%;">
+	    <tr>
+	      <th>schema technology</th>
+	      <th>cover range<br/>(A)</th>
+	      <th>cost to pay<br/>(B)</th>
+	      <th>effectiveness<br/>(A)/(B)</th>
+	    </tr>
+	    <tr>
+	      <th>XML Schema</th>
+	      <td>95%</td>
+	      <td>100%</td>
+	      <td>0.95 (= 95/100)</td>
+	    </tr>
+	    <tr>
+	      <th>RelaxNG</th>
+	      <td>80%</td>
+	      <td>20%</td>
+	      <td>4.0  (= 80/20)</td>
+	    </tr>
+	    <tr>
+	      <th>Kwalify</th>
+	      <td>50%</td>
+	      <td>5%</td>
+	      <td>10.0  (= 50/5)</td>
+	    </tr>
+	  </table>
 	</div>
       </div>
 
+      <div class="slide">
+	<h1>Kwalify als YAML</h1>
+      </div>
+
+      <div class="slide">
+	<h1>Kwalify als JSON</h1>
+      </div>
+
+      <div class="slide">
+	<h1>Kwalify als Data::Dumper</h1>
+      </div>
+
+      <div class="slide">
+	<h1>Param-Validator</h1>
+      </div>
+
+      <div class="slide">
+	<h1>Livebetrieb</h1>
+	<div>
+	  <tt>pkwalify -f schema.yml data.yml</tt>
+	</div>
+	<ul class="incremental">
+	  <li>Gut:<br/> <tt>data.yml#0: valid.</tt></li>
+	  <li>Schlecht:<br/> <tt>- [/] Expected required key '-font'</tt></li>
+	  <li>Auch schlecht:<br/> <tt>- [/-font] Non-valid data 'HASH(0x5d91d8)', expected a str</tt></li>
+	  <li>Nochmals:<br/> <tt>- [/-width] '-12' is too small (&lt; min 0)</tt></li>
+	</ul>
+      </div>
+
+      <div class="slide">
+	<h1>Aussichten</h1>
+	<ul>
+	  <li>Dynamik in die Schemasprache bringen</li>
+	  <li>nxml-mode &#x2192; nyml-mode</li>
+	  <li>automatischer HTML/GUI-Form-Generator</li>
+	</ul>
+      </div>
 
     </div>
 
