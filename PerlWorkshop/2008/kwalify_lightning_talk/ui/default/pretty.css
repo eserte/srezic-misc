@@ -84,3 +84,8 @@ img.incremental {visibility: hidden;}
 
 li:after {content: " [" attr(class) "]"; color: #F88;}
  */
+
+table.compare { text-align:center; font-size:90%; }
+table.compare td,tr { padding: 10px; }
+th.toprow  { border-bottom: 1px solid black; }
+th.leftcol { border-right: 1px solid black; }
