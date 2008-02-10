@@ -96,7 +96,7 @@
 	  <table class="compare" cellspacing="0">
 	    <tr>
 	      <th class="toprow leftcol">schema technology</th>
-	      <th class="toprow">cover range<br/>(A)</th>
+	      <th class="toprow">cover r2ange<br/>(A)</th>
 	      <th class="toprow">cost to pay<br/>(B)</th>
 	      <th class="toprow">effectiveness<br/>(A)/(B)</th>
 	    </tr>
@@ -136,6 +136,28 @@
 
       <div class="slide">
 	<h1>Param-Validator</h1>
+	<pre>
+my $foo_schema =
+    {
+     type => "map",
+     mapping =>
+     {
+      -font  => { type => 'str',
+                  required => 1,
+                },
+      -width => { type => 'int',
+                  range => {max=>20, min=>0},
+                },
+     },
+    };
+
+sub foo {
+    my $args = { @_ };
+    Kwalify::validate($foo_schema, $args);
+    ...
+}
+	</pre>
+
       </div>
 
       <div class="slide">
@@ -145,9 +167,9 @@
 	</div>
 	<ul class="incremental">
 	  <li>Gut:<br/> <tt>data.yml#0: valid.</tt></li>
-	  <li>Schlecht:<br/> <tt>- [/] Expected required key '-font'</tt></li>
-	  <li>Auch schlecht:<br/> <tt>- [/-font] Non-valid data 'HASH(0x5d91d8)', expected a str</tt></li>
-	  <li>Nochmals:<br/> <tt>- [/-width] '-12' is too small (&lt; min 0)</tt></li>
+	  <li>Schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/] Expected required key '-font'</tt></li>
+	  <li>Auch schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/-font] Non-valid data 'HASH(0x5d91d8)', expected a str</tt></li>
+	  <li>Nochmals:<br/> <tt>data.yml#0: INVALID<br/>- [/-width] '-12' is too small (&lt; min 0)</tt></li>
 	</ul>
       </div>
 
