@@ -152,7 +152,9 @@ remember other issues (no backward compatibility). Not very well
 suited for OO, it's more for C-struct like things.
 
 L<Class::Accessor>: stable. Has variants for fast access
-L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>.
+L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>
+(but note that lvalue access has problems in perl and is still marked
+as experimental).
 
 L<accessors>: simple syntax, has also some variants. Test suite spits
 a lot of warnings. A possible downside is that the internal hash
