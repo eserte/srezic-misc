@@ -46,7 +46,27 @@
 
 
       <div class="slide">
-	<h1>Eine Schemasprache</h1>
+	<h1>Datenstrukturen</h1>
+	<pre><code>
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;gpx xmlns="http://www.topografix.com/GPX/1/1"
+    version="1.1" /&gt;</code><code class="odd">
+---
+foo: bar
+bla:
+  - 1
+  - 2
+  - 3	</code><code>
+{"bla":[1,2,3],"foo":"bar"}	</code><code class="odd">
+$VAR1 = {
+  'bla' => ['1','2','3'],
+  'foo' => 'bar'
+};
+	</code></pre>
+      </div>
+
+      <div class="slide">
+	<h1>Schemata für XML</h1>
 	<ul>
 	  <li>
 	    XML hat schon:<br /><br />
@@ -61,11 +81,11 @@
       </div>
 
       <div class="slide">
-	<h1>Eine Schemasprache</h1>
+	<h1>Eine Schemasprache für $@%</h1>
 	<ul class="incremental">
 	  <li>
 	    Was verwendet man aber für<br/><br/>
-	    <ul class="incremental">
+	    <ul><!-- class="incremental" -->
 	      <li>YAML</li>
 	      <li>JSON</li>
 	      <li><tt>$@%</tt></li>
@@ -124,20 +144,90 @@
       </div>
 
       <div class="slide">
-	<h1>Kwalify als YAML</h1>
+	<h1>$</h1>
+	Skalare:
+	<pre><code>
+
+type: text
+
+type: number
+
+type: float
+
+type: int
+
+type: bool
+
+type: date
+
+type: time
+	</code></pre>
       </div>
 
       <div class="slide">
-	<h1>Kwalify als JSON</h1>
+	<h1>@</h1>
+	Arrays, ein Beispielschema:
+	<pre><code>
+
+type: seq
+sequence:
+  - type: text
+	</code></pre>
+	Validierende Beispieldaten:
+	<pre><code>
+
+- text1
+- text2
+- text3
+	</code></pre>
       </div>
 
       <div class="slide">
-	<h1>Kwalify als Data::Dumper</h1>
+	<h1>%</h1>
+	Hashes, ein Beispielschema:
+	<pre><code>
+
+type: map
+mapping:
+  foo:
+    type: text
+  bar:
+    type: text
+	</code></pre>
+	Validierende Beispieldaten:
+	<pre><code>
+
+foo: text...
+bar: text...
+	</code></pre>
+      </div>
+
+      <div class="slide">
+	<h1>Weitere Regeln:</h1>
+	<ul class="incremental">
+	  <li>pattern (regulärer Ausdruck)</li>
+	  <li>length (Stringlänge)</li>
+	  <li>min, max, min-ex, max-ex, range</li>
+	  <li>enum (Aufzählung)</li>
+	</ul>
+      </div>
+
+      <div class="slide">
+	<h1>Livebetrieb</h1>
+	<div>
+	  <tt>pkwalify -f schema.yml data.yml</tt>
+	</div>
+	<ul class="incremental">
+	  <li>Gut:<br/> <tt>data.yml#0: valid.</tt></li>
+	  <li>Schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/] Expected required key '-font'</tt></li>
+	  <li>Auch schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/-font] Non-valid data 'HASH(0x5d91d8)', expected a str</tt></li>
+	  <li>Nochmals:<br/> <tt>data.yml#0: INVALID<br/>- [/-width] '-12' is too small (&lt; min 0)</tt></li>
+	</ul>
       </div>
 
       <div class="slide">
 	<h1>Param-Validator</h1>
-	<pre>
+	<pre><code>
 my $foo_schema =
     {
      type => "map",
@@ -157,27 +247,14 @@ sub foo {
     Kwalify::validate($foo_schema, $args);
     ...
 }
-	</pre>
+	</code></pre>
 
-      </div>
-
-      <div class="slide">
-	<h1>Livebetrieb</h1>
-	<div>
-	  <tt>pkwalify -f schema.yml data.yml</tt>
-	</div>
-	<ul class="incremental">
-	  <li>Gut:<br/> <tt>data.yml#0: valid.</tt></li>
-	  <li>Schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/] Expected required key '-font'</tt></li>
-	  <li>Auch schlecht:<br/> <tt>data.yml#0: INVALID<br/>- [/-font] Non-valid data 'HASH(0x5d91d8)', expected a str</tt></li>
-	  <li>Nochmals:<br/> <tt>data.yml#0: INVALID<br/>- [/-width] '-12' is too small (&lt; min 0)</tt></li>
-	</ul>
       </div>
 
       <div class="slide">
 	<h1>Aussichten</h1>
 	<ul>
-	  <li>Dynamik in die Schemasprache bringen</li>
+	  <li>Dynamik in die Schemasprache bringen (assert)</li>
 	  <li>nxml-mode &#x2192; nyml-mode</li>
 	  <li>automatischer HTML/GUI-Form-Generator</li>
 	</ul>

@@ -89,3 +89,5 @@ table.compare { text-align:center; font-size:90%; }
 table.compare td,tr { padding: 10px; }
 th.toprow  { border-bottom: 1px solid black; }
 th.leftcol { border-right: 1px solid black; }
+
+.slide code.odd { color: #355; padding-top:0px; padding-bottom:0px; }
