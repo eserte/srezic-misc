@@ -368,6 +368,9 @@ whether there's an increase of used SVs.
 
 L<Devel::Leak::Object> (was recommended at cpanratings).
 
+L<Devel::TrackObjects>: track the usage of objects, which can also be
+used to find memory leaks.
+
 =head3 Compatibility support
 
 L<Perl::MinimumVersion> determines the minimal required perl version
