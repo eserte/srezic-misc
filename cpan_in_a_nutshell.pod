@@ -671,7 +671,7 @@ difference between those two?)
 
 L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
 string and getting an answer. Has a lot of useful options (defaults,
-input filters ...).
+input filters ...). But it does not seem to run under Windows.
 
 =head2 AI
 
