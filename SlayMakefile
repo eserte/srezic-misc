@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.7 2008/02/05 21:13:24 eserte Exp $
+# $Id: SlayMakefile,v 1.8 2008/02/23 16:58:09 eserte Exp $
 #
 
 {
@@ -26,6 +26,18 @@
     sub html_css { "http://search.cpan.org/s/style.css" }
 }
 
+{
+    sub test_cpantestersmatrix {
+        my(@cgi_args) = @_;
+	local $ENV{SCRIPT_NAME} = "cpantestersmatrix.pl"; # to avoid warnings
+	my $content = `perl -wT cgi/cpantestersmatrix.pl @cgi_args`;
+	Test::More::ok($content, "Have content for @cgi_args");
+	Test::More::like($content, qr{content-type:\s*text/html}i, "Seen http header");
+	Test::More::unlike($content, qr{error}i, "No error seen");
+	Test::More::like($content, qr{other links}i, "Some expected content");
+    }
+}
+
 all: permissions cpan_in_a_nutshell.html
 
 cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod SlayMakefile
@@ -45,3 +57,13 @@ rsync-cpantestersmatrix-stable:
 rsync-cpantestersmatrix-devel:
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix2.pl
 
+test-cpantestersmatrix-local:
+	{
+	    require Test::More; Test::More::plan('no_plan');
+	    test_cpantestersmatrix 'dist=Tk';
+	    test_cpantestersmatrix 'dist=Tk 804.027';
+	    test_cpantestersmatrix 'dist=JSON', 'maxver=1';
+	    test_cpantestersmatrix 'dist=Clarion';
+	    test_cpantestersmatrix 'author=srezic';
+	    "";
+	}
