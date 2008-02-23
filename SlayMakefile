@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.8 2008/02/23 16:58:09 eserte Exp $
+# $Id: SlayMakefile,v 1.9 2008/02/23 16:59:56 eserte Exp $
 #
 
 {
@@ -31,6 +31,7 @@
         my(@cgi_args) = @_;
 	local $ENV{SCRIPT_NAME} = "cpantestersmatrix.pl"; # to avoid warnings
 	my $content = `perl -wT cgi/cpantestersmatrix.pl @cgi_args`;
+	Test::More::is($?, 0, "Exit code for @cgi_args");
 	Test::More::ok($content, "Have content for @cgi_args");
 	Test::More::like($content, qr{content-type:\s*text/html}i, "Seen http header");
 	Test::More::unlike($content, qr{error}i, "No error seen");
