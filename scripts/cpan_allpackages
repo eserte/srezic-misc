@@ -1,0 +1,123 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: cpan_allpackages,v 1.1 2008/03/01 23:31:10 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2008 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use Config;
+
+my $thisperl = "perl-".$Config{version};
+my $thisarch = $Config{archname} . " " . $Config{osvers};
+
+my $all_dist = all_distributions();
+my $tested_dist = parse_reports_sent();
+my $tested_released_dist = $tested_dist->{released};
+
+my %test_status;
+while(my($distname, $distinfo) = each %$all_dist) {
+    if (!exists $tested_released_dist->{$distname}) {
+	$test_status{$distname} = ["untested", $distinfo];
+    } elsif (!exists $tested_released_dist->{$distname}->{$thisperl}) {
+	$test_status{$distname} = ["not this perl (but: " . join(" ", sort keys %{$tested_released_dist->{$distname}}),
+				   $distinfo
+			          ];
+    } elsif (!exists $tested_released_dist->{$distname}->{$thisperl}->{$thisarch}) {
+	$test_status{$distname} = ["not this arch (but: " . join(" ", sort keys %{$tested_released_dist->{$distname}->{$thisperl}}),
+				   $distinfo
+			          ];
+    } else {
+	my $tested_version = safe_version($tested_released_dist->{$distname}->{$thisperl}->{$thisarch}->version);
+	my $latest_version = safe_version($distinfo->version);
+	if ($tested_version >= $latest_version) {
+	    $test_status{$distname} = ["tested", $distinfo];
+	} else {
+	    $test_status{$distname} = ["not the latest version $latest_version (but: $tested_version)", $distinfo];
+	}
+    }
+}
+
+for my $distname (sort keys %test_status) {
+    my($status, $distinfo) = @{ $test_status{$distname} };
+    #printf "%-40s %s\n", $distname, $status;
+    printf "%-60s %s\n", $distinfo->cpanid."/".$distinfo->filename, $status;
+}
+
+sub all_distributions { # takes ~3 seconds
+    use CPAN::DistnameInfo;
+    use PerlIO::gzip;
+    my %dist;
+    open my $FH, "<:gzip", "/usr/local/src/CPAN/sources/modules/02packages.details.txt.gz"
+	or die $!;
+    my $state = "h";
+    while(<$FH>) {
+	if ($state eq 'h') {
+	    if (/^$/) {
+		$state = 'b';
+	    }
+	} else {
+	    my(undef,undef, $dist) = split;
+	    my $d = CPAN::DistnameInfo->new($dist);
+	    my $distname = $d->dist;
+	    if (defined $distname && !exists $dist{$distname}) {
+		$dist{$distname} = $d;
+	    }
+	}
+    }
+    \%dist;
+}
+
+sub parse_reports_sent {
+    use version;
+    my %dist;
+    open my $fh, "$ENV{HOME}/.cpanreporter/reports-sent.db"
+	or die $!;
+    while(<$fh>) {
+	next if /^#/;
+	chomp;
+	if (my($phase, $action, $dist, $perl, $arch) =
+		$_ =~ m{^
+			(\S+)\s+
+			(\S+)\s+
+			(\S+)\s+
+			\(([^\)]+)\)\s+
+			(.+)
+			$}x) {
+	    my $d = CPAN::DistnameInfo->new($dist.".tar.gz");
+	    my $maturity = $d->maturity;
+	    if (my $old_d = $dist{$maturity}->{$d->dist}->{$perl}->{$arch}) {
+		if (safe_version($d->version) <= safe_version($old_d->version)) {
+		    next;
+		}
+	    }
+	    $dist{$maturity}->{$d->dist}->{$perl}->{$arch} = $d;
+	} else {
+	    warn "Cannot parse line $_";
+	}
+    }
+    \%dist;
+}
+
+# from cpantestersmatrix:
+sub safe_version {
+    my $version_string = shift;
+    while(length $version_string) {
+	my $version = eval { version->new($version_string) };
+	if (!$@) {
+	    return $version;
+	}
+	$version_string = substr($version_string,0,-1);
+    }
+    "0";
+}
+
+__END__
