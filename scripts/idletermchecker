@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: idletermchecker,v 1.23 2008/03/03 09:50:46 eserte Exp $
+# $Id: idletermchecker,v 1.24 2008/03/03 20:35:25 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -26,6 +26,8 @@ use IO::Select;
 use Getopt::Long;
 
 my $lsof = is_in_path("lsof");
+undef $lsof; # XXX unfortunately lsof may become wild and eat memory
+             # and loop wildly on freebsd...
 
 my @terminals;
 my $default_timeout  = 30;
