@@ -2,24 +2,95 @@
 
 # Untested!
 
-set -e
+doupdate=1
+only=
 
-CPAN_SMOKE_MODULES=~eserte/work/srezic-misc/scripts/cpan_smoke_modules
-
-~/devel/update-allcpanpackages
-
-for perl in 5.10.0 5.8.8 5.6.2 5.00505 5.10.0t; do
-    varname=`echo $perl | sed -e 's/\./_/g'`
-    LAST_UNTESTED_DISTROS_$varname=`grep -v '^\?' ~eserte/var/tested-cpan-$perl | sort -r | head -200 | awk '{print $2}'`
+args=`getopt Uo: $*`
+if [ $? -ne 0 ]
+then
+    echo 'Usage: $0 [-U] [-o perlversion]'
+    exit 2
+fi
+set -- $args
+for i do
+    case "$i" in
+	-U)
+	    doupdate=0
+	    shift
+	    ;;
+	-o)
+	    only="$2"
+	    shift
+	    shift
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+    esac
 done
 
-xterm -geometry +0+0   -e $CPAN_SMOKE_MODULES -r -warntimeout 0 -batch -c -wait -pv 5.10.0  $LAST_UNTESTED_DISTROS_5_10_0  &
-xterm -geometry -0+0   -e $CPAN_SMOKE_MODULES    -warntimeout 0 -batch -c -wait -pv 5.8.8   $LAST_UNTESTED_DISTROS_5_8_8   &
-xterm -geometry +0+338 -e $CPAN_SMOKE_MODULES -r -warntimeout 0 -batch -c -wait -pv 5.6.2   $LAST_UNTESTED_DISTROS_5_6_2   &
-xterm -geometry -0-338 -e $CPAN_SMOKE_MODULES    -warntimeout 0 -batch -c -wait -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505 &
-xterm -geometry +0-0   -e $CPAN_SMOKE_MODULES    -warntimeout 0 -batch -c -wait -pv 5.10.0t $LAST_UNTESTED_DISTROS_5_10_0t &
+set -e
+
+PATH=$PATH:~eserte/work/srezic-misc/scripts:~eserte/devel
+
+[ -r /home/e/eserte/.cpan/CPAN/MyConfig.pm ] || (echo "CPAN config is not readable!"; exit 1)
+
+CPAN_SMOKE_MODULES=cpan_smoke_modules
+CPAN_SMOKE_MODULE_ARGS="-warntimeout 0 -batch -wait "
+XTERM_ARGS="-xrm '*Desk:3'"
+
+case $doupdate in
+    1)
+	perl -MCPAN -e 'CPAN::HandleConfig->load; $CPAN::Config->{use_sqlite}=1; CPAN::Shell->reload("index")'
+	update-allcpanpackages
+	;;
+esac
+
+sleep=0
+
+if [ "$only" = "" -o "$only" = "5.10.0" ]
+then
+    LAST_UNTESTED_DISTROS_5_10_0="` grep -v '^[#\?]' ~/var/tested-cpan-5.10.0  | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    echo $LAST_UNTESTED_DISTROS_5_10_0  > ~/.cpan_test_distros_5_10_0
+    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -r -pv 5.10.0  $LAST_UNTESTED_DISTROS_5_10_0) &
+    sleep=`expr $sleep + 3`
+fi
+
+if [ "$only" = "" -o "$only" = "5.8.8" ]
+then
+    LAST_UNTESTED_DISTROS_5_8_8="`  grep -v '^[#\?]' ~/var/tested-cpan-5.8.8   | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    echo $LAST_UNTESTED_DISTROS_5_8_8   > ~/.cpan_test_distros_5_8_8
+    (sleep $sleep;  xterm $XTERM_ARGS -geometry -0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.8.8   $LAST_UNTESTED_DISTROS_5_8_8  )&
+    sleep=`expr $sleep + 3`
+fi
+
+if [ "$only" = "" -o "$only" = "5.6.2" ]
+then
+    LAST_UNTESTED_DISTROS_5_6_2="`  grep -v '^[#\?]' ~/var/tested-cpan-5.6.2   | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    echo $LAST_UNTESTED_DISTROS_5_6_2   > ~/.cpan_test_distros_5_6_2
+    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -r -pv 5.6.2   $LAST_UNTESTED_DISTROS_5_6_2  )&
+    sleep=`expr $sleep + 3`
+fi
+
+if [ "$only" = "" -o "$only" = "5.00505" ]
+then
+    LAST_UNTESTED_DISTROS_5_00505="`grep -v '^[#\?]' ~/var/tested-cpan-5.00505 | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    echo $LAST_UNTESTED_DISTROS_5_00505 > ~/.cpan_test_distros_5_00505
+    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
+    sleep=`expr $sleep + 3`
+fi
+
+if [ "$only" = "" -o "$only" = "5.10.0t" ]
+then
+    LAST_UNTESTED_DISTROS_5_10_0t="`grep -v '^[#\?]' ~/var/tested-cpan-5.10.0t | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    echo $LAST_UNTESTED_DISTROS_5_10_0t > ~/.cpan_test_distros_5_10_0t
+    (sleep $sleep; xterm $XTERM_ARGS -geometry +0-0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.10.0t $LAST_UNTESTED_DISTROS_5_10_0t)&
+    sleep=`expr $sleep + 3`
+fi
 
 # Wait until all xterm are settled
+sleep $sleep
 sleep 3
 cpansandtty=""
 for tty in /dev/tty[pq]*
@@ -33,6 +104,6 @@ do
       esac
   fi
 done
-~eserte/work/srezic-misc/scripts/idletermchecker -t 60 -t2 120 -tk $cpansandtty &
+idletermchecker -t 60 -t2 120 -tk $cpansandtty &
 
 tail -f ~/.cpanreporter/reports-sent.db
