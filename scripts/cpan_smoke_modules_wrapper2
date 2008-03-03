@@ -38,7 +38,7 @@ PATH=$PATH:~eserte/work/srezic-misc/scripts:~eserte/devel
 
 CPAN_SMOKE_MODULES=cpan_smoke_modules
 CPAN_SMOKE_MODULE_ARGS="-warntimeout 0 -batch -wait "
-XTERM_ARGS="-xrm '*Desk:3'"
+XTERM_ARGS="-xrm *Desk:3"
 
 case $doupdate in
     1)
@@ -53,7 +53,7 @@ if [ "$only" = "" -o "$only" = "5.10.0" ]
 then
     LAST_UNTESTED_DISTROS_5_10_0="` grep -v '^[#\?]' ~/var/tested-cpan-5.10.0  | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
     echo $LAST_UNTESTED_DISTROS_5_10_0  > ~/.cpan_test_distros_5_10_0
-    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -r -pv 5.10.0  $LAST_UNTESTED_DISTROS_5_10_0) &
+    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -rr -pv 5.10.0  $LAST_UNTESTED_DISTROS_5_10_0) &
     sleep=`expr $sleep + 3`
 fi
 
@@ -69,7 +69,7 @@ if [ "$only" = "" -o "$only" = "5.6.2" ]
 then
     LAST_UNTESTED_DISTROS_5_6_2="`  grep -v '^[#\?]' ~/var/tested-cpan-5.6.2   | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
     echo $LAST_UNTESTED_DISTROS_5_6_2   > ~/.cpan_test_distros_5_6_2
-    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -r -pv 5.6.2   $LAST_UNTESTED_DISTROS_5_6_2  )&
+    (sleep $sleep; xterm $XTERM_ARGS -geometry +0+338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -rr -pv 5.6.2   $LAST_UNTESTED_DISTROS_5_6_2  )&
     sleep=`expr $sleep + 3`
 fi
 
