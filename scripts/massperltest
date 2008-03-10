@@ -142,6 +142,8 @@ for my $dir (@directories) {
 		    if (m{Failed (.* test scripts), .* okay. (.* subtests) failed, .* okay}) {
 			$test_summary = "$1, $2";
 			last;
+		    } elsif (m{Failed (.* test scripts). (.* subtests) failed}) {
+			$test_summary = "$1, $2";
 		    }
 		}
 	    } else {
