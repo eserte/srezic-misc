@@ -117,14 +117,40 @@ for my $dir (@directories) {
     if ($prereqinst) {
 	$cmd .= " && sudo $perl $ENV{HOME}/bin/sh/mkprereqinst -exec -execopts=-q";
     }
-    $cmd .= " && $Config{make} all test $redirect <" . File::Spec->devnull;
+    $cmd .= " && $Config{make} all $redirect <" . File::Spec->devnull;
     print STDERR "$cmd\n" if $v;
     system($cmd);
-    die "make clean signalled" if ($? & 127 == 2);
+    die "make all signalled" if ($? & 127 == 2);
+    if ($? != 0) {
+	outerrsum "failed (build)\n";
+	next;
+    }
+
+    my $logbefore = -s $log;
+    $cmd = "$Config{make} test $redirect <" . File::Spec->devnull;
+    print STDERR "$cmd\n" if $v;
+    system($cmd);
+    die "make test signalled" if ($? & 127 == 2);
     if ($? == 0) {
 	outerrsum "OK\n";
     } else {
-	outerrsum "failed\n";
+	my $test_summary = "test summary N/A";
+	if (open my $logfh, $log) {
+	    if (seek $logfh, $logbefore, 0) {
+		while(<$logfh>) {
+		    chomp;
+		    if (m{Failed (.* test scripts), .* okay. (.* subtests) failed, .* okay}) {
+			$test_summary = "$1, $2";
+			last;
+		    }
+		}
+	    } else {
+		warn "Seek failed on log file <$log>: $!";
+	    }
+	} else {
+	    warn "Could not open log file <$log>: $!";
+	}
+	outerrsum "failed ($test_summary)\n";
     }
 }
 $curr_dir = undef;
