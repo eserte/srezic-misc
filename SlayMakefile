@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.9 2008/02/23 16:59:56 eserte Exp $
+# $Id: SlayMakefile,v 1.10 2008/03/11 21:01:41 eserte Exp $
 #
 
 {
@@ -53,6 +53,7 @@ permissions:
 	chmod ugo+rx scripts cgi
 
 rsync-cpantestersmatrix-stable:
+	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix.pl
 
 rsync-cpantestersmatrix-devel:
