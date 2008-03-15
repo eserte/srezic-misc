@@ -246,8 +246,14 @@ L<DBM::Deep> is a pure-perl implementation which can also handle deep
 nested structures as values (other DBM implementations can only
 handle scalars as values).
 
+L<BerkeleyDB> interfaces berkeley db like L<DB_File>, but has a much
+richer API (e.g. support for transactions).
+
+L<BDB> allows asynchronous access to berkeley db.
+
 L<CDB_File> is a "constant" database. This means that generating the
-database is costly, but reading is very fast.
+database is costly, but reading is very fast. A pure perl variant is
+L<CDB_Perl>.
 
 To have L<MLDBM> sits on top of the other DBM implementations and
 enables storing of deep nested structures. Unlike L<DBM::Deep>,
