@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.10 2008/03/11 21:01:41 eserte Exp $
+# $Id: SlayMakefile,v 1.11 2008/03/27 00:50:31 eserte Exp $
 #
 
 {
@@ -52,14 +52,14 @@ permissions:
 	cd cgi && chmod ugo+rx *
 	chmod ugo+rx scripts cgi
 
-rsync-cpantestersmatrix-stable:
+rsync-cpantestersmatrix-stable:	permissions
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix.pl
 
-rsync-cpantestersmatrix-devel:
+rsync-cpantestersmatrix-devel:	permissions
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix2.pl
 
-test-cpantestersmatrix-local:
+test-cpantestersmatrix-local:	permissions
 	{
 	    require Test::More; Test::More::plan('no_plan');
 	    test_cpantestersmatrix 'dist=Tk';
