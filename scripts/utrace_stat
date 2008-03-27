@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: utrace_stat,v 1.4 2007/10/13 11:21:28 eserte Exp $
+# $Id: utrace_stat,v 1.5 2008/03/27 00:51:22 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 1999,2002,2006 Slaven Rezic. All rights reserved.
@@ -24,12 +24,13 @@ my $max_ptr;
 my %malloc;
 my %opt;
 
-GetOptions(\%opt, "p", "showleaks|l") or
+GetOptions(\%opt, "p", "showleaks|l", "summary|s") or
     die <<EOF;
 usage: $0 [-p] [-l]
 
 -p: show also raw utrace calls
 -l: show memory leaks at end
+-s: show only summary
 
 Example usage:
 
@@ -37,6 +38,8 @@ Example usage:
     kdump | utrace_stat
 
 EOF
+
+my $only_summary = $opt{summary};
 
 my %long = (
 	    # 32 bit
@@ -67,7 +70,8 @@ while(<>) {
 		my $size = hex(join("",@v[@{$long{$l}[1]}]));
 		my $ptr  = hex(join("",@v[@{$long{$l}[2]}]));
 		if ($size == 0 && $ptr == 0) {
-		    printf "${pre}malloc init\n";
+		    printf "${pre}malloc init\n"
+			unless $only_summary;
 		} else {
 		    $mem += $size;
 		    $total_mem += $size;
@@ -75,7 +79,8 @@ while(<>) {
 			$peak_mem = $mem;
 		    }
 		    $malloc{$ptr} = $size;
-		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr;
+		    printf "${pre}malloc(%d) => 0x%08x\n", $size, $ptr
+			 unless $only_summary;
 		    if (!defined $min_ptr || $ptr < $min_ptr) {
 			$min_ptr = $ptr;
 		    }
@@ -93,7 +98,8 @@ while(<>) {
 		    } else {
 			$mem -= $malloc{$ptr};
 			my $bytes = delete $malloc{$ptr};
-			printf "${pre}free(0x%08x) ($bytes bytes)\n", $ptr, $bytes;
+			printf "${pre}free(0x%08x) ($bytes bytes)\n", $ptr, $bytes
+			    unless $only_summary;
 		    }
 		} else { # realloc
 		    if (!exists $malloc{$ptr}) {
@@ -108,7 +114,8 @@ while(<>) {
 			if ($mem > $peak_mem) {
 			    $peak_mem = $mem;
 			}
-			printf "${pre}realloc(0x%08x, %d) => 0x%08x\n", $ptr, $size, $r;
+			printf "${pre}realloc(0x%08x, %d) => 0x%08x\n", $ptr, $size, $r
+			     unless $only_summary;
 			if (!defined $min_ptr || $r < $min_ptr) {
 			    $min_ptr = $r;
 			}
@@ -122,7 +129,8 @@ while(<>) {
 	    warn "Unhandled USER $l";
 	}
     } else {
-	print $_;
+	print $_
+	    unless $only_summary;
     }
 }
 
