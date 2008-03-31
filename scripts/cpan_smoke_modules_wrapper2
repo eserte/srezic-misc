@@ -83,7 +83,7 @@ if [ "$only" = "" -o "$only" = "5.00505" ]
 then
     LAST_UNTESTED_DISTROS_5_00505="`grep -v '^[#\?]' ~/var/tested-cpan-5.00505 | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
     echo $LAST_UNTESTED_DISTROS_5_00505 > ~/.cpan_test_distros_5_00505
-    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
+    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-0 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
     sleep=`expr $sleep + 3`
 fi
 
@@ -91,7 +91,7 @@ if [ "$only" = "" -o "$only" = "5.8.8t" ]
 then
     LAST_UNTESTED_DISTROS_5_8_8t="`grep -v '^[#\?]' ~/var/tested-cpan-5.8.8t | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
     echo $LAST_UNTESTED_DISTROS_5_8_8t > ~/.cpan_test_distros_5_8_8t
-    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-500   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.8.8t $LAST_UNTESTED_DISTROS_5_8_8t)&
+    (sleep $sleep; xterm $XTERM_ARGS -geometry -0+338   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.8.8t $LAST_UNTESTED_DISTROS_5_8_8t)&
     sleep=`expr $sleep + 3`
 fi
 
