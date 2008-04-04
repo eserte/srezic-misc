@@ -4,8 +4,9 @@
 
 doupdate=1
 only=
+also_failed=0
 
-args=`getopt Uo: $*`
+args=`getopt Uo:f $*`
 if [ $? -ne 0 ]
 then
     echo 'Usage: $0 [-U] [-o perlversion]'
@@ -23,12 +24,37 @@ for i do
 	    shift
 	    shift
 	    ;;
+	-f)
+	    also_failed=1
+	    ;;
 	--)
 	    shift
 	    break
 	    ;;
     esac
 done
+
+get_untested() {
+    local perlver=$1
+    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'
+}
+
+get_failed_and_untested() {
+    local perlver=$1
+    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested .*PASS' | sort -r | head -1000 | awk '{print $2}'
+}
+
+get_distros() {
+    local perlver=$1
+    case $also_failed in
+	1)
+	    get_failed_and_untested $perlver
+	    ;;
+	*)
+	    get_untested $perlver
+	    ;;
+    esac
+}
 
 set -e
 
@@ -53,7 +79,7 @@ sleep=0
 ## Again enabled with CPAN::Reporter 1.13, have to check for problems...
 if [ "$only" = "" -o "$only" = "5.10.0" ]
 then
-    LAST_UNTESTED_DISTROS_5_10_0="` grep -v '^[#\?]' ~/var/tested-cpan-5.10.0  | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_10_0="`get_distros 5.10.0`"
     echo $LAST_UNTESTED_DISTROS_5_10_0  > ~/.cpan_test_distros_5_10_0
     (sleep $sleep; xterm $XTERM_ARGS -geometry +0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -rr -pv 5.10.0  $LAST_UNTESTED_DISTROS_5_10_0) &
     sleep=`expr $sleep + 3`
@@ -63,7 +89,7 @@ fi
 # were already tested by the previous perl port with "6.2" in the osvers
 if [ "$only" = "" -o "$only" = "5.8.8" ]
 then
-    LAST_UNTESTED_DISTROS_5_8_8="`  grep -v '^[#\?]' ~/var/tested-cpan-5.8.8   | grep -v ' tested' | egrep -v '^(2007|2008-0[12])' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_8_8="`get_distros 5.8.8`"
     echo $LAST_UNTESTED_DISTROS_5_8_8   > ~/.cpan_test_distros_5_8_8
     (sleep $sleep;  xterm $XTERM_ARGS -geometry -0+0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.8.8   $LAST_UNTESTED_DISTROS_5_8_8  )&
     sleep=`expr $sleep + 3`
@@ -71,7 +97,7 @@ fi
 
 if [ "$only" = "" -o "$only" = "5.6.2" ]
 then
-    LAST_UNTESTED_DISTROS_5_6_2="`  grep -v '^[#\?]' ~/var/tested-cpan-5.6.2   | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_6_2="`get_distros 5.6.2`"
     echo $LAST_UNTESTED_DISTROS_5_6_2   > ~/.cpan_test_distros_5_6_2
     (sleep $sleep; xterm $XTERM_ARGS -geometry +0+338 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS -rr -pv 5.6.2   $LAST_UNTESTED_DISTROS_5_6_2  )&
     sleep=`expr $sleep + 3`
@@ -81,7 +107,7 @@ fi
 ## Again enabled with CPAN::Reporter 1.13, have to check for problems...
 if [ "$only" = "" -o "$only" = "5.00505" ]
 then
-    LAST_UNTESTED_DISTROS_5_00505="`grep -v '^[#\?]' ~/var/tested-cpan-5.00505 | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_00505="`get_distros 5.00505`"
     echo $LAST_UNTESTED_DISTROS_5_00505 > ~/.cpan_test_distros_5_00505
     (sleep $sleep; xterm $XTERM_ARGS -geometry -0-0 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
     sleep=`expr $sleep + 3`
@@ -89,7 +115,7 @@ fi
 
 if [ "$only" = "" -o "$only" = "5.8.8t" ]
 then
-    LAST_UNTESTED_DISTROS_5_8_8t="`grep -v '^[#\?]' ~/var/tested-cpan-5.8.8t | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_8_8t="`get_distros 5.8.8t`"
     echo $LAST_UNTESTED_DISTROS_5_8_8t > ~/.cpan_test_distros_5_8_8t
     (sleep $sleep; xterm $XTERM_ARGS -geometry -0+338   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.8.8t $LAST_UNTESTED_DISTROS_5_8_8t)&
     sleep=`expr $sleep + 3`
@@ -97,7 +123,7 @@ fi
 
 if [ "$only" = "" -o "$only" = "5.10.0t" ]
 then
-    LAST_UNTESTED_DISTROS_5_10_0t="`grep -v '^[#\?]' ~/var/tested-cpan-5.10.0t | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'`"
+    LAST_UNTESTED_DISTROS_5_10_0t="`get_distros 5.10.0t`"
     echo $LAST_UNTESTED_DISTROS_5_10_0t > ~/.cpan_test_distros_5_10_0t
     (sleep $sleep; xterm $XTERM_ARGS -geometry +0-0   -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.10.0t $LAST_UNTESTED_DISTROS_5_10_0t)&
     sleep=`expr $sleep + 3`
