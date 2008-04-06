@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.11 2008/03/27 00:50:31 eserte Exp $
+# $Id: SlayMakefile,v 1.12 2008/04/06 19:48:23 eserte Exp $
 #
 
 {
@@ -27,16 +27,31 @@
 }
 
 {
-    sub test_cpantestersmatrix {
+    sub _fetch_cpantestersmatrix {
         my(@cgi_args) = @_;
 	local $ENV{SCRIPT_NAME} = "cpantestersmatrix.pl"; # to avoid warnings
 	my $content = `perl -wT cgi/cpantestersmatrix.pl @cgi_args`;
+	$content;
+    }
+
+    sub test_cpantestersmatrix {
+        my(@cgi_args) = @_;
+	my $content = _fetch_cpantestersmatrix(@cgi_args);
 	Test::More::is($?, 0, "Exit code for @cgi_args");
 	Test::More::ok($content, "Have content for @cgi_args");
 	Test::More::like($content, qr{content-type:\s*text/html}i, "Seen http header");
 	Test::More::unlike($content, qr{error}i, "No error seen");
 	Test::More::like($content, qr{other links}i, "Some expected content");
     }
+
+    # assumes at least one PASS on a freebsd system
+    sub test_cpantestersmatrix_report_table {
+        my(@cgi_args) = @_;
+	my $content = _fetch_cpantestersmatrix(@cgi_args);
+	Test::More::like($content, qr{PASS});
+	Test::More::like($content, qr{freebsd});
+    }	
+
 }
 
 all: permissions cpan_in_a_nutshell.html
@@ -67,5 +82,9 @@ test-cpantestersmatrix-local:	permissions
 	    test_cpantestersmatrix 'dist=JSON', 'maxver=1';
 	    test_cpantestersmatrix 'dist=Clarion';
 	    test_cpantestersmatrix 'author=srezic';
+	    test_cpantestersmatrix 'dist=Kwalify', 'reports=1', 'os=freebsd', 'perl=5.8.8';
+	    test_cpantestersmatrix_report_table 'dist=Kwalify', 'reports=1', 'os=freebsd', 'perl=5.8.8';
+	    test_cpantestersmatrix 'dist=Kwalify 1.16', 'reports=1', 'os=freebsd', 'perl=5.8.8';
+	    test_cpantestersmatrix_report_table 'dist=Kwalify 1.16', 'reports=1', 'os=freebsd', 'perl=5.8.8';
 	    "";
 	}
