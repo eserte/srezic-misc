@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads,v 1.1 2008/04/09 20:23:56 eserte Exp $
+# $Id: cpan_recent_uploads,v 1.2 2008/04/09 21:00:11 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -14,18 +14,70 @@
 #
 
 use strict;
+use Getopt::Long;
 use Net::NNTP;
 
-my $n = shift || 100;
-
+my $l;
+my @keys;
 my $nntp_host = "nntp.perl.org";
+GetOptions("l|long"    => \$l,
+	   "k|key=s\@" => \@keys,
+	  )
+    or die "usage: $0 [-l] [-k key,key,...] [n]";
+my $n = shift || 100;
+@keys = map { split /,/ } @keys;
+
 my $nntp = Net::NNTP->new($nntp_host);
 die "Can't connect to $nntp_host" if !$nntp;
 my(undef,undef,$last) = $nntp->group("perl.cpan.uploads");
-my $first = $last - $n;
+my $first = $last - $n + 1;
 $first = 1 if $first < 1;
-my $res = $nntp->xhdr("Subject", $first."-".$last);
-my @res = grep { s/^CPAN Upload:\s*// } map { $res->{$_} } sort { $b <=> $a } keys %$res;
-print join("\n", @res), "\n";
+if ($l || @keys) {
+    my @res;
+    my $msg_i = $last;
+    my %keys = map { (lc($_), 1) } @keys;
+    while($msg_i >= $first) {
+	my %h;
+	my $last_key;
+	for my $line (@{ $nntp->head($msg_i) }) {
+	    chomp $line;
+	    if ($line =~ s{^\s+}{ }) {
+		if (!$last_key) {
+		    warn "Unexpected continuation line <$line>, ignoring...\n";
+		} else {
+		    if (!@keys || exists $keys{$last_key}) {
+			$h{$last_key}[-1] .=  $line;
+		    }
+		}
+	    } else {
+		my($key, $val) = split /\s*:\s*/, $line, 2;
+		$key = lc $key;
+		if (!@keys || exists $keys{$key}) {
+		    push @{$h{$key}}, $val;
+		}
+		if ($key eq 'date' && exists $keys{'isodate'}) {
+		    require DateTime::Format::DateParse;
+		    push @{$h{'isodate'}},  DateTime::Format::DateParse->parse_datetime($val)->iso8601;
+		}
+
+		$last_key = $key;
+	    }
+	}
+	push @res, \%h;
+	$msg_i--;
+    }
+
+    if (@keys) {
+	for my $res (@res) {
+	    print join("\t", map { $res->{$_}->[0] } @keys) , "\n";
+	}
+    } else {
+	require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\@res],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+    }
+} else {
+    my $res = $nntp->xhdr("Subject", $first."-".$last);
+    my @res = grep { s/^CPAN Upload:\s*// } map { $res->{$_} } sort { $b <=> $a } keys %$res;
+    print join("\n", @res), "\n";
+}
 
 __END__
