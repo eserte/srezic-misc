@@ -5,11 +5,12 @@
 doupdate=1
 only=
 also_failed=0
+today_grep=cat
 
-args=`getopt Uo:f $*`
+args=`getopt Uo:ftd: $*`
 if [ $? -ne 0 ]
 then
-    echo 'Usage: $0 [-U] [-o perlversion]'
+    echo 'Usage: $0 [-U] [-o perlversion] [-f] [-t] [-d yyyy-mm-dd]'
     exit 2
 fi
 set -- $args
@@ -26,6 +27,18 @@ for i do
 	    ;;
 	-f)
 	    also_failed=1
+	    shift
+	    ;;
+	-t)
+	    today=`date +%Y-%m-%d`
+	    today_grep="grep $today"
+	    shift
+	    ;;
+	-d)
+	    today="$2"
+	    today_grep="grep $today"
+	    shift
+	    shift
 	    ;;
 	--)
 	    shift
@@ -36,12 +49,12 @@ done
 
 get_untested() {
     local perlver=$1
-    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested' | sort -r | head -1000 | awk '{print $2}'
+    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested' | $today_grep | sort -r | head -1000 | awk '{print $2}'
 }
 
 get_failed_and_untested() {
     local perlver=$1
-    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested .*PASS' | sort -r | head -1000 | awk '{print $2}'
+    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested .*PASS' | $today_grep | sort -r | head -1000 | awk '{print $2}'
 }
 
 get_distros() {
@@ -63,8 +76,13 @@ PATH=$PATH:~eserte/work/srezic-misc/scripts:~eserte/devel
 [ -r /home/e/eserte/.cpan/CPAN/MyConfig.pm ] || (echo "CPAN config is not readable!"; exit 1)
 
 CPAN_SMOKE_MODULES=cpan_smoke_modules
-CPAN_SMOKE_MODULE_ARGS="-warntimeout 0 -batch -wait "
+CPAN_SMOKE_MODULE_ARGS="-nosqlite -warntimeout 0 -batch -wait "
 XTERM_ARGS="-xrm *Desk:3"
+case "$today" in
+    2*)
+	XTERM_ARGS="-xrm *Desk:2"
+	;;
+esac
 
 case $doupdate in
     1)
@@ -129,21 +147,21 @@ then
     sleep=`expr $sleep + 3`
 fi
 
-# Wait until all xterm are settled
-sleep $sleep
-sleep 3
-cpansandtty=""
-for tty in /dev/tty[pq]*
-do
-  user=`stat -f %Su $tty`
-  lsof=`lsof $tty | wc -l`
-  if [ $lsof -gt 0 ]
-  then
-      case $user in
-	  cpansand) cpansandtty="$cpansandtty $tty" ;;
-      esac
-  fi
-done
-idletermchecker -t 60 -t2 120 -tk $cpansandtty &
+## Wait until all xterm are settled
+#sleep $sleep
+#sleep 3
+#cpansandtty=""
+#for tty in /dev/tty[pq]*
+#do
+#  user=`stat -f %Su $tty`
+#  lsof=`lsof $tty | wc -l`
+#  if [ $lsof -gt 0 ]
+#  then
+#      case $user in
+#	  cpansand) cpansandtty="$cpansandtty $tty" ;;
+#      esac
+#  fi
+#done
+#idletermchecker -t 60 -t2 120 -tk $cpansandtty &
 
 tail -f ~/.cpanreporter/reports-sent.db
