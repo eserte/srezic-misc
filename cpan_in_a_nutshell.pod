@@ -462,12 +462,20 @@ L<File::Find::Rule> is different XXX. Many plugins.
 
 =head2 Free disk space
 
-L<Filesys::DiskSpace>: no usage of external commands, just using
-syscalls. Support seems to be stalled since many years (there are test
-failures and old bug reports on rt.cpan.org).
+L<Filesys::DfPortable> is probably the best choice. It supports both
+Windows and Unix systems.
 
-Check and compare the following modules: L<Filesys::Df>,
-L<Filesys::DiskFree>, L<Filesys::Statvfs>.
+L<Filesys::Df> and L<Filesys::Statvfs> seem to work on Unix systems.
+Both need a C compiler. L<Filesys::Df> gives more portability, while
+L<Filesys::Statvfs> can return more information about the file system.
+
+L<Filesys::DiskSpace>: no usage of external commands, just using
+syscalls through syscall.ph. Support seems to be stalled since many
+years (there are test failures and old bug reports on rt.cpan.org).
+
+L<Filesys::DiskFree> parses the output of the Unix tool C<df>. It does
+not work with modern BSD systems, for instance. The module is very old
+and seems to be unsupported.
 
 =head1 Graphics
 
