@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.55 2008/04/10 21:02:04 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.56 2008/04/12 10:51:17 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -235,7 +235,7 @@ if ($warntimeout) {
 	if ($tty) {
 	    $idletermchecker_pid = fork;
 	    if ($idletermchecker_pid == 0) {
-		exec "idletermchecker", "-tk", "-s", "-timeout", $warntimeout, "-q", $tty;
+		exec "idletermchecker", "-tk", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
 		die $!;
 	    }
 	} else {
@@ -397,7 +397,7 @@ EOF
 	    if ($has_xterm_conf) {
 		my $dist_or_mods_line = "";
 		for my $dist (@work_set) {
-		    $dist_or_mods_line .= qq{system(qq{xterm-conf -title "$std_title $dist"}); $do_action(qq{$dist}); };
+		    $dist_or_mods_line .= qq{system(qq{xterm-conf -title "$std_title $dist"}); \$0 = "\$^X (CPAN.pm $do_action $dist)"; $do_action(qq{$dist}); };
 		}
 		push @cmd, $cpan_shell_init . $dist_or_mods_line;
 	    } else {
