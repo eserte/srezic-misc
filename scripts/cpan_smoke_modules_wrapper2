@@ -76,7 +76,7 @@ PATH=$PATH:~eserte/work/srezic-misc/scripts:~eserte/devel
 [ -r /home/e/eserte/.cpan/CPAN/MyConfig.pm ] || (echo "CPAN config is not readable!"; exit 1)
 
 CPAN_SMOKE_MODULES=cpan_smoke_modules
-CPAN_SMOKE_MODULE_ARGS="-nosqlite -warntimeout 0 -batch -wait "
+CPAN_SMOKE_MODULE_ARGS="-nosqlite -batch -wait "
 XTERM_ARGS="-xrm *Desk:3"
 case "$today" in
     2*)
@@ -123,13 +123,14 @@ fi
 
 ## Suspended 5.00505 testing, because CPAN::Reporter 1.11 does not obey the prereq specs
 ## Again enabled with CPAN::Reporter 1.13, have to check for problems...
-if [ "$only" = "" -o "$only" = "5.00505" ]
-then
-    LAST_UNTESTED_DISTROS_5_00505="`get_distros 5.00505`"
-    echo $LAST_UNTESTED_DISTROS_5_00505 > ~/.cpan_test_distros_5_00505
-    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-0 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
-    sleep=`expr $sleep + 3`
-fi
+## Still same problems (sample: WPA-CLI)
+#if [ "$only" = "" -o "$only" = "5.00505" ]
+#then
+#    LAST_UNTESTED_DISTROS_5_00505="`get_distros 5.00505`"
+#    echo $LAST_UNTESTED_DISTROS_5_00505 > ~/.cpan_test_distros_5_00505
+#    (sleep $sleep; xterm $XTERM_ARGS -geometry -0-0 -e $CPAN_SMOKE_MODULES $CPAN_SMOKE_MODULE_ARGS   -pv 5.00505 $LAST_UNTESTED_DISTROS_5_00505)&
+#    sleep=`expr $sleep + 3`
+#fi
 
 if [ "$only" = "" -o "$only" = "5.8.8t" ]
 then
