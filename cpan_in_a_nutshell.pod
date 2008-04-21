@@ -433,6 +433,9 @@ file extension - mime type mapping. The module is not looking at
 file's magic. It is supposed to work just like the MIME type
 recognition of Apache.
 
+L<LWP::MediaTypes> is part of libwww-perl. Like MIME::Types, it
+deduces the mime type from the file name.
+
 L<File::MimeInfo::Magic> needs the mime-info database from the
 freedesktop project.
 
