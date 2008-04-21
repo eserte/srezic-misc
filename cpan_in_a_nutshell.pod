@@ -428,10 +428,9 @@ documentation it explains its advantages over L<File::MimeInfo> and
 L<File::MMagic>. Unfortunately the module seems to be rather
 unmaintained since 2004.
 
-L<MIME::Types>: the name may be misleading --- the module is just an
-file extension - mime type mapping. The module is not looking at
-file's magic. It is supposed to work just like the MIME type
-recognition of Apache.
+L<MIME::Types>: the module is a file extension - mime type mapping.
+The module is not looking at file's magic. It is supposed to work just
+like the MIME type recognition of Apache.
 
 L<LWP::MediaTypes> is part of libwww-perl. Like MIME::Types, it
 deduces the mime type from the file name.
