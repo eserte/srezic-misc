@@ -442,6 +442,10 @@ elsewhere. Unfortunately the location of the magic file is different
 from system to system, so it would be nice if there was an
 E<quot>auto-detectE<quot> option.
 
+An XS version of File::MMagic is available as L<File::MMagic::XS>. Its
+documentation presents a benchmark where it is more than 20x faster
+than the pure-perl version.
+
 =head2 File system
 
 =head3 Copying files
