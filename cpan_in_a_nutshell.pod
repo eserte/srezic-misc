@@ -171,6 +171,9 @@ L<Object::Tiny> is smaller and faster than L<Class::Accessor::Fast>.
 L<Moose> does everything for OO, it seems, including generating
 accessors.
 
+L<Coat> is inspired by Moose and implements a subset of Moose's
+features. Coat is self-dependent.
+
 =head2 Sorting
 
 L<Sort::Key> is (according to the author) the fastest way to sort an
