@@ -796,6 +796,11 @@ L<XML::Bare> is, according to the docs, a fast XML parser which
 implements only a subset of XML. Its doc has a comparison table about
 the parsing performance of the existing XML parsers.
 
+=head3 Normalization/Canonicalization
+
+There are L<XML::Normalize::LibXML> and L<XML::CanonicalizeXML>
+available. The latter implements W3C recommendations.
+
 =head3 Utilities
 
 L<Tk::XMLViewer> displays an XML tree in a Tk window.
