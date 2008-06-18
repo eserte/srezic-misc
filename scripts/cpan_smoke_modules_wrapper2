@@ -6,6 +6,7 @@ doupdate=1
 only=
 also_failed=0
 today_grep=cat
+kernel=`uname -s`
 
 args=`getopt Uo:ftd: $*`
 if [ $? -ne 0 ]
@@ -36,7 +37,7 @@ for i do
 	    ;;
 	-d)
 	    today="$2"
-	    today_grep="grep $today"
+	    today_grep="egrep $today"
 	    shift
 	    shift
 	    ;;
@@ -49,12 +50,12 @@ done
 
 get_untested() {
     local perlver=$1
-    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested' | $today_grep | sort -r | head -1000 | awk '{print $2}'
+    grep -v '^[#\?]' ~/var/tested-cpan-$kernel-$perlver | grep -v ' tested' | $today_grep | sort -r | head -1000 | awk '{print $2}'
 }
 
 get_failed_and_untested() {
     local perlver=$1
-    grep -v '^[#\?]' ~/var/tested-cpan-$perlver | grep -v ' tested .*PASS' | $today_grep | sort -r | head -1000 | awk '{print $2}'
+    grep -v '^[#\?]' ~/var/tested-cpan-$kernel-$perlver | grep -v ' tested .*PASS' | $today_grep | sort -r | head -1000 | awk '{print $2}'
 }
 
 get_distros() {
