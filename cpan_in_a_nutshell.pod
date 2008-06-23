@@ -451,6 +451,10 @@ An XS version of File::MMagic is available as L<File::MMagic::XS>. Its
 documentation presents a benchmark where it is more than 20x faster
 than the pure-perl version.
 
+L<File::Type::WebImages> only determines common image file types ("web
+image file types") using magic recognition. Its documentation lists
+advantages over L<File::Type> and L<File::MMagic>.
+
 =head2 File system
 
 =head3 Copying files
