@@ -139,9 +139,10 @@ pure perl replacement L<Date::Pcalc>.
 The standard perl functions and modules: time, localtime, strftime and
 mktime in L<POSIX>, L<Time::Local>.
 
-Other efforts are: L<Time::Piece>, L<Date::Handler>,
-L<Date::Manip> ... A description of the many date and time modules may
-be found here L<http://www.perl.com/pub/a/2003/03/13/datetime.html>
+Other efforts are: L<Time::Piece>, L<Date::Handler>, L<Date::Manip>
+... A description of the many date and time modules may be found here
+L<http://www.perl.com/pub/a/2003/03/13/datetime.html> (but the page is
+unfortunately outdated --- L<DateTime> is not mentioned)
 
 =head2 Class support
 
