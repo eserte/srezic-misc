@@ -363,6 +363,10 @@ output, and the latter is much slower (about 50x), but has more
 profiling output. At least Devel::FastProf turns out to be quite
 useful.
 
+L<Devel::NYTProf> is a fork of Devel::FastProf, which includes extra
+reporting. See its Pod for a list of subroutine- and statement-level
+profilers.
+
 L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
 scripts, saw segmentation faults and garbled profile files). Profiles
 only on sub basis.
