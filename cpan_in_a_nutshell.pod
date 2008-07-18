@@ -28,6 +28,11 @@ seems to be more standard-compliant as L<YAML>. For example, there's
 no way to get L<YAML> dump/load utf-8 files, but in L<YAML::Syck> it's
 at least configurable.
 
+L<YAML::XS> (part of the YAML-LibYAML distribution) is also a C based
+parser using libyaml instead of libsyck. This parser also support YAML
+1.1. The 0.27 version has issues with latin1, but this is possibly
+solved in the forthcoming 0.28 release.
+
 L<YAML::Tiny> is a small parser/generator which only implements a
 subset of YAML.
 
