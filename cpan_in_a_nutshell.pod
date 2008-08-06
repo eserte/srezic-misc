@@ -473,6 +473,10 @@ L<File::Type::WebImages> only determines common image file types ("web
 image file types") using magic recognition. Its documentation lists
 advantages over L<File::Type> and L<File::MMagic>.
 
+L<File::LibMagic> is a perl interface to the libmagic library, which
+means that you get the same results like the L<file(1)> command but
+without the overhead of calling and parsing an external application.
+
 =head2 File system
 
 =head3 Copying files
