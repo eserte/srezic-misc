@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.63 2008/07/11 05:49:39 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.64 2008/08/08 13:53:43 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -61,6 +61,7 @@ my $skip_tested;
 my $skip_fail;
 my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   =    50_000_000; # 50M
+my $bleeding_edge;
 my $debug;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
@@ -84,6 +85,7 @@ GetOptions("n" => \$n,
 	   'splitdists=i' => \$split_dists,
 	   'skiptested!' => \$skip_tested,
 	   'skipfail|skipfailed!' => \$skip_fail,
+	   'bleededge|bleedingedge!' => \$bleeding_edge,
 	   'debug!' => \$debug,
 	  )
     or die "usage!";
@@ -401,7 +403,13 @@ EOF
 	    if ($^O ne 'MSWin32') { # somehow does not work under Windows
 		$cpan_shell_init .= q{$CPAN::VERSION >= 1.9205 or warn(("*"x70)."\n*** Old CPAN version $CPAN::VERSION\n".("*"x70)."\n"); };
 	    }
-	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=1; $CPAN::Config->{urllist}=[qw(ftp://ftp.funet.fi/pub/CPAN/)]; $CPAN::FTP::connect_to_internet_ok=1; };
+	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
+	    if ($bleeding_edge) {
+		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(ftp://pause.perl.org/pub/PAUSE/)]; };
+	    } else {
+		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(ftp://ftp.funet.fi/pub/CPAN/)]; };
+	    }
+	    $cpan_shell_init .= q{$CPAN::FTP::connect_to_internet_ok=1; };
 	} else {
 	    $cpan_shell_init .= "";
 	}
