@@ -67,9 +67,23 @@ if ($do_maintperl) {
 	exit;
     }
     push @cmd, @dists;
-    die "@cmd";
+    warn "@cmd...\n";
     if (system(@cmd) != 0) {
-	die "Failed executing @cmd";
+	die "Failed while running command";
     }
 } else {
+    my @dists;
+    {
+	open my $fh, "-|", "/home/e/eserte/work/srezic-misc/scripts/cpan_recent_uploads"
+	    or die "While running cpan_recent_uploads: $!";
+	while(<$fh>) {
+	    chomp;
+	    push @dists, $_;
+	}
+    }
+    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules", "-skiptested", "-bleededge", @dists);
+    warn "@cmd...\n";
+    if (system(@cmd) != 0) {
+	die "Failure while running command\n";
+    }
 }
