@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Untested!
+# Smokes multiple perl versions in own xterm windows. By default
+# smokes the last 1000 untested distros per perl version.
 
 doupdate=1
 only=
@@ -166,4 +167,7 @@ fi
 #done
 #idletermchecker -t 60 -t2 120 -tk $cpansandtty &
 
+
+set +e
+( ~eserte/bin/sh/forever -60 'echo -n "*********** "; date' ) &
 tail -f ~/.cpanreporter/reports-sent.db

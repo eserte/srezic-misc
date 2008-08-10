@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Older wrapper, not in use anymore
+
 set -e
 
 CPAN_SMOKE_MODULES=~eserte/work/srezic-misc/scripts/cpan_smoke_modules
