@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+
+use strict;
+use Getopt::Long;
+
+my $do_this_month;
+my $do_last_month;
+my $do_recent;
+
+my $do_maintperl;
+my $do_all;
+
+my $skip_update;
+
+GetOptions("maintperl" => \$do_maintperl,
+	   "all"       => \$do_all,
+	   "this"      => \$do_this_month,
+	   "last"      => \$do_last_month,
+	   "recent"    => \$do_recent,
+	   "skip-update" => \$skip_update,
+	  )
+    or die "usage?";
+
+if (!$do_maintperl && !$do_all) {
+    die "Please specify either -maintperl or -all";
+}
+
+if ($do_maintperl) {
+    unless ($skip_update) {
+	my @cmd = "/home/e/eserte/devel/update-allcpanpackages";
+	warn "@cmd...\n";
+	if (system(@cmd) != 0) {
+	    die "update failed";
+	}
+    }
+    if (!$do_this_month && !$do_last_month) {
+	$do_this_month = 1;
+    }
+    my(undef,undef,undef,undef,$m,$y) = localtime;
+    $m++;
+    $y+=1900;
+    my $this_month = sprintf "%04d-%02d-", $y, $m;
+    $m--;
+    if ($m < 1) {
+	$m = 12;
+	$y--;
+    }
+    my $last_month = sprintf "%04d-%02d-", $y, $m;
+    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules",
+	       "-skiptested", "-install",
+	       "-perl", '/usr/perl5.8.8@33662/bin/perl'
+	      );
+    my @dists;
+    {
+	open my $fh, "$ENV{HOME}/var/tested-cpan-FreeBSD-5.8.8"
+	    or die $!;
+	while(<$fh>) {
+	    chomp;
+	    my @F = split;
+	    push @dists, $F[1]
+		if (($do_this_month && $F[0] =~ m{^\Q$this_month}) ||
+		    ($do_last_month && $F[0] =~ m{^\Q$last_month}));
+	}
+    }
+    if (!@dists) {
+	warn "No distributions to test...\n";
+	exit;
+    }
+    push @cmd, @dists;
+    die "@cmd";
+    if (system(@cmd) != 0) {
+	die "Failed executing @cmd";
+    }
+} else {
+}
