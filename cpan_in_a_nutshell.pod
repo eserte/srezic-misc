@@ -149,6 +149,17 @@ Other efforts are: L<Time::Piece>, L<Date::Handler>, L<Date::Manip>
 L<http://www.perl.com/pub/a/2003/03/13/datetime.html> (but the page is
 unfortunately outdated --- L<DateTime> is not mentioned)
 
+=head3 Faking time
+
+L<fixedtime> changes functions time, gmtime and localtime to a
+specified delta. It is a lexical pragma and therefore only works with
+perl 5.10 and better.
+
+L<Time::Fake> does the same thing, but is not lexically scoped and
+therefore works also with older perls.
+
+L<Time::Warp> seems to do similar things (to be evaluated).
+
 =head2 Class support
 
 =head3 Autogenerating accessors
