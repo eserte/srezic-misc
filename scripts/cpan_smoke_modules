@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.64 2008/08/08 13:53:43 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.65 2008/08/14 21:45:23 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -135,6 +135,7 @@ if ($do_continue || $do_recent) {
     }
     for my $item (@$recent) {
 	next if $item->{path} =~ m{(\.patch\.gz|CHECKSUMS|\.readme|\.meta)$};
+	next if $item->{path} =~ m{/00whois.(html|xml)$};
 	last if $last_run_path && $item->{path} eq $last_run_path;
 	(my $path = $item->{path}) =~ s{^id/}{}; # must be removed in protocol 1, not existent in protocol 0
 	push @dist_or_mods, $path;
