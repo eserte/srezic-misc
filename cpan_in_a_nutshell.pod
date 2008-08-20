@@ -734,6 +734,28 @@ L<IO::Prompt>: from the SYNOPSIS it's a nice module for prompting a
 string and getting an answer. Has a lot of useful options (defaults,
 input filters ...). But it does not seem to run under Windows.
 
+=head3 Progress indicators
+
+L<Term::ProgressBar> draws a progress bar to the terminal.
+L<Term::ProgressBar::Quiet> does the same, but checks first if the
+output device is a terminal at all (useful for scripts which may run
+as cron jobs, for instance).
+
+L<Time::Progress> may also draw a progress bar and has a rich set of
+formatting parameters (e.g. showing the ETA etc.).
+
+L<Tk::ProgressBar> for a graphical progress bar. L<IWL::ProgressBar>
+for a web progress bar based on the L<IWL> library.
+
+L<Term::Spinner> draws a classic spinner (a rotating bar).
+L<Term::Twiddler> does the same thing, but seems to allow for more
+configuration. For multiple spinners, one can use
+L<Term::MultiSpinner>.
+
+More in the same league: L<Term::Activity>, a huge framework
+L<ProgressMonitor>, L<Acme::Spinner>, L<Acme::Spinners> (with a set of
+different spinners).
+
 =head2 AI
 
 A long link list for AI and NLP stuff can be found here:
@@ -748,9 +770,15 @@ L<http://perlmonks.org/?node_id=399498>.
 
 =head2 Network Utilities
 
+=head3 IP address matching
+
 L<Net::IP::Match::Regexp> is a module to match IP addresses against
 ranges. This module contains also a list of similar modules with a
-comparison.
+comparison (L<Net::IP::Match>, L<Net::IP::Match::XS>,
+L<Net::IP::Resolver>).
+
+Another module for parsing, manipulating and looking up IP network
+blocks is L<Net::Netmask>.
 
 =head1 Option Parameter Config Processing
 
@@ -942,6 +970,8 @@ with a higher level GUI toolkit like Tk.
 
 L<Qt> is only for the library version 2.0, while the current version
 is at 4.0.
+
+L<IWL> is a widget library for the web.
 
 =head2 Console based GUI toolkits
 
