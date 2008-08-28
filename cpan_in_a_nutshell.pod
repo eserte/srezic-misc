@@ -691,7 +691,7 @@ There are L<String::Random> and L<String::MkPasswd>.
 
 =head2 Logging
 
-A good comparison can be found at:
+A list of available logging modules can be found at:
 L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
 
 =head2 Logfile parsing
