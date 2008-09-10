@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.66 2008/09/10 06:16:58 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.67 2008/09/10 17:36:44 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -63,6 +63,7 @@ my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   =    50_000_000; # 50M
 my $bleeding_edge;
 my $debug;
+my @pre_dist_or_mods;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -87,6 +88,7 @@ GetOptions("n" => \$n,
 	   'skipfail|skipfailed!' => \$skip_fail,
 	   'bleededge|bleedingedge!' => \$bleeding_edge,
 	   'debug!' => \$debug,
+	   'pre=s@' => \@pre_dist_or_mods,
 	  )
     or die <<EOF;
 usage: $0
@@ -100,15 +102,17 @@ usage: $0
      [-[no]interactive] [-[no]wait] [-[no]batch]
      [-[no]builddirreuse]
      [-n] [-[no]debug]
+     [-pre dist/module [...]]
      [dist ...]
 
 -i: test and install
--shell: ???
+-shell: just start the CPAN shell with the special smoker settings
 
 -a: use all installed perls (otherwise some perls will not be used)
 -perl path: use the named perl
 -pv x.y.z: use the perl named by version number
 
+-pre dist/module: module or distribution which should be tested before all others
 -fl file: file with distributions to test
 -c: ???
 -recent: test recent distributions
@@ -268,7 +272,7 @@ if ($interactive) {
     print STDERR "Continue tests with the following perl versions
     @perls
 and CPAN distributions or modules
-    @dist_or_mods
+    @pre_dist_or_mods @dist_or_mods
  (Y/n) ";
     my $yn = <STDIN>;
     exit 0 if $yn =~ m{^n}i;
@@ -389,7 +393,7 @@ EOF
     }
 #die "@dist_or_mods";
 
-    my $total_dists = scalar @dist_or_mods;
+    my $total_dists = scalar(@dist_or_mods) + scalar(@pre_dist_or_mods);
     my $dist_i = 0;
 
     while (@dist_or_mods) {
@@ -497,7 +501,7 @@ EOF
 	} else {
 	    if ($has_xterm_conf) {
 		my $dist_or_mods_line = "";
-		for my $dist (@work_set) {
+		for my $dist (@pre_dist_or_mods, @work_set) {
 		    my $pc = "";
 		    if ($total_dists > 1) {
 			$pc = int($dist_i*100/$total_dists)."%";
@@ -507,7 +511,7 @@ EOF
 		}
 		push @cmd, $cpan_shell_init . $dist_or_mods_line;
 	    } else {
-		my $dist_or_mods_line = join(", ", map { qq{qq{$_}} } @work_set);
+		my $dist_or_mods_line = join(", ", map { qq{qq{$_}} } @pre_dist_or_mods, @work_set);
 		push @cmd, $cpan_shell_init . $do_action.qq{($dist_or_mods_line)};
 	    }
 	}
