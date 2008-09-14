@@ -3,8 +3,8 @@
 use strict;
 use Getopt::Long;
 
-my $do_this_month;
-my $do_last_month;
+my $do_this_month = 1;
+my $do_last_month = 1;
 my $do_recent;
 
 my $do_maintperl;
@@ -14,8 +14,8 @@ my $skip_update;
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
-	   "this"      => \$do_this_month,
-	   "last"      => \$do_last_month,
+	   "this!"     => \$do_this_month,
+	   "last!"     => \$do_last_month,
 	   "recent"    => \$do_recent,
 	   "skip-update" => \$skip_update,
 	  )
@@ -33,9 +33,9 @@ if ($do_maintperl) {
 	    die "update failed";
 	}
     }
-    if (!$do_this_month && !$do_last_month) {
-	$do_this_month = 1;
-    }
+#     if (!$do_this_month && !$do_last_month) {
+# 	$do_this_month = 1;
+#     }
     my(undef,undef,undef,undef,$m,$y) = localtime;
     $m++;
     $y+=1900;
