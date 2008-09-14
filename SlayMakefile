@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.12 2008/04/06 19:48:23 eserte Exp $
+# $Id: SlayMakefile,v 1.13 2008/09/14 17:33:52 eserte Exp $
 #
 
 {
@@ -64,8 +64,15 @@ cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod SlayMakefile
 
 permissions:
 	cd scripts && chmod ugo+rx *
-	cd cgi && chmod ugo+rx *
+	cd cgi && chmod ugo+rx *.pl
+	cd cgi && chmod ugo+r *.yml *.st
 	chmod ugo+rx scripts cgi
+
+rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@bbbike.radzeit.de:/home/slaven/cpantesters_amendments.yml
+
+validate-cpantestersmatrix-data:
+	pkwalify -f cgi/cpantesters_amendments.kwalify cgi/cpantesters_amendments.yml
 
 rsync-cpantestersmatrix-stable:	permissions
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
