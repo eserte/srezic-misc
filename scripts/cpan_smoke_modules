@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.67 2008/09/10 17:36:44 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.68 2008/09/14 17:35:38 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -58,12 +58,13 @@ my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
-my $skip_fail;
+my $no_fail_reports;
 my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   =    50_000_000; # 50M
 my $bleeding_edge;
 my $debug;
 my @pre_dist_or_mods;
+my @cpan_conf;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -85,10 +86,11 @@ GetOptions("n" => \$n,
 	   'builddirreuse!' => \$build_dir_reuse,
 	   'splitdists=i' => \$split_dists,
 	   'skiptested!' => \$skip_tested,
-	   'skipfail|skipfailed!' => \$skip_fail,
+	   'nofailreport' => \$no_fail_reports,
 	   'bleededge|bleedingedge!' => \$bleeding_edge,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
+	   'cpanconf=s@' => \@cpan_conf,
 	  )
     or die <<EOF;
 usage: $0
@@ -96,13 +98,14 @@ usage: $0
      [-a|-allperls] [-perl /path/to/perl [-perl ...]] [-pv x.y.z,x.y.z,....]
      [-fl|-filelist file] [-c|-cont|-continue] [-recent] [-recenturl url]
      [-r|-reverse] [-rr] [-splitdists number]
-     [-[no]skiptested] [-[no]skipfail|skipfailed]
+     [-[no]skiptested] [-nofailreport]
      [-[no]bleededge|bleedingedge]
      [-warntimeout secs] [-[no]sqllite]
      [-[no]interactive] [-[no]wait] [-[no]batch]
      [-[no]builddirreuse]
      [-n] [-[no]debug]
      [-pre dist/module [...]]
+     [-cpanconf key=value [-cpanconf ...]]
      [dist ...]
 
 -i: test and install
@@ -122,14 +125,15 @@ usage: $0
 -rr: reverse just a smaller working set (to be used with -splitdists)
 -splitdists number: test at most number distribution within one iteration (default $split_dists)
 -skiptested: skip already tested distributions (use ~/.cpanreporter/reports-sent.db list)
--skipfailed: ???
+-nofailreport: send only PASS/NA/UNKNOWN reports, no FAIL reports
 
 -warntimeout secs: warn after inactivity (needs idletermchecker program, default $warntimeout)
 -[no]sqllite: (do not) use CPAN::SQLite
--interactive: ???
--wait: ???
--batch: ???
+-interactive: show first all distributions to test and wait for confirmation
+-wait: wait at the end of the smoke run
+-batch: avoid interactivity by using some defaults (default: $batch)
 -builddirreuse: set the corresponding CPAN shell option
+-cpanconf key=val: change CPAN configuration variable
 
 -n:  do not do anything, just show what would be done
 -debug: enable more debugging
@@ -325,8 +329,8 @@ $logfh->autoflush(1);
 CPAN::HandleConfig->load;
 my $prefs_dir = $CPAN::Config->{prefs_dir};
 
-if ($skip_fail) {
-    my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini";
+if ($no_fail_reports) {
+    my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini"; # XXX maybe use PERL_CPAN_REPORTER_DIR?
     if (!-r $confignofail) {
 	die "Cannot read <$confignofail>, needed for -skipfail...";
     }
@@ -490,6 +494,14 @@ EOF
 	    $cpan_shell_init .= q#use Data::Dumper; warn Dumper $CPAN::Config; #;
 	}
 
+	for my $cpan_conf (@cpan_conf) {
+	    my($key,$val) = split /=/, $cpan_conf, 2;
+	    if (!defined $key || !defined $val) {
+		die "Probably invalid cpan_conf value '$cpan_conf'";
+	    }
+	    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+	}
+
 	my @cmd = ($perl);
  	if ($perl =~ /5\.6\.2/ || $perl =~ /5\.005/) {
 	    # Preload to avoid segfaults
@@ -572,14 +584,21 @@ END {
 	$msg .= @dist_or_mods > 3 ? join(", ", @dist_or_mods[0..2]) . " ..." : join(", ", @dist_or_mods);
 	$msg .= ")";
 	print STDERR $msg, "\n";
-	system("tkmessage", "-bg", "green", "-fg", "black", $msg);
+	if (fork == 0) {
+	    exec("tkmessage", "-bg", "green", "-fg", "black", $msg);
+	}
     }
 }
 
 # from cpan_allpackages and changed (seek magic)
 sub parse_reports_sent { # takes ~3 seconds
-    open my $fh, "$ENV{HOME}/.cpanreporter/reports-sent.db"
-	or die $!;
+    my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
+    open my $fh, "$cpan_reporter_dir/reports-sent.db"
+	or do {
+	    warn "*** Can't open $cpan_reporter_dir/reports-sent.db: $!\n";
+	    warn "*** Assuming this is the very first run!\n";
+	    return;
+	};
     if (defined $reports_sent_seek_pos) {
 	seek $fh, $reports_sent_seek_pos, 0
 	    or die $!;
@@ -848,9 +867,7 @@ be removed from the list.
     
 =head1 TODO
 
-    * evtl. die recent-Liste http://search.cpan.org/recent automatisch
-      holen und abarbeiten, dabei aber Duplikate (ältere Versionen)
-      ignorieren (-> CPAN::DistInfo?)
+    * neuen recent-Mechanismus anwenden
 
     * evtl. auch das zuletzt getestete Modul merken und/oder
       ~/.cpanreporter/reports-sent.db verwenden, um zu sehen, welche
