@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.13 2008/09/14 17:33:52 eserte Exp $
+# $Id: SlayMakefile,v 1.14 2008/09/18 21:23:30 eserte Exp $
 #
 
 {
@@ -74,12 +74,15 @@ rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
 validate-cpantestersmatrix-data:
 	pkwalify -f cgi/cpantesters_amendments.kwalify cgi/cpantesters_amendments.yml
 
-rsync-cpantestersmatrix-stable:	permissions
+rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix.pl
 
-rsync-cpantestersmatrix-devel:	permissions
+rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix2.pl
+
+rsync-cpantestersmatrix-favicon:
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@bbbike.radzeit.de:/home/slaven/www/cpantesters_favicon.ico
 
 test-cpantestersmatrix-local:	permissions
 	{
