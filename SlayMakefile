@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.14 2008/09/18 21:23:30 eserte Exp $
+# $Id: SlayMakefile,v 1.15 2008/09/24 23:27:50 eserte Exp $
 #
 
 {
@@ -80,6 +80,22 @@ rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
 
 rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix2.pl
+
+
+rsync-cpantestersmatrix-3:	permissions rsync-cpantestersmatrix-favicon
+	{
+	  open my $fh, "$ENV{HOME}/work/srezic-misc/cgi/cpantestersmatrix.pl" or die $!;
+	  open my $ofh, ">", "/tmp/cpantestersmatrix3.pl" or die $!;
+	  while(<$fh>) {
+	    s{(.*\#\#OLD\#\#)}{#$1};
+	    s{\#(.*\#\#NEW\#\#)}{$1};
+	    s{(.*\$)old_(ct_domain.*must use old site.*)}{$1$2};
+	    print $ofh $_;
+	  }
+	}
+	chmod 755 /tmp/cpantestersmatrix3.pl
+	rsync -av /tmp/cpantestersmatrix3.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix3.pl
+	rm /tmp/cpantestersmatrix3.pl
 
 rsync-cpantestersmatrix-favicon:
 	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@bbbike.radzeit.de:/home/slaven/www/cpantesters_favicon.ico
