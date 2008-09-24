@@ -633,7 +633,7 @@ L<Mail::IMAPTalk> is an IMAP client interface.
 The mentioned modules have mostly only support for generating plain
 messages without MIME and attachments. For more complex emails with
 attachments you need something like L<MIME::Lite>, L<MIME::Tools> or
-L<Email::MIME>. There are claims that at least L<MIME::Lite> is buggy>
+L<Email::MIME>. There are claims that at least L<MIME::Lite> is buggy
 and that L<Email::MIME> should be preferred.
 
 =head1 Miscellaneous
