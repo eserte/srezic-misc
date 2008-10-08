@@ -586,7 +586,9 @@ perl.
 L<GD::Graph> is a nice package to create plots, charts, pie diagrams
 etc. via the L<GD> module.
 
-L<Chart::ThreeD::Pie> is another module to create pie diagrams via
+L<GD::Graph3D> is like GD::Graph, but provides 3d-looking graph.
+
+L<Chart::ThreeD::Pie> is another module to create 3d pie diagrams via
 L<GD>.
 
 =head1 Language Extensions
