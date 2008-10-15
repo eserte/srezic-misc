@@ -199,6 +199,11 @@ L<Mouse> is another Moose clone missing some features but is
 L<Sort::Key> is (according to the author) the fastest way to sort an
 array by key.
 
+L<Sort::Naturally> simultaneously sorts lexically and nummerically.
+
+L<Sort::Version> and L<version> may be used to compare and sort
+version numbers.
+
 =head2 Weak references
 
 Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
@@ -297,6 +302,11 @@ L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
 =head2 Search/fulltext engines
 
 L<WAIT>, a fulltext engine. L<CPAN> has support for this module.
+
+=head2 Database utilities
+
+For turning a database query result into a HTML table, one can use
+L<DBIx::XHTML_Table> or L<HTML::Table::FromDatabase>.
 
 =head1 Development Support
 
