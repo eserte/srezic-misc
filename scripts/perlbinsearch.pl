@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.6 2008/10/21 20:36:07 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.7 2008/10/21 20:37:09 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,7 +17,7 @@
 
   $ git-bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
   $ git-bisect view &
-  $ git-bisect run ~/devel/perlbinsearch.pl 
+  $ git-bisect run ~/work/srezic-misc/scripts/perlbinsearch.pl 
 
 =cut
 
