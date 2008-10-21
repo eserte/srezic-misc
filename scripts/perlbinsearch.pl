@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.3 2008/10/21 20:35:56 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.4 2008/10/21 20:36:00 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -56,6 +56,8 @@ RUN: {
     };
     warn "perl Makefile.PL";
     system("$perldir/perl", "-I$perldir/lib", "Makefile.PL") == 0 or last RUN;
+    warn "make $distribution";
+    system("make") == 0 or last RUN;
     warn "check command: $checkcmd";
     system($checkcmd);
     $err = $?==0 ? 0 : 1;
