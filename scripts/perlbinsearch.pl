@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.2 2008/10/21 20:35:52 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.3 2008/10/21 20:35:56 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -16,26 +16,30 @@
 =pod
 
   $ git-bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
-  $ git-bisect run ~/trash/perlbinsearch.pl 
-
-In another shell:
-
-  $ git-bisect view
+  $ git-bisect view &
+  $ git-bisect run ~/devel/perlbinsearch.pl 
 
 =cut
 
 use strict;
 use Cwd qw(cwd);
-
-my $distribution = "/usr/local/src/CPAN/build/autorequire-0.08-A3c4FR";
-#my $checkcmd = "env PERL5LIB=$perldir/lib make test";
-my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
-
 my $perldir = cwd;
+
+#my $distribution = "/usr/local/src/CPAN/build/autorequire-0.08-A3c4FR";
+my $distribution = "/usr/local/src/CPAN/build/Attribute-Tie-0.01-HxCk5z";
+
+#my $checkcmd = "env PERL5LIB=$perldir/lib make test";
+#my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
+my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/02-array.t";
 
 $SIG{__WARN__} = sub {
     print @_;
     system "xterm-conf", "-f", "-title", "@_";
+};
+
+$SIG{INT} = sub {
+    warn "User aborted ...";
+    exit 257;
 };
 
 my $err = 125; # git-bisect skip
