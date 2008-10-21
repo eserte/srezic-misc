@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.4 2008/10/21 20:36:00 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.5 2008/10/21 20:36:03 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -26,11 +26,13 @@ use Cwd qw(cwd);
 my $perldir = cwd;
 
 #my $distribution = "/usr/local/src/CPAN/build/autorequire-0.08-A3c4FR";
-my $distribution = "/usr/local/src/CPAN/build/Attribute-Tie-0.01-HxCk5z";
+#my $distribution = "/usr/local/src/CPAN/build/Attribute-Tie-0.01-HxCk5z";
+my $distribution = "/usr/local/src/CPAN/build/Apache-Admin-Config-0.94-nzBcpg";
 
 #my $checkcmd = "env PERL5LIB=$perldir/lib make test";
 #my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
-my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/02-array.t";
+#my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/02-array.t";
+my $checkcmd = "env PERL5LIB=$perldir/lib make test TEST_FILES=t/value.t";
 
 $SIG{__WARN__} = sub {
     print @_;
