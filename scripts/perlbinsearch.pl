@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.1 2008/10/21 20:35:49 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.2 2008/10/21 20:35:52 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -28,6 +28,8 @@ use strict;
 use Cwd qw(cwd);
 
 my $distribution = "/usr/local/src/CPAN/build/autorequire-0.08-A3c4FR";
+#my $checkcmd = "env PERL5LIB=$perldir/lib make test";
+my $checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
 
 my $perldir = cwd;
 
@@ -50,9 +52,8 @@ RUN: {
     };
     warn "perl Makefile.PL";
     system("$perldir/perl", "-I$perldir/lib", "Makefile.PL") == 0 or last RUN;
-    warn "make test cpan dist";
-    #system("env PERL5LIB=$perldir/lib make test");
-    system("env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t");
+    warn "check command: $checkcmd";
+    system($checkcmd);
     $err = $?==0 ? 0 : 1;
     warn "error code is $err";
 }
