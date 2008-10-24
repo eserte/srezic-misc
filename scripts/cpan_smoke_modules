@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.68 2008/09/14 17:35:38 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.69 2008/10/24 07:32:05 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -63,6 +63,7 @@ my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   =    50_000_000; # 50M
 my $bleeding_edge;
 my $debug;
+my $destroy_perl_in_path = $^O ne 'MSWin32';
 my @pre_dist_or_mods;
 my @cpan_conf;
 Getopt::Long::Configure('noauto_abbrev');
@@ -91,6 +92,7 @@ GetOptions("n" => \$n,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
 	   'cpanconf=s@' => \@cpan_conf,
+	   'destroyperl!' => \$destroy_perl_in_path,
 	  )
     or die <<EOF;
 usage: $0
@@ -338,6 +340,29 @@ if ($no_fail_reports) {
     $ENV{PERL_CPAN_REPORTER_CONFIG} = $confignofail;
 }
 
+if ($destroy_perl_in_path) {
+    require File::Temp;
+    my($tempdir) = File::Temp::tempdir(TMPDIR => 1, CLEANUP => 1);
+    my $perlbin = "$tempdir/perl";
+    open my $ofh, ">> $perlbin" or die "Cannot write to $perlbin: $!";
+    print $ofh <<'EOF' or die $!;
+#! /bin/sh
+echo '#'
+echo '# Please use $^X instead of perl in system()'
+echo '# and similar calls.'
+echo '#'
+echo '# See also the $EXECUTABLE_NAME or $^X entry'
+echo '# in the perlvar.pod documentation.'
+echo '#'
+exit 1
+EOF
+    close $ofh
+	or die $!;
+    chmod 0755, $perlbin
+	or die $!;
+    $ENV{PATH} = "$tempdir:$ENV{PATH}"; # it's not MSDOS, so can use ":"
+}
+
 for my $perl (@perls) {
     print STDERR "#"x70,"\n";
     print STDERR "# $perl\n";
@@ -518,7 +543,7 @@ EOF
 		    if ($total_dists > 1) {
 			$pc = int($dist_i*100/$total_dists)."%";
 		    }
-		    $dist_or_mods_line .= qq{system(q{xterm-conf -title "$std_title $dist $pc"}); \$0 = "\$^X (CPAN.pm $do_action $dist)"; $do_action(qq{$dist}); };
+		    $dist_or_mods_line .= qq{system(q{xterm-conf -force -title "$std_title $dist $pc"}); \$0 = "\$^X (CPAN.pm $do_action $dist)"; $do_action(qq{$dist}); };
 		    $dist_i++;
 		}
 		push @cmd, $cpan_shell_init . $dist_or_mods_line;
@@ -654,14 +679,19 @@ sub xterm_conf {
 	$has_xterm_conf = is_in_path("xterm-conf") ? 1 : 0;
     }
     return if (!$has_xterm_conf);
-    my @cmd = ("xterm-conf", @args);
+    my @cmd = ("xterm-conf", "-force", @args);
     system @cmd;
 }
 
 sub check_disk_free {
     my($perl) = @_;
     # File::HomeDir is needed because of http://rt.cpan.org/Ticket/Display.html?id=34066
-    my @cmd = ($perl, '-MFile::HomeDir', '-MCPAN', '-e', '$CPAN::Be_Silent=1;CPAN::HandleConfig->load; print $CPAN::Config->{build_dir}');
+    my @cmd = ($perl);
+    if ($perl =~ /5\.6\.2/ || $perl =~ /5\.005/) {
+	# Preload to avoid segfaults
+	push @cmd, '-MFile::HomeDir';
+    }
+    push @cmd, '-MCPAN', '-e', '$CPAN::Be_Silent=1;CPAN::HandleConfig->load; print $CPAN::Config->{build_dir}';
     open my $fh, "-|", @cmd
 	or die $!;
     my $build_dir;
