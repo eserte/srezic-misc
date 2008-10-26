@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.8 2008/10/25 20:14:04 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.9 2008/10/26 08:06:41 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -35,15 +35,18 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/Class-Void-0.05-_REvQg";
 #$distribution = "/usr/local/src/CPAN/build/Math-BigSimple-1.1a-0L7war";
 #$distribution = "/usr/local/src/CPAN/build/Symbol-Values-1.07-Z93uus";
+$distribution = "/usr/local/src/CPAN/build/IO-Mark-v0.0.1-XXX";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
 #$cpanmod = "HTML::Template::Dumper";
 #$cpanmod = "Class::Void";
-$cpanmod = "Apache::Admin::Config";
+#$cpanmod = "Apache::Admin::Config";
+#$cpanmod = "Class::AutoGenerate";
+#$cpanmod = "IO::Mark";
 
 my $checkcmd;
-#$checkcmd = "env PERL5LIB=$perldir/lib make test";
+$checkcmd = "env PERL5LIB=$perldir/lib make test";
 #$checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
 #$checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/02-array.t";
 #$checkcmd = "env PERL5LIB=$perldir/lib make test TEST_FILES=t/value.t";
@@ -60,7 +63,7 @@ if ($distribution && $cpanmod ||
     exit 258;
 }
 if (!$distribution && !$cpanmod && !$script) {
-    warn "Specify either distribution, scropt or CPAN mod!";
+    warn "Specify either distribution, script or CPAN mod!";
     exit 259;
 }
 if ($distribution && !$checkcmd) {
@@ -90,7 +93,7 @@ $SIG{INT} = sub {
 my $err = 125; # git-bisect skip
 RUN: {
     warn "configure.gnu";
-    system('./configure.gnu', '-Dcc=ccache cc') == 0 or last RUN;
+    system('./configure.gnu', '-Dcc=ccache cc', '-Dusedevel=define') == 0 or last RUN;
     warn "make";
     system('make', '-j4') == 0 or last RUN;
     if ($script) {
@@ -102,7 +105,7 @@ RUN: {
 	my $cmd = "env PERL5LIB=$perldir/lib $perldir/perl -MCPAN -e '" .
 	    q{$cpanmod = "} .
 		$cpanmod .
-		    q{"; CPAN::HandleConfig->load; $CPAN::Config->{test_report} = 0; $CPAN::Config->{prefs_dir} = undef; test($cpanmod); $success = eval { not CPAN::Shell->expand("Module", "$cpanmod")->distribution->{make_test}->failed }; exit($success ? 0 : 1)';};
+		    q{"; CPAN::HandleConfig->can("load") and CPAN::HandleConfig->load; $CPAN::Config->{test_report} = 0; $CPAN::Config->{prefs_dir} = undef; test($cpanmod); $success = eval { not CPAN::Shell->expand("Module", "$cpanmod")->distribution->{make_test}->failed }; warn $@ if $@; exit($success ? 0 : 1)';};
 	print STDERR $cmd, "\n";
 	system($cmd);
 	$err = $?==0 ? 0 : 1;
