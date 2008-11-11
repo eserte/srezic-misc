@@ -26,6 +26,37 @@ if (!$do_maintperl && !$do_all) {
 }
 
 if ($do_maintperl) {
+    (getpwuid($<))[0] eq 'cpansand'
+	or die "Works only for cpansand!";
+    unless ($skip_update) {
+	my @cmd = "/home/e/eserte/devel/update-allcpanpackages";
+	warn "@cmd...\n";
+	if (system(@cmd) != 0) {
+	    die "update failed";
+	}
+    }
+
+    my(undef,undef,undef,undef,$m,$y) = localtime;
+    $m++;
+    $y+=1900;
+    my $this_month = sprintf "%04d-%02d-", $y, $m;
+    $m--;
+    if ($m < 1) {
+	$m = 12;
+	$y--;
+    }
+    my $last_month = sprintf "%04d-%02d-", $y, $m;
+
+    my $cmd = <<'EOF';
+env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set3 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -install -nodestroyperl -skiptested -perl /usr/perl5.8.8@34559/bin/perl `sort -r ~cpansand/var/tested-cpan-FreeBSD-5.8.8@34559 | grep -v '^\?' | egrep '(untested|not the latest version)' | egrep '^__DATE__' | sort -r | perl -nale 'print $F[1]'`
+EOF
+    $cmd =~ s{__DATE__}{($this_month|$last_month)};
+    warn "Running '$cmd'...\n";
+    system $cmd;
+    if ($? != 0) {
+	die "Command failed with $?";
+    }
+} elsif (0 && $do_maintperl) { # old
     unless ($skip_update) {
 	my @cmd = "/home/e/eserte/devel/update-allcpanpackages";
 	warn "@cmd...\n";
@@ -48,7 +79,7 @@ if ($do_maintperl) {
     my $last_month = sprintf "%04d-%02d-", $y, $m;
     my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules",
 	       "-skiptested", "-install",
-	       "-perl", '/usr/perl5.8.8@33662/bin/perl'
+	       "-perl", '/usr/perl5.8.8@34559/bin/perl'
 	      );
     my @dists;
     {
