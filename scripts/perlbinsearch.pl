@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.9 2008/10/26 08:06:41 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.10 2008/11/15 00:04:06 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -35,7 +35,8 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/Class-Void-0.05-_REvQg";
 #$distribution = "/usr/local/src/CPAN/build/Math-BigSimple-1.1a-0L7war";
 #$distribution = "/usr/local/src/CPAN/build/Symbol-Values-1.07-Z93uus";
-$distribution = "/usr/local/src/CPAN/build/IO-Mark-v0.0.1-XXX";
+#$distribution = "/usr/local/src/CPAN/build/IO-Mark-v0.0.1-XXX";
+$distribution = "/usr/local/src/CPAN/build/Crypt-SecurID-0.04";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
@@ -44,6 +45,9 @@ my $cpanmod;
 #$cpanmod = "Apache::Admin::Config";
 #$cpanmod = "Class::AutoGenerate";
 #$cpanmod = "IO::Mark";
+#$cpanmod = "MPEG::Audio::Frame";
+#$cpanmod = "Nmap::Scanner";
+#$cpanmod = "Crypt::SecurID";
 
 my $checkcmd;
 $checkcmd = "env PERL5LIB=$perldir/lib make test";
@@ -55,6 +59,9 @@ $checkcmd = "env PERL5LIB=$perldir/lib make test";
 
 my $script;
 #$script = "/tmp/wah.pl";
+
+#my $allow_distroprefs = 0;
+my $allow_distroprefs = 1;
 
 if ($distribution && $cpanmod ||
     $distribution && $script ||
@@ -93,7 +100,10 @@ $SIG{INT} = sub {
 my $err = 125; # git-bisect skip
 RUN: {
     warn "configure.gnu";
-    system('./configure.gnu', '-Dcc=ccache cc', '-Dusedevel=define') == 0 or last RUN;
+    system('./configure.gnu', '-Dcc=ccache cc', '-Dusedevel=define', '--prefix=/usr/perl.XXX',
+	   ## extra stuff following:
+	   #'-Dusefaststdio=define',
+	  ) == 0 or last RUN;
     warn "make";
     system('make', '-j4') == 0 or last RUN;
     if ($script) {
@@ -105,10 +115,16 @@ RUN: {
 	my $cmd = "env PERL5LIB=$perldir/lib $perldir/perl -MCPAN -e '" .
 	    q{$cpanmod = "} .
 		$cpanmod .
-		    q{"; CPAN::HandleConfig->can("load") and CPAN::HandleConfig->load; $CPAN::Config->{test_report} = 0; $CPAN::Config->{prefs_dir} = undef; test($cpanmod); $success = eval { not CPAN::Shell->expand("Module", "$cpanmod")->distribution->{make_test}->failed }; warn $@ if $@; exit($success ? 0 : 1)';};
+		    q{"; CPAN::HandleConfig->can("load") and CPAN::HandleConfig->load; $CPAN::Config->{test_report} = 0; } .
+			(!$allow_distroprefs ? q{$CPAN::Config->{prefs_dir} = undef; } : q{}) .
+			    q{test($cpanmod); $success = eval { not CPAN::Shell->expand("Module", "$cpanmod")->distribution->{make_test}->failed }; if ($@) { warn "CPAN.pm problem: $@"; exit 125; }; exit($success ? 0 : 1)';};
 	print STDERR $cmd, "\n";
 	system($cmd);
-	$err = $?==0 ? 0 : 1;
+	if ($?<<8 == 125) {
+	    $err = 125; # skip, CPAN.pm problem
+	} else {
+	    $err = $?==0 ? 0 : 1;
+	}
     } else {
 	warn "chdir to cpan dist";
 	chdir $distribution or do {
@@ -119,7 +135,11 @@ RUN: {
 	warn "perl Makefile.PL";
 	system("$perldir/perl", "-I$perldir/lib", "Makefile.PL") == 0 or last RUN;
 	warn "make $distribution";
-	system("make") == 0 or last RUN;
+	system("make") == 0 or do {
+	    $err = 1;
+	    warn "error while doing make";
+	    last RUN;
+	};
 	warn "check command: $checkcmd";
 	system($checkcmd);
 	$err = $?==0 ? 0 : 1;
