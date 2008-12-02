@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads,v 1.2 2008/04/09 21:00:11 eserte Exp $
+# $Id: cpan_recent_uploads,v 1.3 2008/12/02 20:54:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -72,11 +72,11 @@ if ($l || @keys) {
 	    print join("\t", map { $res->{$_}->[0] } @keys) , "\n";
 	}
     } else {
-	require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\@res],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+	require Data::Dumper; print Data::Dumper->new([\@res],[qw()])->Indent(1)->Useqq(1)->Dump;
     }
 } else {
     my $res = $nntp->xhdr("Subject", $first."-".$last);
-    my @res = grep { s/^CPAN Upload:\s*// } map { $res->{$_} } sort { $b <=> $a } keys %$res;
+    my @res = grep { !/\.readme$/ } grep { s/^CPAN Upload:\s*// } map { $res->{$_} } sort { $b <=> $a } keys %$res;
     print join("\n", @res), "\n";
 }
 
