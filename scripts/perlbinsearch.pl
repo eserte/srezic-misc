@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.10 2008/11/15 00:04:06 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.11 2008/12/02 20:54:44 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -15,9 +15,9 @@
 
 =pod
 
-  $ git-bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
-  $ git-bisect view &
-  $ git-bisect run ~/work/srezic-misc/scripts/perlbinsearch.pl 
+  git-bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
+  git-bisect view &
+  git-bisect run ~/work/srezic-misc/scripts/perlbinsearch.pl 
 
 =cut
 
@@ -30,13 +30,15 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/autorequire-0.08-A3c4FR";
 #$distribution = "/usr/local/src/CPAN/build/Attribute-Tie-0.01-HxCk5z";
 #$distribution = "/usr/local/src/CPAN/build/Apache-Admin-Config-0.94-nzBcpg";
-#$distribution = "/usr/local/src/CPAN/build/MPEG-Audio-Frame-0.09-avy6LE";
+#$distribution = "/usr/local/src/CPAN/build/MPEG-Audio-Frame-0.09-12dhEG";
 #$distribution = "/usr/local/src/CPAN/build/Acme-Oil-0.1-IUxiWf";
 #$distribution = "/usr/local/src/CPAN/build/Class-Void-0.05-_REvQg";
 #$distribution = "/usr/local/src/CPAN/build/Math-BigSimple-1.1a-0L7war";
 #$distribution = "/usr/local/src/CPAN/build/Symbol-Values-1.07-Z93uus";
 #$distribution = "/usr/local/src/CPAN/build/IO-Mark-v0.0.1-XXX";
-$distribution = "/usr/local/src/CPAN/build/Crypt-SecurID-0.04";
+#$distribution = "/usr/local/src/CPAN/build/Crypt-SecurID-0.04";
+#$distribution = "/usr/local/src/CPAN/build/Tie-Array-FileWriter-0.1-NWMfS2";
+$distribution = "/usr/local/src/CPAN/build/Devel-SmallProf-2.02-0BwnEE";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
@@ -48,6 +50,7 @@ my $cpanmod;
 #$cpanmod = "MPEG::Audio::Frame";
 #$cpanmod = "Nmap::Scanner";
 #$cpanmod = "Crypt::SecurID";
+#$cpanmod = "Data::Reuse";
 
 my $checkcmd;
 $checkcmd = "env PERL5LIB=$perldir/lib make test";
