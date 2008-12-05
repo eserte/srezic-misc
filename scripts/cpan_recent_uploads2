@@ -1,0 +1,132 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# $Id: cpan_recent_uploads2,v 1.1 2008/12/05 23:05:18 eserte Exp $
+# Author: Slaven Rezic
+#
+# Copyright (C) 2008 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use CPAN;
+use Getopt::Long;
+my $LWP_UserAgent;
+my @LWP_options;
+BEGIN {
+    if (eval q{ use LWP::UserAgent::WithCache; 1 }) {
+	$LWP_UserAgent = 'LWP::UserAgent::WithCache';
+	@LWP_options = {
+			'namespace' => 'lwp-cache',
+			'cache_root' => "$ENV{HOME}/.cache",
+			'default_expires_in' => 600,
+		       };
+    } else {
+	require LWP::UserAgent;
+	$LWP_UserAgent = 'LWP::UserAgent';
+    }
+}
+use YAML::Syck qw(Load);
+
+{
+    package MyCPANShell;
+    use vars qw(@ISA $VERBOSE);
+    @ISA = $CPAN::Frontend;
+    sub myprint { shift; warn @_ if $VERBOSE }
+    sub mywarn  { shift; warn @_ if $VERBOSE }
+    $CPAN::Frontend = "MyCPANShell";
+}
+
+my($from, $to);
+my $url;
+my $v;
+
+GetOptions("from=i" => \$from,
+	   "to=i"   => \$to,
+	   "url=s"  => \$url,
+	   "v+"     => \$v,
+	  ) or die "usage?";
+
+my $now = time;
+
+for ($from, $to) {
+    if (defined $_ && m{^-(.*)}) {
+	$_ = $now - $1;
+    }
+}
+
+if (!$from && !$to) {
+    $from = $now - 86400;
+    $to   = $now;
+} elsif (!$from) {
+    $from = $to - 86400;
+} elsif (!$to) {
+    $to = $from + 86400;
+}
+$to = $now if $to > $now;
+
+if ($v) {
+    $MyCPANShell::VERBOSE = 1;
+}
+
+warn "Range from " . scalar(localtime $from) . " to " . scalar(localtime $to) . "\n" if $v;
+
+if (!$url) {
+    CPAN::HandleConfig->load;
+    $url = $CPAN::Config->{urllist}->[0];
+}
+
+if (!$url) {
+    die "Cannot get any URL from urllist and no -url specified on cmdline";
+}
+
+my $ua = $LWP_UserAgent->new(@LWP_options);
+
+my $recent = $url . "/authors/RECENT-1h.yaml";
+warn "Fetching from $recent...\n" if $v;
+my $resp = $ua->get($recent);
+if (!$resp->is_success) {
+    die "Error while fetching $recent: " . $resp->status_line;
+}
+my $recent_data = Load($resp->decoded_content);
+
+my @aggregator = @{ $recent_data->{meta}->{aggregator} || [] };
+
+if ($v && $v >= 2) {
+    *debug = sub { warn "$_[0]\n" };
+} else {
+    *debug = sub { };
+}
+ 
+GATHER_DATA: {
+    my $last_epoch;
+    while() {
+	for my $entry (@{ $recent_data->{recent} }) {
+	    debug("$entry->{epoch} $entry->{path}");
+	    debug("finished!"), last GATHER_DATA if $entry->{epoch} < $from;
+	    debug("skipping over (already seen)"), next if defined $last_epoch && $entry->{epoch} >= $last_epoch;
+	    $last_epoch = $entry->{epoch};
+	    debug("skipping over (to)"), next if $entry->{epoch} > $to;
+	    my $path = $entry->{path};
+	    debug("ignore (not in id)"), next if $path !~ m{^id/(.*)};
+	    $path = $1;
+	    debug("ignore (not a dist)"), next if $path =~ m{(\.patch|\.patch\.gz|CHECKSUMS|\.readme|\.meta)$};
+	    debug("ignore (not a dist)"), next if $path =~ m{/?00whois.(html|xml)$};
+	    print $path, "\n";
+	}
+	last GATHER_DATA if !@aggregator;
+	my $next_aggregator = shift @aggregator;
+	my $next_recent_url = $url . "/authors/RECENT-" . $next_aggregator . ".yaml";
+	warn "Fetching from $next_recent_url...\n" if $v;
+	my $resp = $ua->get($next_recent_url);
+	if (!$resp->is_success) {
+	    die "Error while fetching $next_recent_url: " . $resp->status_line;
+	}
+	$recent_data = Load($resp->decoded_content);
+    }
+}
