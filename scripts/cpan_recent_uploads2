@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads2,v 1.1 2008/12/05 23:05:18 eserte Exp $
+# $Id: cpan_recent_uploads2,v 1.2 2008/12/05 23:11:12 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -76,14 +76,23 @@ if ($v) {
 
 warn "Range from " . scalar(localtime $from) . " to " . scalar(localtime $to) . "\n" if $v;
 
+# XXX is this really necessary?
+$ENV{FTP_PASSIVE} = 1;
+
 if (!$url) {
     CPAN::HandleConfig->load;
-    $url = $CPAN::Config->{urllist}->[0];
+## unfortunately my http mirrors are not as recent as funet:
+#    ($url) = grep { m{^http://} } @{ $CPAN::Config->{urllist} }; # prefer http
+    if (!$url) {
+	$url = $CPAN::Config->{urllist}->[0];
+    }
 }
 
 if (!$url) {
     die "Cannot get any URL from urllist and no -url specified on cmdline";
 }
+
+$url =~ s{/+$}{}; # normalize?
 
 my $ua = $LWP_UserAgent->new(@LWP_options);
 
