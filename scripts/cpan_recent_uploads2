@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads2,v 1.3 2008/12/06 09:47:52 eserte Exp $
+# $Id: cpan_recent_uploads2,v 1.4 2008/12/07 19:42:50 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -115,6 +115,8 @@ if ($v && $v >= 2) {
 } else {
     *debug = sub { };
 }
+
+my %deleted_dist;
  
 GATHER_DATA: {
     my $last_epoch;
@@ -122,10 +124,19 @@ GATHER_DATA: {
 	for my $entry (@{ $recent_data->{recent} }) {
 	    debug("$entry->{epoch} $entry->{path}");
 	    debug("finished!"), last GATHER_DATA if $entry->{epoch} < $from;
+
+	    # deleted flag
+	    my $path = $entry->{path};
+	    if ($entry->{type} eq 'delete') {
+		$deleted_dist{$path} = 1;
+		next;
+	    }
+	    debug("$path was marked as deleted"), next if exists $deleted_dist{$path};
+	    debug("unhandled entry type: $entry->{type}"), next if $entry->{type} ne 'new';
 	    debug("skipping over (already seen)"), next if defined $last_epoch && $entry->{epoch} >= $last_epoch;
 	    $last_epoch = $entry->{epoch};
 	    debug("skipping over (to)"), next if $entry->{epoch} > $to;
-	    my $path = $entry->{path};
+	    # strip "id/" from $path
 	    debug("ignore (not in id)"), next if $path !~ m{^id/(.*)};
 	    $path = $1;
 	    debug("ignore (not a dist)"), next if $path =~ m{(\.patch|\.patch\.gz|CHECKSUMS|\.readme|\.meta)$};
