@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.11 2008/12/02 20:54:44 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.12 2008/12/09 21:41:12 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -15,9 +15,9 @@
 
 =pod
 
-  git-bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
-  git-bisect view &
-  git-bisect run ~/work/srezic-misc/scripts/perlbinsearch.pl 
+  git bisect start cb2877ce3cadf472e7e4932c3609b84b04fa46db perl-5.8.8
+  git bisect view &
+  git bisect run ~/work/srezic-misc/scripts/perlbinsearch.pl 
 
 =cut
 
@@ -38,7 +38,8 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/IO-Mark-v0.0.1-XXX";
 #$distribution = "/usr/local/src/CPAN/build/Crypt-SecurID-0.04";
 #$distribution = "/usr/local/src/CPAN/build/Tie-Array-FileWriter-0.1-NWMfS2";
-$distribution = "/usr/local/src/CPAN/build/Devel-SmallProf-2.02-0BwnEE";
+#$distribution = "/usr/local/src/CPAN/build/Devel-SmallProf-2.02-0BwnEE";
+$distribution = "/usr/local/src/CPAN/build/Convert-IBM390-0.25-FPBfEZ";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
@@ -65,6 +66,9 @@ my $script;
 
 #my $allow_distroprefs = 0;
 my $allow_distroprefs = 1;
+
+#my $cc = "ccache cc";
+my $cc = "ccache gcc34";
 
 if ($distribution && $cpanmod ||
     $distribution && $script ||
@@ -103,7 +107,7 @@ $SIG{INT} = sub {
 my $err = 125; # git-bisect skip
 RUN: {
     warn "configure.gnu";
-    system('./configure.gnu', '-Dcc=ccache cc', '-Dusedevel=define', '--prefix=/usr/perl.XXX',
+    system('./configure.gnu', "-Dcc=$cc", '-Dusedevel=define', '--prefix=/usr/perl.XXX',
 	   ## extra stuff following:
 	   #'-Dusefaststdio=define',
 	  ) == 0 or last RUN;
