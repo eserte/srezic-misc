@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads2,v 1.4 2008/12/07 19:42:50 eserte Exp $
+# $Id: cpan_recent_uploads2,v 1.5 2008/12/11 22:18:26 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,15 +17,15 @@ use strict;
 use CPAN;
 use Getopt::Long;
 my $LWP_UserAgent;
-my @LWP_options;
+my %LWP_options;
 BEGIN {
-    if (eval q{ use LWP::UserAgent::WithCache; 1 }) {
+    if (eval q{ use LWP::UserAgent::WithCache 0.10; 1 }) {
 	$LWP_UserAgent = 'LWP::UserAgent::WithCache';
-	@LWP_options = {
+	%LWP_options = (
 			'namespace' => 'lwp-cache',
 			'cache_root' => "$ENV{HOME}/.cache",
 			'default_expires_in' => 600,
-		       };
+		       );
     } else {
 	require LWP::UserAgent;
 	$LWP_UserAgent = 'LWP::UserAgent';
@@ -98,7 +98,7 @@ if (!$url) {
 
 $url =~ s{/+$}{}; # normalize?
 
-my $ua = $LWP_UserAgent->new(@LWP_options);
+my $ua = $LWP_UserAgent->new(%LWP_options);
 
 my $recent = $url . "/authors/RECENT-1h.yaml";
 warn "Fetching from $recent...\n" if $v;
