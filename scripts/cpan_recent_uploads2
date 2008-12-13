@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads2,v 1.5 2008/12/11 22:18:26 eserte Exp $
+# $Id: cpan_recent_uploads2,v 1.6 2008/12/13 11:09:25 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -47,8 +47,8 @@ my $url;
 my $v;
 my $only_stable;
 
-GetOptions("from=i" => \$from,
-	   "to=i"   => \$to,
+GetOptions("from=s" => \$from,
+	   "to=s"   => \$to,
 	   "url=s"  => \$url,
 	   "onlystable|stable!" => \$only_stable,
 	   "v+"     => \$v,
@@ -58,19 +58,36 @@ EOF
 
 my $now = time;
 
+my %unit2secs = ("h" => 3600,
+		 "d" => 86400,
+		);
+
+for ($from, $to) {
+    if (defined $_ && $_ =~ m{-(\d+)([hd])$}) {
+	my($val, $unit) = ($1, $2);
+	$_ = "-" . ($val * $unit2secs{$unit});
+    }
+}
+
+for ($from, $to) {
+    if (defined $_ && $_ !~ m{^-?\d+$}) {
+	die "Invalid -from/-to value (translated: $_)";
+    }
+}
+
 for ($from, $to) {
     if (defined $_ && m{^-(.*)}) {
 	$_ = $now - $1;
     }
 }
 
-if (!$from && !$to) {
+if (!defined $from && !defined $to) {
     $from = $now - 86400;
     $to   = $now;
-} elsif (!$from) {
+} elsif (!defined $from) {
     $from = $to - 86400;
-} elsif (!$to) {
-    $to = $from + 86400;
+} elsif (!defined $to) {
+    $to = $now;
 }
 $to = $now if $to > $now;
 
@@ -144,7 +161,7 @@ GATHER_DATA: {
 	    if ($only_stable) {
 		require CPAN::DistnameInfo;
 		my $distinfo = CPAN::DistnameInfo->new($path);
-		debug("developer version"), next if $distinfo->maturity ne 'stable';
+		debug("developer version"), next if $distinfo->maturity ne 'released';
 	    }
 	    print $path, "\n";
 	}
