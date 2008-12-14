@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.74 2008/11/28 19:05:50 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.75 2008/12/14 18:24:56 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008 Slaven Rezic. All rights reserved.
@@ -71,6 +71,7 @@ my $strace;
 my $truss;
 my $ktrace;
 my $use_distroprefs = 1;
+my $signal_end = 1;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -106,6 +107,7 @@ GetOptions("n" => \$n,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
 	   'distroprefs!' => \$use_distroprefs,
+	   'signalend!' => \$signal_end,
 	  )
     or die <<EOF;
 usage: $0
@@ -121,6 +123,9 @@ usage: $0
      [-n] [-[no]debug]
      [-pre dist/module [...]]
      [-cpanconf key=value [-cpanconf ...]]
+     [-[no]destroyperl]
+     [-strace|-truss|-ktrace file]
+     [-[no]signalend]
      [dist ...]
 
 -i: test and install
@@ -250,7 +255,8 @@ if (!@perls) {
 
 {
     my @new_dist_or_mods;
-    my %seen_dist;
+    my %seen_dist_maturity;
+    my %seen_dist_released;
     my %seen_mod;
     my %blacklist_author = map{($_,1)} @blacklist_author;
     for my $dist_or_mod (@dist_or_mods) {
@@ -273,14 +279,20 @@ if (!@perls) {
 		warn "Remove blacklisted distribution " . $d_info->distvname . " from list...\n";
 		next;
 	    }
-	    my $dist_key = $d_info->dist."/".$d_info->maturity;
+	    my($dist, $maturity) = ($d_info->dist, $d_info->maturity);
+	    my $dist_maturity_key = "$dist/$maturity";
 	    if (!$d_info->dist) { # it's probably a mod name
 		push @new_dist_or_mods, $dist_or_mod;
-	    } elsif ($seen_dist{$dist_key}) {
-		warn "Remove " . $d_info->distvname . " (maturity=" . $d_info->maturity . ") from list...\n";
+	    } elsif ($seen_dist_maturity{$dist_maturity_key}) {
+		warn "Remove " . $d_info->distvname . " (maturity=$maturity) from list...\n";
+	    } elsif ($maturity eq 'developer' && $seen_dist_released{$dist}) {
+		warn "Remove " . $d_info->distvname . " from list (younger _released_ version exists)...\n";
 	    } else {
 		push @new_dist_or_mods, $dist_or_mod;
-		$seen_dist{$dist_key}++;
+		$seen_dist_maturity{$dist_maturity_key}++;
+		if ($d_info->maturity eq 'released') {
+		    $seen_dist_released{$dist}++;
+		}
 	    }
 	}
     }
@@ -656,7 +668,7 @@ END {
 	system "idletermchecker", "-tk", "-s", "-remove", $tty;
     }
 
-    if (time-$start_time>60 && is_in_path("tkmessage")) {
+    if ($signal_end && time-$start_time>60 && is_in_path("tkmessage")) {
 	my $msg = "Smoking finished (perls=" . join(", ", @perls) . ", dists=";
 	$msg .= @dist_or_mods > 3 ? join(", ", @dist_or_mods[0..2]) . " ..." : join(", ", @dist_or_mods);
 	$msg .= ")";
