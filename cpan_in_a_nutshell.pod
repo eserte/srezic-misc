@@ -579,7 +579,14 @@ newfile.gif.
 L<GraphViz> is a B<graph> library. Feed in a graph or tree and get a
 graph as gif or postscript or Perl/Tk canvas output or ...
 
+=head3 SVG
+
 L<Image::LibRSVG> converts svg graphics into popular image formats.
+
+L<SVG::GD> vs. L<GD::SVG>: use the GD API to create SVG graphivs.
+Check the difference between both!
+
+L<SVG> provides an API to create SVG graphics.
 
 =head2 Image information
 
