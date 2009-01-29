@@ -305,6 +305,26 @@ L<MLDBM::Sync> adds a locking layer to L<MLDBM> files.
 
 L<WAIT>, a fulltext engine. L<CPAN> has support for this module.
 
+L<Senna>, an interface to the Senna fulltext search engine (from Pod:
+"a fast, embeddable search engine that allows fulltext search
+capabilities").
+
+L<CLucene> and L<Lucene> are interfaces to the CLucene C++ search
+engine. From looking at reports and ratings, it seems that C<Lucene>
+is better supported.
+
+L<Plucene>, a Perl port of the Lucene search engine.
+
+L<Search::FreeText>: free text indexing module for medium-to-large
+text corpuses
+
+L<Text::English>: comes with the L<perlindex> script which lets users
+search over all installed Perl documentation, including installed CPAN
+modules.
+
+More: L<Search::InvertedIndex>, L<Sphinx::Search>, L<SWISH>,
+L<KinoSearch> ...
+
 =head2 Database utilities
 
 For turning a database query result into a HTML table, one can use
