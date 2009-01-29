@@ -1020,6 +1020,10 @@ Low level: L<Curses>.
 
 Higher level: L<CDK>, L<Curses::UI>, L<Curses::Widgets>.
 
+Here's a comparison between L<Curses::UI> and L<Curses::Application>
+(sorry, German only):
+L<http://groups.google.com/group/de.comp.lang.perl.misc/browse_thread/thread/6e8da30ef98fb386#0df9b3146ac61a05>
+
 =head2 GUI builder
 
 For L<Tk>: L<ZooZ> is actively developed. It is not exactly of the
