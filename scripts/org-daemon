@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.2 2009/02/07 22:05:25 eserte Exp $
+# $Id: org-daemon,v 1.3 2009/02/08 08:28:43 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -18,6 +18,12 @@ use strict;
 use Getopt::Long;
 use Time::Local qw(timelocal);
 use Tk qw(tkinit Ev MainLoop);
+
+{
+    package Emacs::Org::Daemon::Date;
+    sub new { my $class = shift; bless {@_}, $class }
+    sub id { shift->{text} }
+}
 
 my $debug;
 GetOptions("d|debug!" => \$debug)
@@ -63,22 +69,28 @@ sub show_date_in_emacs {
 
 sub tk_do_one_iteration {
     if (check_for_updates()) {
-	$lb->delete(0, "end");
-	@lb_contents = ();
-	my @dates = map { @{ $_->{dates} } } values %org_files;
-	@dates = sort { $a->{epoch} <=> $b->{epoch} } @dates;
-	if (!@dates) {
-	    $lb->insert("end", "<no dates>");
-	} else {
-	    for my $date (@dates) {
-		$lb->insert("end", $date->{text});
-		push @lb_contents, $date;
-	    }
-	}
+	update_lb();
     }
 
     colorize_entries();
-    check_for_alarms();
+    if (check_for_alarms()) {
+	update_lb();
+    }
+}
+
+sub update_lb {
+    $lb->delete(0, "end");
+    @lb_contents = ();
+    my @dates = map { @{ $_->{dates} } } values %org_files;
+    @dates = grep { !$alarmed{$_->id} } sort { $a->{epoch} <=> $b->{epoch} } @dates;
+    if (!@dates) {
+	$lb->insert("end", "<no dates>");
+    } else {
+	for my $date (@dates) {
+	    $lb->insert("end", $date->{text});
+	    push @lb_contents, $date;
+	}
+    }
 }
 
 sub colorize_entries {
@@ -97,9 +109,12 @@ sub colorize_entries {
 }
 
 sub check_for_alarms {
+    my $changes = 0;
+    my %seen;
     my @dates = map { @{ $_->{dates} } } values %org_files;
     for my $date (@dates) {
-	if ($date->{epoch} <= time && !$alarmed{$date->{text}}) {
+	$seen{$date->id}++;
+	if ($date->{epoch} <= time && !$alarmed{$date->id}) {
 	    my $t = $mw->Toplevel(-title => "Alarm!");
 	    $t->Label(-text => $date->{text}, # . "\n" . $date->{date} . " " . $date->{time},
 		      -justify => 'left',
@@ -118,9 +133,22 @@ sub check_for_alarms {
 		warn $@ if $@;
 	    }
 
-	    $alarmed{$date->{text}} = 1;
+	    eval { $t->attributes(-topmost => 1) };
+	    warn $@ if $@;
+
+	    $alarmed{$date->id} = 1;
+	    $changes++;
 	}
     }
+
+    # cleanup all dates
+    for my $id (keys %alarmed) {
+	if (!$seen{$id}) {
+	    delete $alarmed{$id};
+	}
+    }
+
+    $changes;
 }
 
 sub check_for_updates {
@@ -173,13 +201,13 @@ sub find_dates_in_org_file {
 	    my($h,$m) = $time =~ m{^(\d{1,2}):(\d{2})};
 	    my $epoch = timelocal(0,$m,$h,$D,$M-1,$Y);
 	    if ($epoch >= time) {
-		push @dates, { epoch => $epoch,
-			       date  => $date,
-			       time  => $time,
-			       text  => $text,
-			       file  => $file,
-			       line  => $.,
-			     };
+		push @dates, Emacs::Org::Daemon::Date->new(epoch => $epoch,
+							   date  => $date,
+							   time  => $time,
+							   text  => $text,
+							   file  => $file,
+							   line  => $.,
+							  );
 	    }
 	}
     }
