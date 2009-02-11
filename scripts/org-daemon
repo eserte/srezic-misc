@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.6 2009/02/09 21:26:42 eserte Exp $
+# $Id: org-daemon,v 1.7 2009/02/11 12:02:03 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -73,10 +73,11 @@ sub tk_do_one_iteration {
 	update_lb();
     }
 
-    colorize_entries();
     if (check_for_alarms()) {
 	update_lb();
     }
+
+    colorize_entries();
 }
 
 sub update_lb {
