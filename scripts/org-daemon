@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.7 2009/02/11 12:02:03 eserte Exp $
+# $Id: org-daemon,v 1.8 2009/02/11 13:25:48 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -121,8 +121,19 @@ sub check_for_alarms {
 	    $t->Label(-text => $date->{text}, # . "\n" . $date->{date} . " " . $date->{time},
 		      -justify => 'left',
 		      -font => 'sans 24',
-		      , -background => 'red', -foreground => 'white',
-		     )->pack;
+		      -background => 'red', -foreground => 'white',
+		     )->pack(qw(-fill x -expand 1));
+	    my $overflow = "+00:00";
+	    $t->Label(-textvariable => \$overflow,
+		      -justify => 'right',
+		      -anchor => 'e',
+		      -font => 'sans 8',
+		      -background => 'red', -foreground => 'white',
+		     )->pack(qw(-fill x -expand 1));
+	    $t->repeat(1000, sub {
+			   my $diff = time - $date->{epoch};
+			   $overflow = sprintf "+%02d:%02d", int($diff/60), $diff%60;
+		       });
 
 	    $Tk::platform = $Tk::platform; # peacify -w
 	    if ($Tk::platform eq 'unix') {
