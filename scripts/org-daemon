@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.8 2009/02/11 13:25:48 eserte Exp $
+# $Id: org-daemon,v 1.9 2009/02/13 13:57:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -49,18 +49,40 @@ my $lb = $mw->Scrolled("Listbox",
 		       -scrollbars => "osoe",
 		      )->pack(qw(-fill both -expand 1));
 $lb->bind("<Double-1>" => sub {
-	      show_date_in_emacs(shift->xyIndex);
+	      show_date_by_index_in_emacs(shift->xyIndex);
 	  });
-$lb->repeat(($debug?3:60)*1000, sub { tk_do_one_iteration() });
-tk_do_one_iteration();
 
+tk_do_one_iteration();
+if ($debug) {
+    $lb->repeat(3*1000, sub { tk_do_one_iteration() });
+} else {
+    # synchronize with full minute
+    my(@l) = localtime;
+    my $first_delay = 60 - $l[0];
+    if ($first_delay) {
+	$lb->after($first_delay*1000, sub {
+		       tk_do_one_iteration();
+		       $lb->repeat(60*1000, sub { tk_do_one_iteration() });
+		   });
+    } else {
+	$lb->repeat(60*1000, sub { tk_do_one_iteration() });
+    }
+}
+
+#$mw->WidgetDump;
 MainLoop;
 
-sub show_date_in_emacs {
+sub show_date_by_index_in_emacs {
     my($index) = @_;
     my $date = $lb_contents[$index];
+    die "No date at index $index" if !$date;
+    show_date_in_emacs($date);
+}
+
+sub show_date_in_emacs {
+    my $date = shift;
     my $file = $date->{file};
-    die "No file associated with date at index $index" if !defined $file;
+    die "No file associated with given date" if !defined $file;
     my @cmd = ('emacsclient', '-n',
 	       (defined $date->{line} ? '+'.$date->{line} : ()),
 	       $file,
@@ -114,22 +136,33 @@ sub check_for_alarms {
     my $changes = 0;
     my %seen;
     my @dates = map { @{ $_->{dates} } } values %org_files;
+    my $date_i = -1;
     for my $date (@dates) {
+	$date_i++;
 	$seen{$date->id}++;
 	if ($date->{epoch} <= time && !$alarmed{$date->id}) {
-	    my $t = $mw->Toplevel(-title => "Alarm!");
+	    my %colargs    = (-background => 'red', -foreground => 'white');
+	    my %smlbtnargs = (-font => 'sans 8');
+	    my $t = $mw->Toplevel(-title => "Alarm!", %colargs);
 	    $t->Label(-text => $date->{text}, # . "\n" . $date->{date} . " " . $date->{time},
 		      -justify => 'left',
 		      -font => 'sans 24',
-		      -background => 'red', -foreground => 'white',
+		      %colargs,
 		     )->pack(qw(-fill x -expand 1));
 	    my $overflow = "+00:00";
 	    $t->Label(-textvariable => \$overflow,
 		      -justify => 'right',
 		      -anchor => 'e',
-		      -font => 'sans 8',
-		      -background => 'red', -foreground => 'white',
-		     )->pack(qw(-fill x -expand 1));
+		      %colargs, %smlbtnargs,
+		     )->pack(qw(-side right));
+	    $t->Button(-text => 'Edit',
+		       -command => sub { show_date_in_emacs($date) },
+		       -anchor => 'w',
+		       -borderwidth => 1,
+		       -highlightthickness => 0,
+		       -padx => 1, -pady => 1,
+		       %colargs, %smlbtnargs,
+		      )->pack(qw(-side left));
 	    $t->repeat(1000, sub {
 			   my $diff = time - $date->{epoch};
 			   $overflow = sprintf "+%02d:%02d", int($diff/60), $diff%60;
