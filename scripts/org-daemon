@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.13 2009/02/14 16:25:37 eserte Exp $
+# $Id: org-daemon,v 1.14 2009/02/14 22:11:56 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -14,6 +14,7 @@
 #
 
 use strict;
+use 5.008; # scalar open
 
 use Getopt::Long;
 use Time::Local qw(timelocal);
@@ -106,7 +107,7 @@ sub show_date_by_index_in_emacs {
     my($index) = @_;
     my $date = $lb_contents[$index];
     die "No date at index $index" if !$date;
-    show_date_in_emacs($date);
+    $lb->after(100, sub { show_date_in_emacs($date) }); # do it after the buttonrelease event
 }
 
 sub show_date_in_emacs {
@@ -321,21 +322,47 @@ sub find_dates_in_org_file {
 	      )?
       }x;
 
-    open my $fh, $file
-	or do {
-	    open_warning($file);
-	    return;
-	};
+    my $fh;
+ TRY_OPEN: {
+	my $tries = $open_warning{$file} ? 1 : 10;
+	for (1..$tries) {
+	    open $fh, $file
+		and last TRY_OPEN;
+	    # maybe emacs is now in this moment writing to the file?
+	    if ($tries > 1) {
+		warn "NOTE: file '$file' probably vanished or is saved in this moment. Will retry again.\n";
+		select undef, undef, undef, 0.1; # wait and retry
+	    }
+	}
+	# nope, file probably permanently vanished
+	open_warning($file);
+	return;
+    }
     delete $open_warning{$file};
 
-    while(defined(my $text = <$fh>)) {
-	chomp $text;
-	if ($text =~ m{-\*-.*\bcoding:\s*([^;]+);.*-\*-}) {
+    my $buf = "";
+ TRY_READ: {
+	for (1..10) {
+	    local $/ = undef;
+	    $buf .= <$fh>;
+	    select(undef,undef,undef,0.1);
+	    seek $fh, 0, 1 or die $!;
+	    last TRY_READ if eof($fh);
+	    warn "NOTE: resuming reading file '$file' after " . length($buf) . " bytes...\n";
+	}
+    }
+
+    my $linenumber = 0;
+    open $fh, "<", \$buf
+	or die "Cannot open scalar, should not happen!";
+    while(defined(my $textline = <$fh>)) {
+	$linenumber++;
+	if ($textline =~ m{-\*-.*\bcoding:\s*([^;]+);.*-\*-}) {
 	    my $encoding = $1;
 	    binmode $fh, ':encoding(' . $encoding . ')';
 	}
 
-	while ($text =~ m{$org_stamp_time_of_day_regexp}g) {
+	while ($textline =~ m{$org_stamp_time_of_day_regexp}g) {
 	    my($date, $time, $head_warning) = ($1, $2, $3);
 	    my($Y,$M,$D) = $date =~ m{^(\d{4})-(\d{2})-(\d{2})};
 	    my($h,$m) = $time =~ m{^(\d{1,2}):(\d{2})};
@@ -344,9 +371,9 @@ sub find_dates_in_org_file {
 		my %date_params = (epoch => $epoch,
 				   date  => $date,
 				   time  => $time,
-				   text  => $text,
+				   text  => $textline,
 				   file  => $file,
-				   line  => $.,
+				   line  => $linenumber,
 				  );
 		my $date = Emacs::Org::Daemon::Date->new(%date_params);
 		push @dates, $date;
