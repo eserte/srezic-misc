@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.8 2009/02/09 15:56:33 eserte Exp $
+# $Id: ical2org,v 1.9 2009/02/14 10:34:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -22,8 +22,11 @@ use POSIX        qw(strftime);
 use Time::Local  qw(timelocal timegm);
 
 my $itemdepth = 2;
-GetOptions("itemdepth=i" => \$itemdepth)
-    or die "usage: $0 [-itemdepth ...]";
+my $do_aalarm_parsing = 1;
+GetOptions("itemdepth=i" => \$itemdepth,
+	   "aalarm!"     => \$do_aalarm_parsing,
+	  )
+    or die "usage: $0 [-itemdepth ...] [-noaalarm]";
 
 my $itemstart = "*" x $itemdepth . " ";
 my $propstart = " " x ($itemdepth+1);
@@ -63,7 +66,33 @@ for my $file (@ARGV) {
 	next if $entry->ical_entry_type ne 'VEVENT';
 	my $props = $entry->properties;
 	# XXX use decoded_value?
-	my $begin    = icaldate_to_orgdate(eval { $props->{dtstart}->[0]->value });
+	my $dtstart  = eval { $props->{dtstart}->[0]->value };
+	my $begin    = icaldate_to_orgdate($dtstart);
+	if ($do_aalarm_parsing and $begin and my $alarm = eval{ $props->{aalarm}->[0]->value }) {
+	    ($alarm) = split /;/, $alarm; # XXX what are the other fields?
+	    my $alarm_epoch = _isodate_to_epoch($alarm);
+	    if (!defined $alarm_epoch) {
+		warn "Cannot parse aalarm field '$alarm', ignoring.\n";
+	    } else {
+		my $dtstart_epoch = _isodate_to_epoch($dtstart);
+		if (defined $alarm_epoch) {
+		    if ($alarm_epoch >= $dtstart_epoch) {
+			warn "Ignoring specified alarm '$alarm' for date '$dtstart'...\n";
+		    } else {
+			my $alarm_spec = '-';
+			my $delta = $dtstart_epoch-$alarm_epoch;
+			if ($delta % 3600 == 0) {
+			    $alarm_spec .= ($delta/3600).'h';
+			} elsif ($delta % 60 == 0) {
+			    $alarm_spec .= ($delta/60).'min';
+			} else {
+			    $alarm_spec .= $delta.'s';
+			}
+			$begin =~ s{>}{ $alarm_spec>};
+		    }
+		}
+	    }
+	}
 	my $end      = icaldate_to_orgdate(eval { $props->{dtend}->[0]->value });
 	my $id       = icaluid_to_orgid(eval { $props->{uid}->[0]->value });
 	my $location = eval { $props->{location}->[0]->value };
@@ -82,9 +111,8 @@ for my $file (@ARGV) {
     }
 }
 
-sub icaldate_to_orgdate {
+sub _isodate_to_epoch {
     my $dt = shift;
-    return if !defined $dt;
     if (my($Y,$M,$D,$h,$m,$s,$tz) = $dt =~ m{^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$}) {
 	my $epoch;
 	if ($tz) {
@@ -97,8 +125,18 @@ sub icaldate_to_orgdate {
 	} else {
 	    $epoch = timelocal($s,$m,$h,$D,$M-1,$Y);
 	}
+	$epoch;
+    } else {
+	undef;
+    }
+}
+
+sub icaldate_to_orgdate {
+    my $dt = shift;
+    return if !defined $dt;
+    if (defined(my $epoch = _isodate_to_epoch($dt))) {
 	strftime "<%Y-%m-%d %a %H:%M>", localtime $epoch;
-    } elsif (($Y,$M,$D) = $dt =~ m{^(\d{4})(\d{2})(\d{2})$}) {
+    } elsif (my($Y,$M,$D) = $dt =~ m{^(\d{4})(\d{2})(\d{2})$}) {
 	sprintf "%04d-%02d-%02d", $Y, $M, $D;
     } else {
 	warn "Cannot parse date '$dt'!";
