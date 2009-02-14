@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.11 2009/02/14 10:14:36 eserte Exp $
+# $Id: org-daemon,v 1.12 2009/02/14 11:11:47 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -134,7 +134,11 @@ sub update_lb {
     $lb->delete(0, "end");
     @lb_contents = ();
     my @dates = map { @{ $_->{dates} } } values %org_files;
-    @dates = grep { !$alarmed{$_->id} } sort { $a->{epoch} <=> $b->{epoch} } grep { !$_->{early_warning} } @dates;
+    @dates =
+	grep { !$alarmed{$_->id} }
+	    sort { $a->{epoch} <=> $b->{epoch} }
+		grep { !$_->{early_warning} }
+		    @dates;
     if (!@dates) {
 	$lb->insert("end", "<no dates>");
     } else {
@@ -169,7 +173,10 @@ sub check_for_alarms {
 	$date_i++;
 	$seen{$date->id}++;
 	if ($date->{epoch} <= time && !$alarmed{$date->id}) {
-	    my $real_date = $date->is_early_warning ? $date->{real_date} : undef;
+	    my $real_date = ($date->is_early_warning
+			     ? $date->{real_date}
+			     : undef
+			    );
 	    my %colargs    = (-background => ($real_date ? 'orange' : 'red'),
 			      -foreground => ($real_date ? 'black'  : 'white'),
 			     );
@@ -179,17 +186,20 @@ sub check_for_alarms {
 			 );
 	    my $t;
 	    if ($date && Tk::Exists($pre_alarm_windows{$date})) {
+		# propagate a pre-alarm window into a real one
 		$t = $pre_alarm_windows{$date};
 		$t->configure(%t_args);
 		$_->destroy for $t->children;
 		$t->{OverflowCounter}->cancel;
+		delete $pre_alarm_windows{$date};
 	    } else {
 		$t = $mw->Toplevel(%t_args);
 		if ($real_date) {
 		    $pre_alarm_windows{$real_date} = $t;
 		}
 	    }
-	    $t->Label(-text => ($real_date ? "Early warning:\n" : "") . $date->{text},
+	    $t->Label(-text => (($real_date ? "Early warning:\n" : "")
+				. $date->{text}),
 		      -justify => 'left',
 		      -font => 'sans 24',
 		      %colargs,
@@ -209,10 +219,16 @@ sub check_for_alarms {
 		       %colargs, %smlbtnargs,
 		      )->pack(qw(-side left));
 	    if ($real_date) {
-		$t->{OverflowCounter} = $t->repeat(1000, sub {
-						       my $diff = $real_date->{epoch} - time;
-						       $overflow = sprintf "-%02d:%02d", int($diff/60), $diff%60;
-						   });
+		$t->{OverflowCounter} =
+		    $t->repeat(1000, sub {
+				   my $diff = $real_date->{epoch} - time;
+				   if ($diff <= 0) { # may happen if the original date was deleted
+				       $t->{OverflowCounter}->cancel;
+				       $overflow = "";
+				   } else {
+				       $overflow = sprintf "-%02d:%02d", int($diff/60), $diff%60;
+				   }
+			       });
 	    } else {
 		$t->repeat(1000, sub {
 			       my $diff = time - $date->{epoch};
@@ -286,16 +302,20 @@ sub find_dates_in_org_file {
     # Additionaly the weekday is optional, some org-mode versions seem
     # to deal without the weekday.
 
-    my $org_stamp_time_of_day_regexp = qr{
-					     <
-					     ([0-9]{4}-[0-9]{2}-[0-9]{2}[ ]+(?:\w+[ ]+)?)
-					     ([012][0-9]:[0-5][0-9])
-					     (?:[ ]+(-[0-9]+(?:s|min|h|d|w|m|y)))?
-					     >
-					     (--?
-						 <\1([012][0-9]:[0-5][0-9])>
-					     )?
-				     }x;
+    # '-count unit' is a private extension. It seems that org-mode
+    # is ignoring everything after the recognized date/time.
+
+    my $org_stamp_time_of_day_regexp =
+	qr{
+	      <
+	      ([0-9]{4}-[0-9]{2}-[0-9]{2}[ ]+(?:\w+[ ]+)?)
+	      ([012][0-9]:[0-5][0-9])
+	      (?:[ ]+(-[0-9]+(?:s|min|h|d|w|m|y)))?
+	      >
+	      (--?
+		  <\1([012][0-9]:[0-5][0-9])>
+	      )?
+      }x;
 
     open my $fh, $file
 	or do {
@@ -336,11 +356,13 @@ sub find_dates_in_org_file {
 		}
 		if ($early_warning > 0) {
 		    # the early warning:
-		    push @dates, Emacs::Org::Daemon::Date->new(%date_params,
-							       epoch => $epoch - $early_warning,
-							       early_warning => 1,
-							       real_date => $date,
-							      );
+		    push @dates,
+			Emacs::Org::Daemon::Date->new
+				(%date_params,
+				 epoch => $epoch - $early_warning,
+				 early_warning => 1,
+				 real_date => $date,
+				);
 		}
 	    }
 	}
