@@ -26,19 +26,20 @@ if (!$do_maintperl && !$do_all) {
 }
 
 if ($do_maintperl) {
+    system('xterm-conf -f -title "INIT maintperl"');
     # really tests 5.8.8 and 5.8.9, installs everything stable and
     # tests also developer versions
     (getpwuid($<))[0] eq 'cpansand'
 	or die "Works only for cpansand!";
 
     warn "*** 5.8.9: Just test recent uploads, also devel versions...\n";
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested  `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -3d -v -stable | grep -v '\.pl$'` -r -bleedingedge};
+    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r -bleedingedge -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -3d -v -stable | grep -v '\.pl$'`};
     warn "*** 5.8.8: Just test recent uploads, also devel versions...\n";
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.9@RC2/bin/perl -skiptested  `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -3d -v -stable | grep -v '\.pl$'` -r -bleedingedge};
+    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r -bleedingedge -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -3d -v -stable | grep -v '\.pl$'`};
     warn "*** 5.8.9: Test and install recent uploads, only stable versions...\n";
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl -skiptested  `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -10d -v | grep -v '\.pl$'` -r};
+    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -10d -v | grep -v '\.pl$'`};
     warn "*** 5.8.8: Test and install recent uploads, only stable versions...\n";
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested  `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -10d -v | grep -v '\.pl$'` -r};
+    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -from -10d -v | grep -v '\.pl$'`};
     print STDERR <<'EOF';
 *** Now as eserte:
 
@@ -133,7 +134,7 @@ EOF
     if (system(@cmd) != 0) {
 	die "Failed while running command";
     }
-} else {
+} elsif (0) {
     my @dists;
     {
 	open my $fh, "-|", "/home/e/eserte/work/srezic-misc/scripts/cpan_recent_uploads"
@@ -148,4 +149,13 @@ EOF
     if (system(@cmd) != 0) {
 	die "Failure while running command\n";
     }
+} else {
+    chomp(my @dists = `/home/e/eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -v -from -6d`);
+    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules", "-pv", "5.10.0,5.8.8t,5.10.0t,5.6.2",
+	       "-skiptested", "--", @dists);
+    warn "Running: @cmd\n";
+    if (system(@cmd) != 0) {
+	die "Failure while running command: @cmd\n";
+    }
 }
+
