@@ -1099,6 +1099,12 @@ also faster. These are L<HTTP::Lite> and L<HTTP::Client> (where the
 latter needs C<HTTP::Lite> as a dependency and the version 1.51 seems
 to be broken).
 
+There is a number of extensions to L<LWP::UserAgent>, like
+L<LWP::UserAgent::WithCache> and L<LWP::UserAgent::Cache::Memcached>
+(with caching support), L<LWPx::ParanoidAgent> (an user agent with
+additional restricions, e.g. refusing connecting to internal
+addresses), L<LWP::ParallelUA> (parallel fetching) ...
+
 libnet (L<Net::FTP>) etc. (more low-level, has FTP, but no HTTP (?),
 POP3, SMTP etc.).
 
