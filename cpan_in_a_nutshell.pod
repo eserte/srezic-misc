@@ -323,7 +323,7 @@ search over all installed Perl documentation, including installed CPAN
 modules.
 
 More: L<Search::InvertedIndex>, L<Sphinx::Search>, L<SWISH>,
-L<KinoSearch> ...
+L<KinoSearch>, L<Search::Indexer> ...
 
 =head2 Database utilities
 
