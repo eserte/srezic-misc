@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.12 2008/12/09 21:41:12 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.13 2009/03/02 21:47:33 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -39,7 +39,8 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/Crypt-SecurID-0.04";
 #$distribution = "/usr/local/src/CPAN/build/Tie-Array-FileWriter-0.1-NWMfS2";
 #$distribution = "/usr/local/src/CPAN/build/Devel-SmallProf-2.02-0BwnEE";
-$distribution = "/usr/local/src/CPAN/build/Convert-IBM390-0.25-FPBfEZ";
+#$distribution = "/usr/local/src/CPAN/build/Convert-IBM390-0.25-FPBfEZ";
+$distribution = "/usr/local/src/CPAN/build/Audio-AMR-Decode-0.01-6xodoh";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
@@ -67,8 +68,11 @@ my $script;
 #my $allow_distroprefs = 0;
 my $allow_distroprefs = 1;
 
-#my $cc = "ccache cc";
-my $cc = "ccache gcc34";
+my $cc = "ccache cc";
+#my $cc = "ccache gcc34";
+
+#my $do_patch_perl = 0;
+my $do_patch_perl = 1;
 
 if ($distribution && $cpanmod ||
     $distribution && $script ||
@@ -111,6 +115,9 @@ RUN: {
 	   ## extra stuff following:
 	   #'-Dusefaststdio=define',
 	  ) == 0 or last RUN;
+    if ($do_patch_perl) {
+	system("patch --forward < /usr/ports/lang/perl5.8/files/patch-makedepend"); # intentionally ignore exit code
+    }
     warn "make";
     system('make', '-j4') == 0 or last RUN;
     if ($script) {
