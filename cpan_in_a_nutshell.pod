@@ -821,6 +821,19 @@ L<Net::IP::Resolver>).
 Another module for parsing, manipulating and looking up IP network
 blocks is L<Net::Netmask>.
 
+=head2 SSH
+
+L<Net::SSH> is a simple wrapper around the L<ssh(1)> command. Cannot
+send proper command line arguments to remote. Does not support
+arbitrary ssh options. It seems that there's no active development
+anymore.
+
+L<Net::SSH::Perl> is a ssh implementation written in perl and does not
+need an ssh installed.
+
+L<Net::SSH::Expect> also uses the system's ssh like L<Net::SSH>, but
+adds also the capabilities of L<Expect> into it.
+
 =head1 Option Parameter Config Processing
 
 =head2 Config/Ini files
