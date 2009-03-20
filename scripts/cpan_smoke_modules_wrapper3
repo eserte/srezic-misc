@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
+use FindBin;
 use Getopt::Long;
 
 my $do_this_month = 1;
@@ -61,7 +62,7 @@ EOF
     (getpwuid($<))[0] eq 'cpansand'
 	or die "Works only for cpansand!";
     unless ($skip_update) {
-	my @cmd = "/home/e/eserte/devel/update-allcpanpackages";
+	my @cmd = "~eserte/devel/update-allcpanpackages";
 	warn "@cmd...\n";
 	if (system(@cmd) != 0) {
 	    die "update failed";
@@ -90,7 +91,7 @@ EOF
     }
 } elsif (0 && $do_maintperl) { # old
     unless ($skip_update) {
-	my @cmd = "/home/e/eserte/devel/update-allcpanpackages";
+	my @cmd = "~eserte/devel/update-allcpanpackages";
 	warn "@cmd...\n";
 	if (system(@cmd) != 0) {
 	    die "update failed";
@@ -109,7 +110,7 @@ EOF
 	$y--;
     }
     my $last_month = sprintf "%04d-%02d-", $y, $m;
-    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules",
+    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules",
 	       "-skiptested", "-install",
 	       "-perl", '/usr/perl5.8.8@34559/bin/perl'
 	      );
@@ -137,21 +138,21 @@ EOF
 } elsif (0) {
     my @dists;
     {
-	open my $fh, "-|", "/home/e/eserte/work/srezic-misc/scripts/cpan_recent_uploads"
+	open my $fh, "-|", "$FindBin::RealBin/cpan_recent_uploads"
 	    or die "While running cpan_recent_uploads: $!";
 	while(<$fh>) {
 	    chomp;
 	    push @dists, $_;
 	}
     }
-    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules", "-skiptested", "-bleededge", @dists);
+    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-skiptested", "-bleededge", @dists);
     warn "@cmd...\n";
     if (system(@cmd) != 0) {
 	die "Failure while running command\n";
     }
 } else {
-    chomp(my @dists = `/home/e/eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -v -from -6d`);
-    my @cmd = ("/home/e/eserte/work/srezic-misc/scripts/cpan_smoke_modules", "-pv", "5.10.0,5.8.8t,5.10.0t,5.6.2",
+    chomp(my @dists = `$FindBin::RealBin/cpan_recent_uploads2 -v -from -6d`);
+    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-pv", "5.10.0,5.8.8t,5.10.0t,5.6.2",
 	       "-skiptested", "--", @dists);
     warn "Running: @cmd\n";
     if (system(@cmd) != 0) {
