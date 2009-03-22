@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_recent_uploads2,v 1.6 2008/12/13 11:09:25 eserte Exp $
+# $Id: cpan_recent_uploads2,v 1.7 2009/03/22 21:12:25 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -128,9 +128,11 @@ my $recent_data = Load($resp->decoded_content);
 my @aggregator = @{ $recent_data->{meta}->{aggregator} || [] };
 
 if ($v && $v >= 2) {
-    *debug = sub { warn "$_[0]\n" };
+    *debug      = sub { warn "$_[0]\n" };
+    *debug_code = sub { $_[0]->() };
 } else {
-    *debug = sub { };
+    *debug      = sub { };
+    *debug_code = sub { };
 }
 
 my %deleted_dist;
@@ -139,7 +141,13 @@ GATHER_DATA: {
     my $last_epoch;
     while() {
 	for my $entry (@{ $recent_data->{recent} }) {
-	    debug("$entry->{epoch} $entry->{path}");
+	    debug_code(sub {
+			   my @t = gmtime $entry->{epoch}; $t[4]++; $t[5]+=1900;
+			   my($frac) = $entry->{epoch} =~ m{(\.\d+)$};
+			   $frac = ".0" if !$frac;
+			   my $date = sprintf "%04d-%02d-%02d %02d:%02d:%02d%s", @t[5,4,3,2,1,0], $frac;
+			   debug("$date $entry->{path}");
+		       });
 	    debug("finished!"), last GATHER_DATA if $entry->{epoch} < $from;
 
 	    # deleted flag
