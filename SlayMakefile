@@ -1,8 +1,12 @@
 #
-# $Id: SlayMakefile,v 1.16 2008/09/24 23:28:18 eserte Exp $
+# $Id: SlayMakefile,v 1.17 2009/04/05 19:47:39 eserte Exp $
 #
 
 {
+    use vars qw($BBBIKE_HOST);
+    $BBBIKE_HOST = "bbbike.de";
+    $BBBIKE_HOST = "78.47.225.30";
+
     package MyPH;
     use base 'Pod::Simple::HTML';
     sub html_header_after_title {
@@ -69,21 +73,21 @@ permissions:
 	chmod ugo+rx scripts cgi
 
 rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@bbbike.radzeit.de:/home/slaven/cpantesters_amendments.yml
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
 
 validate-cpantestersmatrix-data:
 	pkwalify -f cgi/cpantesters_amendments.kwalify cgi/cpantesters_amendments.yml
 
 rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix.pl
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix.pl
 
 rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@bbbike.radzeit.de:/home/slaven/cpantestersmatrix2.pl
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix2.pl
 
 
 rsync-cpantestersmatrix-favicon:
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@bbbike.radzeit.de:/home/slaven/www/cpantesters_favicon.ico
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOST}:/home/slaven/www/cpantesters_favicon.ico
 
 test-cpantestersmatrix-local:	permissions
 	{
