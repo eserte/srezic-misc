@@ -11,6 +11,56 @@ modules L<List::MoreUtil> and L<List::Utils>.
 
 =head2 Serialization
 
+Before choosing a serialization module, one needs to choose a
+serialization format first. Some differences in the formats are:
+
+=over
+
+=item Completeness of serialization
+
+Some serialization formats target to be able to serialize B<all>
+aspects of Perl. All serialization formats can handle the basic types
+(scalars, lists, hashes), but for other types (regexps, blessed
+objects, even code references) on needs to choose either a
+Perl-generating serializer (e.g. L<Data::Dumper>), a YAML-generating
+serializer, or Storable. Particularly the Bencode and JSON formats are
+not capable to handle all Perl types.
+
+=item Inter-language interaction
+
+If the serialization data should be passed to other programming
+languages, then a standardized serialization format like YAML, JSON,
+or Bencode should be used. Especially the output of Data::Dumper (pure
+perl) is not suited, so is probably not Storable (deserializers
+probably do not exist outside the Perl world). While XML is a
+standard, there's probably no standard for serializing data structures
+into XML data.
+
+=item Readability for humans
+
+Most serialization formats are plain text. Some are more readable than
+others. In the author's opinion, the readability of serialization
+formats ranges like following: YAML, Perl-based serialization, JSON,
+Bencode, XML, Storable (which is a binary format).
+
+=item Speed
+
+A benchmark with results can be found here:
+L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl> (if
+the URL is not available, then try the archive URL
+L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
+
+=item Security
+
+Some serializer modules allow the deserialization of code references,
+which is possibly dangerous. But no module do this by default,
+typically a switch has to be turned on.
+
+Namely one serialization format has to use Perl's C<eval> or
+C<Safe::reval> function for deserialization: L<Data::Dumper>.
+
+=back
+
 =head3 YAML
 
 YAML as a format is neat: it's human readable, portable across
@@ -80,6 +130,11 @@ L<XML::Smart> tries to solve this problem by using an universal data
 type which can be used either as hash or array or scalar. However, I
 never tried this module in reality.
 
+=head3 Bencode
+
+The following modules can handle Bencode data: L<Convert::Bencode>,
+L<Convert::Bencode_XS>.
+
 =head3 Standard-less formats
 
 L<Storable> is in the core since 5.7.3. It's fast (because implemented
@@ -109,12 +164,13 @@ checksumming.
 L<FreezeThaw> is ancient, pure-perl, and much slower than other
 modules.
 
-A benchmark with results can be found here:
-L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl> (if
-the URL is not available, then try the archive URL
-L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
-More modules are mentioned there not covered here: L<RPC::XML>,
-L<Convert::Bencode>, L<Convert::Bencode_XS>.
+The benchmark by Christian Hansen also mentions the module
+L<RPC::XML>.
+
+L<PHP::Serialization> handles a serialization format which is popular
+in the PHP world. But note that the current version 0.31 is not
+recommended by the maintainer, due to some severe known bugs. Another
+PHP serializer is L<PHP::Session::Serializer::PHP>.
 
 =head2 Hash tools
 
