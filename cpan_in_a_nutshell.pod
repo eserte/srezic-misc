@@ -1246,3 +1246,21 @@ correctly.
 L<CGI> has limited support for URI handling through the url() and
 query_string() functions and the new() constructor.
 
+=head2 Apache/mod_perl support
+
+=head3 Compression
+
+A number of modules solve the problem "automatically (gzip) compress
+outgoing data if the client supports it". Probably the most
+comprehensive mod_perl handler (just by looking at the documentation
+size) is L<Apache::Dynagzip>. More light-weight solutions are
+L<Apache::Compress> and L<Apache::GzipChain> (the latter in
+conjunction with the L<Apache::OutputChain>). All three can handle
+static files. L<Apache::Dynagzip> has recipes how to work with L<CGI>
+or L<Apache::Registry> scripts).
+
+L<CGI::Compress::Gzip> is only suitable for CGI scripts. It
+automatically turns the standard output into a gzip-compressed stream,
+if suitable.
+
+=cut
