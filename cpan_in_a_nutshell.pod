@@ -231,6 +231,9 @@ L<Class::Accessor::Fast> and lvalue access L<Class::Accessor::Lvalue>
 (but note that lvalue access has problems in perl and is still marked
 as experimental).
 
+L<Class::Accessor::Fast::XS> is compatible with
+L<Class::Accessor::Fast>, but implemented in XS and somewhat faster.
+
 L<accessors>: simple syntax, has also some variants. Test suite spits
 a lot of warnings. A possible downside is that the internal hash
 members are preceded with a dash. This makes serialized objects (e.g.
