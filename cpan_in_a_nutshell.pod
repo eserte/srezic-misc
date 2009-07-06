@@ -908,7 +908,8 @@ retrieving a configuration.
 L<Config::IniFiles>: most people recommend this module for Windows-ini
 styled configuration files. More modules in this game:
 L<Config::Tiny>, L<Config::IniHash>, L<Config::Mini>, and
-L<Config::INI::Simple>.
+L<Config::INI::Simple>. L<Config::Any::INI> can read ini files, but
+not write them.
 
 L<XML::Simple>: out-of-the-box serialization is not possible without
 fiddling with a lot of options
