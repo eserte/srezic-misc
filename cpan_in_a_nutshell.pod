@@ -822,6 +822,10 @@ L<Geo::Coder::Google> is an interface to the Google Geocoding API. It
 requires an API key, which has restrictions on its usage. Results
 seems to be good, at least for the Germany area.
 
+L<Geo::Coder::GoogleMaps> is a similar module which just uses a
+different interface to the API (JSON instead of XML). The results
+should be of the same quality like L<Geo::Coder::Google>.
+
 L<Geo::Coder::Yahoo> is an interface to the Yahoo Geocoding API. It
 also requires an API key, but there does not seem to be any
 restrictions on usage, unlike the Google API. Results are not that
