@@ -816,7 +816,25 @@ should-condition.
 
 =head2 Geo modules
 
+=head3 Geocoding
+
+L<Geo::Coder::Google> is an interface to the Google Geocoding API. It
+requires an API key, which has restrictions on its usage. Results
+seems to be good, at least for the Germany area.
+
+L<Geo::Coder::Yahoo> is an interface to the Yahoo Geocoding API. It
+also requires an API key, but there does not seem to be any
+restrictions on usage, unlike the Google API. Results are not that
+good, at least for the Germany area, and there seem to be problems
+with umlauts, so avoid them.
+
+L<Geo::Coder::Bing> is an interface to the geocoding API from
+L<http://www.bing.com>. It does not require any API key. Results seem
+to be good, at least for the Germany area.
+
 L<Geo::Coder::US> is an interface to the free US geo data.
+
+=head3 Other
 
 L<Geo::Google> is an interface to Google maps.
 
