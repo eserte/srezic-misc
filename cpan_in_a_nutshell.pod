@@ -178,7 +178,9 @@ To get ordered hashes, use either L<Tie::IxHash> (which is old and
 seems to be rock-stable), L<Tie::InsertOrderHash> (has problems with
 older perls i.e. 5.005) or L<Tie::Hash::Indexed> (this is an XS
 implementation of L<Tie::IxHash>, and, acoording to the documentation,
-usually twice as fast as Tie::IxHash).
+usually twice as fast as Tie::IxHash). And there are even more:
+L<Tie::StoredOrderHash> (which has a comparison over the others),
+L<Tie::LLHash>, L<Tie::Hash::ButMoreFun>.
 
 For case insensitive hashes, use either L<Tie::CPHash> or
 L<Hash::Case>.
