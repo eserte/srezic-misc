@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_allpackages,v 1.20 2008/12/02 20:53:34 eserte Exp $
+# $Id: cpan_allpackages,v 1.21 2009/08/05 23:06:59 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -63,6 +63,25 @@ if ($perl) {
     }
     $thisarch = `$perl -MConfig -e 'print \$Config{archname}." ".\$Config{osvers}'`;
     warn "Checking for perl=$thisperl arch=$thisarch...\n";
+}
+
+## Taken code from cpan_smoke_modules:
+# Set PERL_CPAN_REPORTER_DIR if $prefix/.cpanreporterdir file exists
+local $^W = 0; # no warning if PERL_CPAN_REPORTER_DIR is unset
+local $ENV{PERL_CPAN_REPORTER_DIR} = $ENV{PERL_CPAN_REPORTER_DIR};
+if (!$ENV{PERL_CPAN_REPORTER_DIR}) {
+    my $perl_prefix = `$perl -MConfig -e 'print \$Config{prefix}'`;
+    if ($perl_prefix && open my $fh, "$perl_prefix/.cpanreporterdir") {
+	chomp(my $reporter_dir = <$fh>);
+	if ($reporter_dir) {
+	    if (!-d $reporter_dir) {
+		warn "Specified reporter dir <$reporter_dir> does not exist, cannot use...";
+	    } else {
+		warn "Using .cpanreporter directory $reporter_dir...\n";
+		$ENV{PERL_CPAN_REPORTER_DIR} = $reporter_dir;
+	    }
+	}
+    }
 }
 
 if (!-d "$ENV{HOME}/var") {
