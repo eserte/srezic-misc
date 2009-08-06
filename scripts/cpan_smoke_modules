@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.83 2009/08/05 22:22:59 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.84 2009/08/06 11:22:28 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -447,7 +447,7 @@ EOF
 
     # Set PERL_CPAN_REPORTER_DIR if $prefix/.cpanreporterdir file exists
     local $^W = 0; # no warning if PERL_CPAN_REPORTER_DIR is unset
-    local $ENV{PERL_CPAN_REPORTER_DIR} = $ENV{PERL_CPAN_REPORTER_DIR};
+    local $ENV{PERL_CPAN_REPORTER_DIR} = $ENV{PERL_CPAN_REPORTER_DIR} if $ENV{PERL_CPAN_REPORTER_DIR};
     if (!$ENV{PERL_CPAN_REPORTER_DIR}) {
 	my $perl_prefix = `$perl -MConfig -e 'print \$Config{prefix}'`;
 	if ($perl_prefix && open my $fh, "$perl_prefix/.cpanreporterdir") {
