@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.13 2009/03/02 21:47:33 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.14 2009/08/11 22:43:18 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -40,7 +40,7 @@ my $distribution;
 #$distribution = "/usr/local/src/CPAN/build/Tie-Array-FileWriter-0.1-NWMfS2";
 #$distribution = "/usr/local/src/CPAN/build/Devel-SmallProf-2.02-0BwnEE";
 #$distribution = "/usr/local/src/CPAN/build/Convert-IBM390-0.25-FPBfEZ";
-$distribution = "/usr/local/src/CPAN/build/Audio-AMR-Decode-0.01-6xodoh";
+#$distribution = "/usr/local/src/CPAN/build/Audio-AMR-Decode-0.01-6xodoh";
 
 my $cpanmod;
 #$cpanmod = "ex::lib::zip";
@@ -55,7 +55,7 @@ my $cpanmod;
 #$cpanmod = "Data::Reuse";
 
 my $checkcmd;
-$checkcmd = "env PERL5LIB=$perldir/lib make test";
+#$checkcmd = "env PERL5LIB=$perldir/lib make test";
 #$checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/03_autodynaload_hook.t";
 #$checkcmd = "env PERL5LIB=$perldir/lib $perldir/perl -Mblib t/02-array.t";
 #$checkcmd = "env PERL5LIB=$perldir/lib make test TEST_FILES=t/value.t";
@@ -64,6 +64,7 @@ $checkcmd = "env PERL5LIB=$perldir/lib make test";
 
 my $script;
 #$script = "/tmp/wah.pl";
+$script = "/tmp/readline.pl";
 
 #my $allow_distroprefs = 0;
 my $allow_distroprefs = 1;
@@ -71,8 +72,8 @@ my $allow_distroprefs = 1;
 my $cc = "ccache cc";
 #my $cc = "ccache gcc34";
 
-#my $do_patch_perl = 0;
-my $do_patch_perl = 1;
+my $do_patch_perl = 0;
+#my $do_patch_perl = 1;
 
 if ($distribution && $cpanmod ||
     $distribution && $script ||
