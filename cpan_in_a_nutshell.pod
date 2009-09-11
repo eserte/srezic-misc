@@ -297,6 +297,8 @@ heavy-weight L<Moose> module.
 
 See also below for comparing within test scripts (L<Test::Deep>).
 
+To compare files, use the core module L<File::Compare>.
+
 =head1 Database Interfaces
 
 =head2 Object persistance
