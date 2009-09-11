@@ -252,7 +252,7 @@ L<Moose> does everything for OO, it seems, including generating
 accessors.
 
 L<Coat> is inspired by Moose and implements a subset of Moose's
-features. Coat is self-dependent.
+features. Coat is self-contained.
 
 L<Mouse> is another Moose clone missing some features but is
 (according to the documentation) much faster than Moose.
