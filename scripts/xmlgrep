@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.13 2009/09/18 14:55:56 eserte Exp $
+# $Id: xmlgrep,v 1.14 2009/09/18 14:58:42 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007 Slaven Rezic. All rights reserved.
@@ -118,6 +118,8 @@ sub xmlgrep {
     }
 }
 
+sub fv { $_->findvalue(shift) }
+
 sub usage {
     die <<EOF;
 usage: $0 [-as-xml] [-parse-html] xpath [file ...]
@@ -156,6 +158,9 @@ default if this script is called as C<htmlgrep>.
 
 Pass the filtered nodes to a perl subroutine as C<$_>.
 
+The convenience function C<fv> is available as a shortcut for
+C<< $_->findvalue >>.
+
 =item -with-filename | -H
 
 Precede every result line with the filename. This is the default when
@@ -180,7 +185,11 @@ or
 
 Use C<-e>:
 
-    xmlgrep -e '$_->findvalue("foo") . " " . $_->findvalue("bar")' '//something' file.xml
+    xmlgrep -e '$_->findvalue("foo") . " " . $_->findvalue("bar")' //something file.xml
+
+or with the convenience function C<fv>:
+
+    xmlgrep -e 'fv("foo")." ".fv("bar")' //something file.xml
 
 =head1 AUTHOR
 
