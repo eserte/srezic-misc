@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.14 2009/09/18 14:58:42 eserte Exp $
+# $Id: xmlgrep,v 1.15 2009/09/18 14:59:53 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007 Slaven Rezic. All rights reserved.
@@ -190,6 +190,10 @@ Use C<-e>:
 or with the convenience function C<fv>:
 
     xmlgrep -e 'fv("foo")." ".fv("bar")' //something file.xml
+
+=head1 CREDITS
+
+C<-e> was suggested by Andreas J. KE<ouml>nig.
 
 =head1 AUTHOR
 
