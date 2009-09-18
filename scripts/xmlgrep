@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.12 2007/10/23 08:14:52 eserte Exp $
+# $Id: xmlgrep,v 1.13 2009/09/18 14:55:56 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007 Slaven Rezic. All rights reserved.
@@ -25,6 +25,7 @@ GetOptions(\%opt,
 	   "parse-html|parsehtml!",
            "with-filename|H!",
            "no-filename|h!",
+           "e=s",
 	  )
     or usage();
 
@@ -80,10 +81,18 @@ sub xmlgrep {
 	$root->setNamespaceDeclURI(undef, undef);
     }
 
+    my $cb;
+    if ($opt{e}) {
+        my $code = 'sub { local $_ = shift; ' . $opt{e} . '}';
+        $cb = eval $code;
+        die "Failure while compiling\n$code\nError: $@" if $@;
+    }
     # my @result = map { $_->textContent } $root->findnodes($path);
     my $prepend_filename = $file ? "$file:" : "";
     for my $node ($root->findnodes($xpath)) {
-	if ($opt{"as-xml"}) {
+        if ($cb) {
+            print $cb->($node), "\n";
+        } elsif ($opt{"as-xml"}) {
 	    if ($opt{'parse-html'}) {
 		die "Output of XML for parsed HTML is not implemented";
 	    }
@@ -143,6 +152,10 @@ Output results as HTML snippets.
 Assume source files to be (possibly non-wellformed) HTML. This is the
 default if this script is called as C<htmlgrep>.
 
+=item -e perlcode
+
+Pass the filtered nodes to a perl subroutine as C<$_>.
+
 =item -with-filename | -H
 
 Precede every result line with the filename. This is the default when
@@ -164,6 +177,10 @@ Get all <a> links:
 or
 
     htmlgrep '/html/body//a/@href' some.html
+
+Use C<-e>:
+
+    xmlgrep -e '$_->findvalue("foo") . " " . $_->findvalue("bar")' '//something' file.xml
 
 =head1 AUTHOR
 
