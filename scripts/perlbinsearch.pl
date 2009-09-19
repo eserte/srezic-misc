@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.14 2009/08/11 22:43:18 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.15 2009/09/19 09:51:56 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -53,6 +53,7 @@ my $cpanmod;
 #$cpanmod = "Nmap::Scanner";
 #$cpanmod = "Crypt::SecurID";
 #$cpanmod = "Data::Reuse";
+#$cpanmod = "Unicode::Property::XS";
 
 my $checkcmd;
 #$checkcmd = "env PERL5LIB=$perldir/lib make test";
@@ -64,10 +65,11 @@ my $checkcmd;
 
 my $script;
 #$script = "/tmp/wah.pl";
-$script = "/tmp/readline.pl";
+#$script = "/tmp/readline.pl";
+$script = "/home/e/eserte/trash/bisect.pl";
 
-#my $allow_distroprefs = 0;
-my $allow_distroprefs = 1;
+my $allow_distroprefs = 0;
+#my $allow_distroprefs = 1;
 
 my $cc = "ccache cc";
 #my $cc = "ccache gcc34";
@@ -123,7 +125,11 @@ RUN: {
     system('make', '-j4') == 0 or last RUN;
     if ($script) {
 	warn "run script";
-	system("$perldir/perl", "-I$perldir/lib", $script);
+	local $ENV{PERL5LIB} = "$perldir/lib";
+	system("$perldir/perl",
+	       #"-I$perldir/lib",
+	       $script,
+	      );
 	$err = $?==0 ? 0 : 1;
     } elsif ($cpanmod) {
 	warn "Testing with CPAN.pm";
