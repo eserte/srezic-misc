@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.4 2009/09/24 20:53:21 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.5 2009/09/24 20:53:24 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -23,7 +23,7 @@ my @files = @ARGV;
 if (!@files) {
     @files = glob("$ENV{HOME}/var/ctr/new/*.rpt");
 }
-die "No files given" if !@files;
+die "No files given or found.\n" if !@files;
 
 my $good_directory = "$ENV{HOME}/var/ctr/sync";
 die "No $good_directory" if !-d $good_directory;
@@ -41,6 +41,10 @@ for my $file (@files) {
     }
 }
 @files = @new_files;
+if (!@files) {
+    warn "No file needs to be checked manually, finishing.";
+    exit;
+}
 
 my $mw = tkinit;
 

@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.5 2009/09/24 20:57:14 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.4 2009/09/24 20:57:11 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,14 +17,13 @@ use strict;
 use Test::Reporter;
 use File::Basename;
 
-my $sync_dir = "$ENV{HOME}/var/ctr/sync";
-my $done_dir = "$ENV{HOME}/var/ctr/done";
-my $process_dir = "$ENV{HOME}/var/ctr/process";
+my $sync_dir = "$ENV{HOME}/trash/sync";
+my $done_dir = "$ENV{HOME}/trash/sync/done";
+my $process_dir = "$ENV{HOME}/trash/sync/process";
 
-for my $file (glob("$sync_dir/pass.*.rpt"),
-	      glob("$sync_dir/unknown.*.rpt"),
-	      glob("$sync_dir/na.*.rpt"),
-	      glob("$sync_dir/fail.*.rpt"),
+for my $file (glob("$sync_dir/pass*.rpt"),
+	      glob("$sync_dir/unknown*.rpt"),
+	      glob("$sync_dir/na*.rpt"),
 	     ) {
     warn "File $file does not exist anymore?", next if !-r $file;
     warn "$file...\n";
@@ -56,8 +55,8 @@ The good (non-fail) reports. On the windows machine
 
     ssh 192.168.1.253
     cd /cygdrive/c/Users/eserte/ctr
-    ls sync/* && echo "sync is not empty" || mv *.rpt sync/
-    rsync -v -a sync/ eserte@biokovo:var/ctr/new/ && mv sync/* done/
+    ls sync/* && echo "sync is not empty" || mv {pass,unknown,na}.* sync/
+    rsync -v -a sync/ eserte@biokovo:trash/sync/ && mv sync/* done/
 
 On the unix machine
 
