@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.3 2009/09/24 20:57:07 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.6 2009/09/24 20:57:17 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,13 +17,14 @@ use strict;
 use Test::Reporter;
 use File::Basename;
 
-my $sync_dir = "$ENV{HOME}/trash/sync";
-my $done_dir = "$ENV{HOME}/trash/sync/done";
-my $process_dir = "$ENV{HOME}/trash/sync/process";
+my $sync_dir = "$ENV{HOME}/var/ctr/sync";
+my $done_dir = "$ENV{HOME}/var/ctr/done";
+my $process_dir = "$ENV{HOME}/var/ctr/process";
 
-for my $file (glob("$sync_dir/pass*.rpt"),
-	      glob("$sync_dir/unknown*.rpt"),
-	      glob("$sync_dir/na*.rpt"),
+for my $file (glob("$sync_dir/pass.*.rpt"),
+	      glob("$sync_dir/unknown.*.rpt"),
+	      glob("$sync_dir/na.*.rpt"),
+	      glob("$sync_dir/fail.*.rpt"),
 	     ) {
     warn "File $file does not exist anymore?", next if !-r $file;
     warn "$file...\n";
@@ -55,13 +56,12 @@ The good (non-fail) reports. On the windows machine
 
     ssh 192.168.1.253
     cd /cygdrive/c/Users/eserte/ctr
-    rm -f sync/*
-    mv {pass,unknown,na}.* sync/
-    rsync -v -a sync/ eserte@biokovo:trash/sync/
-    mv sync/* done/
+    ls sync/* && echo "sync is not empty" || mv *.rpt sync/
+    rsync -v -a sync/*.rpt eserte@biokovo:var/ctr/new/ && mv sync/*.rpt done/
 
 On the unix machine
 
+    ctr_good_or_invalid.pl
     send_tr_reports.pl
 
 Now review the fail reports on the windows machine. Invalid ones move
@@ -75,5 +75,14 @@ In /cygdrive/c/Users/eserte/Documents/.cpanreporter/config.ini:
     email_from=srezic@cpan.org
     send_report=default:yes
     transport=File C:\Users\eserte\ctr
+
+Basically the same configuration can be used for cygwin
+~/.cpanreporter/config.ini, just use the cygwin path style for the
+transport directory.
+
+    edit_report=default:no
+    email_from=srezic@cpan.org
+    send_report=default:yes
+    transport=File /cygdrive/c/Users/eserte/ctr
 
 =cut
