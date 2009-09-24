@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.4 2009/09/24 20:57:11 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.2 2009/09/24 20:57:04 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -47,16 +47,18 @@ for my $file (glob("$sync_dir/pass*.rpt"),
 
 __END__
 
-=head1 WORKFLOW
+=pod
 
-See CPAN/CPAN::Reporter configuration below:
+Workflow
+
+(lookup CPAN/CPAN::Reporter configuration on windows)
 
 The good (non-fail) reports. On the windows machine
 
-    ssh 192.168.1.253
     cd /cygdrive/c/Users/eserte/ctr
-    ls sync/* && echo "sync is not empty" || mv {pass,unknown,na}.* sync/
-    rsync -v -a sync/ eserte@biokovo:trash/sync/ && mv sync/* done/
+    rm -f sync/*
+    mv {pass,unknown,na}.* sync/
+    rsync -v -a sync/ eserte@biokovo:trash/sync/
 
 On the unix machine
 
@@ -64,23 +66,5 @@ On the unix machine
 
 Now review the fail reports on the windows machine. Invalid ones move
 to the invalid/ subdirectory.
-
-=head1 CPAN::REPORTER CONFIGURATION
-
-In /cygdrive/c/Users/eserte/Documents/.cpanreporter/config.ini:
-
-    edit_report=default:no
-    email_from=srezic@cpan.org
-    send_report=default:yes
-    transport=File C:\Users\eserte\ctr
-
-Basically the same configuration can be used for cygwin
-~/.cpanreporter/config.ini, just use the cygwin path style for the
-transport directory.
-
-    edit_report=default:no
-    email_from=srezic@cpan.org
-    send_report=default:yes
-    transport=File /cygdrive/c/Users/eserte/ctr
 
 =cut
