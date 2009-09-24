@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.1 2009/09/24 20:53:10 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.2 2009/09/24 20:53:14 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,15 +17,27 @@ use strict;
 use File::Copy qw(move);
 use Tk;
 use Tk::More;
-use Tk::Error;
+use Tk::ErrorDialog;
 
 my @files = @ARGV;
 die "No files given" if !@files;
 
-my $good_directory = "$ENV{HOME}/trash/sync";
+my $good_directory = "$ENV{HOME}/var/ctr/sync";
 die "No $good_directory" if !-d $good_directory;
-my $invalid_directory = "$ENV{HOME}/trash/sync/invalid";
+my $invalid_directory = "$ENV{HOME}/var/ctr/invalid";
 die "No $invalid_directory" if !-d $invalid_directory;
+
+my @new_files;
+# pass, na, unknown are always good:
+for my $file (@files) {
+    if ($file =~ m{/(pass|unknown|na)\.}) {
+	move $file, $good_directory
+	    or die "Cannot move $file to $good_directory: $!";
+    } else {
+	push @new_files, $file;
+    }
+}
+@files = @new_files;
 
 my $mw = tkinit;
 
