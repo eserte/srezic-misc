@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.6 2009/09/24 20:57:17 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.7 2009/09/24 21:01:52 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -17,9 +17,21 @@ use strict;
 use Test::Reporter;
 use File::Basename;
 
-my $sync_dir = "$ENV{HOME}/var/ctr/sync";
-my $done_dir = "$ENV{HOME}/var/ctr/done";
-my $process_dir = "$ENV{HOME}/var/ctr/process";
+my $reportdir = shift || "$ENV{HOME}/var/ctr";
+
+my $sync_dir = "$reportdir/sync";
+my $done_dir = "$reportdir/done";
+my $process_dir = "$reportdir/process";
+
+if (!-d $sync_dir) {
+    warn "Create $sync_dir and move reports to this directory...";
+}
+if (!-d $done_dir) {
+    mkdir $done_dir    or die "While creating $done_dir: $!";
+}
+if (!-d $process_dir) {
+    mkdir $process_dir or die "While creating $process_dir: $!";
+}
 
 for my $file (glob("$sync_dir/pass.*.rpt"),
 	      glob("$sync_dir/unknown.*.rpt"),
