@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.2 2009/09/24 20:53:14 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.3 2009/09/24 20:53:18 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -20,6 +20,9 @@ use Tk::More;
 use Tk::ErrorDialog;
 
 my @files = @ARGV;
+if (!@files) {
+    @files = glob("$ENV{HOME}/var/ctr/new/*.rpt");
+}
 die "No files given" if !@files;
 
 my $good_directory = "$ENV{HOME}/var/ctr/sync";
