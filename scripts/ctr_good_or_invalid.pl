@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.8 2009/09/24 20:53:33 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.9 2009/09/24 20:53:38 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -18,6 +18,11 @@ use File::Copy qw(move);
 use Tk;
 use Tk::More;
 use Tk::ErrorDialog;
+use Getopt::Long;
+
+my $only_good;
+GetOptions("good" => \$only_good)
+    or die "usage: $0 [-good] [directory]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
@@ -52,8 +57,12 @@ for my $file (@files) {
 }
 @files = @new_files;
 if (!@files) {
-    warn "No file needs to be checked manually, finishing.";
+    warn "No file needs to be checked manually, finishing.\n";
     exit;
+}
+if ($only_good) {
+    warn "Skipping " . scalar(@files) . " distribution(s) with FAILs.\n";
+    exit 1;
 }
 
 my $mw = tkinit;
