@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.9 2009/09/24 20:53:38 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.10 2009/09/24 20:53:42 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -21,8 +21,19 @@ use Tk::ErrorDialog;
 use Getopt::Long;
 
 my $only_good;
-GetOptions("good" => \$only_good)
-    or die "usage: $0 [-good] [directory]";
+my $sort_by_date;
+my $reversed;
+GetOptions("good" => \$only_good,
+	   "sort=s" => sub {
+	       if ($_[1] eq 'date') {
+		   $sort_by_date = 1;
+	       } else {
+		   die "-sort only takes the date value currently";
+	       }
+	   },
+	   "r" => \$reversed,
+	  )
+    or die "usage: $0 [-good] [-sort date] [-r] [directory]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
@@ -43,6 +54,10 @@ if (!-d $good_directory) {
 my $invalid_directory = "$reportdir/invalid";
 if (!-d $invalid_directory) {
     mkdir $invalid_directory or die "While creating $invalid_directory: $!";
+}
+my $undecided_directory = "$reportdir/undecided";
+if (!-d $undecided_directory) {
+    mkdir $undecided_directory or die "While creating $undecided_directory: $!";
 }
 
 my @new_files;
@@ -65,15 +80,36 @@ if ($only_good) {
     exit 1;
 }
 
+if ($sort_by_date) {
+    @files =
+	map {
+	    $_->[1]
+	} sort {
+	    $a->[0] <=> $b->[0]
+	} map {
+	    my @s = stat $_;
+	    [$s[9], $_]
+	} @files;
+}
+if ($reversed) {
+    @files = reverse @files;
+}
+
 my $mw = tkinit;
 
 my $currfile_i = 0;
 my $currfile;
 my($currdist, $currversion);
+my $modtime;
 
 my $prev_b;
 my $next_b;
 my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
+{
+    my $f = $mw->Frame->pack(-fill => "x");
+    $f->Label(-text => "Report created:")->pack(-side => "left");
+    $f->Label(-textvariable => \$modtime)->pack(-side => "left");
+}
 {
     my $f = $mw->Frame->pack(-fill => "x");
     $prev_b = $f->Button(-text => "Prev (F4)",
@@ -96,6 +132,13 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 	       -command => sub {
 		   move $currfile, $invalid_directory
 		       or die "Cannot move $currfile to $invalid_directory: $!";
+		   nextfile();
+	       }
+	      )->pack(-side => "left");
+    $f->Button(-text => "UNDECIDED",
+	       -command => sub {
+		   move $currfile, $undecided_directory
+		       or die "Cannot move $currfile to $undecided_directory: $!";
 		   nextfile();
 	       }
 	      )->pack(-side => "left");
@@ -156,11 +199,13 @@ $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $prev_b->invoke });
 
 #$mw->FullScreen; # does not work (with fvwm2 only?)
+#$mw->attributes(-fullscreen => 1); # does not work (with fvwm2 only?)
 MainLoop;
 
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $more->Load($currfile);
+    $more->Subwidget("scrolled")->SearchText(-searchterm => qr{PROGRAM OUTPUT});
     my $currfulldist;
     if (open my $fh, $currfile) {
 	while(<$fh>) {
@@ -176,8 +221,10 @@ sub set_currfile {
 		last;
 	    }
 	}
+	$modtime = scalar localtime ((stat($currfile))[9]);
     } else {
 	warn "Can't open $currfile: $!";
+	$modtime = "N/A";
     }
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 }
