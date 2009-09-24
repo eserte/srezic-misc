@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.6 2009/09/24 20:53:27 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.7 2009/09/24 20:53:30 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -101,6 +101,18 @@ MainLoop;
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $more->Load($currfile);
+    if (open my $fh, $currfile) {
+	while(<$fh>) {
+	    if (/^Subject:\s*(.*)/) {
+		my $subject = $1;
+		my $mw = $more->toplevel;
+		$mw->title("ctr_good_or_invalid: $subject");
+		last;
+	    }
+	}
+    } else {
+	warn "Can't open $currfile: $!";
+    }
 }
 
 sub nextfile {
