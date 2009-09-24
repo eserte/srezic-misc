@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.5 2009/09/24 20:53:24 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.6 2009/09/24 20:53:27 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -19,16 +19,26 @@ use Tk;
 use Tk::More;
 use Tk::ErrorDialog;
 
+my $reportdir = shift || "$ENV{HOME}/var/ctr";
+
 my @files = @ARGV;
+if (@files == 1 && -d $files[0]) {
+    $reportdir = $files[0];
+    @files = ();
+}
 if (!@files) {
-    @files = glob("$ENV{HOME}/var/ctr/new/*.rpt");
+    @files = glob("$reportdir/new/*.rpt");
 }
 die "No files given or found.\n" if !@files;
 
-my $good_directory = "$ENV{HOME}/var/ctr/sync";
-die "No $good_directory" if !-d $good_directory;
-my $invalid_directory = "$ENV{HOME}/var/ctr/invalid";
-die "No $invalid_directory" if !-d $invalid_directory;
+my $good_directory = "$reportdir/sync";
+if (!-d $good_directory) {
+    mkdir $good_directory or die "While creating $good_directory: $!";
+}
+my $invalid_directory = "$reportdir/invalid";
+if (!-d $invalid_directory) {
+    mkdir $invalid_directory or die "While creating $invalid_directory: $!";
+}
 
 my @new_files;
 # pass, na, unknown are always good:
