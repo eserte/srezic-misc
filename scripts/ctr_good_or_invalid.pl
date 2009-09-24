@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.7 2009/09/24 20:53:30 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.8 2009/09/24 20:53:33 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -60,11 +60,14 @@ my $mw = tkinit;
 
 my $currfile_i = 0;
 my $currfile;
+my($currdist, $currversion);
 
+my $prev_b;
+my $next_b;
 my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 {
     my $f = $mw->Frame->pack(-fill => "x");
-    $f->Button(-text => "Prev",
+    $prev_b = $f->Button(-text => "Prev (F4)",
 	       -command => sub {
 		   if ($currfile_i > 0) {
 		       $currfile_i--;
@@ -88,31 +91,86 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 	       }
 	      )->pack(-side => "left");
        
-    $f->Button(-text => "Next",
+    $next_b = $f->Button(-text => "Next (F5)",
 	       -command => sub { nextfile() },
 	      )->pack(-side => "left");
 
+    $f->Label(-width => 2)->pack(-side => "left"); # Spacer
+
+    $f->Button(-text => "RT",
+	       -command => sub {
+		   require CGI;
+		   require Tk::Pod::WWWBrowser;
+		   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . CGI->new({Name=>$currdist})->query_string);
+	       })->pack(-side => "left");
+    $f->Button(-text => "Matrix",
+	       -command => sub {
+		   require CGI;
+		   require Tk::Pod::WWWBrowser;
+		   Tk::Pod::WWWBrowser::start_browser("http://bbbike.radzeit.de/~slaven/cpantestersmatrix.cgi?" . CGI->new({dist=>$currdist, reports=>"1"})->query_string);
+	       })->pack(-side => "left");
+    $f->Button(-text => "ctgetreports",
+	       -command => sub {
+		   require Tk::ExecuteCommand;
+		   require File::Temp;
+		   my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
+		   my $t = $mw->Toplevel(-title => "Reports on $currdist $currversion");
+		   my $ec = $t->ExecuteCommand()->pack;
+		   $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --dumpvars=. --dumpfile=$tempfile");
+		   $ec->execute_command;
+		   $ec->bell;
+		   $ec->destroy;
+		   $t->update;
+		   my $m = $t->Scrolled("More", -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
+		   $t->update;
+		   $m->Load($tempfile);
+		   $m->Subwidget("scrolled")->focus;
+	       })->pack(-side => "left");
+    $f->Button(-text => "solve",
+	       -command => sub {
+		   require Tk::ExecuteCommand;
+		   require File::Temp;
+		   my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
+		   my $t = $mw->Toplevel(-title => "Solve $currdist $currversion");
+		   my $ec = $t->ExecuteCommand()->pack(qw(-fill both -expand 1));
+		   $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --solve --dumpfile=$tempfile");
+		   $ec->execute_command;
+		   $ec->bell;
+		   $ec->focus;
+	       })->pack(-side => "left");
 }
 
 set_currfile();
 
+$mw->bind("<Control-q>" => sub { $mw->destroy });
+$mw->bind("<F4>" => sub { $prev_b->invoke });
+$mw->bind("<F5>" => sub { $prev_b->invoke });
+
+#$mw->FullScreen; # does not work (with fvwm2 only?)
 MainLoop;
 
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $more->Load($currfile);
+    my $currfulldist;
     if (open my $fh, $currfile) {
 	while(<$fh>) {
 	    if (/^Subject:\s*(.*)/) {
 		my $subject = $1;
 		my $mw = $more->toplevel;
 		$mw->title("ctr_good_or_invalid: $subject");
+		if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
+		    $currfulldist = $1;
+		} else {
+		    warn "Cannot parse distribution out of '$subject'";
+		}
 		last;
 	    }
 	}
     } else {
 	warn "Can't open $currfile: $!";
     }
+    ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 }
 
 sub nextfile {
