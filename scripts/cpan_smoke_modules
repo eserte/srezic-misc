@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.90 2009/08/07 08:39:32 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.91 2009/09/24 21:36:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -656,6 +656,8 @@ EOF
 	    mkdir $build_reuse_dir if !-d $build_reuse_dir;
 	    die "Cannot use $build_reuse_dir" if !-d $build_reuse_dir || !-w $build_reuse_dir;
 	    $cpan_shell_init .= q{$CPAN::Config->{build_dir_reuse} = 1; $CPAN::Config->{build_dir} = "}.$build_reuse_dir.q{"; };
+	} else {
+	    $cpan_shell_init .= q{$CPAN::Config->{build_dir_reuse} = 0; };
 	}
 
 	if ($debug) {
@@ -713,10 +715,11 @@ EOF
 
 	my $data_limit = 500*1024*1024;
 	my $cputime_limit = 3600*1;
+	my $openfiles_limit = 2048; # the freebsd default is at 22500
 	if (is_in_path("limits") && $^O ne 'MSWin32') {
 	    # on my FreeBSD system, kern.maxfiles is ~ 12000
 	    # -v is needed for FreeBSD 7.x
-	    unshift @cmd, "limits", "-t", $cputime_limit, "-d", $data_limit, "-v", $data_limit;#, "-n", 4000;
+	    unshift @cmd, "limits", "-t", $cputime_limit, "-d", $data_limit, "-v", $data_limit, "-n", $openfiles_limit;
 	} elsif (eval { require BSD::Resource; 1 }) {
 	    # Note that limiting in THIS process is not what is
 	    # "correct", but resource limits are inherited by the
@@ -729,6 +732,9 @@ EOF
 	    }
 	    if (!BSD::Resource::setrlimit(BSD::Resource::RLIMIT_CPU(), $cputime_limit, $cputime_limit)) {
 		warn "*** WARNING: Could not set resource limit of cpu time to $cputime_limit.\n";
+	    }
+	    if (!BSD::Resource::setrlimit(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit, $openfiles_limit)) {
+		warn "*** WARNING: Could not set resource limit of number of open files to $openfiles_limit.\n";
 	    }
 	} else {
 	    warn "*** WARNING: Neither limits(1) nor BSD::Resource available, not resource limits possible.\n";
