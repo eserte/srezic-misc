@@ -431,7 +431,8 @@ L<Test::Distribution>: test if a distribution is correct and complete
 README). Simple to use.
 
 L<Test::Deep>: compare deep structures with a lot of features. For
-easier tests, is_deeply from Test::More should suffice.
+easier tests, is_deeply from Test::More should suffice. For large data
+structures, using L<Data::Compare> may be faster than is_deeply.
 
 L<Test::Without::Module>: emulates the non-existance of modules (e.g.
 for optional features). Modules with similar functionality:
