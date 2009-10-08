@@ -50,6 +50,10 @@ L<http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl> (if
 the URL is not available, then try the archive URL
 L<http://web.archive.org/web/20060507091304/http://idisk.mac.com/christian.hansen/Public/perl/serialize.pl>).
 
+Another comparison which is primarily aimed at caching may be found
+here: L<http://cpan.robm.fastmail.fm/cache_perf.html>. Note that
+caching is almost always used together with some serialization means.
+
 =item Security
 
 Some serializer modules allow the deserialization of code references,
@@ -58,6 +62,9 @@ typically a switch has to be turned on.
 
 Namely one serialization format has to use Perl's C<eval> or
 C<Safe::reval> function for deserialization: L<Data::Dumper>.
+
+L<Storable> may be configured to eval code references, which is
+possibly a dangerous operation. This option is off by default.
 
 =back
 
