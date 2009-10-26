@@ -1,0 +1,39 @@
+#!/usr/bin/perl -w
+
+use strict;
+use IO::Dir;
+use ExtUtils::Packlist;
+use ExtUtils::Installed;
+
+sub emptydir($) {
+    my ($dir) = @_;
+    my $dh = IO::Dir->new($dir) || return(0);
+    my @count = $dh->read();
+    $dh->close();
+    return(@count == 2 ? 1 : 0);
+}
+
+my $module = shift;
+my $installed = ExtUtils::Installed->new();
+
+if (!$module) {
+    # Find all the installed packages
+    print STDERR ("Finding all installed modules...\n");
+    foreach my $module (grep(!/^Perl$/, $installed->modules())) {
+	my $version = $installed->version($module) || "???";
+	print("$module $version\n");
+    }
+} else {
+    print STDERR ("Removal list for $module\n");
+    # Remove all the files
+    foreach my $file (sort($installed->files($module))) {
+	print("rm $file\n");
+    }
+    my $pf = $installed->packlist($module)->packlist_file();
+    print("rm $pf\n");
+    foreach my $dir (sort($installed->directory_tree($module))) {
+	if (emptydir($dir)) {
+	    print("rmdir $dir\n");
+	}
+    }
+}
