@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: guess_encoding,v 1.4 2007/09/24 22:35:35 eserte Exp $
+# $Id: guess_encoding,v 1.5 2009/11/05 17:19:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007 Slaven Rezic. All rights reserved.
@@ -16,18 +16,24 @@
 # Which are the expected Unicode codepoints?
 my @expected_codepoints = (9, 10, 13, # newlines+tab
 			   32..127,
-			   (map { ord } split //, "äöüÄÖÜß"),
-			   0x20ac, # euro sign
+			   #(map { ord } split //, "äöüÄÖÜß"),
+			   #0x20ac, # euro sign
+			   0x3040..0x309f, # hiragana
+			   0x30a0..0x30ff, # katakana
+			   0x3400..0x4DB5, # CJK Unified Ideographs Extension A
+			   0x4E00..0x9fc3, # CJK Unified Ideographs
 			  );
 
 # Which are the expected encodings? May be empty, in this case
 # all to perl available encodings will be checked.
-my @expected_encodings = qw(cp1252 iso-8859-1 utf-8 iso-8859-15);
+#my @expected_encodings = qw(cp1252 iso-8859-1 utf-8 iso-8859-15);
+my @expected_encodings = qw();
 
 # Text to analyze, specify in raw octets:
 #my $octets_to_analyze = "Bla äöü \x80";		# cp1252 sample
 #my $octets_to_analyze = "Bla Ã¤Ã¶Ã¼ â\202¬";		# utf-8 sample
-my $octets_to_analyze = "Bla äöü ¤";			# iso-8859-15 sample
+#my $octets_to_analyze = "Bla äöü ¤";			# iso-8859-15 sample
+my $octets_to_analyze = do { open my $fh, shift or die "Cannot open file (please specify on cmdline): $!"; local $/; <$fh> };
 
 ######################################################################
 # No user-servicable parts below this point.
@@ -56,7 +62,9 @@ for my $encoding (@expected_encodings) {
 		$fitting_codepoints++;
 	    }
 	}
-	push @encoding_result, [$encoding, $fitting_codepoints*100/keys %got_codepoints];
+	if (keys %got_codepoints) {
+	    push @encoding_result, [$encoding, $fitting_codepoints*100/keys %got_codepoints];
+	}
     }
 }
 
