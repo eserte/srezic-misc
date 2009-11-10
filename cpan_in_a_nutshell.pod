@@ -179,6 +179,18 @@ in the PHP world. But note that the current version 0.31 is not
 recommended by the maintainer, due to some severe known bugs. Another
 PHP serializer is L<PHP::Session::Serializer::PHP>.
 
+=head2 Validation
+
+L<Data::FormValidator> is a rather old validation module which works
+with CGI-like data, but may also be used for validation of generic
+hashes.
+
+L<Kwalify> implements the same-named schema language originally
+appeared in the Ruby community.
+
+L<Data::Rx> and L<Data::Schema> are new players in the data validation
+business.
+
 =head2 Hash tools
 
 To get ordered hashes, use either L<Tie::IxHash> (which is old and
