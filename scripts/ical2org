@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.11 2009/08/07 13:29:23 eserte Exp $
+# $Id: ical2org,v 1.12 2009/11/29 20:27:55 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -167,7 +167,8 @@ sub icaldate_to_orgdate {
     if (defined(my $epoch = _isodate_to_epoch($dt))) {
 	strftime "<%Y-%m-%d %a %H:%M>", localtime $epoch;
     } elsif (my($Y,$M,$D) = $dt =~ m{^(\d{4})(\d{2})(\d{2})$}) {
-	sprintf "%04d-%02d-%02d", $Y, $M, $D;
+	my $epoch = timelocal(0,0,0,$D,$M-1,$Y);
+	strftime "<%Y-%m-%d %a>", localtime $epoch;
     } else {
 	warn "Cannot parse date '$dt'!";
 	undef;
