@@ -1,11 +1,12 @@
 #
-# $Id: SlayMakefile,v 1.17 2009/04/05 19:47:39 eserte Exp $
+# $Id: SlayMakefile,v 1.18 2009/12/04 17:43:52 eserte Exp $
 #
 
 {
-    use vars qw($BBBIKE_HOST);
+    use vars qw($BBBIKE_HOST $BBBIKE_HOSTEUROPE_HOST);
     $BBBIKE_HOST = "bbbike.de";
     $BBBIKE_HOST = "78.47.225.30";
+    $BBBIKE_HOSTEUROPE_HOST = "83.169.19.137";
 
     package MyPH;
     use base 'Pod::Simple::HTML';
@@ -71,6 +72,26 @@ permissions:
 	cd cgi && chmod ugo+rx *.pl
 	cd cgi && chmod ugo+r *.yml *.st
 	chmod ugo+rx scripts cgi
+
+rsync-hosteurope-cpantestersmatrix-stable:	permissions rsync-hosteurope-cpantestersmatrix-favicon
+	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix.pl
+
+rsync-hosteurope-cpantestersmatrix-favicon:
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantesters_favicon.ico
+
+rsync-hosteurope-cpantestersmatrix-robots.txt:
+	{
+	    require File::Temp;
+	    my($tmpfh,$tmpfile) = File::Temp::tempfile(SUFFIX => '.txt', UNLINK => 1) or die $!;
+	    print $tmpfh "User-agent: *\n";
+	    print $tmpfh "Disallow: /?\n";
+	    close $tmpfh or die $!;
+	    chmod 0644, $tmpfile;
+	    my @cmd = ('rsync', '-av', $tmpfile, 'root@' . $BBBIKE_HOSTEUROPE_HOST . ':/root/work/cpantestersmatrix/robots.txt');
+	    system @cmd;
+	    $? == 0 or die "@cmd failed with $?";
+	}
 
 rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
 	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
