@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.18 2009/12/04 17:43:52 eserte Exp $
+# $Id: SlayMakefile,v 1.19 2009/12/10 13:56:29 eserte Exp $
 #
 
 {
@@ -73,6 +73,8 @@ permissions:
 	cd cgi && chmod ugo+r *.yml *.st
 	chmod ugo+rx scripts cgi
 
+######################################################################
+
 rsync-hosteurope-cpantestersmatrix-stable:	permissions rsync-hosteurope-cpantestersmatrix-favicon
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix.pl
@@ -92,6 +94,18 @@ rsync-hosteurope-cpantestersmatrix-robots.txt:
 	    system @cmd;
 	    $? == 0 or die "@cmd failed with $?";
 	}
+
+rsync-hosteurope-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
+	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantesters_amendments.yml
+
+rsync-hosteurope-cpantestersmatrix-additions:
+	rsync -av ~/devel/parse_cpan_packages_fast.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/
+
+fix-hosteurope-cpantestersmatrix-permissions:
+	ssh -l root ${BBBIKE_HOSTEUROPE_HOST} chgrp www-data /root/work/cpantestersmatrix
+	ssh -l root ${BBBIKE_HOSTEUROPE_HOST} chmod g+w /root/work/cpantestersmatrix
+
+######################################################################
 
 rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
 	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
