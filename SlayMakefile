@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.19 2009/12/10 13:56:29 eserte Exp $
+# $Id: SlayMakefile,v 1.20 2009/12/17 16:33:53 eserte Exp $
 #
 
 {
@@ -78,6 +78,9 @@ permissions:
 rsync-hosteurope-cpantestersmatrix-stable:	permissions rsync-hosteurope-cpantestersmatrix-favicon
 	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
 	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix.pl
+
+rsync-hosteurope-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
+	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix2.pl
 
 rsync-hosteurope-cpantestersmatrix-favicon:
 	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantesters_favicon.ico
