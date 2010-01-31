@@ -213,7 +213,8 @@ loop conveniently over a list-like object.
 =head2 Date and time modules
 
 A complete implementation is offered by L<DateTime>, with a plethora
-of plugins and additions.
+of plugins and additions. A list of DateTime-related modules may be
+found at L<http://datetime.perl.org/?Modules>.
 
 A classic one is L<Date::Calc>, a rather complete implementation of
 date/time functions with a functional (somewhat non-perlish naming)
@@ -562,7 +563,7 @@ L<http://perlmonks.org/?node_id=399498>.
 
 =head2 Pod
 
-XXX podlators, Pod::Simple, various pod2html modules XXX
+XXX podlators, Pod::Simple, various pod2html modules, App::Pod2CpanHtml XXX
 
 =head1 File Handle Input/Output
 
