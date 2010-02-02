@@ -1126,7 +1126,8 @@ L<String::Trigram> finds similar strings by trigram (or 1, 2, 4,
 etc.-gram) method.
 
 L<Text::LevenshteinXS> calculates the Levenshtein edit distance (which
-is used in String::Approx, for exampl) between two strings.
+is used in String::Approx, for example) between two strings.
+L<Text::Levenshtein> is a pure perl implementation.
 
 Just for completeness: there's also the command line agrep, see
 L<http://en.wikipedia.org/wiki/Agrep>.
