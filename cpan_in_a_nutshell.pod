@@ -304,7 +304,12 @@ claims that it is faster than Storable's dclone.
 =head2 Accessing
 
 L<Data::Path> provides XPath-similar accessing methods to data
-structures.
+structures. A similar approach is L<Data::DPath>, which has a
+comparison table between these both modules.
+
+For just accessing a deep data structure L<Data::Diver> may also be
+used. Using this module it is not necessary to differentiate between
+subhashs and subarrays. Autovivification is avoided.
 
 =head2 Comparing
 
