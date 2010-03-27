@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.10 2009/09/24 20:53:42 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.11 2010/03/27 13:06:50 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -104,6 +104,7 @@ my $modtime;
 
 my $prev_b;
 my $next_b;
+my $good_b;
 my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 {
     my $f = $mw->Frame->pack(-fill => "x");
@@ -121,7 +122,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 		       die "No files before!";
 		   }
 	       })->pack(-side => "left");
-    $f->Button(-text => "GOOD",
+    $good_b = $f->Button(-text => "GOOD (C-g)",
 	       -command => sub {
 		   move $currfile, $good_directory
 		       or die "Cannot move $currfile to $good_directory: $!";
@@ -195,6 +196,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 set_currfile();
 
 $mw->bind("<Control-q>" => sub { $mw->destroy });
+$mw->bind("<Control-g>" => sub { $good_b->invoke });
 $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $prev_b->invoke });
 
