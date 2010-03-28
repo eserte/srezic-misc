@@ -1,5 +1,5 @@
 #
-# $Id: SlayMakefile,v 1.21 2010/03/11 21:21:55 eserte Exp $
+# $Id: SlayMakefile,v 1.22 2010/03/28 19:44:50 eserte Exp $
 #
 
 {
@@ -110,22 +110,22 @@ fix-hosteurope-cpantestersmatrix-permissions:
 
 ######################################################################
 
-rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
+#rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
+#	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
 
 validate-cpantestersmatrix-data:
 	pkwalify -f cgi/cpantesters_amendments.kwalify cgi/cpantesters_amendments.yml
 
-rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
-	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix.pl
+#rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
+#	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
+#	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix.pl
 
-rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix2.pl
+#rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
+#	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix2.pl
 
 
-rsync-cpantestersmatrix-favicon:
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOST}:/home/slaven/www/cpantesters_favicon.ico
+#rsync-cpantestersmatrix-favicon:
+#	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOST}:/home/slaven/www/cpantesters_favicon.ico
 
 test-cpantestersmatrix-local:	permissions
 	{
