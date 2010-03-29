@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.92 2010/03/29 09:59:57 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.93 2010/03/29 18:39:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -73,6 +73,7 @@ my $ktrace;
 my $use_distroprefs = 1;
 my $signal_end = 1;
 my $module_printused;
+my $unkind = 0;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -89,6 +90,7 @@ GetOptions("n" => \$n,
 	   'recent' => \$do_recent,
 	   'recenturl=s' => \$recent_url,
 	   'interactive!' => \$interactive,
+	   'unkind' => \$unkind,
 	   'wait!' => \$wait,
 	   'batch!' => \$batch,
 	   'builddirreuse!' => \$build_dir_reuse,
@@ -157,6 +159,7 @@ usage: $0
 -builddirreuse: set the corresponding CPAN shell option
 -cpanconf key=val: change CPAN configuration variable
 -moduleprintused: report used modules using Module::PrintUsed
+-unkind:      disable the default to run with low priority
 
 -n:  do not do anything, just show what would be done
 -debug: enable more debugging
@@ -429,7 +432,7 @@ if ($warntimeout) {
 }
 
 # neither "nice" on Windows, nor setpriority or so:
-if ($^O eq 'MSWin32') {
+if (!$unkind && $^O eq 'MSWin32') {
     eval {
 	require Win32::Process;
 	Win32::Process::Open(my $proc, $$, 0)
@@ -708,7 +711,7 @@ EOF
 	    unshift @cmd, 'ktrace', '-id', '-f', $ktrace;
 	}
 
-	if (is_in_path("nice") && $^O ne 'MSWin32') {
+	if (!$unkind && is_in_path("nice") && $^O ne 'MSWin32') {
 	    unshift @cmd, "nice";
 	}
 
