@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.15 2009/09/19 09:51:56 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.16 2010/04/01 20:17:35 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -54,6 +54,8 @@ my $cpanmod;
 #$cpanmod = "Crypt::SecurID";
 #$cpanmod = "Data::Reuse";
 #$cpanmod = "Unicode::Property::XS";
+#$cpanmod = "Filter::Include";
+$cpanmod = "Convert::Number::Ethiopic";
 
 my $checkcmd;
 #$checkcmd = "env PERL5LIB=$perldir/lib make test";
@@ -66,7 +68,7 @@ my $checkcmd;
 my $script;
 #$script = "/tmp/wah.pl";
 #$script = "/tmp/readline.pl";
-$script = "/home/e/eserte/trash/bisect.pl";
+#$script = "/home/e/eserte/trash/bisect.pl";
 
 my $allow_distroprefs = 0;
 #my $allow_distroprefs = 1;
