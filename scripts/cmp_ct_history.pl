@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.5 2010/04/11 07:54:30 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.6 2010/04/11 07:54:34 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -39,8 +39,8 @@ GetOptions("missing!"     => \$show_missing,
 	  )
     or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] newhistory oldhistory";
 
-my $hist1 = shift or die "left history?";
-my $hist2 = shift or die "right history?";
+my $hist1 = shift or die "left history (usually the history with the *newer* system)?";
+my $hist2 = shift or die "right history (usually the history with the *older* system)?";
 
 my %hist1 = %{ read_history($hist1) };
 my %hist2 = %{ read_history($hist2) };
