@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.1 2010/04/11 07:54:18 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.2 2010/04/11 07:54:21 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -14,12 +14,25 @@
 #
 
 use strict;
+use CPAN;
 use Getopt::Long;
 use List::MoreUtils qw(uniq);
 
+{
+    package CPAN::SRTShell;
+    use vars qw(@ISA);
+    @ISA = $CPAN::Frontend;
+    sub mysleep { shift; sleep shift()/10 }
+    sub myprint { shift; print STDERR @_ }
+}
+$CPAN::Frontend="CPAN::SRTShell";
+
 my $show_missing;
-GetOptions("missing!" => \$show_missing)
-    or die "usage: $0 [-missing] lefthistory righthistory";
+my $show_fulldist;
+GetOptions("missing!" => \$show_missing,
+	   "fulldist!" => \$show_fulldist,
+	  )
+    or die "usage: $0 [-missing] [-fulldist] lefthistory righthistory";
 
 my $hist1 = shift or die "left history?";
 my $hist2 = shift or die "right history?";
@@ -43,6 +56,10 @@ for my $dist (sort keys %dists) {
 	}
     }
     if ($res) {
+	if ($show_fulldist) {
+	    my $fulldist = CPAN::Shell->expand("Distribution", "/$dist/");
+	    $dist = $fulldist->id if $fulldist;
+	}
 	printf "%-55s %s\n", $dist, $res;
     }
 }
