@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: cpandisthasfile.pl,v 1.2 2010/04/11 07:51:36 eserte Exp $
+# $Id: cpandisthasfile.pl,v 1.3 2010/04/11 07:51:39 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2009 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2009,2010 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -22,13 +22,11 @@ my $cache = "$ENV{HOME}/var/cpanfilelist";
 mkpath $cache if !-d $cache;
 die "Cannot create cache $cache" if !-d $cache;
 
-my $check_for;
-if (@ARGV == 1) {
-    $check_for = qr{$ARGV[0]};
-} elsif (@ARGV == 0) {
-    $check_for = qr{/Build\.PL$};
+my @check_for;
+if (@ARGV) {
+    @check_for = @ARGV;
 } else {
-    die "usage: $0 [rx]";
+    die "usage: $0 rx ...";
 }
 
 my $tgz_qr = qr{\.(?:tgz|tar)};
@@ -79,10 +77,16 @@ for my $distfile (sort @$dist) {
 
     open my $fh, $cachefile
 	or die "Cannot open $cachefile: $!";
-    while(<$fh>) {
-	if ($_ =~ $check_for) {
-	    print "$distfile\n"; # FOUND
-	    last;
+    my %this_check_for = map{(qr{$_},1)} @check_for;
+ LOOP_FILE: while(<$fh>) {
+	for my $check_for (keys %this_check_for) {
+	    if ($_ =~ $check_for) {
+		delete $this_check_for{$check_for};
+		if (!%this_check_for) {
+		    print "$distfile\n"; # FOUND
+		    last LOOP_FILE;
+		}
+	    }
 	}
     }
 }
