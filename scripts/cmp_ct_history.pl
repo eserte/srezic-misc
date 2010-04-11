@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.4 2010/04/11 07:54:27 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.5 2010/04/11 07:54:30 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -12,6 +12,9 @@
 # Mail: slaven@rezic.de
 # WWW:  http://www.rezic.de/eserte/
 #
+
+# Compare two CPAN::Reporter histories (e.g. for parallel comparing
+# smokes)
 
 use strict;
 use CPAN;
@@ -34,7 +37,7 @@ GetOptions("missing!"     => \$show_missing,
 	   "fulldist!"    => \$show_fulldist,
 	   "minimal|min+" => \$show_minimal,
 	  )
-    or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] lefthistory righthistory";
+    or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] newhistory oldhistory";
 
 my $hist1 = shift or die "left history?";
 my $hist2 = shift or die "right history?";
@@ -70,6 +73,16 @@ DIST: for my $dist (sort keys %dists) {
 	}
 	my $grade_left  = join(" ", @grades_left);
 	my $grade_right = join(" ", @grades_right);
+	if ($show_minimal && $show_minimal >= 3) {
+	    if ($grade_left eq 'PASS') {
+		next DIST;
+	    }
+	}
+	if ($show_minimal && $show_minimal >= 4) {
+	    unless ($grade_left eq 'FAIL' && $grade_right =~ m{^(UNKNOWN|PASS|NA)$}) {
+		next DIST;
+	    }
+	}
 	if ($grade_left ne $grade_right) {
 	    $res = "<$grade_left> vs. <$grade_right>";
 	}
