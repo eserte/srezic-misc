@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.3 2010/04/11 07:54:24 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.4 2010/04/11 07:54:27 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -30,11 +30,11 @@ $CPAN::Frontend="CPAN::SRTShell";
 my $show_missing;
 my $show_fulldist;
 my $show_minimal;
-GetOptions("missing!" => \$show_missing,
-	   "fulldist!" => \$show_fulldist,
-	   "minimal!" => \$show_minimal,
+GetOptions("missing!"     => \$show_missing,
+	   "fulldist!"    => \$show_fulldist,
+	   "minimal|min+" => \$show_minimal,
 	  )
-    or die "usage: $0 [-missing] [-fulldist] [-minimal] lefthistory righthistory";
+    or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] lefthistory righthistory";
 
 my $hist1 = shift or die "left history?";
 my $hist2 = shift or die "right history?";
@@ -44,7 +44,7 @@ my %hist2 = %{ read_history($hist2) };
 
 my %dists = map {($_,1)} keys(%hist1), keys(%hist2);
 
-for my $dist (sort keys %dists) {
+DIST: for my $dist (sort keys %dists) {
     my $res;
     if (!exists $hist1{$dist}) {
 	$res = "missing left" if $show_missing;
@@ -60,6 +60,14 @@ for my $dist (sort keys %dists) {
 		}
 	    }
 	}
+	if ($show_minimal && $show_minimal >= 2) {
+	    my %grades_left  = map{($_,1)} @grades_left;
+	    for my $grade_right (@grades_right) {
+		if (exists $grades_left{$grade_right}) {
+		    next DIST;
+		}
+	    }
+	}
 	my $grade_left  = join(" ", @grades_left);
 	my $grade_right = join(" ", @grades_right);
 	if ($grade_left ne $grade_right) {
@@ -68,7 +76,7 @@ for my $dist (sort keys %dists) {
     }
     if ($res) {
 	if ($show_fulldist) {
-	    my $fulldist = CPAN::Shell->expand("Distribution", "/$dist/");
+	    my $fulldist = CPAN::Shell->expand("Distribution", "/\\/$dist/");
 	    $dist = $fulldist->id if $fulldist;
 	}
 	printf "%-55s %s\n", $dist, $res;
