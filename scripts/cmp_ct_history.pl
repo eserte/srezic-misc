@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.2 2010/04/11 07:54:21 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.3 2010/04/11 07:54:24 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -29,10 +29,12 @@ $CPAN::Frontend="CPAN::SRTShell";
 
 my $show_missing;
 my $show_fulldist;
+my $show_minimal;
 GetOptions("missing!" => \$show_missing,
 	   "fulldist!" => \$show_fulldist,
+	   "minimal!" => \$show_minimal,
 	  )
-    or die "usage: $0 [-missing] [-fulldist] lefthistory righthistory";
+    or die "usage: $0 [-missing] [-fulldist] [-minimal] lefthistory righthistory";
 
 my $hist1 = shift or die "left history?";
 my $hist2 = shift or die "right history?";
@@ -49,8 +51,17 @@ for my $dist (sort keys %dists) {
     } elsif (!exists $hist2{$dist}) {
 	$res = "missing right" if $show_missing;
     } else {
-	my $grade_left  = join(" ", uniq sort map { $_->[1] } @{$hist1{$dist}});
-	my $grade_right = join(" ", uniq sort map { $_->[1] } @{$hist2{$dist}});
+	my @grades_left  = uniq sort map { $_->[1] } @{$hist1{$dist}};
+	my @grades_right = uniq sort map { $_->[1] } @{$hist2{$dist}};
+	if ($show_minimal) {
+	    for my $grades (\@grades_left, \@grades_right) {
+		if ("@$grades" ne "DISCARD") {
+		    @$grades = grep { $_ ne "DISCARD" } @$grades;
+		}
+	    }
+	}
+	my $grade_left  = join(" ", @grades_left);
+	my $grade_right = join(" ", @grades_right);
 	if ($grade_left ne $grade_right) {
 	    $res = "<$grade_left> vs. <$grade_right>";
 	}
