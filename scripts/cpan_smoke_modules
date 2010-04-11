@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.94 2010/04/11 08:49:09 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.95 2010/04/11 13:13:13 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -641,6 +641,9 @@ EOF
 	    $cpan_shell_init .= q#$CPAN::Config->{use_sqlite}=0; $CPAN::Config->{cache_metadata}=1; #;
 	}
 	$cpan_shell_init .= q#$CPAN::Config->{prerequisites_policy} = q[follow]; #;
+	if ($batch) {
+	    $cpan_shell_init .= q#$CPAN::Config->{build_requires_install_policy} =~ s{ask/}{}; #; # don't be interactive
+	}
 
 	# perl belongs to this user -> no sudo necessary
 	if ($do_action eq 'install' || $do_action eq 'shell') {
@@ -756,6 +759,7 @@ EOF
 	if ($batch) {
 	    #$ENV{PERL_MM_USE_DEFAULT} = 1; --- currently bad idea ... turns CPAN::Reporter questions off
 	    $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps};
+	    $ENV{PERL_BATCH} = 'yes'; # private extension, used in 01.DISABLED.yml
 	}
 	$ENV{DBIC_NO_WARN_BAD_PERL} = 1; # with the warning messages test output gets so long being unusable
 	my $save_perl5opt = $ENV{PERL5OPT};
