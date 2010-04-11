@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpandisthasfile.pl,v 1.3 2010/04/11 07:51:39 eserte Exp $
+# $Id: cpandisthasfile.pl,v 1.4 2010/04/11 08:13:21 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008,2009,2010 Slaven Rezic. All rights reserved.
@@ -17,6 +17,31 @@ use strict;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use File::Basename qw(dirname);
 use File::Path qw(mkpath);
+use Getopt::Long;
+
+sub usage (;$) {
+    my $msg = shift;
+    warn "$msg\n" if $msg;
+    die <<EOF;
+usage: $0 [-cpansrc] rx ...
+EOF
+}
+
+my $cpansrc;
+GetOptions("cpansrc=s" => \$cpansrc,
+	  )
+    or usage;
+
+if (!$cpansrc) {
+    require CPAN;
+    no warnings 'once';
+    local $CPAN::Be_Silent = 1;
+    CPAN::HandleConfig->load;
+    $cpansrc = $CPAN::Config->{keep_source_where};
+}
+if (!$cpansrc) {
+    die "Please specify -cpansrc or configure CPAN.pm";
+}
 
 my $cache = "$ENV{HOME}/var/cpanfilelist";
 mkpath $cache if !-d $cache;
@@ -26,7 +51,7 @@ my @check_for;
 if (@ARGV) {
     @check_for = @ARGV;
 } else {
-    die "usage: $0 rx ...";
+    usage;
 }
 
 my $tgz_qr = qr{\.(?:tgz|tar)};
@@ -34,7 +59,7 @@ my $zip_qr = qr{\.zip$};
 
 my $dist = all_distributions();
 for my $distfile (sort @$dist) {
-    my $full = "/usr/local/src/CPAN/sources/authors/id/$distfile";
+    my $full = "$cpansrc/authors/id/$distfile";
     if (!-r $full) {
 	warn "SKIP distfile does not exist on disk: $full\n";
 	next;
@@ -94,8 +119,9 @@ for my $distfile (sort @$dist) {
 sub all_distributions { # takes ~3 seconds
     use PerlIO::gzip;
     my %dist;
-    open my $FH, "<:gzip", "/usr/local/src/CPAN/sources/modules/02packages.details.txt.gz"
-	or die $!;
+    my $packages_file = "$cpansrc/modules/02packages.details.txt.gz";
+    open my $FH, "<:gzip", $packages_file
+	or die "Can't open $packages_file: $!";
     my $state = "h";
     while(<$FH>) {
 	if ($state eq 'h') {
