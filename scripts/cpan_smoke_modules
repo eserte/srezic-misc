@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.95 2010/04/11 13:13:13 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.96 2010/04/12 09:35:31 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -71,6 +71,7 @@ my $strace;
 my $truss;
 my $ktrace;
 my $use_distroprefs = 1;
+my $prefs_dir;
 my $signal_end = 1;
 my $module_printused;
 my $unkind = 0;
@@ -110,6 +111,7 @@ GetOptions("n" => \$n,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
 	   'distroprefs!' => \$use_distroprefs,
+	   'prefsdir=s' => \$prefs_dir,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	  )
@@ -130,6 +132,7 @@ usage: $0
      [-[no]destroyperl]
      [-strace|-truss|-ktrace file]
      [-[no]signalend] [-moduleprintused]
+     [-[no]distroprefs] [-prefsdir ...]
      [dist ...]
 
 -i: test and install
@@ -260,7 +263,12 @@ if (!@perls) {
 }
 
 CPAN::HandleConfig->load;
-my $prefs_dir = $CPAN::Config->{prefs_dir};
+my $prefs_dir_is_changed;
+if ($prefs_dir) {
+    $prefs_dir_is_changed = 1;
+} else {
+    $prefs_dir = $CPAN::Config->{prefs_dir};
+}
 
 # to make it easy to copy'n'paste download URLs from search.cpan.org:
 for (@dist_or_mods) {
@@ -633,6 +641,8 @@ EOF
 	$cpan_shell_init .= q{$CPAN::Config->{threshold_perl5lib_upto} = 9999999; };
 	if (!$use_distroprefs) {
 	    $cpan_shell_init .= q{$CPAN::Config->{prefs_dir} = ""; };
+	} elsif ($prefs_dir_is_changed) {
+	    $cpan_shell_init .= q{$CPAN::Config->{prefs_dir} = "} . $prefs_dir . q{"; };
 	}
 	$cpan_shell_init .= q{eval { require Expect; 1 } or $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps}; };
 	if ($use_sqlite) {
