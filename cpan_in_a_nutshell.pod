@@ -934,6 +934,10 @@ L<http://perlmonks.org/?node_id=399498>.
 A long link list for Bioinformatics stuff can be found here:
 L<http://perlmonks.org/?node_id=399498>.
 
+=head2 Job Queues
+
+Distributed systems are L<TheSchwartz> and L<Gearman>.
+
 =head1 Networking Devices IPC
 
 =head2 Network Utilities
