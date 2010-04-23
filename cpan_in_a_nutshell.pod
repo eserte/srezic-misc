@@ -1055,6 +1055,20 @@ the parsing performance of the existing XML parsers.
 There are L<XML::Normalize::LibXML> and L<XML::CanonicalizeXML>
 available. The latter implements W3C recommendations.
 
+=head3 Feeds
+
+Parsing and generating RSS: L<XML::RSS> generally works fine, but may
+be quite slow on parsing some types of RSS feeds (taking ~5 seconds on
+normal computers). L<XML::RSS::Parser> is more light-weight than
+L<XML::RSS> and provides only parsing capabilities. It seems to be
+significantly faster than L<XML::RSS> (probably dependent on the used
+XML::SAX driver). L<XML::RSS::Tools> provides client capabilities and
+expects an XSLT stylesheet which does the converstion of rss content.
+L<XML::RSS::Feed> runs on top of L<XML::RSS> and provides caching
+abilities.
+
+Parsing and generating Atom: L<XML::Atom>...
+
 =head3 Utilities
 
 L<Tk::XMLViewer> displays an XML tree in a Tk window.
