@@ -320,6 +320,12 @@ L<Array::Compare> may only do comparisons on lists/arrays. Using
 L<Array::Compare> is not recommended anymore, as it uses the rather
 heavy-weight L<Moose> module.
 
+Is is also possible to do comparisons by serializing data structure
+(e.g. using L<Data::Dumper> or L<Storable>) and do a string compare of
+the serialized data. Make sure that the output is canonical, i.e. by
+using Sortkeys(1) with L<Data::Dumper> or by setting
+C<$Storable::canonical>.
+
 See also below for comparing within test scripts (L<Test::Deep>).
 
 To compare files, use the core module L<File::Compare>.
