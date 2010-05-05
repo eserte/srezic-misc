@@ -736,6 +736,9 @@ L<GD::Graph3D> is like GD::Graph, but provides 3d-looking graph.
 L<Chart::ThreeD::Pie> is another module to create 3d pie diagrams via
 L<GD>.
 
+L<Chart::Clicker> is based on the Cario graphics library and many
+people think that its output is extremely beautiful.
+
 =head1 Language Extensions
 
 =head2 Exporting
