@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: perlbinsearch.pl,v 1.16 2010/04/01 20:17:35 eserte Exp $
+# $Id: perlbinsearch.pl,v 1.17 2010/05/07 19:39:03 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -175,6 +175,7 @@ chdir $perldir or do {
     exit 256;
 };
 system('make', 'distclean');
+system('git', 'clean', '-f', '-d', '-x');
 exit $err;
 
 __END__
