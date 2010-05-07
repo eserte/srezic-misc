@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.11 2010/03/27 13:06:50 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.12 2010/05/07 19:39:20 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -23,6 +23,7 @@ use Getopt::Long;
 my $only_good;
 my $sort_by_date;
 my $reversed;
+my $geometry;
 GetOptions("good" => \$only_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
@@ -32,8 +33,9 @@ GetOptions("good" => \$only_good,
 	       }
 	   },
 	   "r" => \$reversed,
+	   "geometry=s" => \$geometry,
 	  )
-    or die "usage: $0 [-good] [-sort date] [-r] [directory]";
+    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
@@ -96,6 +98,7 @@ if ($reversed) {
 }
 
 my $mw = tkinit;
+$mw->geometry($geometry) if $geometry;
 
 my $currfile_i = 0;
 my $currfile;
