@@ -717,14 +717,22 @@ L<SVG> provides an API to create SVG graphics.
 =head2 Image information
 
 L<Image::Size> and L<Image::Info> may be used to get information about
-an image file (like size, mime format etc.). I had some exotic jpegs
-which did not work with Image::Info, but worked with Image::Size. The
-latest versions of Image::Info say that this module is deprecated.
+an image file (like size, mime format etc.).
 
 L<Image::EXIF> is an interface to EXIF information. Some EXIF
 information can also be found in L<Image::Info>. There's also
 L<Image::ExifTool>, which is (contrary to Image::EXIF) written in pure
 perl.
+
+L<GD> can be misused to determine if a file is an image at all by
+loading the image into a GD::Image object (meaning at least that it's
+an image format supported by GD), and has a getBounds method to get
+the dimensions of the image. But this is not very efficient,
+especially for large images.
+
+L<Image::Magick> provides a "Ping" method which gets only basic
+information (size and format) from the image without loading it
+completely, so it's more efficient than GD.
 
 =head2 Charts
 
@@ -1089,9 +1097,10 @@ L<http://perl.apache.org/docs/tutorials/tmpl/comparison/comparison.html>.
 And here's another one:
 L<http://www.perl.com/lpt/a/2001/08/21/templating.html>. Here's a
 benchmark:
-L<http://search.cpan.org/~rhandom/Template-Alloy-1.009/samples/benchmark/bench_various_templaters.pl>.
-The examples directory of L<HTML::Template::Compiled> also includes a
-benchmark script, but without numbers in it.
+L<http://search.cpan.org/perldoc?bench_various_templaters.pl> (part of
+L<http://search.cpan.org/dist/Template-Alloy/>. The examples directory
+of L<HTML::Template::Compiled> also includes a benchmark script, but
+without numbers in it.
 
 =head3 Standalone templating systems
 
