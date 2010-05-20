@@ -639,6 +639,18 @@ attributes.
 L<File::Copy::Recursive> is an alternative module for copying files
 recursively.
 
+=head3 Moving files
+
+L<File::Copy> has a C<move> function which also can handle moving
+across filesystem boundaries (which the perl function C<rename>
+cannot).
+
+L<File::PerlMove> provides a shell command C<pmv> to rename files
+using perl expressions. Another implementation doing this is C<rename>
+(originally by Larry Wall, and currently exists in numerous variants),
+and sometimes part of operating system installs (e.g. available for
+Debian or as a FreeBSD port).
+
 =head3 Walking a file hierarchy
 
 L<File::Find> is in the core. 
