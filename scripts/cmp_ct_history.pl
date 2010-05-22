@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.6 2010/04/11 07:54:34 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.7 2010/05/22 20:47:42 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -33,14 +33,21 @@ $CPAN::Frontend="CPAN::SRTShell";
 my $show_missing;
 my $show_fulldist;
 my $show_minimal;
+my $org_file;
 GetOptions("missing!"     => \$show_missing,
 	   "fulldist!"    => \$show_fulldist,
 	   "minimal|min+" => \$show_minimal,
+	   "org=s"        => \$org_file,
 	  )
     or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] newhistory oldhistory";
 
 my $hist1 = shift or die "left history (usually the history with the *newer* system)?";
 my $hist2 = shift or die "right history (usually the history with the *older* system)?";
+
+my $dist2rt;
+if ($org_file) {
+    $dist2rt = read_org_file($org_file);
+}
 
 my %hist1 = %{ read_history($hist1) };
 my %hist2 = %{ read_history($hist2) };
@@ -92,7 +99,11 @@ DIST: for my $dist (sort keys %dists) {
 	    my $fulldist = CPAN::Shell->expand("Distribution", "/\\/$dist/");
 	    $dist = $fulldist->id if $fulldist;
 	}
-	printf "%-55s %s\n", $dist, $res;
+	printf "%-55s %s", $dist, $res;
+	if ($dist2rt->{$dist}) {
+	    print "\t$dist2rt->{$dist}";
+	}
+	print "\n";
     }
 }
 
@@ -115,5 +126,21 @@ sub read_history {
     \%hist;
 }
 
+sub read_org_file {
+    my $file = shift;
+    open my $fh, $file
+	or die "Can't open $file: $!";
+    my %dist2rt;
+    my $maybe_current_dist;
+    while(<$fh>) {
+	chomp;
+	if (/^\*+\s*(\S+)/) {
+	    $maybe_current_dist = $1;
+	} elsif ($maybe_current_dist && m{(http.*?rt.cpan.org\S+Display.html\?id=\d+)}) {
+	    $dist2rt{$maybe_current_dist} = $1;
+	}
+    }
+    \%dist2rt;
+}
  
 __END__
