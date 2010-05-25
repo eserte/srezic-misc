@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.98 2010/05/07 20:26:06 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.99 2010/05/25 08:14:36 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -636,7 +636,7 @@ EOF
 	    if ($bleeding_edge) {
 		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(ftp://pause.perl.org/pub/PAUSE/)]; };
 	    } else {
-		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(ftp://ftp.funet.fi/pub/CPAN/)]; };
+		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(http://cpan.cpantesters.org/ ftp://ftp.funet.fi/pub/CPAN/)]; };
 	    }
 	}
 	$cpan_shell_init .= q{$CPAN::FTP::connect_to_internet_ok=1; };
