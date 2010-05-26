@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.7 2010/05/22 20:47:42 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.8 2010/05/26 19:25:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -45,8 +45,11 @@ my $hist1 = shift or die "left history (usually the history with the *newer* sys
 my $hist2 = shift or die "right history (usually the history with the *older* system)?";
 
 my $dist2rt;
+my $dist2fixed;
 if ($org_file) {
-    $dist2rt = read_org_file($org_file);
+    my %res = read_org_file($org_file);
+    $dist2rt    = $res{dist2rt};
+    $dist2fixed = $res{dist2fixed};
 }
 
 my %hist1 = %{ read_history($hist1) };
@@ -103,6 +106,9 @@ DIST: for my $dist (sort keys %dists) {
 	if ($dist2rt->{$dist}) {
 	    print "\t$dist2rt->{$dist}";
 	}
+	if ($dist2fixed->{$dist}) {
+	    print "\t$dist2fixed->{$dist}";
+	}
 	print "\n";
     }
 }
@@ -131,16 +137,23 @@ sub read_org_file {
     open my $fh, $file
 	or die "Can't open $file: $!";
     my %dist2rt;
+    my %dist2fixed;
     my $maybe_current_dist;
     while(<$fh>) {
 	chomp;
 	if (/^\*+\s*(\S+)/) {
 	    $maybe_current_dist = $1;
-	} elsif ($maybe_current_dist && m{(http.*?rt.cpan.org\S+Display.html\?id=\d+)}) {
-	    $dist2rt{$maybe_current_dist} = $1;
+	} elsif ($maybe_current_dist) {
+	    if (m{(http.*?rt.cpan.org\S+Display.html\?id=\d+)}) {
+		$dist2rt{$maybe_current_dist} = $1;
+	    } elsif (m{(fixed in \d\S*)}) {
+		$dist2fixed{$maybe_current_dist} = $1;
+	    }
 	}
     }
-    \%dist2rt;
+    (dist2rt    => \%dist2rt,
+     dist2fixed => \%dist2fixed,
+    );
 }
  
 __END__
