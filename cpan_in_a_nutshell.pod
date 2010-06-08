@@ -355,8 +355,17 @@ L<SQL::Translator> seems to do everyhing: schema translation from
 everything to everything, including diagrams and creating diffs. The
 object model seems to be clean, separating parsers, producers, filters
 and schema objects. Unfortunately it has also everything as PREREQ_PM,
-including GD, GraphViz, Excel-related modules... Supported database
-engines are MySQL, Oracle, PostgreSQL, SQLite and many others.
+including GD, GraphViz, Excel-related modules... Another downside is
+that certain operations are quite slow, e.g. parsing a schema from an
+SQL file or database. Supported database engines are MySQL, Oracle,
+PostgreSQL, SQLite and many others.
+
+L<DBIx::DBSchema> may me used for translating an existing database
+schema (which will be read from a database) and create SQL statements
+for another database engine. Especially there's no support for parsing
+a schema from an SQL file. Supported database engines are MySQL,
+PostgreSQL and SQLite, while Sybase and Oracle are partially supported
+(from the docs).
 
 L<MySQL::Diff> has a limited task of showing differences between two
 mysql schemas (either from file or from a database) and create a
@@ -364,12 +373,6 @@ series of ALTER TABLE statements to bring one schema to the other.
 Development to this module has stopped a lot of years ago, meaning
 that newer MySQL versions (4.x, 5.x ...) are not supported without
 manual tweaks.
-
-L<DBIx::DBSchema> may me used for translating an existing database
-schema (which will be read from a database) and create SQL statements
-for another database engine. Supported database engines are MySQL,
-PostgreSQL and SQLite, while Sybase and Oracle are partially supported
-(from the docs).
 
 =head2 File database systems
 
