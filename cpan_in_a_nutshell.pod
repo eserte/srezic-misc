@@ -210,6 +210,12 @@ Check for L<Iterator> and L<Object::Realize::Later> (lazy
 evaluation???). L<Object::Iterate> introduces an B<iterate> method to
 loop conveniently over a list-like object.
 
+=head2 Traverse
+
+L<Data::Rmap> traverses complex data structures and makes it possible
+to modify the elements in-place. Related modules are: L<Data::Walk>,
+L<Data::Transformer>, L<Data::Traverse>.
+
 =head2 Date and time modules
 
 A complete implementation is offered by L<DateTime>, with a plethora
