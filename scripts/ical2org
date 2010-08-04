@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.14 2010/06/30 10:30:06 eserte Exp $
+# $Id: ical2org,v 1.15 2010/08/04 14:39:30 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009 Slaven Rezic. All rights reserved.
@@ -66,6 +66,7 @@ my $result = '';
 for my $file (@ARGV) {
     if ($file eq '-') {
 	my($tmpfh, $tmpfile)=tempfile(UNLINK => 1, SUFFIX => ".vcs");
+	binmode STDIN, ':utf8';
 	while(<STDIN>) {
 	    print $tmpfh $_
 		or die $!;
