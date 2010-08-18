@@ -573,11 +573,10 @@ developed) and others. Look which one is the best nowadays XXX.
 
 =head2 Regexp tools
 
-L<Regexp::Assemble>: combine multiple regexpes into one. XXX More
-modules doing similar things.
-
-A list with regexp tools can be found here:
-L<http://perlmonks.org/?node_id=399498>.
+L<Regexp::Assemble>: combine multiple regexpes into one. A faster but
+more restricted module doing the same is L<Regexp::Trie>. Other
+modules doing similar things are L<Regexp::Optimizer> and
+L<Regex::PreSuf>.
 
 =head1 Documentation
 
