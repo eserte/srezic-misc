@@ -1023,7 +1023,7 @@ L<Net::SSH::Expect> also uses the system's ssh like L<Net::SSH>, but
 adds also the capabilities of L<Expect> into it.
 
 L<Net::OpenSSH> is a new player. The Pod documentation of this module
-compares against the other available ssh implementations.
+has a comparison against the other available ssh implementations.
 
 =head1 Option Parameter Config Processing
 
