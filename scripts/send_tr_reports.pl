@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.7 2009/09/24 21:01:52 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.8 2010/08/31 22:34:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -14,8 +14,13 @@
 #
 
 use strict;
+use Getopt::Long;
 use Test::Reporter;
 use File::Basename;
+
+my $use_mail;
+GetOptions("mail" => \$use_mail)
+    or die "usage: $0 [-mail]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
@@ -43,10 +48,21 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
     my $process_file = $process_dir . "/" . basename($file);
     rename $file, $process_file
 	or die "Cannot move $file to $process_file: $!";
-    my $r = Test::Reporter->new(from => "srezic\@cpan.org",
-				transport => "Net::SMTP",
-				mx => ["localhost"]
-			       )->read($process_file);
+    my @tr_args;
+    if ($use_mail) {
+	@tr_args = (from => "srezic\@cpan.org",
+		    transport => "Net::SMTP",
+		    mx => ["localhost"],
+		   );
+    } else {
+	@tr_args = (transport => 'Metabase',
+		    transport_args => [
+				       uri => 'http://metabase.cpantesters.org/beta/',
+				       id_file => '/home/e/eserte/.cpanreporter/srezic_metabase_id.json',
+				      ],
+		   );
+    }
+    my $r = Test::Reporter->new(@tr_args)->read($process_file);
     # XXX fix t::r bug?
     $r->{_subject} =~ s{\n}{}g;
     $r->send;
