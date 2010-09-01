@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.16 2010/08/04 14:40:36 eserte Exp $
+# $Id: ical2org,v 1.17 2010/09/01 19:54:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009,2010 Slaven Rezic. All rights reserved.
@@ -42,6 +42,21 @@ if ($add_to_file) {
     $add_to_file    = dirname $add_to_file;
     if (!-w $add_to_file || !-f $add_to_file) {
 	die "File '$add_to_file' does not exist or is not writable";
+    }
+    if (emacs_file_locked($add_to_file)) {
+	if (-e "/dev/tty") { # only on Unix systems
+	    print STDERR "*** WARN: The file <$add_to_file> looks like
+          it is locked by emacs. Really add to file? (y/N) ";
+	    my $ans;
+	    if (open my $fh, "<", "/dev/tty") {
+		chomp($ans = <$fh>);
+	    } else {
+		warn "Cannot read from /dev/tty: $!";
+	    }
+	    if ($ans !~ m{^y}i) {
+		exit 1;
+	    }
+	}
     }
     require Tie::File;
     tie @tie_array, 'Tie::File', $add_to_file
@@ -216,6 +231,19 @@ sub icaluid_to_orgid {
     return if !defined $uid;
     $uid =~ s{^\s+(?:TS|DL|SC)-}{}; # XXX why? The space seems to be a org-mode bug (report!) The prefixes stand for timestamp, deadline, scheduled
     $uid;
+}
+
+# Taken from bbbike/miscsrc/insert_points (emacs_lockfile) and
+# slightly changed
+sub emacs_file_locked {
+    my $file = shift;
+    my $lock_file;
+    if ($file =~ m{/.*?$}) {
+	($lock_file = $file) =~ s{/([^/]+)$}{/.#$1};
+    } else {
+	$lock_file = '.#' . $file;
+    }
+    -l $lock_file;
 }
 
 __END__
