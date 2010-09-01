@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.8 2010/08/31 22:34:16 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.9 2010/09/01 19:07:18 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -57,7 +57,7 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
     } else {
 	@tr_args = (transport => 'Metabase',
 		    transport_args => [
-				       uri => 'http://metabase.cpantesters.org/beta/',
+				       uri => 'https://metabase.cpantesters.org/api/v1/',
 				       id_file => '/home/e/eserte/.cpanreporter/srezic_metabase_id.json',
 				      ],
 		   );
