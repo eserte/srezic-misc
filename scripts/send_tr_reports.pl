@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.9 2010/09/01 19:07:18 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.10 2010/09/03 20:48:26 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -65,10 +65,8 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
     my $r = Test::Reporter->new(@tr_args)->read($process_file);
     # XXX fix t::r bug?
     $r->{_subject} =~ s{\n}{}g;
-    $r->send;
-    if ($r->errstr) {
+    $r->send or
 	die "Something failed in $process_file: " . $r->errstr . ". Stop.\n";
-    }
     my $done_file = $done_dir . "/" . basename($file);
     rename $process_file, $done_file
 	or die "Cannot move $process_file to $done_file: $!";
