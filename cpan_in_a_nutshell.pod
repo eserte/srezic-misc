@@ -179,6 +179,13 @@ in the PHP world. But note that the current version 0.31 is not
 recommended by the maintainer, due to some severe known bugs. Another
 PHP serializer is L<PHP::Session::Serializer::PHP>.
 
+L<Data::Pond> is dealing with the "Perl-based open notation for data".
+It's somewhat similar as Data::Dumper, as the generated serialization
+data is perl code and may be eval'ed, but it has also a
+deserialization method to avoid the possibly dangerous eval operation.
+Also, Data::Pond can only serialize a subset of Perl data, probably to
+make the format language-independent.
+
 =head2 Validation
 
 L<Data::FormValidator> is a rather old validation module which works
