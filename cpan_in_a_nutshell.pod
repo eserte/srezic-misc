@@ -186,6 +186,10 @@ deserialization method to avoid the possibly dangerous eval operation.
 Also, Data::Pond can only serialize a subset of Perl data, probably to
 make the format language-independent.
 
+L<Data::MessagePack> is a binary "packer" for perl data structures.
+See L<http://cpanratings.perl.org/dist/Data-MessagePack> for reviews
+on this serializer.
+
 =head2 Validation
 
 L<Data::FormValidator> is a rather old validation module which works
@@ -1169,6 +1173,9 @@ template. Small and useful.
 L<Template::Alloy> is, according to its documentation, a fast
 templating system which can emulate some of the other popular systems,
 including Template-Toolkit and HTML::Template.
+
+L<Text::Xslate> is a scalable template engine for Perl5, and according
+to its documentation, very fast (claiming to be 100x faster than TT2).
 
 =head3 Meta templating systems
 
