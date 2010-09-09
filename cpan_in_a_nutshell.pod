@@ -1394,6 +1394,8 @@ templating systems (is this true XXX?).
 
 L<Jifty>.
 
+L<Dancer> - lightweight yet powerful web application framework.
+
 =head3 CGI based frameworks
 
 L<CGI::Application>
