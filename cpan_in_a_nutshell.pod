@@ -1402,11 +1402,6 @@ L<CGI::Application>
 
 L<Contentment> --- a perl based Web CMS (check it XXX).
 
-L<WE_Framework> --- together with L<webeditor> a CMS for small to
-middle static sites with a focus on: multi-language sites, editors are
-constrained to pre-defined templates, Template-Toolkit based, database
-is Berkeley DB.
-
 =head2 Wiki
 
 L<CGI::Wiki>: nice, modular, not out-of-the-box, but relatively easily
