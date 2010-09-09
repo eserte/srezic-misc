@@ -309,6 +309,21 @@ version numbers.
 Nowadays the preferred way is to use weaken in L<Scalar::Util>, a core
 perl module. Former modules were L<WeakRef> ...
 
+=head2 Constants
+
+The core Perl pragma L<constant> is able to create sigil-less
+constants. sigil-less is problematic because such constants are not
+easily embedable in strings, and may not be used on the left-hand side
+of a fat comma or as a hash key in a simple way. The perl interpreter
+may do good optimizations with constants created using this pragma.
+
+L<Readonly>, L<Readonly::XS>, and L<Const::Fast> are modules which
+create constants (or read-only variables) which have sigils, meaning
+that the disadvantages above disappear. The performance though is
+worse, beginning with Readonly being the slowest and Const::Fast being
+the fastest, but probably cannot be as fast as constants created by
+the contant pragma.
+
 =head2 Cloning
 
 L<Storable> has the function B<dclone()>.
