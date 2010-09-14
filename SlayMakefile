@@ -1,13 +1,8 @@
 #
-# $Id: SlayMakefile,v 1.22 2010/03/28 19:44:50 eserte Exp $
+# $Id: SlayMakefile,v 1.23 2010/09/14 20:24:52 eserte Exp $
 #
 
 {
-    use vars qw($BBBIKE_HOST $BBBIKE_HOSTEUROPE_HOST);
-    $BBBIKE_HOST = "bbbike.de";
-    $BBBIKE_HOST = "78.47.225.30";
-    $BBBIKE_HOSTEUROPE_HOST = "83.169.19.137";
-
     package MyPH;
     use base 'Pod::Simple::HTML';
     sub html_header_after_title {
@@ -31,33 +26,6 @@
     sub html_css { "http://search.cpan.org/s/style.css" }
 }
 
-{
-    sub _fetch_cpantestersmatrix {
-        my(@cgi_args) = @_;
-	local $ENV{SCRIPT_NAME} = "cpantestersmatrix.pl"; # to avoid warnings
-	my $content = `perl -wT cgi/cpantestersmatrix.pl @cgi_args`;
-	$content;
-    }
-
-    sub test_cpantestersmatrix {
-        my(@cgi_args) = @_;
-	my $content = _fetch_cpantestersmatrix(@cgi_args);
-	Test::More::is($?, 0, "Exit code for @cgi_args");
-	Test::More::ok($content, "Have content for @cgi_args");
-	Test::More::like($content, qr{content-type:\s*text/html}i, "Seen http header");
-	Test::More::unlike($content, qr{error}i, "No error seen");
-	Test::More::like($content, qr{other links}i, "Some expected content");
-    }
-
-    # assumes at least one PASS on a freebsd system
-    sub test_cpantestersmatrix_report_table {
-        my(@cgi_args) = @_;
-	my $content = _fetch_cpantestersmatrix(@cgi_args);
-	Test::More::like($content, qr{PASS});
-	Test::More::like($content, qr{freebsd});
-    }	
-
-}
 
 all: permissions cpan_in_a_nutshell.html
 
@@ -69,75 +37,5 @@ cpan_in_a_nutshell.html: cpan_in_a_nutshell.pod SlayMakefile
 
 permissions:
 	cd scripts && chmod ugo+rx *
-	cd cgi && chmod ugo+rx *.pl
-	cd cgi && chmod ugo+r *.yml *.st
-	chmod ugo+rx scripts cgi
+	chmod ugo+rx scripts
 
-######################################################################
-
-rsync-hosteurope-cpantestersmatrix-stable:	permissions rsync-hosteurope-cpantestersmatrix-favicon
-	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix.pl
-
-rsync-hosteurope-cpantestersmatrix-devel:	permissions rsync-hosteurope-cpantestersmatrix-favicon
-	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantestersmatrix2.pl
-
-rsync-hosteurope-cpantestersmatrix-favicon:
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantesters_favicon.ico
-
-rsync-hosteurope-cpantestersmatrix-robots.txt:
-	{
-	    require File::Temp;
-	    my($tmpfh,$tmpfile) = File::Temp::tempfile(SUFFIX => '.txt', UNLINK => 1) or die $!;
-	    print $tmpfh "User-agent: *\n";
-	    print $tmpfh "Disallow: /?\n";
-	    close $tmpfh or die $!;
-	    chmod 0644, $tmpfile;
-	    my @cmd = ('rsync', '-av', $tmpfile, 'root@' . $BBBIKE_HOSTEUROPE_HOST . ':/root/work/cpantestersmatrix/robots.txt');
-	    system @cmd;
-	    $? == 0 or die "@cmd failed with $?";
-	}
-
-rsync-hosteurope-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
-	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/cpantesters_amendments.yml
-
-rsync-hosteurope-cpantestersmatrix-additions:
-	rsync -av ~/devel/parse_cpan_packages_fast.pl root@${BBBIKE_HOSTEUROPE_HOST}:/root/work/cpantestersmatrix/
-
-fix-hosteurope-cpantestersmatrix-permissions:
-	ssh -l root ${BBBIKE_HOSTEUROPE_HOST} chgrp www-data /root/work/cpantestersmatrix
-	ssh -l root ${BBBIKE_HOSTEUROPE_HOST} chmod g+w /root/work/cpantestersmatrix
-
-######################################################################
-
-#rsync-cpantestersmatrix-data:	permissions validate-cpantestersmatrix-data
-#	rsync -av ~/work/srezic-misc/cgi/cpantesters_amendments.yml root@${BBBIKE_HOST}:/home/slaven/cpantesters_amendments.yml
-
-validate-cpantestersmatrix-data:
-	pkwalify -f cgi/cpantesters_amendments.kwalify cgi/cpantesters_amendments.yml
-
-#rsync-cpantestersmatrix-stable:	permissions rsync-cpantestersmatrix-favicon
-#	{ print STDERR "Are you sure? This is stable! CTRL-C if not! "; <STDIN> }
-#	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix.pl
-
-#rsync-cpantestersmatrix-devel:	permissions rsync-cpantestersmatrix-favicon
-#	rsync -av ~/work/srezic-misc/cgi/cpantestersmatrix.pl root@${BBBIKE_HOST}:/home/slaven/cpantestersmatrix2.pl
-
-
-#rsync-cpantestersmatrix-favicon:
-#	rsync -av ~/work/srezic-misc/cgi/cpantesters_favicon.ico root@${BBBIKE_HOST}:/home/slaven/www/cpantesters_favicon.ico
-
-test-cpantestersmatrix-local:	permissions
-	{
-	    require Test::More; Test::More::plan('no_plan');
-	    test_cpantestersmatrix 'dist=Tk';
-	    test_cpantestersmatrix 'dist=Tk 804.027';
-	    test_cpantestersmatrix 'dist=JSON', 'maxver=1';
-	    test_cpantestersmatrix 'dist=Clarion';
-	    test_cpantestersmatrix 'author=srezic';
-	    test_cpantestersmatrix 'dist=Kwalify', 'reports=1', 'os=freebsd', 'perl=5.8.8';
-	    test_cpantestersmatrix_report_table 'dist=Kwalify', 'reports=1', 'os=freebsd', 'perl=5.8.8';
-	    test_cpantestersmatrix 'dist=Kwalify 1.16', 'reports=1', 'os=freebsd', 'perl=5.8.8';
-	    test_cpantestersmatrix_report_table 'dist=Kwalify 1.16', 'reports=1', 'os=freebsd', 'perl=5.8.8';
-	    "";
-	}
