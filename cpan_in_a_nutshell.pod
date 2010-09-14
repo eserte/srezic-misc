@@ -325,6 +325,16 @@ worse, beginning with Readonly being the slowest and Const::Fast being
 the fastest, but probably cannot be as fast as constants created by
 the contant pragma.
 
+L<Data::Lock> also uses Perl's internal feature to make a variable
+immutable, therefore also being quite fast. L<Attribute::Constant>
+adds some syntactic sugar to this module.
+
+Another module exposing Perl's internal readonly flag is
+L<Scalar::Readonly>. It works on scalars only, though.
+
+The core module L<Hash::Util> has a set of functions to "lock" the
+keys and/or values of a hash.
+
 =head2 Cloning
 
 L<Storable> has the function B<dclone()>.
