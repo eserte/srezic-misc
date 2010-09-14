@@ -372,7 +372,8 @@ the serialized data. Make sure that the output is canonical, i.e. by
 using Sortkeys(1) with L<Data::Dumper> or by setting
 C<$Storable::canonical>.
 
-See also below for comparing within test scripts (L<Test::Deep>).
+See also L<below|/Generic test modules> for comparing within test
+scripts (L<Test::Deep>).
 
 To compare files, use the core module L<File::Compare>.
 
@@ -380,9 +381,9 @@ To compare files, use the core module L<File::Compare>.
 
 =head2 Object persistance
 
-L<Storable> (see above) and all other (de)serialization modules. See
-also L<http://poop.sourceforge.net> for a comprehensive list of perl
-object persistance modules.
+L<Storable> (see L<above|/Serialization>) and all other
+(de)serialization modules. See also L<http://poop.sourceforge.net> for
+a comprehensive list of perl object persistance modules.
 
 =head2 Database Abstractions
 
