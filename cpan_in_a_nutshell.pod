@@ -441,8 +441,8 @@ richer API (e.g. support for transactions).
 
 L<BDB> allows asynchronous access to berkeley db.
 
-L<CDB_File> is a "constant" database. This means that generating the
-database is costly, but reading is very fast. A pure perl variant is
+L<CDB_File> is a "constant" database. This means that the database is
+created only once, but reading is very fast. A pure perl variant is
 L<CDB_Perl>.
 
 To have L<MLDBM> sits on top of the other DBM implementations and
@@ -568,16 +568,17 @@ not dump parameters.
 
 =head3 Profiling
 
+L<Devel::NYTProf> is currently the state of the art profiler in the
+Perl world. It allows subroutine- and statement-level profilers.
+Reports are created as a series of HTML pages, but even other programs
+(e.g. kcachegrind) may be used.
+
 L<Devel::FastProf> and L<Devel::SmallProf>: profilers on line basis.
 The first one has less impact on the execution time of the script
 (according to the author, 3 to 5 times slower) and has less profiling
 output, and the latter is much slower (about 50x), but has more
 profiling output. At least Devel::FastProf turns out to be quite
 useful.
-
-L<Devel::NYTProf> is a fork of Devel::FastProf, which includes extra
-reporting. See its Pod for a list of subroutine- and statement-level
-profilers.
 
 L<Devel::DProf>: ancient, has problems with complicated stuff (e.g. Tk
 scripts, saw segmentation faults and garbled profile files). Profiles
@@ -597,11 +598,14 @@ L<Devel::Leak::Object> (was recommended at cpanratings).
 L<Devel::TrackObjects>: track the usage of objects, which can also be
 used to find memory leaks.
 
+L<Devel::FindRef> is designed to find memory leaks by creating a
+detailed report of all yet active scalars with all references to it.
+
 =head3 Compatibility support
 
 L<Perl::MinimumVersion> determines the minimal required perl version
 for given perl code. Unfortunately it's far from perfect, many modern
-perl constructs are not yet recognizes. See
+perl constructs are not yet recognized. See
 L<http://rt.cpan.org/Public/Bug/Display.html?id=28916>.
 
 The C<corelist> script, part of the L<Module::CoreList> module
@@ -610,7 +614,9 @@ distribution, knows when modules were part of the perl core, if ever.
 =head2 Versioning control systems
 
 L<VCS> (old, unmaintained), L<VCI> (new, at the moment actively
-developed) and others. Look which one is the best nowadays XXX.
+developed) and others. TBD: Look which one is the best nowadays.
+
+L<Git> is included in the git core.
 
 =head2 Regexp tools
 
@@ -981,6 +987,12 @@ L<Geo::Coder::Mapquest> is an interface to the beta Mapquest Geocoding
 Web Service. The service requires an API key. According to the manpage
 of version 0.01, the results are often not good for the US area, and
 there are no results for addresses outside the US.
+
+L<Geo::Coder::Cloudmade> is an interface to the Cloudmade API, which
+is using data from the OpenStreetMap project. An API key is required.
+
+L<Geo::Coder::OSM> is another interface an API using OpenStreetMap
+data. No API key is required.
 
 =head3 Other
 
