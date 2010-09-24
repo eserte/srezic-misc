@@ -347,6 +347,9 @@ L<Clone> is a module dedicated for cloning.
 L<Scalar::Util::Clone> is another clone module. Its documentation
 claims that it is faster than Storable's dclone.
 
+L<Data::Clone>, another XS-based clone module. Reviews ap CPAN ratings
+suggest that it's faster than Storable.
+
 =head2 Accessing
 
 L<Data::Path> provides XPath-similar accessing methods to data
