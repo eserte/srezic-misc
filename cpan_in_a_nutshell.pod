@@ -340,7 +340,10 @@ keys and/or values of a hash.
 
 =head2 Cloning
 
-L<Storable> has the function B<dclone()>.
+L<Storable> has the function B<dclone()>. Most data types can be
+cloned, including code references (if Deparse/Eval is turned on, but
+with some restrictions regarding lexicals); but some data types
+cannot, like regexps.
 
 L<Clone> is a module dedicated for cloning.
 
