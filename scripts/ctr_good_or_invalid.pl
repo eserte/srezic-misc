@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.13 2010/09/02 07:32:55 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.14 2010/10/29 19:48:10 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -115,6 +115,9 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
     my $f = $mw->Frame->pack(-fill => "x");
     $f->Label(-text => "Report created:")->pack(-side => "left");
     $f->Label(-textvariable => \$modtime)->pack(-side => "left");
+
+    $f->Label(-text => "/ " . $#files)->pack(-side => "right");
+    $f->Label(-textvariable => \$currfile_i)->pack(-side => "right");
 }
 {
     my $f = $mw->Frame->pack(-fill => "x");
