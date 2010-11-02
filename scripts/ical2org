@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.18 2010/11/02 10:19:36 eserte Exp $
+# $Id: ical2org,v 1.19 2010/11/02 10:29:01 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009,2010 Slaven Rezic. All rights reserved.
@@ -15,6 +15,7 @@
 
 use strict;
 use Data::ICal   qw();
+use Encode       qw(encode);
 use File::Basename qw(dirname basename);
 use File::Spec   qw();
 use File::Temp   qw(tempfile);
@@ -59,8 +60,11 @@ if ($add_to_file) {
 	}
     }
     require Tie::File;
-    tie @tie_array, 'Tie::File', $add_to_file
+    open my $fh, '+<', $add_to_file
 	or die "Cannot open or write to $add_to_file: $!";
+    #XXX does not work!!! binmode $fh, ':utf8'; # we only support utf-8
+    tie @tie_array, 'Tie::File', $fh
+	or die "Cannot tie to filehandle: $!";
     for my $line_i (0 .. $#tie_array) {
 	if ($tie_array[$line_i] =~ m{^\*\s+\Q$add_to_section\E\b}) {
 	    $tie_begin_section_index = $line_i + 1;
@@ -139,6 +143,10 @@ for my $file (@ARGV) {
 	    }
 	    $orgstring .= $propstart . ":END:\n";
 	}
+	# From this point on we assume $orgstring as an opaque binary.
+	# Because setting the utf8 flag on a Tie::File does not work
+	# (see above), we do the encoding here:
+	$orgstring = encode 'utf-8', $orgstring;
 	push @result, { orgstring => $orgstring,
 			(defined $id ? (id => $id) : ()),
 		      };
@@ -312,6 +320,9 @@ I</filepath/section>, where I<filepath> is the path to the org-mode
 file, and I<section> is the section name within the file. Note that
 it's expected that the section is a top-level heading, that is,
 prefixed just with one star.
+
+It is also assumed that the org-mode file is encoded as utf-8. No
+other encoding is supported.
 
 =head1 TODO
 
