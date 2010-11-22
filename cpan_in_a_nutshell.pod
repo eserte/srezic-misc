@@ -1406,6 +1406,11 @@ look at http://rt.cpan.org and the overwhelming bug list).
 L<WWW::Mechanize::Shell> is a shell for driving WWW::Mechanize and
 creating scripts for this module.
 
+L<Web::Scraper> is a web scraping toolkit using HTML/CSS selectors or
+XPath expressions.
+
+L<Scrappy> is a powerful web harvester and spider.
+
 =head2 Server
 
 L<HTTP::Proxy> to create a HTTP proxy.
