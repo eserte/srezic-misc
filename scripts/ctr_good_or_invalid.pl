@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.14 2010/10/29 19:48:10 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.15 2011/02/12 15:50:57 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
@@ -24,7 +24,7 @@ my $only_good;
 my $sort_by_date;
 my $reversed;
 my $geometry;
-my $quit_at_end;
+my $quit_at_end = 1;
 GetOptions("good" => \$only_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
@@ -35,9 +35,9 @@ GetOptions("good" => \$only_good,
 	   },
 	   "r" => \$reversed,
 	   "geometry=s" => \$geometry,
-	   "quit-at-end" => \$quit_at_end,
+	   "quit-at-end!" => \$quit_at_end,
 	  )
-    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-quit-at-end] [directory [file ...]]";
+    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
