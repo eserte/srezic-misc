@@ -4,6 +4,8 @@ use strict;
 use FindBin;
 use Getopt::Long;
 
+sub run_smoker ($$$);
+
 my $do_this_month = 1;
 my $do_last_month = 1;
 my $do_recent;
@@ -14,7 +16,7 @@ my $do_special;
 
 my $skip_update;
 
-my $use_pause = 1;
+my $use_pause = 0; # cpantesters.org should be good enough
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
@@ -27,7 +29,7 @@ GetOptions("maintperl" => \$do_maintperl,
 	  )
     or die "usage?";
 
-my $recent_url = $use_pause ? "ftp://pause.perl.org/pub/PAUSE/" : "ftp://ftp.funet.fi/pub/CPAN/";
+my $recent_url = $use_pause ? "ftp://pause.perl.org/pub/PAUSE/" : "http://cpan.cpantesters.org/"; # was:"ftp://ftp.funet.fi/pub/CPAN/";
 my $bleedingedge = $use_pause ? "-bleedingedge" : "-nobleedingedge";
 
 if (!$do_maintperl && !$do_all && !$do_special) {
@@ -41,38 +43,43 @@ if ($do_maintperl) {
     (getpwuid($<))[0] eq 'cpansand'
 	or die "Works only for cpansand!";
 
-    # devel
-    warn "*** 5.12.0: Just test recent uploads, also devel versions...\n";
-    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.12.0/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
-    warn "*** 5.10.1: Just test recent uploads, also devel versions...\n";
-    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.10.1/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
+    run_smoker '5.12.3', 'devel',  '-3d';
+    run_smoker '5.12.0', 'devel',  '-3d';
+    run_smoker '5.10.1', 'devel',  '-3d';
+    run_smoker '5.8.9',  'devel',  '-3d';
+    run_smoker '5.12.3', 'stable', '-20d';
+    run_smoker '5.12.0', 'stable', '-20d';
+    run_smoker '5.10.1', 'stable', '-20d';
+    run_smoker '5.8.9',  'stable', '-20d';
+
 #    warn "*** 5.8.9: Just test recent uploads, also devel versions...\n";
 #    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
 #    warn "*** 5.8.8: Just test recent uploads, also devel versions...\n";
 #    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
 #
-    # only stable
-    warn "*** 5.12.0: Test and install recent uploads, only stable versions...\n";
-    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.12.0/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
-    warn "*** 5.10.1: Test and install recent uploads, only stable versions...\n";
-    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.10.1/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
+#    # only stable
+#    warn "*** 5.12.0: Test and install recent uploads, only stable versions...\n";
+#    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.12.0/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
+#    warn "*** 5.10.1: Test and install recent uploads, only stable versions...\n";
+#    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.10.1/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
 #    warn "*** 5.8.9: Test and install recent uploads, only stable versions...\n";
 #    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
 #    warn "*** 5.8.8: Test and install recent uploads, only stable versions...\n";
 #    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
 #
-    print STDERR <<'EOF';
-*** Now as eserte:
 
-ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -sort date -r
-send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
-
-*** Or only the PASSes without inspection:
-
-ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -good
-send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
-
-EOF
+#     print STDERR <<'EOF';
+# *** Now as eserte:
+# 
+# ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -sort date -r
+# send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
+# 
+# *** Or only the PASSes without inspection:
+# 
+# ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -good
+# send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
+# 
+# EOF
     system('xterm-conf -f -title "FINISHED maintperl"');
 } elsif (0 && $do_maintperl) { # old, somewhat newer
     (getpwuid($<))[0] eq 'cpansand'
@@ -184,3 +191,10 @@ EOF
     }
 }
 
+sub run_smoker ($$$) {
+    my($perl_version, $stability, $interval) = @_;
+    warn "*** $perl_version: Just test uploads last $interval, " . ($stability eq 'stable' ? 'only stable' : 'also devel') . " versions...\n";
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl /usr/perl} . $perl_version . q{/bin/perl} . $perl_version . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    warn "$cmd ...\n";
+    system $cmd;
+}
