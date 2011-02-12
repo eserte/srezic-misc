@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.102 2011/02/12 09:21:30 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.103 2011/02/12 09:37:11 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009 Slaven Rezic. All rights reserved.
@@ -21,6 +21,8 @@ use CPAN;
 use CPAN::DistnameInfo 0.07; # .tar.bz2 support
 use IO::Handle;
 use Sys::Hostname qw(hostname);
+use File::Temp qw(tempfile);
+use File::Path qw(mkpath);
 
 sub save_pwd (&);
 
@@ -61,6 +63,7 @@ my $has_xterm_conf;
 my $skip_tested;
 my $skip_tested_nondiscarded;
 my $no_fail_reports;
+my $save_reports;
 my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   =    50_000_000; # 50M
 my $bleeding_edge;
@@ -106,6 +109,7 @@ GetOptions("n" => \$n,
 	       $skip_tested_nondiscarded = 1;
 	   },
 	   'nofailreport' => \$no_fail_reports,
+	   'savereports' => \$save_reports,
 	   'bleededge|bleedingedge!' => \$bleeding_edge,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
@@ -459,7 +463,37 @@ open my $logfh, ">>", $cpan_smoke_log
     or warn "WARNING: Cannot write to logfile $cpan_smoke_log: $!";
 $logfh->autoflush(1);
 
-if ($no_fail_reports) {
+if ($save_reports) {
+    my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
+	or die "Can't create tempfile: $!";
+    open my $ifh, "<", "$ENV{HOME}/.cpanreporter/config.ini"
+	or die "Can't open config.ini: $!";
+    my $workflow_dir = "$ENV{HOME}/var/cpansmoker";
+    my $new_reports_dir = "$workflow_dir/new";
+    my $changed_transport = 0;
+    while(<$ifh>) {
+	if (/^transport\s*=\s*/) {
+	    print $tmpfh "transport=File $new_reports_dir\n";
+	    $changed_transport++;
+	} else {
+	    print $tmpfh $_;
+	}
+    }
+    if (!$changed_transport) {
+	die "Could not find transport setting in config.ini";
+    }
+    close $tmpfh
+	or die "Error while closing: $!";
+    for my $dir ($new_reports_dir,
+		 "$workflow_dir/sync",
+		 "$workflow_dir/process",
+		 "$workflow_dir/done",
+		 "$workflow_dir/undecided",
+		) {
+	mkpath $dir if !-d $dir;
+    }
+    $ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
+} elsif ($no_fail_reports) {
     my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini"; # XXX maybe use PERL_CPAN_REPORTER_DIR?
     if (!-r $confignofail) {
 	die "Cannot read <$confignofail>, needed for -skipfail...";
