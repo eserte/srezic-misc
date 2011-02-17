@@ -430,6 +430,21 @@ Development to this module has stopped a lot of years ago, meaning
 that newer MySQL versions (4.x, 5.x ...) are not supported without
 manual tweaks.
 
+=head3 SQL Builder
+
+L<SQL::Abstract> is inspired by L<DBIx::Abstract>, but does only the
+SQL generation part. L<SQL::Abstract::Limit> adds a portable LIMIT
+emulation to that module.
+
+The L<SQL::Maker> documentation claims that it's more extensible than
+L<SQL::Abstract>. L<SQL::Maker> is inspired by L<DBIx::Skinny>.
+
+With L<SQL::Interpolate> one still writes SQL statements, but perl
+variables may be magically interpolated into them.
+
+More approaches: L<SQL::DB::Schema>, L<SQL::Query> and many more at
+CPAN.
+
 =head2 File database systems
 
 File database systems or dbm systems are simple database systems with
