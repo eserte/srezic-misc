@@ -194,7 +194,7 @@ EOF
 sub run_smoker ($$$) {
     my($perl_version, $stability, $interval) = @_;
     warn "*** $perl_version: Just test uploads last $interval, " . ($stability eq 'stable' ? 'only stable' : 'also devel') . " versions...\n";
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl /usr/perl} . $perl_version . q{/bin/perl} . $perl_version . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl /usr/perl} . $perl_version . q{/bin/perl} . $perl_version . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
 }
