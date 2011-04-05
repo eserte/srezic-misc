@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.108 2011/04/03 16:31:01 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.109 2011/04/05 05:57:45 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009, 2011 Slaven Rezic. All rights reserved.
@@ -1023,22 +1023,24 @@ sub check_disk_free {
 	die "Build directory <$build_dir> for perl <$perl> does not exist";
     }
     if (eval { require Filesys::DfPortable; 1 }) {
-	my $build_ref = Filesys::DfPortable::dfportable($build_dir);
-	if (!$build_ref) {
-	    die "Cannot get filesys information for $build_dir";
-	}
-	while ($build_ref->{bavail} < $min_build_dir_avail) {
+	while () {
+	    my $build_ref = Filesys::DfPortable::dfportable($build_dir);
+	    if (!$build_ref) {
+		die "Cannot get filesys information for $build_dir";
+	    }
+	    last if ($build_ref->{bavail} > $min_build_dir_avail);
 	    warn qq{Less than $min_build_dir_avail bytes on $build_dir available: $build_ref->{bavail}.
 Please cleanup the directory and go on with <RETURN>: };
 	    <STDIN>;
 	}
 
 	require File::Spec;
-	my $tmp_ref = Filesys::DfPortable::dfportable(File::Spec->tmpdir);
-	if (!$tmp_ref) {
-	    die "Cannot get filesys information for " . File::Spec->tmpdir;
-	}
-	while ($tmp_ref->{bavail} < $min_tmp_dir_avail) {
+	while () {
+	    my $tmp_ref = Filesys::DfPortable::dfportable(File::Spec->tmpdir);
+	    if (!$tmp_ref) {
+		die "Cannot get filesys information for " . File::Spec->tmpdir;
+	    }
+	    last if ($tmp_ref->{bavail} > $min_tmp_dir_avail);
 	    warn qq{Less than $min_tmp_dir_avail bytes on " . File::Spec->tmpdir . " available: $tmp_ref->{bavail}.
 Please cleanup the directory and go on with <RETURN>: };
 	    <STDIN>;
