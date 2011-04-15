@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_allpackages,v 1.24 2011/03/19 09:01:58 eserte Exp $
+# $Id: cpan_allpackages,v 1.25 2011/04/15 06:39:03 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -70,15 +70,17 @@ if ($perl) {
 local $^W = 0; # no warning if PERL_CPAN_REPORTER_DIR is unset
 local $ENV{PERL_CPAN_REPORTER_DIR} = $ENV{PERL_CPAN_REPORTER_DIR} if $ENV{PERL_CPAN_REPORTER_DIR};
 if (!$ENV{PERL_CPAN_REPORTER_DIR}) {
-    my $perl_prefix = `$perl -MConfig -e 'print \$Config{prefix}'`;
-    if ($perl_prefix && open my $fh, "$perl_prefix/.cpanreporterdir") {
-	chomp(my $reporter_dir = <$fh>);
-	if ($reporter_dir) {
-	    if (!-d $reporter_dir) {
-		warn "Specified reporter dir <$reporter_dir> does not exist, cannot use...";
-	    } else {
-		warn "Using .cpanreporter directory $reporter_dir...\n";
-		$ENV{PERL_CPAN_REPORTER_DIR} = $reporter_dir;
+    if ($perl) {
+	my $perl_prefix = `$perl -MConfig -e 'print \$Config{prefix}'`;
+	if ($perl_prefix && open my $fh, "$perl_prefix/.cpanreporterdir") {
+	    chomp(my $reporter_dir = <$fh>);
+	    if ($reporter_dir) {
+		if (!-d $reporter_dir) {
+		    warn "Specified reporter dir <$reporter_dir> does not exist, cannot use...";
+		} else {
+		    warn "Using .cpanreporter directory $reporter_dir...\n";
+		    $ENV{PERL_CPAN_REPORTER_DIR} = $reporter_dir;
+		}
 	    }
 	}
     }
@@ -300,3 +302,24 @@ sub safe_version {
 }
 
 __END__
+
+=head1 NAME
+
+cpan_allpackages - create list of all active CPAN distribution
+
+=head1 DESCRIPTION
+
+The format of the list is: ISO date, full distribution path with
+author, and the the test status from previous runs with the current
+perl (or with a perl specified with C<-perl>.
+
+=head1 BUGS
+
+CPAN.pm diagnostics messages appear in the output. To workaround this,
+grep for lines which start with a ISO date (i.e.
+C<< /^\d\d\d\d-\d\d-\d\d/ >>) 
+
+First time run is slow, because a lot of files from CPAN need to be
+fetched.
+
+=cut
