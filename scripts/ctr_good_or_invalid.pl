@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.15 2011/02/12 15:50:57 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.16 2011/04/16 14:19:05 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
@@ -168,7 +168,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 	       -command => sub {
 		   require CGI;
 		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://bbbike.radzeit.de/~slaven/cpantestersmatrix.cgi?" . CGI->new({dist=>$currdist, reports=>"1"})->query_string);
+		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . CGI->new({dist=>$currdist, reports=>"1"})->query_string);
 	       })->pack(-side => "left");
     $f->Button(-text => "ctgetreports",
 	       -command => sub {
@@ -215,7 +215,9 @@ MainLoop;
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $more->Load($currfile);
-    $more->Subwidget("scrolled")->SearchText(-searchterm => qr{PROGRAM OUTPUT});
+    my $textw = $more->Subwidget("scrolled");
+    $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
+    $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
     my $currfulldist;
     if (open my $fh, $currfile) {
 	while(<$fh>) {
