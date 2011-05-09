@@ -1244,7 +1244,8 @@ template. Small and useful.
 
 L<Template::Alloy> is, according to its documentation, a fast
 templating system which can emulate some of the other popular systems,
-including Template-Toolkit and HTML::Template.
+including Template-Toolkit and HTML::Template. Unfortunately the XS
+version, L<Template::Alloy::XS> does not work anymore for a long time.
 
 L<Text::Xslate> is a scalable template engine for Perl5, and according
 to its documentation, very fast (claiming to be 100x faster than TT2).
