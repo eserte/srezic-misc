@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.111 2011/05/18 19:15:06 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.112 2011/05/18 19:32:15 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009, 2011 Slaven Rezic. All rights reserved.
@@ -447,7 +447,7 @@ if ($r) {
 }
 
 {
-    for my $another_tmp (qw(/mnt/i386/tmp /tmp)) {
+    for my $another_tmp (qw(/var/tmp /tmp)) {
 	if (-d $another_tmp && -w $another_tmp) {
 	    my $_another_tmp = $another_tmp . "/cpansmoker-$<";
 	    if (!-d $_another_tmp) {
