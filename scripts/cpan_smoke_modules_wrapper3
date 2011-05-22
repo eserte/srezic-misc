@@ -43,12 +43,14 @@ if ($do_maintperl) {
     (getpwuid($<))[0] eq 'cpansand'
 	or die "Works only for cpansand!";
 
+    run_smoker '5.14.0', 'devel',  '-3d';
     run_smoker '5.12.3', 'devel',  '-3d';
-    run_smoker '5.12.0', 'devel',  '-3d';
+    #run_smoker '5.12.0', 'devel',  '-3d';
     run_smoker '5.10.1', 'devel',  '-3d';
     run_smoker '5.8.9',  'devel',  '-3d';
+    run_smoker '5.14.0', 'stable', '-20d';
     run_smoker '5.12.3', 'stable', '-20d';
-    run_smoker '5.12.0', 'stable', '-20d';
+    #run_smoker '5.12.0', 'stable', '-20d';
     run_smoker '5.10.1', 'stable', '-20d';
     run_smoker '5.8.9',  'stable', '-20d';
 
@@ -194,7 +196,14 @@ EOF
 sub run_smoker ($$$) {
     my($perl_version, $stability, $interval) = @_;
     warn "*** $perl_version: Just test uploads last $interval, " . ($stability eq 'stable' ? 'only stable' : 'also devel') . " versions...\n";
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl /usr/perl} . $perl_version . q{/bin/perl} . $perl_version . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    my $perl_exe = '/usr/perl' . $perl_version . '/bin/perl' . $perl_version;
+    if (!-x $perl_exe) {
+	$perl_exe = '/usr/local/bin/perl' . $perl_version;
+	if (!-x $perl_exe) {
+	    die "Cannot find a perl $perl_version, tried in /usr/perlXXX and /usr/local/bin/perlXXX";
+	}
+    }
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl } . $perl_exe . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
 }
