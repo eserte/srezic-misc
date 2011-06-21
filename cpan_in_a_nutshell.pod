@@ -685,7 +685,8 @@ unmaintained since 2004.
 
 L<MIME::Types>: the module is a file extension - mime type mapping.
 The module is not looking at file's magic. It is supposed to work just
-like the MIME type recognition of Apache.
+like the MIME type recognition of Apache. A similar module with a
+simpler interface is L<Media::Type::Simple>.
 
 L<LWP::MediaTypes> is part of libwww-perl. Like MIME::Types, it
 deduces the mime type from the file name.
@@ -968,6 +969,10 @@ There are L<String::Random> and L<String::MkPasswd>.
 
 A list of available logging modules can be found at:
 L<http://search.cpan.org/dist/Log-Dispatch/lib/Log/Dispatch.pm#RELATED_MODULES>.
+
+The documentation page of L<Log::Fast>, a logger written for speed,
+have a speed comparison against other logging modules at:
+L<http://search.cpan.org/dist/Log-Fast/lib/Log/Fast.pm#DESCRIPTION>.
 
 =head2 Logfile parsing
 
