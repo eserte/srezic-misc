@@ -763,7 +763,14 @@ and seems to be unsupported.
 =head2 Locking
 
 Perl already has core support for flock(). But there are modules which
-are wrappers around it, or implement locking a different way.
+are wrappers around it, especially for creating lock files, or
+implement locking a different way.
+
+L<File::Flock> is a wrapper around flock(). It knows about blocking
+and non-blocking locks and has a convenient OO interface which removes
+the lock file if the object goes out of scope. L<File::Basic::Flock>
+is similar like F<File::Flock>, but the user has to create the lock
+file himself.
 
 L<File::FcntlLock> uses fcntl() instead of flock() for locking. One
 advantage is that fcntl() can do range locking. Disadvantage is that
@@ -774,8 +781,7 @@ calls like flock() or lockf(). It has even support for locking over
 NFS. It is reasonable safe from race conditions, but not absolutely.
 
 The following modules have also some support for locking:
-L<File::Basic::Flock>, L<File::Flock>, L<Paranoid::Lockfile> (butcheck
-the RT queue here!).
+L<Paranoid::Lockfile> (but check the RT queue here!).
 
 L<File::Lockfile> is not recommended, as race conditions are easily
 possible (checked with at least v1.0.5).
