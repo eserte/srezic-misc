@@ -762,10 +762,20 @@ and seems to be unsupported.
 
 =head2 Locking
 
-The following modules have some support for locking:
-L<File::Basic::Flock>, L<File::FcntlLock>, L<File::Flock>, a couple of
-modules in the B<LockFile::> namespace (e.g. L<LockFile::Simple>),
-L<Lazy::Lockfile>, L<Paranoid::Lockfile>.
+Perl already has core support for flock(). But there are modules which
+are wrappers around it, or implement locking a different way.
+
+L<File::FcntlLock> uses fcntl() instead of flock() for locking. One
+advantage is that fcntl() can do range locking. Disadvantage is that
+this method is not available everywhere.
+
+The locking algorithm of L<LockFile::Simple> does not use any system
+calls like flock() or lockf(). It has even support for locking over
+NFS. It is reasonable safe from race conditions, but not absolutely.
+
+The following modules have also some support for locking:
+L<File::Basic::Flock>, L<File::Flock>, L<Paranoid::Lockfile> (butcheck
+the RT queue here!).
 
 L<File::Lockfile> is not recommended, as race conditions are easily
 possible (checked with at least v1.0.5).
