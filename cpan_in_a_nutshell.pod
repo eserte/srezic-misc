@@ -760,6 +760,16 @@ L<Filesys::DiskFree> parses the output of the Unix tool C<df>. It does
 not work with modern BSD systems, for instance. The module is very old
 and seems to be unsupported.
 
+=head2 Locking
+
+The following modules have some support for locking:
+L<File::Basic::Flock>, L<File::FcntlLock>, L<File::Flock>, a couple of
+modules in the B<LockFile::> namespace (e.g. L<LockFile::Simple>),
+L<Lazy::Lockfile>, L<Paranoid::Lockfile>.
+
+L<File::Lockfile> is not recommended, as race conditions are easily
+possible (checked with at least v1.0.5).
+
 =head1 Graphics
 
 =head2 Graphic libraries
