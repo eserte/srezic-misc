@@ -1447,9 +1447,12 @@ There is a number of extensions to L<LWP::UserAgent>, like
 L<LWP::UserAgent::WithCache> and L<LWP::UserAgent::Cache::Memcached>
 (with caching support), L<LWPx::ParanoidAgent> (an user agent with
 additional restricions, e.g. refusing connecting to internal
-addresses), L<LWP::ParallelUA> (parallel fetching),
-L<LWP::UserAgent::Determined> (an user agent which retries a few times
-in case of transient errors) ...
+addresses), L<LWP::UserAgent::Determined> (an user agent which retries
+a few times in case of transient errors) ...
+
+L<LWP::ParallelUA> is an implementation on top of L<LWP> to allow
+parallel fetching. Unfortunately this module does not work anymore
+with recent L<LWP> installations.
 
 libnet (L<Net::FTP>) etc. (more low-level, has FTP, but no HTTP (?),
 POP3, SMTP etc.).
