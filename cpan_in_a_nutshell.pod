@@ -1436,7 +1436,12 @@ There are other light-weight HTTP implementations, which are not
 complete as LWP, but smaller in size and module number and probably
 also faster. These are L<Furl>, L<HTTP::Lite> and L<HTTP::Client>
 (where the latter needs C<HTTP::Lite> as a dependency and the version
-1.51 seems to be broken).
+1.51 seems to be broken). L<HTTP::MHTTP> is also a very low-level
+implementation, which is probably faster than L<LWP>, but for example
+lacks out-of-the-box support for name-based virtual hosts.
+
+L<HTTP::GHTTP> needs a non-standard library to be installed, and a C
+compiler. It's probably faster than L<LWP>.
 
 There is a number of extensions to L<LWP::UserAgent>, like
 L<LWP::UserAgent::WithCache> and L<LWP::UserAgent::Cache::Memcached>
