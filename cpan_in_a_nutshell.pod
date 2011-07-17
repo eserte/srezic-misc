@@ -661,6 +661,16 @@ L<Regex::PreSuf>.
 
 XXX podlators, Pod::Simple, various pod2html modules, App::Pod2CpanHtml XXX
 
+L<Pod::Simple>: a robust Pod parser. It's part of the perl
+distribution since 5.10.0.
+
+L<Pod::POM>: converts Pod documents into an object module, which can
+in turn be translated into different markups like HTML, text, or again
+Pod. Unfortunately the Pod parser has a couple of issues (see RT bug
+tickets).
+
+L<Tk::Pod>: a Tk Pod viewer widget.
+
 =head1 File Handle Input/Output
 
 =head2 IO
@@ -1447,8 +1457,9 @@ There is a number of extensions to L<LWP::UserAgent>, like
 L<LWP::UserAgent::WithCache> and L<LWP::UserAgent::Cache::Memcached>
 (with caching support), L<LWPx::ParanoidAgent> (an user agent with
 additional restricions, e.g. refusing connecting to internal
-addresses), L<LWP::UserAgent::Determined> (an user agent which retries
-a few times in case of transient errors) ...
+addresses), L<LWP::UserAgent::Determined> and
+L<LWP::UserAgent::ExponentialBackoff> (user agents retrying a few
+times in case of transient errors) ...
 
 L<LWP::ParallelUA> is an implementation on top of L<LWP> to allow
 parallel fetching. Unfortunately this module does not work anymore
