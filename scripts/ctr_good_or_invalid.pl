@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.16 2011/04/16 14:19:05 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.17 2011/10/30 14:05:07 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
@@ -25,6 +25,7 @@ my $sort_by_date;
 my $reversed;
 my $geometry;
 my $quit_at_end = 1;
+my $do_xterm_title;
 GetOptions("good" => \$only_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
@@ -36,10 +37,18 @@ GetOptions("good" => \$only_good,
 	   "r" => \$reversed,
 	   "geometry=s" => \$geometry,
 	   "quit-at-end!" => \$quit_at_end,
+	   "xterm-title!" => \$do_xterm_title,
 	  )
-    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [directory [file ...]]";
+    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-xterm-title] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
+
+if ($do_xterm_title) {
+    if (!eval { require XTerm::Conf; 1 }) {
+	warn "No XTerm::Conf available, turning -xterm-title off...\n";
+	$do_xterm_title = 0;
+    }
+}
 
 my @files = @ARGV;
 if (@files == 1 && -d $files[0]) {
@@ -49,7 +58,13 @@ if (@files == 1 && -d $files[0]) {
 if (!@files) {
     @files = glob("$reportdir/new/*.rpt");
 }
-die "No files given or found.\n" if !@files;
+if (!@files) {
+    my $msg = "No files given or found";
+    if ($do_xterm_title) {
+	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
+    }
+    die "$msg.\n";
+}
 
 my $good_directory = "$reportdir/sync";
 if (!-d $good_directory) {
@@ -76,11 +91,19 @@ for my $file (@files) {
 }
 @files = @new_files;
 if (!@files) {
-    warn "No file needs to be checked manually, finishing.\n";
+    my $msg = "No file needs to be checked manually";
+    warn "$msg, finishing.\n";
+    if ($do_xterm_title) {
+	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
+    }
     exit;
 }
 if ($only_good) {
-    warn "Skipping " . scalar(@files) . " distribution(s) with FAILs.\n";
+    my $msg = scalar(@files) . " distribution(s) with FAILs";
+    warn "Skipping $msg.\n";
+    if ($do_xterm_title) {
+	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
+    }
     exit 1;
 }
 
