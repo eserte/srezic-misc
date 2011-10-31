@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.17 2011/10/30 14:05:07 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.18 2011/10/31 19:26:04 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
@@ -122,6 +122,10 @@ if ($reversed) {
     @files = reverse @files;
 }
 
+if ($do_xterm_title) {
+    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: interactive mode");
+}
+
 my $mw = tkinit;
 $mw->geometry($geometry) if $geometry;
 
@@ -235,6 +239,10 @@ $mw->bind("<F5>" => sub { $prev_b->invoke });
 #$mw->attributes(-fullscreen => 1); # does not work (with fvwm2 only?)
 MainLoop;
 
+if ($do_xterm_title) {
+    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: finished");
+}
+
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $more->Load($currfile);
@@ -275,7 +283,7 @@ sub nextfile {
 			    -message => "No more files. Quit?",
 			    -type => "YesNo",
 			   ) eq 'Yes') {
-	    exit;
+	    $mw->destroy;
 	} else {
 	    warn "Continuing?";
 	}
