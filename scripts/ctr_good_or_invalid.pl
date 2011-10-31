@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.18 2011/10/31 19:26:04 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.19 2011/10/31 19:28:58 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
@@ -277,7 +277,7 @@ sub nextfile {
 	$currfile_i++;
 	set_currfile();
     } else {
-	exit if $quit_at_end;
+	$mw->destroy if $quit_at_end;
 	if ($mw->messageBox(-icon => "question",
 			    -title => "End of list",
 			    -message => "No more files. Quit?",
