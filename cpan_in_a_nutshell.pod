@@ -808,7 +808,7 @@ for patent reasons. So many OS distributions still use the older
 version to remain backwards compatibility. Maybe these things will
 settle as the patent expired and newer libgd2 and GD2 versions come
 with gif support again. libgd2 also has true color support, and there
-is also true font support.
+is also truetype/freetype font support.
 
 L<Image::Magick> (also known as PerlMagick) is, compared to GD, slow
 but creates superior results. It's said that the API is not stable and
@@ -820,9 +820,7 @@ with a Perl binding.
 
 L<Imager> is a library which comes with the graphic library bundled in
 the perl module distribution. So you only need the low-level libraries
-like libpng and libjpeg installed on your system. The version number
-of Imager is still 0.something, so expect that things do not work as
-expected.
+like libpng and libjpeg installed on your system.
 
 L<Image::Imlib2>: apparently an interface to the imlib2 library. Not
 tested yet.
