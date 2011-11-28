@@ -844,7 +844,7 @@ graph as gif or postscript or Perl/Tk canvas output or ...
 L<Image::LibRSVG> converts svg graphics into popular image formats.
 
 L<SVG::GD> vs. L<GD::SVG>: use the GD API to create SVG graphivs.
-Check the difference between both!
+[XXX: What are the differences between both?]
 
 L<SVG> provides an API to create SVG graphics.
 
@@ -878,7 +878,7 @@ L<GD::Graph3D> is like GD::Graph, but provides 3d-looking graph.
 L<Chart::ThreeD::Pie> is another module to create 3d pie diagrams via
 L<GD>.
 
-L<Chart::Clicker> is based on the Cario graphics library and many
+L<Chart::Clicker> is based on the Cairo graphics library and many
 people think that its output is extremely beautiful.
 
 =head1 Language Extensions
