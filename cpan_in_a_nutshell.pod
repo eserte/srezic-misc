@@ -837,6 +837,9 @@ newfile.gif.
 L<GraphViz> is a B<graph> library. Feed in a graph or tree and get a
 graph as gif or postscript or Perl/Tk canvas output or ...
 
+L<Cairo> is a 2d vector graphics library and able to create png files,
+amongst other formats.
+
 =head3 SVG
 
 L<Image::LibRSVG> converts svg graphics into popular image formats.
@@ -845,6 +848,9 @@ L<SVG::GD> vs. L<GD::SVG>: use the GD API to create SVG graphivs.
 [XXX: What are the differences between both?]
 
 L<SVG> provides an API to create SVG graphics.
+
+L<Cairo> is a 2d vector graphics library and able to create SVG
+graphics, amongst other formats.
 
 =head2 Image information
 
@@ -876,7 +882,7 @@ L<GD::Graph3D> is like GD::Graph, but provides 3d-looking graph.
 L<Chart::ThreeD::Pie> is another module to create 3d pie diagrams via
 L<GD>.
 
-L<Chart::Clicker> is based on the Cairo graphics library and many
+L<Chart::Clicker> is based on the L<Cairo> graphics library and many
 people think that its output is extremely beautiful.
 
 =head1 Language Extensions
@@ -1317,6 +1323,9 @@ PDF::Create, at least for my needs.
 
 In L<CAM::PDF>'s SEE ALSO Pod section there's a comparison between a
 couple of PDF-related modules.
+
+L<Cairo> is a 2d vector graphics library and able to create PDF files,
+amongst other formats.
 
 There are some templating solutions (PDF::Reuse, PDF::Template). And
 there's also (non-perl) pdflatex!
