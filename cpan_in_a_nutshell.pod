@@ -228,7 +228,8 @@ loop conveniently over a list-like object.
 
 L<Data::Rmap> traverses complex data structures and makes it possible
 to modify the elements in-place. Related modules are: L<Data::Dmap>,
-L<Data::Walk>, L<Data::Transformer>, L<Data::Traverse>.
+L<Data::Walk> (which implements a L<File::Find>-like interface),
+L<Data::Transformer>, L<Data::Traverse>, L<Data::Visitor>.
 
 =head2 Date and time modules
 
