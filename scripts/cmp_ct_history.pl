@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.8 2010/05/26 19:25:58 eserte Exp $
+# $Id: cmp_ct_history.pl,v 1.9 2011/12/12 22:37:51 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008 Slaven Rezic. All rights reserved.
@@ -114,9 +114,11 @@ DIST: for my $dist (sort keys %dists) {
 }
 
 sub read_history {
+    my $file = shift;
     my %hist;
-    open my $ifh, shift
-	or die $!;
+    -f $file or die "$file is not a file";
+    open my $ifh, $file
+	or die "Can't open $file: $!";
     while(<$ifh>) {
 	next if m{^#};
 	chomp;
