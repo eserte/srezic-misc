@@ -297,7 +297,8 @@ L<Coat> is inspired by Moose and implements a subset of Moose's
 features. Coat is self-contained.
 
 L<Mouse> is another Moose clone missing some features but is
-(according to the documentation) much faster than Moose.
+(according to the documentation) much faster than Moose. Other even
+tinier versions of Moose are L<Moo> and L<Mo>.
 
 =head2 Sorting
 
