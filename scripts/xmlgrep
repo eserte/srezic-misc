@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: xmlgrep,v 1.17 2010/04/11 07:52:57 eserte Exp $
+# $Id: xmlgrep,v 1.18 2012/02/20 14:44:45 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2006,2007,2009 Slaven Rezic. All rights reserved.
@@ -100,7 +100,7 @@ sub xmlgrep {
     my $prepend_filename = $file ? "$file:" : "";
     for my $node ($root->findnodes($xpath)) {
         if ($cb) {
-            print $cb->($node), "\n";
+            print $prepend_filename, $cb->($node), "\n";
         } elsif ($opt{"as-xml"}) {
 	    if ($opt{'parse-html'}) {
 		die "Output of XML for parsed HTML is not implemented";
