@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.19 2011/10/31 19:28:58 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.20 2012/02/20 20:28:53 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -21,12 +21,14 @@ use Tk::ErrorDialog;
 use Getopt::Long;
 
 my $only_good;
+my $auto_good;
 my $sort_by_date;
 my $reversed;
 my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title;
 GetOptions("good" => \$only_good,
+	   "auto-good" => \$auto_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
 		   $sort_by_date = 1;
@@ -42,6 +44,11 @@ GetOptions("good" => \$only_good,
     or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-xterm-title] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
+
+if ($auto_good) {
+    # just to check if X11::Protocol etc. is available
+    is_user_at_computer();
+}
 
 if ($do_xterm_title) {
     if (!eval { require XTerm::Conf; 1 }) {
@@ -98,7 +105,16 @@ if (!@files) {
     }
     exit;
 }
-if ($only_good) {
+if ($auto_good) {
+    if (!is_user_at_computer()) {
+	my $msg = scalar(@files) . " distribution(s) with FAILs (inactive user)";
+	warn "Skipping $msg.\n";
+	if ($do_xterm_title) {
+	    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
+	}
+	exit 1;
+    }
+} elsif ($only_good) {
     my $msg = scalar(@files) . " distribution(s) with FAILs";
     warn "Skipping $msg.\n";
     if ($do_xterm_title) {
@@ -290,4 +306,24 @@ sub nextfile {
     }
 }
 
+sub is_user_at_computer {
+    require X11::Protocol;
+    my $X = X11::Protocol->new;
+    $X->init_extension('MIT-SCREEN-SAVER')
+	or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
+    my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
+    $on_or_off eq 'On' ? 0 : 1;
+}
+
 __END__
+
+=head1 EXAMPLES
+
+Following needs forever (unreleased), ctr_good_or_invalid.pl (this
+file), send_tr_reports.pl (available at same place like
+ctr_good_or_invalid.pl). Note that the perl executable is hardcoded
+here:
+
+    forever -countdown -181 -pulse 'echo "*** WORK ***";sleep 1;perl5.12.4 -S ctr_good_or_invalid.pl -auto-good -xterm-title ~cpansand/var/cpansmoker; perl5.12.4 -S send_tr_reports.pl ~cpansand/var/cpansmoker/; echo "*** DONE ***"'
+
+=cut
