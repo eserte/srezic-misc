@@ -894,7 +894,8 @@ people think that its output is extremely beautiful.
 The standard way for exporting symbols from a package to another is
 the core module L<Exporter>. See L<Sub::Exporter/COMPARISONS>
 explaining the strengths and weaknesses of L<Exporter>,
-L<Exporter::Lite>, L<Exporter::Easy>, L<Exporter::Simple>,
+L<Exporter::Lite>, L<Exporter::Easy>, L<Exporter::Simple> (this one's
+broken for perl 5.12 and newer and seems to be not fixed anymore),
 L<Perl6::Export>, L<Perl6::Export::Attrs>, L<Exporter::Renaming>,
 L<Class::Exporter>, L<Exporter::Tidy>.
 
