@@ -755,6 +755,10 @@ L<File::Find> is in the core.
 
 L<File::Find::Rule> is different XXX. Many plugins.
 
+L<File::Zglob> provides globbing like the core L<File::Glob>, but adds
+zsh's "**" pattern, which can be used to recursively descend into
+subdirectories.
+
 =head2 Free disk space
 
 L<Filesys::DfPortable> is probably the best choice. It supports both
