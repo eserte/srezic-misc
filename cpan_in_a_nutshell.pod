@@ -1558,11 +1558,12 @@ query_string() functions and the new() constructor.
 A number of modules solve the problem "automatically (gzip) compress
 outgoing data if the client supports it". Probably the most
 comprehensive mod_perl handler (just by looking at the documentation
-size) is L<Apache::Dynagzip>. More light-weight solutions are
-L<Apache::Compress> (in conjuction with L<Apache::Filter>) and
-L<Apache::GzipChain> (in conjunction with L<Apache::OutputChain>). All
-three can handle static files. L<Apache::Dynagzip> has recipes how to
-work with L<CGI> or L<Apache::Registry> scripts).
+size) is L<Apache::Dynagzip> (which is a
+L<Apache::Filter>-implementing filter). More light-weight solutions
+are L<Apache::Compress> (also in conjunction with L<Apache::Filter>)
+and L<Apache::GzipChain> (in conjunction with L<Apache::OutputChain>).
+All three can handle static files. L<Apache::Dynagzip> has recipes how
+to work with L<CGI> or L<Apache::Registry> scripts).
 
 L<CGI::Compress::Gzip> is only suitable for CGI scripts. It
 automatically turns the standard output into a gzip-compressed stream,
