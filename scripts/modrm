@@ -13,7 +13,7 @@ sub emptydir($) {
     return(@count == 2 ? 1 : 0);
 }
 
-my @modules = @_;
+my @modules = @ARGV;
 my $installed = ExtUtils::Installed->new();
 
 if (!@modules) {
