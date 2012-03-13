@@ -13,10 +13,10 @@ sub emptydir($) {
     return(@count == 2 ? 1 : 0);
 }
 
-my $module = shift;
+my @modules = @_;
 my $installed = ExtUtils::Installed->new();
 
-if (!$module) {
+if (!@modules) {
     # Find all the installed packages
     print STDERR ("Finding all installed modules...\n");
     foreach my $module (grep(!/^Perl$/, $installed->modules())) {
@@ -24,16 +24,18 @@ if (!$module) {
 	print("$module $version\n");
     }
 } else {
-    print STDERR ("Removal list for $module\n");
-    # Remove all the files
-    foreach my $file (sort($installed->files($module))) {
-	print("rm $file\n");
-    }
-    my $pf = $installed->packlist($module)->packlist_file();
-    print("rm $pf\n");
-    foreach my $dir (sort($installed->directory_tree($module))) {
-	if (emptydir($dir)) {
-	    print("rmdir $dir\n");
+    for my $module (@modules) {
+	print STDERR ("Removal list for $module\n");
+	# Remove all the files
+	foreach my $file (sort($installed->files($module))) {
+	    print("rm $file\n");
+	}
+	my $pf = $installed->packlist($module)->packlist_file();
+	print("rm $pf\n");
+	foreach my $dir (sort($installed->directory_tree($module))) {
+	    if (emptydir($dir)) {
+		print("rmdir $dir\n");
+	    }
 	}
     }
 }
