@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.114 2011/12/12 22:36:26 eserte Exp $
+# $Id: cpan_smoke_modules,v 1.115 2012/03/18 14:16:53 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2007, 2008, 2009, 2011 Slaven Rezic. All rights reserved.
@@ -75,7 +75,6 @@ my @all_perls =
      #'/usr/perl5.12.0t/bin/perl5.12.0', # XXX metabase not installed
      '/usr/perl5.12.3/bin/perl5.12.3',
      #'/usr/perl5.13.9/bin/perl5.13.9',
-     '/usr/perl5.12.3/bin/perl5.14.0',
     );
 
 # No need to blacklist users anymore --- no mails are sent directly anymore.
@@ -525,9 +524,10 @@ if ($save_reports) {
     my $workflow_dir = "$ENV{HOME}/var/cpansmoker";
     my $new_reports_dir = "$workflow_dir/new";
     my $changed_transport = 0;
+    my $new_transport_setting = "transport=File $new_reports_dir\n";
     while(<$ifh>) {
 	if (/^transport\s*=/) {
-	    print $tmpfh "transport=File $new_reports_dir\n";
+	    print $tmpfh $new_transport_setting;
 	    $changed_transport++;
 	} elsif (/^edit_report\s*=/) {
 	    print $tmpfh "edit_report=default:no\n";
@@ -540,7 +540,8 @@ if ($save_reports) {
 	}
     }
     if (!$changed_transport) {
-	die "Could not find transport setting in config.ini";
+	print $tmpfh $new_transport_setting;
+	$changed_transport++;
     }
     close $tmpfh
 	or die "Error while closing: $!";
