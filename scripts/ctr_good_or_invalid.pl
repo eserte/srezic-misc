@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.20 2012/02/20 20:28:53 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.21 2012/03/22 20:32:29 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010,2012 Slaven Rezic. All rights reserved.
@@ -250,6 +250,15 @@ $mw->bind("<Control-q>" => sub { $mw->destroy });
 $mw->bind("<Control-g>" => sub { $good_b->invoke });
 $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $prev_b->invoke });
+
+if ($auto_good) {
+    $mw->repeat(60, sub {
+		    if (!is_user_at_computer()) {
+			warn "User not anymore at computer, quitting...\n";
+			$mw->destroy;
+		    }
+		})
+}
 
 #$mw->FullScreen; # does not work (with fvwm2 only?)
 #$mw->attributes(-fullscreen => 1); # does not work (with fvwm2 only?)
