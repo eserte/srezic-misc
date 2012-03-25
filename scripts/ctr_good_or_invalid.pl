@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.21 2012/03/22 20:32:29 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.22 2012/03/25 17:36:45 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010,2012 Slaven Rezic. All rights reserved.
@@ -276,19 +276,35 @@ sub set_currfile {
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
     my $currfulldist;
     if (open my $fh, $currfile) {
+	my $subject;
+	my $x_test_reporter_perl;
 	while(<$fh>) {
 	    if (/^Subject:\s*(.*)/) {
-		my $subject = $1;
-		my $mw = $more->toplevel;
-		$mw->title("ctr_good_or_invalid: $subject");
+		$subject = $1;
 		if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
 		    $currfulldist = $1;
 		} else {
 		    warn "Cannot parse distribution out of '$subject'";
 		}
+	    } elsif (/^X-Test-Reporter-Perl:\s*(.*)/i) {
+		$x_test_reporter_perl = $1;
+	    } elsif (/^$/) {
 		last;
 	    }
 	}
+
+	my $title = "ctr_good_or_invalid:";
+	if ($subject) {
+	    $title =  " " . $subject;
+	    if ($x_test_reporter_perl) {
+		$title .= " (perl " . $x_test_reporter_perl . ")";
+	    }
+	    my $mw = $more->toplevel;
+	} else {
+	    $title = " (subject not parseable)";
+	}
+	$mw->title($title);
+
 	$modtime = scalar localtime ((stat($currfile))[9]);
     } else {
 	warn "Can't open $currfile: $!";
