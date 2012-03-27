@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.22 2012/03/25 17:36:45 eserte Exp $
+# $Id: ctr_good_or_invalid.pl,v 1.23 2012/03/27 18:41:09 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008-2010,2012 Slaven Rezic. All rights reserved.
@@ -22,6 +22,7 @@ use Getopt::Long;
 
 my $only_good;
 my $auto_good;
+my $only_pass_is_good;
 my $sort_by_date;
 my $reversed;
 my $geometry;
@@ -29,6 +30,7 @@ my $quit_at_end = 1;
 my $do_xterm_title;
 GetOptions("good" => \$only_good,
 	   "auto-good" => \$auto_good,
+	   "only-pass-is-good" => \$only_pass_is_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
 		   $sort_by_date = 1;
@@ -86,10 +88,12 @@ if (!-d $undecided_directory) {
     mkdir $undecided_directory or die "While creating $undecided_directory: $!";
 }
 
+my $good_rx = $only_pass_is_good ? qr{/(pass)\.} : qr{/(pass|unknown|na)\.};
+
 my @new_files;
 # pass, na, unknown are always good:
 for my $file (@files) {
-    if ($file =~ m{/(pass|unknown|na)\.}) {
+    if ($file =~ $good_rx) {
 	move $file, $good_directory
 	    or die "Cannot move $file to $good_directory: $!";
     } else {
