@@ -1555,6 +1555,8 @@ correctly.
 L<CGI> has limited support for URI handling through the url() and
 query_string() functions and the new() constructor.
 
+L<URI::Query> handles just the querystring part.
+
 =head2 Apache/mod_perl support
 
 =head3 Compression
