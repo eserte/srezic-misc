@@ -1013,10 +1013,10 @@ code.
 
 =head2 Parsers
 
-See
-L<http://sourceforge.net/docman/display_doc.php?docid=27420&group_id=133629>
-about a comparison between L<Parse::RecDescent>, L<Parse::Yapp>, and
-Perl-byacc.
+L<Marpa::XS> is a parser for grammars which can be written in BNF.
+
+See L<http://egparser.sourceforge.net/> about a comparison between
+L<Parse::RecDescent>, L<Parse::Yapp>, and Perl-byacc.
 
 =head2 CRC
 
