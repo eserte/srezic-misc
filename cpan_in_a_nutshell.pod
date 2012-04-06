@@ -690,6 +690,14 @@ L<http://cpanratings.perl.org/dist/IO-String> for a rating which
 compares IO::String and IO::Scalar (where the former seems to be
 better than the latter).
 
+=head2 Compression
+
+=head3 gzip
+
+L<PerlIO::gzip> and L<PerlIO::via::gzip> both provide transparent gzip
+compression and decompression while reading from/writing to file
+handles.
+
 =head1 File Name Systems Locking
 
 =head2 File type detection
