@@ -982,20 +982,34 @@ L<http://www.mail-archive.com/sw-design@metaperl.com/msg00115.html>.
 
 L<ExtUtils::MakeMaker> is the old-fashioned standard way of building
 perl modules and applications. Unfortunately it depends on the
-existance of a C<make> tool on the system, so there's now a pure-perl
-solution in the beginnings: L<Module::Build>.
+existance of a C<make> tool on the system. For a pure-perl
+build system try L<Module::Build>.
+
+L<Module::Install> is a build description system which provides a nice
+DSL and is extensible using plugins. It's self-contained;
+distributions are expected to ship C<Module::Install> and all
+dependencies. Under the hood it is using L<ExtUtils::MakeMaker> and
+relies on a C<make> tool.
 
 A C<make> replacement as a perl module: L<Make>, together with a
 command line tool C<pmake>.
 
 L<Commands::Guarded> is an interesting module for guarded execution of
-commands (better description!).
+commands (XXX better description!).
 
 L<PANT> is meant as an C<ant> replacement to help to automate a build
 environment. It is usually used as a meta script which calls external
 C<make> commands and has some built-ins like NewerFile, CopyFile etc.
 
 L<Cons> is a make replacement. Cons files are written in pure perl.
+
+L<Slay::Makefile> provides a make variant called C<slaymake> which can
+run both shell commands and perl code.
+
+L<Parallel::Depend> is a dependency system which has a focus on
+parallel execution. It provides also a dependency system which looks
+remotely like a makefile. It's able to run both shell comands and perl
+code.
 
 =head2 Parsers
 
