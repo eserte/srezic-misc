@@ -2,10 +2,10 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.10 2010/09/03 20:48:26 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.11 2012/04/09 12:03:58 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -62,9 +62,29 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
 				      ],
 		   );
     }
-    my $r = Test::Reporter->new(@tr_args)->read($process_file);
+    my $r = Test::Reporter->new(@tr_args);
+
+    # XXX Another TR bug: should not set these two by default
+    # XXX see also below
+    undef $r->{_perl_version}->{_archname};
+    undef $r->{_perl_version}->{_osvers};
+
+    $r->read($process_file);
+
     # XXX fix t::r bug?
+    # XXX Still problematic in current TR versions using Metabase?
     $r->{_subject} =~ s{\n}{}g;
+
+    # XXX 2nd half on another TR bug: set the correct values for
+    # _archname and _osvers
+    {
+	use Config::Perl::V ();
+	my $perlv = $r->{_perl_version}->{_myconfig};
+	my $config = Config::Perl::V::summary(Config::Perl::V::plv2hash($perlv));
+	$r->{_perl_version}->{_archname} = $config->{archname};
+	$r->{_perl_version}->{_osvers} = $config->{osvers};
+    }
+
     $r->send or
 	die "Something failed in $process_file: " . $r->errstr . ". Stop.\n";
     my $done_file = $done_dir . "/" . basename($file);
