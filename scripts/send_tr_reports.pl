@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.11 2012/04/09 12:03:58 eserte Exp $
+# $Id: send_tr_reports.pl,v 1.12 2012/04/09 15:53:50 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2008,2012 Slaven Rezic. All rights reserved.
@@ -65,6 +65,7 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
     my $r = Test::Reporter->new(@tr_args);
 
     # XXX Another TR bug: should not set these two by default
+    # See https://rt.cpan.org/Ticket/Display.html?id=76447
     # XXX see also below
     undef $r->{_perl_version}->{_archname};
     undef $r->{_perl_version}->{_osvers};
@@ -77,6 +78,7 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
 
     # XXX 2nd half on another TR bug: set the correct values for
     # _archname and _osvers
+    # See https://rt.cpan.org/Ticket/Display.html?id=76447
     {
 	use Config::Perl::V ();
 	my $perlv = $r->{_perl_version}->{_myconfig};
