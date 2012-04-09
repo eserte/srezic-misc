@@ -1069,6 +1069,18 @@ should-condition.
 
 =head2 Geo modules
 
+=head3 Distance calculation
+
+The core module L<Math::Trig> has a C<<great_circle_distance>> function.
+
+L<Geo::Distance> offers a couple of different algorithms for distance
+calculation. L<Geo::Distance::XS> is a faster XS implementation of
+this module.
+
+L<GIS::Distance> also offers different algorithms for distance
+calculation. The returned values are objects here.
+L<GIS::Distance::Fast> is a faster XS implementation of this module.
+
 =head3 Geocoding
 
 L<Geo::Coder::Google> is an interface to the Google Geocoding API. It
