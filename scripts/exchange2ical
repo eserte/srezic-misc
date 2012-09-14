@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+our $VERSION = 0.001;
+
+use Data::ICal qw();
+use Data::ICal::Entry::Event qw();
+use Date::ICal qw();
+use Date::Parse qw(str2time);
+use Email::MIME qw();
+
+my $file = shift
+    or die "Please specify file with exchange mail";
+
+my $message = do {
+    open my $fh, $file or die $!;
+    local $/;
+    <$fh>;
+};
+my $mime = Email::MIME->new($message);
+my $subject = $mime->header('subject');
+my $body;
+for my $part ($mime->parts) {
+    if ($part->content_type =~ m{text/plain}) {
+	$body = $part->body;
+	last;
+    }
+}
+
+if (!defined $body) {
+    die "Cannot parse text/plain part out of mail";
+}
+
+if ($body !~ m{When:\s+([^-]+)-([^.]+)}) {
+    die "Cannot parse time out of '$body'";
+}
+my($from_date, $until_time) = ($1, $2);
+my $from_epoch = str2time($from_date);
+$from_epoch or die "Can't parse date from $from_date";
+
+(my $to_date = $from_date) =~ s{\S+\s+\S+$}{$until_time};
+my $to_epoch = str2time($to_date);
+$to_epoch or die "Can't parse date from $to_date";
+
+my $vevent = Data::ICal::Entry::Event->new;
+$vevent->add_properties(
+			summary => $subject,
+			description => $body,
+			dtstart => Date::ICal->new(epoch => $from_epoch)->ical,
+			dtend   => Date::ICal->new(epoch => $to_epoch)->ical,
+		       );
+
+my $calendar = Data::ICal->new;
+$calendar->add_entry($vevent);
+
+binmode STDOUT, ":utf8";
+print $calendar->as_string;
+
+__END__
+
+=head1 NAME
+
+exchange2ical
+
+=head1 HOWTO
+
+Save the email containing the exchange event in your mail program.
+iceape/seamonkey is just creating a file with the .eml suffix.
+
+Run exchange2ical together with ical2org, which may automatically add
+the entry to a section in a org-mode file:
+
+    ~/work2/srezic-misc/scripts/exchange2ical /tmp/the_email.eml | ~/work2/srezic-misc/scripts/ical2org -add ~/work/drafts/slavenr/TODO/Termine
+
+=head1 AUTHOR
+
+Slaven Rezic <slaven@rezic.de>
+
+=cut
+
+# Local Variables:
+# mode: cperl
+# cperl-indent-level: 4
+# indent-tabs-mode: nil
+# End:
+# vim:sw=4:ts=8:sta:et
