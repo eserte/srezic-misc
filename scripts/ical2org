@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.20 2011/07/01 15:43:41 eserte Exp $
+# $Id: ical2org,v 1.21 2012/09/14 11:01:16 eserte Exp $
 # Author: Slaven Rezic
 #
 # Copyright (C) 2009,2010 Slaven Rezic. All rights reserved.
@@ -128,7 +128,8 @@ for my $file (@ARGV) {
 	my $orgstring = $itemstart . $summary . ($begin ? " $begin" : "") . ($end ? "--$end" : "") . "\n";
 	my $leadingspace = " "x length($itemstart);
 	if (defined $description) {
-	    $orgstring .= join("", map { $leadingspace . $_ . "\n" } split /\\n/, $description);
+	    # XXX some systems create \\n, some create just \n ...
+	    $orgstring .= join("", map { $leadingspace . $_ . "\n" } split /(?:\\n|\n)/, $description);
 	}
 	for my $attendee (@attendees) {
 	    $orgstring .= $leadingspace . "* " . $attendee . "\n";
