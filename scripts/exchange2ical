@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-our $VERSION = 0.001;
+our $VERSION = 0.002;
 
 use Data::ICal qw();
 use Data::ICal::Entry::Event qw();
@@ -20,6 +20,8 @@ my $message = do {
 };
 my $mime = Email::MIME->new($message);
 my $subject = $mime->header('subject');
+my $from = $mime->header('from');
+my @to = split /,\s*/, $mime->header('to');
 my $body;
 for my $part ($mime->parts) {
     if ($part->content_type =~ m{text/plain}) {
@@ -43,10 +45,15 @@ $from_epoch or die "Can't parse date from $from_date";
 my $to_epoch = str2time($to_date);
 $to_epoch or die "Can't parse date from $to_date";
 
+my $description = "$body\nFrom: $from\nTo:\n";
+for my $to (@to) {
+    $description .= "* $to\n";
+}
+
 my $vevent = Data::ICal::Entry::Event->new;
 $vevent->add_properties(
 			summary => $subject,
-			description => $body,
+			description => $description,
 			dtstart => Date::ICal->new(epoch => $from_epoch)->ical,
 			dtend   => Date::ICal->new(epoch => $to_epoch)->ical,
 		       );
