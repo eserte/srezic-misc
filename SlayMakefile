@@ -1,7 +1,3 @@
-#
-# $Id: SlayMakefile,v 1.23 2010/09/14 20:24:52 eserte Exp $
-#
-
 {
     package MyPH;
     use base 'Pod::Simple::HTML';
