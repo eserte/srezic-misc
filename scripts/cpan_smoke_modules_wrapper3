@@ -16,7 +16,7 @@ my $do_special;
 
 my $skip_update;
 
-my $use_pause = 1; # cpantesters.org should be good enough # 2012-08-06: missing files, switch to PAUSE
+my $use_pause = 0; # cpantesters.org should be good enough # 2012-08-06: missing files, switch to PAUSE # 2012-10-19 switch to cpantesters.org again
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
