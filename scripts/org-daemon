@@ -22,22 +22,24 @@ use Tk qw(tkinit Ev MainLoop);
 
 {
     package Emacs::Org::Daemon::Date;
-    use Scalar::Util qw(weaken);
     sub new {
 	my($class, %args) = @_;
-	my $self = bless {%args}, $class;
-	if (exists $self->{real_date}) {
-	    weaken $self->{real_date};
-	}
-	$self;
+	bless {%args}, $class;
     }
     sub id {
 	my $self = shift;
-	$self->{text} . $self->is_early_warning;
+	join '|', $self->{text}, $self->{date};
     }
-    sub is_early_warning {
+    sub state {
 	my $self = shift;
-	!!$self->{real_date};
+	my $now = time;
+	if ($now >= $self->{epoch}) {
+	    'due';
+	} elsif (defined $self->{early_warning_epoch} && $now >= $self->{early_warning_epoch}) {
+	    'early';
+	} else {
+	    'wait';
+	}
     }
 }
 
@@ -51,8 +53,9 @@ GetOptions("d|debug!" => \$debug,
 
 my %open_warning;
 my %org_files;
-my %alarmed;
-my %pre_alarm_windows;
+my %window_for_date;    # ($date_id -> $tk_window), for a (maybe) currently display date
+my %seen_early_warning; # ($date_id -> 1)
+my %seen_due_date;      # ($date_id -> 1)
 my @lb_contents;
 {
     my @org_files = @ARGV;
@@ -132,9 +135,7 @@ sub tk_do_one_iteration {
 	update_lb();
     }
 
-    if (check_for_alarms()) {
-	update_lb();
-    }
+    check_for_alarms();
 
     colorize_entries();
 }
@@ -143,11 +144,7 @@ sub update_lb {
     $lb->delete(0, "end");
     @lb_contents = ();
     my @dates = map { @{ $_->{dates} } } values %org_files;
-    @dates =
-	grep { !$alarmed{$_->id} }
-	    sort { $a->{epoch} <=> $b->{epoch} }
-		grep { !$_->{early_warning} }
-		    @dates;
+    @dates = sort { $a->{epoch} <=> $b->{epoch} } @dates;
     if (!@dates) {
 	$lb->insert("end", "<no dates>");
     } else {
@@ -175,52 +172,66 @@ sub colorize_entries {
 }
 
 sub check_for_alarms {
-    my $changes = 0;
-    my %seen;
+    my %active;
     my @dates = map { @{ $_->{dates} } } values %org_files;
     my $date_i = -1;
     for my $date (@dates) {
 	$date_i++;
-	$seen{$date->id}++;
-	if ($date->{epoch} <= time && !$alarmed{$date->id}) {
-	    my $real_date = ($date->is_early_warning
-			     ? $date->{real_date}
-			     : undef
-			    );
-	    my %colargs    = (-background => ($real_date ? 'orange' : 'red'),
-			      -foreground => ($real_date ? 'black'  : 'white'),
+	my $date_id = $date->id;
+	$active{$date_id} = 1;
+	my $date_state = $date->state;
+	if ($date_state =~ m{^(early|due)$}) {
+	    my $is_early_warning = $date_state eq 'early';
+	    my $t = $window_for_date{$date_id};
+	    if ($t && Tk::Exists($t)) {
+		next if $t->{DateState} eq $date_state; # nothing changed
+	    }
+	    if ($date_state eq 'early') {
+		if ($seen_early_warning{$date_id}) {
+		    next; # user already saw the early warning and clicked it away, don't redisplay
+		} else {
+		    $seen_early_warning{$date_id} = 1;
+		}
+	    } elsif ($date_state eq 'due') {
+		if ($seen_due_date{$date_id}) {
+		    next;
+		} else {
+		    $seen_due_date{$date_id} = 1;
+		}
+	    }
+
+	    my %colargs    = (
+			      -background => ($is_early_warning ? 'orange' : 'red'),
+			      -foreground => ($is_early_warning ? 'black'  : 'white'),
 			     );
 	    my %smlbtnargs = (-font => $small_font);
-	    my %t_args = (-title => ($real_date ? "Early Warning" : "Alarm!"),
+	    my %t_args = (
+			  -title => ($is_early_warning ? "Early Warning" : "Alarm!"),
 			  %colargs,
 			 );
-	    my $t;
-	    if ($date && Tk::Exists($pre_alarm_windows{$date})) {
-		# propagate a pre-alarm window into a real one
-		$t = $pre_alarm_windows{$date};
+
+	    if ($t && Tk::Exists($t)) {
+		# something changed: early -> due
 		$t->configure(%t_args);
 		$_->destroy for $t->children;
 		$t->{OverflowCounter}->cancel;
-		delete $pre_alarm_windows{$date};
 		$t->deiconify;
 		$t->raise;
-		$t->{DateId} = $date->id;
+		$t->{DateState} = $date_state;
 	    } else {
 		$t = $mw->Toplevel(%t_args);
-		if ($real_date) {
-		    $pre_alarm_windows{$real_date} = $t;
-		}
 		$t->bind($_ => sub { $t->destroy })
 		    for ('<Escape>', '<Control-q>');
-		$t->{DateId} = $date->id;
+		$t->{DateId} = $date_id;
+		$t->{DateState} = $date_state;
 	    }
-	    $t->Label(-text => (($real_date ? "Early warning:\n" : "")
+	    $t->Label(-text => (($is_early_warning ? "Early warning:\n" : "")
 				. $date->{text}),
 		      -justify => 'left',
 		      -font => 'sans 24',
 		      %colargs,
 		     )->pack(qw(-fill x -expand 1));
-	    my $overflow = ($real_date ? "" : "+00:00");
+	    my $overflow = ($is_early_warning ? "" : "+00:00");
 	    $t->Label(-textvariable => \$overflow,
 		      -justify => 'right',
 		      -anchor => 'e',
@@ -234,10 +245,10 @@ sub check_for_alarms {
 		       -padx => 1, -pady => 1,
 		       %colargs, %smlbtnargs,
 		      )->pack(qw(-side left));
-	    if ($real_date) {
+	    if ($is_early_warning) {
 		$t->{OverflowCounter} =
 		    $t->repeat(1000, sub {
-				   my $diff = $real_date->{epoch} - time;
+				   my $diff = $date->{epoch} - time;
 				   if ($diff <= 0) { # may happen if the original date was deleted
 				       $t->{OverflowCounter}->cancel;
 				       $overflow = "";
@@ -246,10 +257,11 @@ sub check_for_alarms {
 				   }
 			       });
 	    } else {
-		$t->repeat(1000, sub {
-			       my $diff = time - $date->{epoch};
-			       $overflow = sprintf "+%02d:%02d", int($diff/60), $diff%60;
-			   });
+		$t->{OverflowCounter} =
+		    $t->repeat(1000, sub {
+				   my $diff = time - $date->{epoch};
+				   $overflow = sprintf "+%02d:%02d", int($diff/60), $diff%60;
+			       });
 	    }
 
 	    $Tk::platform = $Tk::platform; # peacify -w
@@ -266,25 +278,18 @@ sub check_for_alarms {
 	    eval { $t->attributes(-topmost => 1) };
 	    warn $@ if $@;
 
-	    $alarmed{$date->id} = 1;
-	    $changes++;
+	    $window_for_date{$date_id} = $t;
 	}
     }
 
-    # cleanup all dates
-    for my $id (keys %alarmed) {
-	if (!$seen{$id}) {
-	    delete $alarmed{$id};
-	}
-    }
-
+    # Cleanup outdated windows (not existing or very old dates)
     {
 	my @destroy_w;
 	$mw->Walk(sub {
 		      my $w = shift;
 		      if ($w->isa('Tk::Toplevel')) {
 			  my $date_id = $w->{DateId};
-			  if ($date_id && !$seen{$date_id}) {
+			  if ($date_id && !$active{$date_id}) {
 			      push @destroy_w, $w;
 			  }
 		      }
@@ -292,7 +297,14 @@ sub check_for_alarms {
 	$_->destroy for @destroy_w;
     }
 
-    $changes;
+    # cleanup data structures
+    for my $ref (\%window_for_date, \%seen_early_warning, \%seen_due_date) {
+	while(my($k) = each %$ref) {
+	    if (!$active{$k}) {
+		delete $ref->{$k};
+	    }
+	}
+    }
 }
 
 sub check_for_updates {
@@ -414,7 +426,7 @@ sub find_dates_in_org_file {
 	    my($Y,$M,$D) = $date =~ m{^(\d{4})-(\d{2})-(\d{2})};
 	    my($h,$m) = $time =~ m{^(\d{1,2}):(\d{2})};
 	    my $epoch = timelocal(0,$m,$h,$D,$M-1,$Y);
-	    if ($epoch >= time) {
+	    if ($epoch >= time - 86400) { # we also collect also dates, just in case they are still displayed; also the early warning time is not considered here
 		my $text;
 		if (defined $last_item) {
 		    if ($last_item ne $textline) {
@@ -432,8 +444,6 @@ sub find_dates_in_org_file {
 				   file  => $file,
 				   line  => $linenumber,
 				  );
-		my $date = Emacs::Org::Daemon::Date->new(%date_params);
-		push @dates, $date;
 
 		my $early_warning;
 		if ($head_warning) {
@@ -443,14 +453,17 @@ sub find_dates_in_org_file {
 		    $early_warning = $default_early_warning;
 		}
 		if ($early_warning > 0) {
-		    # the early warning:
-		    push @dates,
-			Emacs::Org::Daemon::Date->new
-				(%date_params,
-				 epoch => $epoch - $early_warning,
-				 early_warning => 1,
-				 real_date => $date,
-				);
+		    $date_params{early_warning_epoch} = $epoch - $early_warning;
+		}
+
+		my $date = Emacs::Org::Daemon::Date->new(%date_params);
+		my $date_state = $date->state;
+		if (
+		    ($date_state eq 'due' && $window_for_date{$date->id} && Tk::Exists($window_for_date{$date->id}))
+		    ||
+		    $date_state =~ m{^(wait|early)}
+		   ) {
+		    push @dates, $date;
 		}
 	    }
 	}
