@@ -41,6 +41,14 @@ use Tk qw(tkinit Ev MainLoop);
 	    'wait';
 	}
     }
+    sub formatted_text {
+	my $self = shift;
+	(my $formatted_text = $self->{text}) =~ s{\t}{ }g;
+	$formatted_text =~ s{^\*+}{};
+	$formatted_text =~ s{^\s+}{};
+	$formatted_text =~ s{^(TODO|DONE|WAITING|WONTFIX|LATER)\s+}{};
+	$formatted_text;
+    }
 }
 
 my $small_font = 'sans 8';
@@ -149,8 +157,7 @@ sub update_lb {
 	$lb->insert("end", "<no dates>");
     } else {
 	for my $date (@dates) {
-	    (my $formatted_text = $date->{text}) =~ s{\t}{ }g;
-	    $lb->insert("end", $formatted_text);
+	    $lb->insert("end", $date->formatted_text);
 	    push @lb_contents, $date;
 	}
     }
@@ -226,7 +233,7 @@ sub check_for_alarms {
 		$t->{DateState} = $date_state;
 	    }
 	    $t->Label(-text => (($is_early_warning ? "Early warning:\n" : "")
-				. $date->{text}),
+				. $date->formatted_text),
 		      -justify => 'left',
 		      -font => 'sans 24',
 		      %colargs,
