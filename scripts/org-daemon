@@ -204,6 +204,7 @@ sub check_for_alarms {
 		delete $pre_alarm_windows{$date};
 		$t->deiconify;
 		$t->raise;
+		$t->{DateId} = $date->id;
 	    } else {
 		$t = $mw->Toplevel(%t_args);
 		if ($real_date) {
@@ -211,6 +212,7 @@ sub check_for_alarms {
 		}
 		$t->bind($_ => sub { $t->destroy })
 		    for ('<Escape>', '<Control-q>');
+		$t->{DateId} = $date->id;
 	    }
 	    $t->Label(-text => (($real_date ? "Early warning:\n" : "")
 				. $date->{text}),
@@ -274,6 +276,20 @@ sub check_for_alarms {
 	if (!$seen{$id}) {
 	    delete $alarmed{$id};
 	}
+    }
+
+    {
+	my @destroy_w;
+	$mw->Walk(sub {
+		      my $w = shift;
+		      if ($w->isa('Tk::Toplevel')) {
+			  my $date_id = $w->{DateId};
+			  if ($date_id && !$seen{$date_id}) {
+			      push @destroy_w, $w;
+			  }
+		      }
+		  });
+	$_->destroy for @destroy_w;
     }
 
     $changes;
