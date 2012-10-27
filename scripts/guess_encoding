@@ -23,6 +23,7 @@ my %expected_codepoints_groups = (
 				  space     => [9, 10, 13], # newlines+tab
 				  ascii     => [32..127],
 				  german    => [map { ord } split //, "äöüÄÖÜß"],
+				  french    => [map { ord } split //, "àéèâêîôûù"],
 				  eurosign  => [0x20ac],
 				  hiragana  => [0x3040..0x309f],
 				  katakana  => [0x30a0..0x30ff],
@@ -37,9 +38,13 @@ my %expected_codepoints_groups = (
 my @expected_encodings;
 
 my @expected_codepoints_groups;
+my $v;
+my $short;
 GetOptions(
 	   "encodings=s{1,}" => \@expected_encodings,
 	   "codepoints=s{1,}" => \@expected_codepoints_groups,
+	   "short" => \$short,
+	   "v" => \$v,
 	  ) or die <<EOF;
 usage: $0 --codepoints ... ... -- file
 EOF
@@ -100,8 +105,50 @@ for my $encoding (@expected_encodings) {
 }
 
 @encoding_result = sort { $b->[1] <=> $a->[1] } @encoding_result;
-for my $result (@encoding_result) {
-    printf "%-30s: %4.1f%%\n", $result->[0], $result->[1];
+if ($short) {
+    my @perfect;
+    for (@encoding_result) {
+	if ($_->[1] == 100) {
+	    push @perfect, $_->[0];
+	    last if @perfect >= 10;
+	}
+    }
+    if (@perfect) {
+	print "@perfect\n";
+	exit 0;
+    } else {
+	print "???\n";
+	exit 1;
+    }
+} else {
+    for my $result (@encoding_result) {
+	printf "%-30s: %4.1f%%\n", $result->[0], $result->[1];
+    }
+}
+
+# XXX need refactoring, less duplication of code!
+if ($v) {
+    if (@encoding_result) {
+	my $encoding = $encoding_result[0]->[0];
+	my $characters = eval {
+	    decode($encoding, $octets_to_analyze, Encode::FB_CROAK|Encode::LEAVE_SRC);
+	};
+	if (!$@) {
+	    my %got_codepoints;
+	    for my $codepoint (map { ord } split //, $characters) {
+		$got_codepoints{$codepoint}++;
+	    }
+	    require charnames;
+	    print "Missing:\n";
+	    while(my($k,$v) = each %got_codepoints) {
+		if (!exists $expected_codepoints{$k}) {
+		    print $k, " ", charnames::viacode($k), "\n";
+		}
+	    }
+	} else {
+	    warn "hmm, nothing for '$encoding'";
+	}
+    }
 }
 
 __END__
