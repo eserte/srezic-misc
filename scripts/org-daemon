@@ -444,6 +444,9 @@ sub find_dates_in_org_file {
 		} else {
 		    $text = $textline;
 		}
+		if ($text =~ m{^\*+\s+(?:DONE|WONTFIX)\b}) {
+		    next; # ignore DONE and WONTFIX items
+		}
 		my %date_params = (epoch => $epoch,
 				   date  => $date,
 				   time  => $time,
