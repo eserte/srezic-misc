@@ -256,7 +256,7 @@ $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $prev_b->invoke });
 
 if ($auto_good) {
-    $mw->repeat(60, sub {
+    $mw->repeat(2*1000, sub {
 		    if (!is_user_at_computer()) {
 			warn "User not anymore at computer, quitting...\n";
 			$mw->destroy;
