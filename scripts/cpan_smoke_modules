@@ -303,6 +303,7 @@ if (!@perls) {
 	my @all_perl_defs;
 
 	my $latest_blead;
+	my $max_stable_perl_ver;
 	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
 	    next if !-x $candidate;
 	    if (my($ver, $minor) = $candidate =~ m{/perl(5\.(\d+)\.\d+)}) {
@@ -312,6 +313,9 @@ if (!@perls) {
 		    push @all_perl_defs, ["/usr/perl$ver/bin/perl$ver", $safe_ver];
 		} elsif (!$is_devel) {
 		    push @all_perl_defs, [$candidate, $safe_ver];
+		    if (!$max_stable_perl_ver || $max_stable_perl_ver < $safe_ver) {
+			$max_stable_perl_ver = $safe_ver;
+		    }
 		} else {
 		    if (!$latest_blead || $latest_blead->[1] < $safe_ver) {
 			$latest_blead = [$candidate, $safe_ver];
@@ -320,9 +324,13 @@ if (!@perls) {
 	    }
 	}
 
-	# Only one blead to test
+	# Test blead only if it's newer than the newest stable perl
 	if ($latest_blead) {
-	    push @all_perl_defs, $latest_blead;
+	    if ($max_stable_perl_ver && $max_stable_perl_ver > $latest_blead->[1]) {
+		warn "Don't test $latest_blead->[0] --- $latest_blead->[1] < $max_stable_perl_ver...";
+	    } else {
+		push @all_perl_defs, $latest_blead;
+	    }
 	}
 
 	# Newest first
