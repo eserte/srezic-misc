@@ -13,13 +13,6 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
-# Obsolete comments:
-#   On FreeBSD:
-#     kldload snp
-#     sudo watch p2 | idlechecker.pl
-#   On Linux:
-#     Use snoop? http://sourceforge.net/projects/snoop/
-
 use strict;
 use File::Spec;
 use IO::Select;
