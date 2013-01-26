@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: org-daemon,v 1.25 2012/09/20 14:30:48 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2009 Slaven Rezic. All rights reserved.
+# Copyright (C) 2009,2013 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -53,11 +52,26 @@ use Tk qw(tkinit Ev MainLoop);
 
 my $small_font = 'sans 8';
 my $default_early_warning = 30*60;
+my $recheck_interval;
 my $debug;
-GetOptions("d|debug!" => \$debug,
+GetOptions(
+	   "d|debug!" => \$debug,
+	   "recheck-interval=i" => \$recheck_interval,
 	   "early-warning=i" => \$default_early_warning,
+	   "small-font=s" => \$small_font,
 	  )
-    or die "$0 [--debug] [--early-warning=seconds] orgfile ...";
+    or die "$0 [--debug] [--early-warning=seconds] [--recheck-interval=seconds] orgfile ...";
+
+if (!$recheck_interval) {
+    if ($debug) {
+	$recheck_interval = 3;
+    } else {
+	$recheck_interval = 60;
+    }
+}
+if ($recheck_interval < 1) {
+    die "Invalid --recheck-interval, must be 1 second or larger.\n";
+}
 
 my %open_warning;
 my %org_files;
@@ -90,20 +104,20 @@ $lb->Button(-padx => 0, -pady => 0, -borderwidth => 1,
 	   )->place(-relx => 1, -rely => 1, -anchor => 'se');
 
 tk_do_one_iteration();
-if ($debug) {
-    $lb->repeat(3*1000, sub { tk_do_one_iteration() });
-} else {
-    # synchronize with full minute
+if ($recheck_interval == 60) {
+    # synchronize with full minute, only implemented for recheck_interval=60
     my(@l) = localtime;
-    my $first_delay = 60 - $l[0];
+    my $first_delay = $recheck_interval - $l[0];
     if ($first_delay) {
 	$lb->after($first_delay*1000, sub {
 		       tk_do_one_iteration();
-		       $lb->repeat(60*1000, sub { tk_do_one_iteration() });
+		       normal_repeater();
 		   });
     } else {
-	$lb->repeat(60*1000, sub { tk_do_one_iteration() });
+	normal_repeater();
     }
+} else {
+    normal_repeater();
 }
 
 $mw->protocol('WM_DELETE_WINDOW', sub {
@@ -119,6 +133,10 @@ $mw->protocol('WM_DELETE_WINDOW', sub {
 
 #$mw->WidgetDump;
 MainLoop;
+
+sub normal_repeater {
+    $lb->repeat($recheck_interval*1000, sub { tk_do_one_iteration() });
+}
 
 sub show_date_by_index_in_emacs {
     my($index) = @_;
@@ -520,7 +538,7 @@ org-daemon - watch for appointments in org-mode files
 
 =head1 SYNOPSIS
 
-    org-daemon [--debug] [--early-warning=seconds] orgfile ... &
+    org-daemon [--debug] [--early-warning=seconds] [--recheck-interval=seconds] orgfile ... &
 
 =head1 DESCRIPTION
 
@@ -532,17 +550,22 @@ org-mode files for appointments, that is, entries in the form of C<<
 
 =over
 
-=item --debug
-
-Turn on debugging mode. Currently this means: do not iconify
-appointment list by default, and check every 3 seconds instead every
-60 seconds.
-
 =item --early-warning=I<seconds>
 
 There's an warning before the real alarm 30 minutes (1800 seconds)
 before. This option can be used to change this period. Use 0 to turn
 early warnings off completely.
+
+=item --recheck-interval=I<seconds>
+
+Set the interval for checking the specified org-mode files for
+changes. By default, B<org-daemon> checks every 60 seconds.
+
+=item --debug
+
+Turn on debugging mode. Currently this means: do not iconify
+appointment list by default, and check every 3 seconds instead every
+60 seconds.
 
 =back
 
@@ -550,8 +573,8 @@ early warnings off completely.
 
 =over
 
-=item * Watch all given files periodically every minute (or in
-C<-debug> mode every three seconds)
+=item * Watch all given files periodically every minute (or the
+interval as given with the C<--recheck-interval> switch).
 
 =item * Iconified list of next appointments, with entries in different
 colors (red for appointments in near future, over orange and yellow to
