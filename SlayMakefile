@@ -23,11 +23,11 @@
 }
 
 
-all: permissions cpan_in_a_nutshell/cpan_in_a_nutshell.html
+all: permissions
 
-cpan_in_a_nutshell/cpan_in_a_nutshell.html: cpan_in_a_nutshell/cpan_in_a_nutshell.pod SlayMakefile
+/tmp/cpan_in_a_nutshell.html: cpan_in_a_nutshell/cpan_in_a_nutshell.pod SlayMakefile
 	{
-	    MyPH->parse_from_file("cpan_in_a_nutshell/cpan_in_a_nutshell.pod", "cpan_in_a_nutshell/cpan_in_a_nutshell.html");
+	    MyPH->parse_from_file("cpan_in_a_nutshell/cpan_in_a_nutshell.pod", "/tmp/cpan_in_a_nutshell.html");
 	    "";
 	}
 
