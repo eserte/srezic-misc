@@ -1130,12 +1130,18 @@ L<Weather::Underground> does not need an API key, seems to still work,
 and has data for international locations. It provides current weather
 conditions, no forecast, sunrise/sunset and moonrise/moonset data.
 
+L<Geo::METAR> parses METAR weather data. It does not do fetching at
+all. A sample source for METAR data is
+L<http://weather.noaa.gov/cgi-bin/mgetmetar.pl?cccc=I<$ICAO>> (put in
+an icao airport code).
+
 =head4 Non-working modules
 
 L<Weather::Com>: the Pod says "Note that weather.com is retiring the
 XML Data Feed."
 
-L<Weather::Google> seems to be not working anymore. See
+L<Weather::Google> does not work anymore, because Google ceased the
+iGoogle weather API. See
 L<https://rt.cpan.org/Ticket/Display.html?id=79260>.
 
 L<Geo::Weather> is US centric and does not seem to work anyway. See
@@ -1145,6 +1151,40 @@ L<http://search.cpan.org/perldoc?weather> looks like a convenient
 script, but unfortunately the location data is stored in the script
 itself, and there does not seem to be a way how to change this from
 cmdline.
+
+=head4 Unknown status
+
+There are more modules dealing with weather. These are all untested:
+
+=over
+
+=item * L<Weather::WWO>
+
+=item * L<WebService::Livedoor::Weather>
+
+=item * L<Weather::NOAA::GFS>
+
+=item * L<Weather::Airport>
+
+=item * L<Geo::WeatherNWS>
+
+=item * L<Geo::WeatherNOAA>
+
+=item * L<WWW::Weather::Yahoo>
+
+Test is failing, so probably does not work anymore
+
+=item * L<WWW::Wunderground::API>
+
+=item * L<Weather::YR>
+
+Maybe the API is no longer active? See L<https://rt.cpan.org/Ticket/Display.html?id=82048>.
+
+=item * L<Weather::NWS::NDFDgen>
+
+Module needs probably a URL update, see L<https://rt.cpan.org/Ticket/Display.html?id=71371>.
+
+=back
 
 =head2 Terminal input
 
