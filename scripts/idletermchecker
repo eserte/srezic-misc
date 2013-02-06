@@ -418,9 +418,9 @@ sub check_tk {
 	    my $age = time-$mtime;
 	    if ($age >= $use_timeout) {
 		push @timeouted, $terminal;
-		$age{$terminal} = $age;
-		$age_l{$terminal}->configure(-text => $age);
 	    }
+	    $age{$terminal} = $age;
+	    $age_l{$terminal}->configure(-text => $age);
 	}
 
 	my %timeouted = map{($_,1)} @timeouted;
