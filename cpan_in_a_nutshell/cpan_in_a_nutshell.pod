@@ -1083,23 +1083,30 @@ L<GIS::Distance::Fast> is a faster XS implementation of this module.
 
 =head3 Geocoding
 
-L<Geo::Coder::Google> is an interface to the Google Geocoding API. It
-requires an API key, which has restrictions on its usage. Results
-seems to be good, at least for the Germany area.
+L<Geo::Coder::Google> is an interface to the Google Geocoding API.
+Results seems to be good, at least for the Germany area. There are
+variants for the two API versions L<Geo::Coder::Google::V2> and
+L<Geo::Coder::Google::V3>. There's also an alternative implementation
+for the V3 API only: L<Geo::Coder::Googlev3>.
 
 L<Geo::Coder::GoogleMaps> is a similar module which just uses a
 different interface to the API (JSON instead of XML). The results
 should be of the same quality like L<Geo::Coder::Google>.
 
-L<Geo::Coder::Yahoo> is an interface to the Yahoo Geocoding API. It
-also requires an API key, but there does not seem to be any
-restrictions on usage, unlike the Google API. Results are not that
-good, at least for the Germany area, and there seem to be problems
-with umlauts, so avoid them.
+L<Geo::Coder::PlaceFinder> is a similar to the Yahoo PlaceFinder
+geocoding service. It requires an app id. The previous geocoding
+service was served by L<Geo::Coder::Yahoo>, but the old API was
+shutdown in 2011.
 
 L<Geo::Coder::Bing> is an interface to the geocoding API from
 L<http://www.bing.com>. It does not require any API key. Results seem
 to be good, at least for the Germany area.
+
+L<Geo::Coder::OSM> is another interface an API using OpenStreetMap
+data. No API key is required.
+
+L<Geo::Coder::Cloudmade> is an interface to the Cloudmade API, which
+is using data from the OpenStreetMap project. An API key is required.
 
 L<Geo::Coder::US> is an interface to the free US geo data.
 
@@ -1107,12 +1114,6 @@ L<Geo::Coder::Mapquest> is an interface to the beta Mapquest Geocoding
 Web Service. The service requires an API key. According to the manpage
 of version 0.01, the results are often not good for the US area, and
 there are no results for addresses outside the US.
-
-L<Geo::Coder::Cloudmade> is an interface to the Cloudmade API, which
-is using data from the OpenStreetMap project. An API key is required.
-
-L<Geo::Coder::OSM> is another interface an API using OpenStreetMap
-data. No API key is required.
 
 =head3 Other
 
