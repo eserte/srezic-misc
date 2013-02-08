@@ -124,6 +124,7 @@ my $strace;
 my $truss;
 my $ktrace;
 my $use_distroprefs = 1;
+my $use_limits = 1;
 my $prefs_dir;
 my $signal_end = 1;
 my $module_printused;
@@ -171,6 +172,7 @@ GetOptions("n" => \$n,
 	   'ktrace=s' => \$ktrace,
 	   'distroprefs!' => \$use_distroprefs,
 	   'prefsdir=s' => \$prefs_dir,
+	   'limits!' => \$use_limits,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=i' => \$min_build_dir_avail,
@@ -193,6 +195,7 @@ usage: $0
      [-strace|-truss|-ktrace file]
      [-[no]signalend] [-moduleprintused]
      [-[no]distroprefs] [-prefsdir ...]
+     [-[no]limits]
      [dist ...]
 
 -i: test and install
@@ -891,34 +894,36 @@ EOF
 	    unshift @cmd, "nice";
 	}
 
-	my $data_limit = 500*1024*1024;
-	my $cputime_limit = 3600*1;
-	my $openfiles_limit = 2048; # the freebsd default is at 22500
-	if (is_in_path("limits") && $^O ne 'MSWin32') {
-	    # on my FreeBSD system, kern.maxfiles is ~ 12000
-	    # -v is needed for FreeBSD 7.x
-	    unshift @cmd, "limits", "-t", $cputime_limit, "-d", $data_limit, "-v", $data_limit, "-n", $openfiles_limit;
-	} elsif (eval { require BSD::Resource; 1 }) {
-	    # Note that limiting in THIS process is not what is
-	    # "correct", but resource limits are inherited by the
-	    # forked processes and such a large data limit is enough
-	    # for the wrapper process, so it works.
-	    #
-	    my $set_limit_if_higher = sub {
-		my($limit, $value, $label) = @_;
-		my $old_limit = BSD::Resource::getrlimit($limit);
-		if (!defined $old_limit || $old_limit == -1) {
-		    if (!BSD::Resource::setrlimit($limit, $value, $value)) {
-			warn "*** WARNING: Could not set resource limit of $label to $value.\n";
+	if ($use_limits) {
+	    my $data_limit = 500*1024*1024;
+	    my $cputime_limit = 3600*1;
+	    my $openfiles_limit = 2048; # the freebsd default is at 22500
+	    if (is_in_path("limits") && $^O ne 'MSWin32') {
+		# on my FreeBSD system, kern.maxfiles is ~ 12000
+		# -v is needed for FreeBSD 7.x
+		unshift @cmd, "limits", "-t", $cputime_limit, "-d", $data_limit, "-v", $data_limit, "-n", $openfiles_limit;
+	    } elsif (eval { require BSD::Resource; 1 }) {
+		# Note that limiting in THIS process is not what is
+		# "correct", but resource limits are inherited by the
+		# forked processes and such a large data limit is enough
+		# for the wrapper process, so it works.
+		#
+		my $set_limit_if_higher = sub {
+		    my($limit, $value, $label) = @_;
+		    my $old_limit = BSD::Resource::getrlimit($limit);
+		    if (!defined $old_limit || $old_limit == -1) {
+			if (!BSD::Resource::setrlimit($limit, $value, $value)) {
+			    warn "*** WARNING: Could not set resource limit of $label to $value.\n";
+			}
 		    }
-		}
-	    };
-	    # linux does not honor RLIMIT_DATA, but RLIMIT_AS
-	    $set_limit_if_higher->(BSD::Resource::RLIMIT_AS(), $data_limit);
-	    $set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
-	    $set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
-	} else {
-	    warn "*** WARNING: Neither limits(1) nor BSD::Resource available, not resource limits possible.\n";
+		};
+		# linux does not honor RLIMIT_DATA, but RLIMIT_AS
+		$set_limit_if_higher->(BSD::Resource::RLIMIT_AS(), $data_limit);
+		$set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
+		$set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
+	    } else {
+		warn "*** WARNING: Neither limits(1) nor BSD::Resource available, not resource limits possible.\n";
+	    }
 	}
 
 	if ($n) {
