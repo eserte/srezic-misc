@@ -110,6 +110,8 @@ my $skip_tested;
 my $skip_tested_nondiscarded;
 my $no_fail_reports;
 my $save_reports;
+my $reports_workflow_dir;
+my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   = 50_000_000; # 50M
 my $min_dir_inodes_percent = 5;
@@ -158,6 +160,7 @@ GetOptions("n" => \$n,
 	   },
 	   'nofailreport' => \$no_fail_reports,
 	   'savereports!' => \$save_reports,
+	   'reportsworkflowdir=s' => \$reports_workflow_dir,
 	   'bleededge|bleedingedge!' => \$bleeding_edge,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
@@ -562,8 +565,21 @@ if ($save_reports) {
 	or die "Can't create tempfile: $!";
     open my $ifh, "<", "$ENV{HOME}/.cpanreporter/config.ini"
 	or die "Can't open config.ini: $!";
-    my $workflow_dir = "$ENV{HOME}/var/cpansmoker";
-    my $new_reports_dir = "$workflow_dir/new";
+
+    if (!$reports_workflow_dir) {
+	$reports_workflow_dir = $reports_workflow_default_dir;
+	if (!-d $reports_workflow_dir) {
+	    mkpath $reports_workflow_dir;
+	}
+	if (!-d $reports_workflow_dir) {
+	    die "Cannot create $reports_workflow_dir";
+	}
+    } else {
+	if (!-d $reports_workflow_dir) {
+	    die "The directory $reports_workflow_dir does not exist";
+	} # the subdirs may be missing and will be created
+    }
+    my $new_reports_dir = "$reports_workflow_dir/new";
     my $changed_transport = 0;
     my $new_transport_setting = "transport=File $new_reports_dir\n";
     while(<$ifh>) {
@@ -587,12 +603,12 @@ if ($save_reports) {
     close $tmpfh
 	or die "Error while closing: $!";
     for my $dir ($new_reports_dir,
-		 "$workflow_dir/sync",
-		 "$workflow_dir/process",
-		 "$workflow_dir/done",
-		 "$workflow_dir/undecided",
+		 "$reports_workflow_dir/sync",
+		 "$reports_workflow_dir/process",
+		 "$reports_workflow_dir/done",
+		 "$reports_workflow_dir/undecided",
 		) {
-	mkpath $dir if !-d $dir;
+	mkdir $dir if !-d $dir;
     }
     $ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
 } elsif ($no_fail_reports) {
