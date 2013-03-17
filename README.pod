@@ -1,0 +1,15 @@
+=head1 srezic-misc
+
+=over
+
+=item L<cpan_in_a_nutshell/cpan_in_a_nutshell.pod>
+
+A listing of modules with short comparisons.
+
+=item L<scripts>
+
+Miscellaneous scaffolding and other scripts.
+
+=back
+
+=cut
