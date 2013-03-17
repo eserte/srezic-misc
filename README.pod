@@ -2,11 +2,11 @@
 
 =over
 
-=item L<cpan_in_a_nutshell/cpan_in_a_nutshell.pod>
+=item F<cpan_in_a_nutshell/cpan_in_a_nutshell.pod>
 
 A listing of modules with short comparisons.
 
-=item L<scripts>
+=item F<scripts>
 
 Miscellaneous scaffolding and other scripts.
 
