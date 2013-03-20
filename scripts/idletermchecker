@@ -237,7 +237,6 @@ sub check_tk {
 	if (!@terminals) {
 	    $mw->after(1500, sub {
 			   $mw->destroy;
-			   exit 0;
 		       });
 	    $mw->messageBox(-message => "No more watchers, exiting...");
 	} else {
@@ -453,10 +452,14 @@ sub check_tk {
 		}
 	    }
 	} else {
-	    $mw->iconify unless $permanently_shown;
+	    $mw->iconify if !$permanently_shown && Tk::Exists($mw);
 	}
-	$mw->update;
-	sleep 1;
+	if (Tk::Exists($mw)) {
+	    $mw->update;
+	    sleep 1;
+	} else {
+	    exit;
+	}
     }
 }
 
