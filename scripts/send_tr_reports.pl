@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: send_tr_reports.pl,v 1.12 2012/04/09 15:53:50 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -19,8 +18,12 @@ use Test::Reporter;
 use File::Basename;
 
 my $use_mail;
-GetOptions("mail" => \$use_mail)
-    or die "usage: $0 [-mail]";
+my $cpan_uid = 'srezic';
+GetOptions(
+	   "mail" => \$use_mail,
+	   "cpan-uid=s" => \$cpan_uid,
+	  )
+    or die "usage: $0 [-mail] [-cpan-uid ...]";
 
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
@@ -58,7 +61,7 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
 	@tr_args = (transport => 'Metabase',
 		    transport_args => [
 				       uri => 'https://metabase.cpantesters.org/api/v1/',
-				       id_file => '/home/e/eserte/.cpanreporter/srezic_metabase_id.json',
+				       id_file => "$ENV{HOME}/.cpanreporter/" . $cpan_uid . "_metabase_id.json",
 				      ],
 		   );
     }
