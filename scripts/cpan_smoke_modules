@@ -20,7 +20,6 @@ use Getopt::Long;
 use CPAN;
 use CPAN::DistnameInfo 0.10; # .tar.bz2 support, TRIAL support
 use IO::Handle;
-use Sys::Hostname qw(hostname);
 use File::Temp qw(tempfile);
 use File::Path qw(mkpath);
 
@@ -91,7 +90,6 @@ my $n;
 my $r;
 my $rr; # reverse a working set (-splitdists) only
 my $use_sqlite = 0; # not default anymore --- sometimes there are locking problems
-$use_sqlite = 1 if hostname =~ m{^mom}; # known slow machine XXX -> should go to some config file
 my $fl;
 my $do_continue;
 my $do_recent;
@@ -115,7 +113,6 @@ my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
 my $min_tmp_dir_avail   = 50_000_000; # 50M
 my $min_dir_inodes_percent = 5;
-my $bleeding_edge;
 my $debug;
 my $destroy_perl_in_path = 0; # $^O ne 'MSWin32';
 my @pre_dist_or_mods;
@@ -129,6 +126,7 @@ my $prefs_dir;
 my $signal_end = 1;
 my $module_printused;
 my $unkind = 0;
+my $mirror_url = 'http://cpan.cpantesters.org/';
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -162,7 +160,7 @@ GetOptions("n" => \$n,
 	   'nofailreport' => \$no_fail_reports,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
-	   'bleededge|bleedingedge!' => \$bleeding_edge,
+	   'mirrorurl=s' => \$mirror_url,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
 	   'cpanconf=s@' => \@cpan_conf,
@@ -184,7 +182,7 @@ usage: $0
      [-fl|-filelist file] [-c|-cont|-continue] [-recent] [-recenturl url]
      [-r|-reverse] [-rr] [-splitdists number]
      [-[no]skiptested] [-nofailreport]
-     [-[no]bleededge|bleedingedge]
+     [-mirrorurl ...]
      [-warntimeout secs] [-[no]sqllite]
      [-[no]interactive] [-[no]wait] [-[no]batch]
      [-[no]builddirreuse]
@@ -793,15 +791,7 @@ EOF
 	    }
 	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
 	}
-	if (hostname eq 'devpc01-debian') {
-	    # use local rsync-recent mirror
-	} else {
-	    if ($bleeding_edge) {
-		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(ftp://pause.perl.org/pub/PAUSE/)]; };
-	    } else {
-		$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(http://cpan.cpantesters.org/ ftp://ftp.funet.fi/pub/CPAN/)]; };
-	    }
-	}
+	$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(} . $mirror_url . q{)]; };
 	$cpan_shell_init .= q{$CPAN::FTP::connect_to_internet_ok=1; };
 	# The new feature seems to be problematic:
 	$cpan_shell_init .= q{$CPAN::Config->{threshold_perl5lib_upto} = 9999999; };

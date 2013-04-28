@@ -16,7 +16,7 @@ my $do_special;
 
 my $skip_update;
 
-my $use_pause = 0; # cpantesters.org should be good enough # 2012-08-06: missing files, switch to PAUSE # 2012-10-19 switch to cpantesters.org again # Since 2013-01-01 there's no ftp @ pause anymore
+my $mirror_url = "http://cpan.cpantesters.org/";
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
@@ -25,12 +25,11 @@ GetOptions("maintperl" => \$do_maintperl,
 	   "last!"     => \$do_last_month,
 	   "recent"    => \$do_recent,
 	   "skip-update" => \$skip_update,
-	   "pause!"    => \$use_pause,
+	   "mirrorurl=s" => \$mirror_url,
 	  )
     or die "usage?";
 
-my $recent_url = $use_pause ? "ftp://pause.perl.org/pub/PAUSE/" : "http://cpan.cpantesters.org/"; # was:"ftp://ftp.funet.fi/pub/CPAN/";
-my $bleedingedge = $use_pause ? "-bleedingedge" : "-nobleedingedge";
+my $recent_url = $mirror_url;
 
 if (!$do_maintperl && !$do_all && !$do_special) {
     die "Please specify either -maintperl or -all or -special";
@@ -57,34 +56,6 @@ if ($do_maintperl) {
     run_smoker '5.10.1', 'stable', '-20d';
     run_smoker '5.8.9',  'stable', '-20d';
 
-#    warn "*** 5.8.9: Just test recent uploads, also devel versions...\n";
-#    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
-#    warn "*** 5.8.8: Just test recent uploads, also devel versions...\n";
-#    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -install -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -3d -v -stable | grep -v '\.pl$'`};
-#
-#    # only stable
-#    warn "*** 5.12.0: Test and install recent uploads, only stable versions...\n";
-#    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.12.0/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
-#    warn "*** 5.10.1: Test and install recent uploads, only stable versions...\n";
-#    system q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.10.1/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
-#    warn "*** 5.8.9: Test and install recent uploads, only stable versions...\n";
-#    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
-#    warn "*** 5.8.8: Test and install recent uploads, only stable versions...\n";
-#    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl588-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.8@RELEASE/bin/perl -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -url } . $recent_url . q{ -from -20d -v | grep -v '\.pl$'`};
-#
-
-#     print STDERR <<'EOF';
-# *** Now as eserte:
-# 
-# ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -sort date -r; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -sort date -r
-# send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
-# 
-# *** Or only the PASSes without inspection:
-# 
-# ctr_good_or_invalid.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/ -good; ctr_good_or_invalid.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/ -good
-# send_tr_reports.pl ~cpansand/var/perl5.10.1-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.9@RC2-7.0-test/ctr1/; send_tr_reports.pl ~cpansand/var/perl5.8.8-7.0-test/ctr1/    
-# 
-# EOF
     system('xterm-conf -f -title "FINISHED maintperl"');
 } elsif (0 && $do_maintperl) { # old, somewhat newer
     (getpwuid($<))[0] eq 'cpansand'
@@ -173,7 +144,7 @@ EOF
 	    push @dists, $_;
 	}
     }
-    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-skiptested", "-nobleededge", @dists);
+    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-skiptested", "-mirrorurl", $mirror_url, @dists);
     warn "@cmd...\n";
     if (system(@cmd) != 0) {
 	die "Failure while running command\n";
@@ -185,11 +156,11 @@ EOF
      http://perlbuzz.com/2009/07/testpod-140-now-checks-for-illegal-l-constructs.html
     )...
 EOF
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl } . $bleedingedge . q{ -filelist ~eserte/trash/has_podt2};
+    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl } . q{ -filelist ~eserte/trash/has_podt2};
 } else {
     chomp(my @dists = `$FindBin::RealBin/cpan_recent_uploads2 -v -from -6d -url $recent_url`);
     my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-pv", "5.10.0,5.8.8t,5.10.0t,5.6.2,5.8.8",
-	       $bleedingedge, "-skiptested", "--", @dists);
+	       "-skiptested", "--", @dists);
     warn "Running: @cmd\n";
     if (system(@cmd) != 0) {
 	die "Failure while running command: @cmd\n";
@@ -206,7 +177,7 @@ sub run_smoker ($$$) {
 	    die "Cannot find a perl $perl_version, tried in /usr/perlXXX and $perl_exe";
 	}
     }
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl } . $perl_exe . q{ -skiptested -r } . $bleedingedge . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
     if ($? == 2) {
