@@ -128,15 +128,6 @@ exit $errors;
 # REPO NAME save_pwd /home/e/eserte/work/srezic-repository 
 # REPO MD5 0f7791cf8e3b62744d7d5cfbd9ddcb07
 
-=head2 save_pwd(sub { ... })
-
-=for category File
-
-Save the current directory and assure that outside the block the old
-directory will still be valid.
-
-=cut
-
 sub save_pwd (&) {
     my $code = shift;
     require Cwd;
@@ -151,3 +142,13 @@ sub save_pwd (&) {
 # REPO END
 
 __END__
+
+=pod
+
+For the "olddist" parameter you can get it like this:
+
+    cpan
+    look Your-Dist
+    pwd
+
+=cut
