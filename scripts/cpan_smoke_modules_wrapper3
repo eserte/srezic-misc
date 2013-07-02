@@ -42,6 +42,9 @@ if ($do_maintperl) {
     (getpwuid($<))[0] eq 'cpansand'
 	or die "Works only for cpansand!";
 
+    run_smoker '5.18.0', 'devel',  '-3d';
+    run_smoker '5.18.0', 'stable', '-20d';
+
     run_smoker '5.16.0-RC0', 'devel',  '-3d';
     run_smoker '5.16.0-RC0', 'stable', '-20d';
 
