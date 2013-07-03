@@ -93,7 +93,15 @@ print STDERR "="x70,"\n";
 system('cat', $dest_patch_file);
 print STDERR "="x70,"\n";
 
-my @cmd = ("/opt/perl/bin/cpan-upload", "-d", "patches", $dest_patch_file);
+my $cpan_upload = 'cpan-upload';
+if (!is_in_path($cpan_upload)) {
+    # last ressort, try /opt/perl
+    $cpan_upload = '/opt/perl/bin/cpan-upload';
+    if (!-x $cpan_upload) {
+	die "cpan-upload does not seem to be available, cannot upload $dest_patch_file\n";
+    }
+}
+my @cmd = ($cpan_upload, "-d", "patches", $dest_patch_file);
 print STDERR "Execute @cmd? (y/n) ";
 if (!yn) {
     print "OK, exiting...\n";
@@ -123,6 +131,62 @@ sub show_upload_url {
         }
     }
 }
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/slavenr/work2/srezic-repository 
+# REPO MD5 e18e6687a056e4a3cbcea4496aaaa1db
+sub is_in_path {
+    my($prog) = @_;
+    if (file_name_is_absolute($prog)) {
+	if ($^O eq 'MSWin32') {
+	    return $prog       if (-f $prog && -x $prog);
+	    return "$prog.bat" if (-f "$prog.bat" && -x "$prog.bat");
+	    return "$prog.com" if (-f "$prog.com" && -x "$prog.com");
+	    return "$prog.exe" if (-f "$prog.exe" && -x "$prog.exe");
+	    return "$prog.cmd" if (-f "$prog.cmd" && -x "$prog.cmd");
+	} else {
+	    return $prog if -f $prog and -x $prog;
+	}
+    }
+    require Config;
+    %Config::Config = %Config::Config if 0; # cease -w
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"     if (-f "$_\\$prog" && -x "$_\\$prog");
+	    return "$_\\$prog.bat" if (-f "$_\\$prog.bat" && -x "$_\\$prog.bat");
+	    return "$_\\$prog.com" if (-f "$_\\$prog.com" && -x "$_\\$prog.com");
+	    return "$_\\$prog.exe" if (-f "$_\\$prog.exe" && -x "$_\\$prog.exe");
+	    return "$_\\$prog.cmd" if (-f "$_\\$prog.cmd" && -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
+
+# REPO BEGIN
+# REPO NAME file_name_is_absolute /home/slavenr/work2/srezic-repository 
+# REPO MD5 89d0fdf16d11771f0f6e82c7d0ebf3a8
+BEGIN {
+    if (eval { require File::Spec; defined &File::Spec::file_name_is_absolute }) {
+	*file_name_is_absolute = \&File::Spec::file_name_is_absolute;
+    } else {
+	*file_name_is_absolute = sub {
+	    my $file = shift;
+	    my $r;
+	    if ($^O eq 'MSWin32') {
+		$r = ($file =~ m;^([a-z]:(/|\\)|\\\\|//);i);
+	    } else {
+		$r = ($file =~ m|^/|);
+	    }
+	    $r;
+	};
+    }
+}
+# REPO END
 
 __END__
 
