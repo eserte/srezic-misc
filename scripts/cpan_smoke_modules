@@ -313,7 +313,7 @@ if (!@perls) {
 	    if (my($ver, $minor) = $candidate =~ m{/perl(5\.(\d+)\.\d+)}) {
 		my $safe_ver = safe_version($ver);
 		my $is_devel = $minor % 2 == 1;
-		if ($^O eq 'freebsd' && $ver eq '5.8.9' && -x "/usr/perl$ver/bin/perl$ver") { # XXX works only for fbsd 8.0! XXX
+		if ($^O eq 'freebsd' && $Config{osvers} =~ m{^8\.} && $ver eq '5.8.9' && -x "/usr/perl$ver/bin/perl$ver") { # this is valid only for fbsd 8.0
 		    push @all_perl_defs, ["/usr/perl$ver/bin/perl$ver", $safe_ver];
 		} elsif (!$is_devel) {
 		    push @all_perl_defs, [$candidate, $safe_ver];
