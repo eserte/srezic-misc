@@ -194,6 +194,22 @@ __END__
 
 patch-to-cpan.pl - transfer a patch to CPAN
 
+=head1 SYNOPSIS
+
+    patch-to-cpan.pl -rt 12345 -patch http://host/path/to/patch -name Dist-Name -ver 1.2.3
+
+=head1 PREREQUISITES
+
+=over
+
+=item * L<cpan-upload> installed
+
+=item * F<~/.pause> configured at least with the C<user> name
+
+=item * a "patches" subdirectory in the user's PAUSE directory
+
+=back
+
 =head1 AUTHOR
 
 Slaven Rezic <srezic@cpan.org>
