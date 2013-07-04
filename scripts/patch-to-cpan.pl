@@ -22,6 +22,7 @@ use Getopt::Long;
 use LWP::UserAgent;
 
 my $rt;
+my $github;
 my $patch_url;
 my $dist;
 my $distver;
@@ -31,7 +32,7 @@ sub usage (;$) {
     if ($msg) {
 	warn "$msg\n";
     }
-    die "usage: $0 -rt ... -patch ... -dist ... -ver ...\n";
+    die "usage: $0 [-rt ...|-github ...] -patch ... -dist ... -ver ...\n";
 }
 
 sub yn () {
@@ -49,18 +50,23 @@ sub yn () {
 
 GetOptions(
 	   "rt=i"    => \$rt,
+           "github=i" => \$github,
 	   "patch=s" => \$patch_url,
 	   "dist=s"  => \$dist,
 	   "ver=s"   => \$distver,
 	  )
     or usage;
 
-$rt        or usage "-rt option with RT ticket number is missing";
+if ($rt && $github) {
+    usage "Use either -rt or -github, not both";
+} elsif (!$rt && !$github) {
+    usage "-rt option with RT ticket number or -github with github issue number is missing";
+}
 $patch_url or usage "-patch option with URL to patch file is missing";
 $dist      or usage "-dist option with distribution name (not module name) is missing";
 $distver   or usage "-ver option with distribution version is missing";
 
-my $patch_file = "$dist-$distver-RT$rt.patch";
+my $patch_file = "$dist-$distver-" . ($rt ? "RT$rt" : "github$github") . ".patch";
 print STDERR "Does this name for the patch file looks reasonable?
 
     $patch_file
@@ -201,6 +207,7 @@ patch-to-cpan.pl - transfer a patch to CPAN
 =head1 SYNOPSIS
 
     patch-to-cpan.pl -rt 12345 -patch http://host/path/to/patch -name Dist-Name -ver 1.2.3
+    patch-to-cpan.pl -github 2 -patch http://host/path/to/patch -name Dist-Name -ver 1.2.3
 
 =head1 PREREQUISITES
 
