@@ -126,8 +126,12 @@ sub show_upload_url {
         if ($user) {
             $user = uc $user;
             my($user2, $user1) = $user =~ m{^((.).)};
-            my $desturl = 'http://cpan.cpantesters.org/authors/id/' . $user1 . '/' . $user2 . '/' . $user . '/patches/' . $patch_file;
-            print STDERR "Patch file will appear at: $desturl\n";
+            my $destdir = 'http://cpan.cpantesters.org/authors/id/' . $user1 . '/' . $user2 . '/' . $user . '/patches/';
+            my $desturl = $destdir . $patch_file;
+            print STDERR <<EOF
+Patch file will appear at: $desturl
+Directory listing: $destdir?C=M;O=D
+EOF
         }
     }
 }
