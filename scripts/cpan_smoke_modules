@@ -127,6 +127,7 @@ my $signal_end = 1;
 my $module_printused;
 my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
+my $hidemod;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -177,6 +178,7 @@ GetOptions("n" => \$n,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=i' => \$min_build_dir_avail,
+	   'hidemod=s' => \$hidemod,
 	  )
     or die <<EOF;
 usage: $0
@@ -194,7 +196,7 @@ usage: $0
      [-cpanconf key=value [-cpanconf ...]]
      [-[no]destroyperl]
      [-strace|-truss|-ktrace file]
-     [-[no]signalend] [-moduleprintused]
+     [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits]
      [dist ...]
@@ -228,6 +230,8 @@ usage: $0
 -cpanconf key=val: change CPAN configuration variable
 -moduleprintused: report used modules using Module::PrintUsed
 -unkind:      disable the default to run with low priority
+-hidemod: use Devel::Hide to "hide" modules when building. A popular one is
+          -hidemod "Test::Pod Test::Pod::Coverage"
 
 -n:  do not do anything, just show what would be done
 -debug: enable more debugging
@@ -939,6 +943,11 @@ EOF
 	my $save_perl5opt = $ENV{PERL5OPT};
 	if ($module_printused) {
 	    $ENV{PERL5OPT} .= " -MModule::PrintUsed";
+	}
+	if ($hidemod) {
+	    $ENV{PERL5OPT} .= " -MDevel::Hide";
+	    $ENV{DEVEL_HIDE_VERBOSE} = 0;
+	    $ENV{DEVEL_HIDE_PM} = $hidemod;
 	}
 	system @cmd;
 	if ($? & 127) {
