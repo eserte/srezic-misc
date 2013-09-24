@@ -379,9 +379,10 @@ if ($prefs_dir) {
     $prefs_dir = $CPAN::Config->{prefs_dir};
 }
 
-# to make it easy to copy'n'paste download URLs from search.cpan.org:
+# to make it easy to copy'n'paste download URLs from search.cpan.org or metacpan.org:
 for (@dist_or_mods) {
     s{^\Qhttp://search.cpan.org/CPAN/authors/id/\E./../}{};
+    s{^\Qhttp://cpan.metacpan.org/authors/id/\E./../}{};
 }
 
 # And allow also partial distribution names without author name
