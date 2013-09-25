@@ -101,6 +101,7 @@ my $wait;
 my $batch = 1;
 my $for_parallel_smoker = 0;
 my $all_perls = 1; # Usually I want them all
+my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
@@ -141,6 +142,7 @@ GetOptions("n" => \$n,
 	   "warntimeout=i" => \$warntimeout,
 	   'perl=s@' => \@perls,
 	   'pv=s@' => \@pv,
+	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
 	   'fl|filelist=s' => \$fl,
 	   'c|cont|continue' => \$do_continue,
@@ -207,6 +209,7 @@ usage: $0
 -a: use all installed perls (otherwise some perls will not be used)
 -perl path: use the named perl
 -pv x.y.z: use the perl named by version number
+-thisperl: use the current perl in PATH (useful for perlbrew)
 
 -pre dist/module: module or distribution which should be tested before all others
 -fl file: file with distributions to test
@@ -307,6 +310,15 @@ if (!@dist_or_mods) {
 
 if (@pv) {
     push @perls, map { "perl$_" } map { split /,/ } @pv;
+}
+
+if ($do_this_perl) {
+    my $perl = is_in_path("perl");
+    if ($perl) {
+	push @perls, $perl;
+    } else {
+	die "Strange: cannot find 'perl' in PATH?!";
+    }
 }
 
 if (!@perls) {
