@@ -33,51 +33,6 @@ my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
 my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
 
-## XXX hardcoded list for biokovo XXX
-## -> now generated dynamically, see below
-#my @all_perls = 
-#    (
-#     #'/usr/perl5.004_04/bin/perl5.00404',
-#     #'/usr/perl5.005_03d/bin/perl5.00503',
-#     #'/usr/perl5.005_05/bin/perl5.00505',
-#     #'/usr/perl5.6.0/bin/perl5.6.0',
-#     #'/usr/perl5.6.1/bin/perl5.6.1',
-#     #'/usr/perl5.6.1d/bin/perl5.6.1',
-#     #'/usr/perl5.6.2/bin/perl5.6.2',
-#     #'/usr/perl5.6.2d/bin/perl5.6.2',
-#     #'/usr/perl5.8.0/bin/perl5.8.0',
-#     #'/usr/perl5.8.0d/bin/perl5.8.0',
-#     #'/usr/perl5.8.1/bin/perl5.8.1',
-#     #'/usr/perl5.8.1d/bin/perl5.8.1',
-#     #'/usr/perl5.8.2d/bin/perl5.8.2',
-#     #'/usr/perl5.8.3/bin/perl5.8.3',
-#     #'/usr/perl5.8.3d/bin/perl5.8.3',
-#     #'/usr/perl5.8.4/bin/perl5.8.4',
-#     #'/usr/perl5.8.5d/bin/perl5.8.5',
-#     #'/usr/perl5.8.6/bin/perl5.8.6',
-#     #'/usr/perl5.8.7/bin/perl5.8.7',
-#     #'/usr/perl5.8.8/bin/perl5.8.8',
-#     #'/usr/perl5.8.8d/bin/perl5.8.8',
-#     '/usr/perl5.8.9/bin/perl5.8.9',
-#     #'/usr/perl5.9.0/bin/perl5.9.0',
-#     #'/usr/perl5.9.0d/bin/perl5.9.0',
-#     #'/usr/perl5.9.4/bin/perl5.9.4',
-#     #'/usr/perl5.9.5/bin/perl5.9.5',
-#     #'/usr/perl5.9.5d/bin/perl5.9.5',
-#     #'/usr/perl5.10.0/bin/perl5.10.0', # XXX metabase not installed
-#     #'/usr/perl5.10.0d/bin/perl5.10.0',
-#     '/usr/perl5.10.1/bin/perl5.10.1',
-#     #'/usr/perl5.11.0/bin/perl5.11.0',
-#     #'/usr/perl5.11.0d/bin/perl5.11.0',
-#     #'/usr/perl5.11.4/bin/perl5.11.4',
-#     #'/usr/perl5.11.5/bin/perl5.11.5',
-#     '/usr/perl5.12.0/bin/perl5.12.0',
-#     #'/usr/perl5.12.0t/bin/perl5.12.0', # XXX metabase not installed
-#     '/usr/perl5.12.3/bin/perl5.12.3',
-#     #'/usr/perl5.13.9/bin/perl5.13.9',
-#     '/usr/perl5.15.9/bin/perl5.15.9',
-#    );
-
 # No need to blacklist users anymore --- no mails are sent directly anymore.
 my @blacklist_author; # = qw(MLEHMANN PJFL);
 my @perls;
