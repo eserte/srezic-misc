@@ -584,8 +584,9 @@ $logfh->autoflush(1);
 if ($save_reports) {
     my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
 	or die "Can't create tempfile: $!";
-    open my $ifh, "<", "$ENV{HOME}/.cpanreporter/config.ini"
-	or die "Can't open config.ini: $!";
+    my $config_ini_path = "$ENV{HOME}/.cpanreporter/config.ini";
+    open my $ifh, "<", $config_ini_path
+	or die "Can't open $config_ini_path: $!";
 
     if (!$reports_workflow_dir) {
 	$reports_workflow_dir = $reports_workflow_default_dir;
