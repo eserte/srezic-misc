@@ -280,16 +280,25 @@ if (!@perls) {
     if ($all_perls) {
 	my @all_perl_defs;
 
+	my $system_perl;
+	if ($^O eq 'freebsd') {
+	    if (-l "/usr/local/bin/perl5") {
+		$system_perl = readlink "/usr/local/bin/perl5";
+	    }
+	}
+
 	my $latest_blead;
 	my $max_stable_perl_ver;
 	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
 	    next if !-x $candidate;
+	    if ($system_perl && $candidate eq $system_perl) {
+		warn "Skip system perl '$system_perl'...\n";
+		next;
+	    }
 	    if (my($ver, $minor) = $candidate =~ m{/perl(5\.(\d+)\.\d+)}) {
 		my $safe_ver = safe_version($ver);
 		my $is_devel = $minor % 2 == 1;
-		if ($^O eq 'freebsd' && $Config{osvers} =~ m{^8\.} && $ver eq '5.8.9' && -x "/usr/perl$ver/bin/perl$ver") { # this is valid only for fbsd 8.0
-		    push @all_perl_defs, ["/usr/perl$ver/bin/perl$ver", $safe_ver];
-		} elsif (!$is_devel) {
+		if (!$is_devel) {
 		    push @all_perl_defs, [$candidate, $safe_ver];
 		    if (!$max_stable_perl_ver || $max_stable_perl_ver < $safe_ver) {
 			$max_stable_perl_ver = $safe_ver;
