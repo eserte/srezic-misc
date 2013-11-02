@@ -1,0 +1,321 @@
+#!/usr/bin/perl -w
+# -*- cperl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2013 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use FindBin;
+use File::Temp qw(tempfile);
+use Getopt::Long;
+
+use autodie qw(:all);
+use Commands::Guarded;
+
+sub save_pwd2 ();
+sub sudo (@);
+
+my $perlver;
+my $build_debug;
+my $build_threads;
+my $morebits;
+GetOptions(
+	   "perlver=s" => \$perlver,
+	   "debug"     => \$build_debug,
+	   "threads"   => \$build_threads,
+	   "morebits" => \$morebits,
+	  )
+    or die "usage: $0 [-debug] [-threads] [-morebits] -perlver 5.X.Y\n";
+
+if (!$perlver) {
+    die "-perlver is mandatory";
+}
+
+if ($perlver !~ m{^5\.\d+\.\d+(-RC\d+)?$}) {
+    die "'$perlver' does not look like a perl5 version";
+}
+
+my $perldir = "/usr/perl$perlver";
+if ($^O eq 'linux') {
+    $perldir = "/opt/perl-$perlver";
+}
+if ($build_debug)   { $perldir .= "d" }
+if ($build_threads) { $perldir .= "t" }
+
+my $sudo_validator_pid;
+sudo 'echo', 'Initialized sudo password';
+
+my $original_download_directory = my $download_directory = "/usr/ports/distfiles";
+if (!-d $download_directory) {
+    $download_directory = "/tmp";
+    if ($^O eq 'freebsd') {
+	# may happen if no port installation was done ever
+	warn "$original_download_directory not yet created? Adjusting download directory to $download_directory\n";
+    } else {
+	warn "Not on a FreeBSD system? Adjusting download directory to $download_directory\n";
+    }
+}
+if (!-w $download_directory) {
+    $download_directory = "/tmp";
+    warn "Download directory '$original_download_directory' is not writable, fallback to '$download_directory'\n";
+}
+my $perl_tar_gz = "perl-$perlver.tar.gz";
+my $downloaded_perl = "$download_directory/$perl_tar_gz";
+my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz";
+my $srezic_misc = "$ENV{HOME}/work/srezic-misc";
+if (!-d $srezic_misc) {
+    $srezic_misc = "$ENV{HOME}/work2/srezic-misc";
+    if (!-d $srezic_misc) {
+	warn "* WARN: srezic-misc directory not found, install will very probably fail!\n";
+    }
+}
+step "Download perl $perlver" =>
+    ensure {
+	-f $downloaded_perl && -s $downloaded_perl
+    }
+    using {
+	my $save_pwd = save_pwd2;
+	chdir $download_directory;
+	my $tmp_perl_tar_gz = $perl_tar_gz.".~".$$."~";
+	system 'wget', "-O", $tmp_perl_tar_gz, $download_url;
+	rename $tmp_perl_tar_gz, $perl_tar_gz;
+    };
+
+my $src_dir = "/usr/local/src";
+if (!-d $src_dir || !-w $src_dir) {
+    $src_dir = "/tmp";
+    warn "Not on a FreeBSD system? Adjusting src dir to $src_dir\n";
+}
+my $perl_src_dir = "$src_dir/perl-$perlver";
+step "Extract in $src_dir" =>
+    ensure {
+	-f "$perl_src_dir/.extracted";
+    }
+    using {
+	my $save_pwd = save_pwd2;
+	chdir $src_dir;
+	system "tar", "xf", $downloaded_perl;
+	system "touch", "$perl_src_dir/.extracted";
+    };
+
+my $built_file = "$perl_src_dir/.built" . ($build_debug || $build_threads ? "_" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "") : "");
+step "Build perl" =>
+    ensure {
+	-x "$perl_src_dir/perl" && -f $built_file;
+    }
+    using {
+	my $save_pwd = save_pwd2;
+	for my $looks_like_built (glob(".built*")) {
+	    unlink $looks_like_built;
+	}
+	chdir $perl_src_dir;
+	my @build_cmd;
+	if (-e "$ENV{HOME}/FreeBSD/perl/build") {
+	    @build_cmd = (
+			  'nice', "$ENV{HOME}/FreeBSD/perl/build",
+			  '-prefix' => $perldir,
+			  ($build_debug ? "-debug" : ()),
+			  ($build_threads ? "-threads" : ()),
+			  ($morebits ? "-morebits" : ()),
+			 );
+	} else {
+	    my $need_usedevel;
+	    if ($perlver =~ m{^5\.(\d+)} && $1 >= 7 && $1%2 == 1) {
+		$need_usedevel = 1;
+	    }
+	    @build_cmd = (
+			  "nice ./configure.gnu --prefix=$perldir" .
+			  ($need_usedevel ? ' -Dusedevel' : '') .
+			  ($build_debug ? ' -DDEBUGGING' : '') .
+			  ($build_threads ? ' -Dusethreads' : '') .
+			  ($morebits ? die("No support for morebits") : ()) .
+			  ' && make all test'
+			 );
+	}
+	system @build_cmd;
+	system "touch", $built_file;
+    };
+
+my $state_dir = "$perldir/.install_state";
+step "Install perl" =>
+    ensure {
+	-d $perldir && -f "$state_dir/.installed"
+    }
+    using {
+	my $save_pwd = save_pwd2;
+	chdir $perl_src_dir;
+	sudo 'make', 'install';
+	if (!-d $state_dir) {
+	    sudo 'mkdir', $state_dir;
+	    sudo 'chown', (getpwuid($<))[0], $state_dir;
+	}
+	system 'touch', "$state_dir/.installed";
+    };
+
+my $symlink_src = "/usr/local/bin/perl$perlver" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "");
+step "Symlink in /usr/local/bin" =>
+    ensure {
+	-l $symlink_src
+    }
+    using {
+	sudo 'ln', '-s', "$perldir/bin/perl$perlver", $symlink_src;
+    };
+
+step "Symlink perl for devel perls" =>
+    ensure {
+	-x "$perldir/bin/perl"
+    }
+    using {
+	sudo 'ln', '-s', "perl$perlver", "$perldir/bin/perl";
+    };
+
+#- change ownership to cpansand:
+#sudo chown -R cpansand:cpansand $MYPERLDIR && sudo chmod -R ugo+r $MYPERLDIR
+#- switch now to cpansand (set again MYPERLDIR and MYPERLVER!)
+
+# install both YAML::Syck and YAML, because it's not clear what's configured
+# for CPAN.pm (by default it's probably YAML, but on cvrsnica/biokovo it's
+# set to YAML::Syck)
+my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl CPAN::Reporter);
+
+step "Install modules needed for CPAN::Reporter" =>
+    ensure {
+	toolchain_modules_installed_check();
+    }
+    using {
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
+    };
+
+step "Report Kwalify" =>
+    ensure {
+	-f "$state_dir/.reported_kwalify"
+    }
+    using {
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-savereports", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
+	# XXX unfortunately, won't fail if reporting did not work for some reason
+	system "touch", "$state_dir/.reported_kwalify";
+    };
+
+step "Report toolchain modules" =>
+    ensure {
+	-f "$state_dir/.reported_toolchain"
+    }
+    using {
+	# note: as this is the last step (currently), explicitely use -signalend
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-signalend", "-savereports", @toolchain_modules, "-perl", "$perldir/bin/perl";
+	# XXX unfortunately, won't fail if reporting did not work for some reason
+	system "touch", "$state_dir/.reported_toolchain";
+    };
+
+#- ImageMagick manuell installieren (von CPAN geht nicht) und zwar
+#gegen die Version, die schon mit FreeBSD kommt (does not work
+#currently for bleadperl, FreeBSD's ImageMagick is too old):
+#cd /usr/local/src/work/ImageMagick-*/PerlMagick
+#	  und normal bauen (als eserte)
+#	    $MYPERLDIR/bin/perl Makefile.PL && make all test
+#	  aber als cpansand installieren:
+#	    sudo -H -u cpansand make install
+#	  Achtung: ältere Versionen von Image::Magick brauchen eine
+#	  Dummy-Typemap-Datei, wenn sie mit einem neuen Perl (~ >= 5.14.0)
+#	  gebaut wurden. Siehe "typemap problems in newer perls" in TODO.
+
+#	- Bundle::BBBike installieren (Achtung: X11::Protocol ist interaktiv!)
+#	  cd ~eserte/src/bbbike && ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nobatch -shell -perl $MYPERLDIR/bin/perl
+#	  und dann: install Bundle::BBBike
+
+#	- Consider to add the new perl to
+#	  ~/work/srezic-misc/scripts/cpan_smoke_modules_wrapper3
+
+END {
+    if ($sudo_validator_pid) {
+	kill $sudo_validator_pid;
+	undef $sudo_validator_pid;
+    }
+}
+
+sub toolchain_modules_installed_check {
+    my $this_perl = "$perldir/bin/perl";
+    my($tmpfh,$tmpfile) = tempfile(SUFFIX => "setup_new_smoker_perl.txt", UNLINK => 1)
+	or die $!;
+    for my $toolchain_module (@toolchain_modules) {
+	if ($toolchain_module eq 'Term::ReadLine::Perl') {
+	    print $tmpfh "Term::ReadLine\n"; # hack needed here, see https://rt.cpan.org/Ticket/Display.html?id=89894
+	}
+	print $tmpfh "$toolchain_module\n";
+    }
+    close $tmpfh or die $!;
+
+    my $total_success = 1;
+
+    # CPAN::Reporter::PrereqCheck is really only for internal use, and
+    # the call convention is different, but doing it as designed would
+    # make the code unnecessarily more complicated...
+    #
+    # On first-time install there will be a "Can't location
+    # CPAN/Reporter/PrereqCheck..." error.
+    my $prereq_result = qx/$this_perl -MCPAN::Reporter::PrereqCheck -e "CPAN::Reporter::PrereqCheck::_run()" < $tmpfile/;
+    unlink $tmpfile; # do it early
+
+    if ($? != 0) {
+	$total_success = 0; # probably no CPAN::Reporter::PrereqCheck available
+    } else {
+	for my $line (split "\n", $prereq_result) {
+	    next unless length $line;
+	    my(undef, $met, undef) = split " ", $line;
+	    if (!$met) {
+		$total_success = 0;
+		last;
+	    }
+	}
+    }
+    $total_success;
+}
+
+sub sudo (@) {
+    my(@cmd) = @_;
+    system 'sudo', '-v';
+    if (!$sudo_validator_pid) {
+	my $parent = $$;
+	$sudo_validator_pid = fork;
+	if ($sudo_validator_pid == 0) {
+	    # child
+	    while() {
+		sleep 60; # assumes that sudo timeout is larger than one minute!!!
+		if (!kill 0 => $parent) {
+		    exit;
+		}
+		system 'sudo', '-v';
+	    }
+	}
+    }
+    system 'sudo', @cmd;
+}
+
+# REPO BEGIN
+# REPO NAME save_pwd2 /home/e/eserte/work/srezic-repository 
+# REPO MD5 456b25e69b899a5f4b7b7e61c4fccccf
+
+{
+    sub save_pwd2 () {
+	require Cwd;
+	bless {cwd => Cwd::cwd()}, __PACKAGE__ . '::SavePwd2';
+    }
+    my $DESTROY = sub {
+	my $self = shift;
+	chdir $self->{cwd}
+	    or die "Can't chdir to $self->{cwd}: $!";
+    };
+    no strict 'refs';
+    *{__PACKAGE__.'::SavePwd2::DESTROY'} = $DESTROY;
+}
+# REPO END
+
+__END__
