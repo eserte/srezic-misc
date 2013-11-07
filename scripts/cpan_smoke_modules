@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_smoke_modules,v 1.118 2012/04/22 18:40:59 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007, 2008, 2009, 2011, 2012 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -291,8 +290,8 @@ if (!@perls) {
 	my $max_stable_perl_ver;
 	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
 	    next if !-x $candidate;
-	    if ($system_perl && $candidate eq $system_perl) {
-		warn "Skip system perl '$system_perl'...\n";
+	    if ($do_action eq 'install' && $system_perl && $candidate eq $system_perl) {
+		warn "Skip system perl '$system_perl' for '$do_action' action...\n";
 		next;
 	    }
 	    if (my($ver, $minor) = $candidate =~ m{/perl(5\.(\d+)\.\d+)}) {
