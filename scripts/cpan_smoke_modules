@@ -21,6 +21,7 @@ use CPAN::DistnameInfo 0.10; # .tar.bz2 support, TRIAL support
 use IO::Handle;
 use File::Temp qw(tempfile);
 use File::Path qw(mkpath);
+use Sys::Hostname qw(hostname);
 
 sub save_pwd (&);
 
@@ -509,7 +510,9 @@ if ((   $n                    # no idletermchecker in no exec mode:
     $warntimeout = undef;
 }
 
+(my $short_hostname = hostname) =~ s{\..*}{};
 chomp(my $tty = `tty`);
+(my $short_tty = $tty) =~ s{^.*/}{};
 
 my $idletermchecker_pid;
 if ($warntimeout) {
@@ -734,7 +737,7 @@ EOF
 	if ($logfh) {
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble BEGIN\n";
 	}
-	my $std_title = "smoke($tty): $perl";
+	my $std_title = "smoke($short_hostname:$short_tty): $perl";
 	xterm_conf('-title', $std_title);
 
 	if ($prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
