@@ -16,6 +16,7 @@ use strict;
 use Getopt::Long;
 use Test::Reporter;
 use File::Basename;
+use POSIX qw(strftime);
 
 my $use_mail;
 my $cpan_uid = 'srezic';
@@ -28,14 +29,18 @@ GetOptions(
 my $reportdir = shift || "$ENV{HOME}/var/ctr";
 
 my $sync_dir = "$reportdir/sync";
-my $done_dir = "$reportdir/done";
+my $done_root_dir = "$reportdir/done";
+my $done_dir = "$done_root_dir/" . strftime("%Y-%m", localtime);
 my $process_dir = "$reportdir/process";
 
 if (!-d $sync_dir) {
     warn "Create $sync_dir and move reports to this directory...";
 }
+if (!-d $done_root_dir) {
+    mkdir $done_root_dir or die "While creating $done_root_dir: $!";
+}
 if (!-d $done_dir) {
-    mkdir $done_dir    or die "While creating $done_dir: $!";
+    mkdir $done_dir or die "While creating $done_dir: $!";
 }
 if (!-d $process_dir) {
     mkdir $process_dir or die "While creating $process_dir: $!";
