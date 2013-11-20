@@ -84,6 +84,8 @@ my $module_printused;
 my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
 my $hidemod;
+my $use_vncserver;
+my $x11_display = ':9'; # ssh begins at :10
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -136,6 +138,7 @@ GetOptions("n" => \$n,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=i' => \$min_build_dir_avail,
 	   'hidemod=s' => \$hidemod,
+	   'vnc!'  => \$use_vncserver,
 	  )
     or die <<EOF;
 usage: $0
@@ -155,7 +158,7 @@ usage: $0
      [-strace|-truss|-ktrace file]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
-     [-[no]limits]
+     [-[no]limits] [-vnc]
      [dist ...]
 
 -i: test and install
@@ -202,6 +205,9 @@ if ($truss && -e $truss) {
 }
 if ($ktrace && -e $ktrace) {
     die "File specified with -ktrace '$ktrace' must not exist";
+}
+if ($use_vncserver && !is_in_path('vncserver')) {
+    die '-vnc specified, but vncserver is not in path';
 }
 my @dist_or_mods = @ARGV;
 if ($do_action eq 'shell' && !@dist_or_mods) {
@@ -634,6 +640,24 @@ EOF
 my $PERL_CPAN_REPORTER_DIR;
 $PERL_CPAN_REPORTER_DIR = $ENV{PERL_CPAN_REPORTER_DIR} if $ENV{PERL_CPAN_REPORTER_DIR};
 
+my $effective_x11_display;
+if ($use_vncserver) {
+    my @cmd = ('vncserver', $x11_display);
+    warn "INFO: starting vncserver on display $x11_display...\n";
+    system @cmd;
+    if ($? != 0) {
+	die "ERROR: Failure running '@cmd'";
+    }
+    # Do a double check if it's working
+    if (is_in_path('xset')) { # hopefully everywhere installed...
+	system "xset -display $x11_display q >/dev/null 2>&1";
+	if ($? != 0) {
+	    die "ERROR: X11 display check using 'xset' failed, refuse to continue...\n";
+	}
+    }
+    $effective_x11_display = $x11_display;
+}
+
 my $last_xterm_title;
 for my $perl (@perls) {
     print STDERR "#"x70,"\n";
@@ -929,6 +953,9 @@ EOF
 	    $ENV{DEVEL_HIDE_VERBOSE} = 0;
 	    $ENV{DEVEL_HIDE_PM} = $hidemod;
 	}
+	if ($effective_x11_display) {
+	    $ENV{DISPLAY} = $effective_x11_display;
+	}
 	system @cmd;
 	if ($? & 127) {
 	    die sprintf("Child died with signal %d, %s coredump\n",
@@ -954,6 +981,8 @@ if ($do_continue && @dist_or_mods) {
 }
 
 END {
+    kill_x11_server();
+
     if ($wait) {
 	print STDERR "Smoking finished, enter RETURN to exit: ";
 	<STDIN>;
@@ -975,6 +1004,16 @@ END {
     }
 
     xterm_conf(-title => ($last_xterm_title||"") . " FINISHED");
+}
+
+sub kill_x11_server {
+    if ($use_vncserver && $effective_x11_display) {
+	my @cmd = ('vncserver', '-kill', $effective_x11_display);
+	system @cmd;
+	if ($? != 0) {
+	    warn "WARN: killing vnc server with '@cmd' failed: $?";
+	}
+    }
 }
 
 # from cpan_allpackages and changed (seek magic)
