@@ -29,7 +29,7 @@ my $timeout  = $default_timeout;
 my $timeout2 = $default_timeout2;
 my $local_timeout;
 my $q; # be quiet on stderr
-my $do_tk;
+my $do_tk = ($0 =~ m{tkidletermchecker});
 my $geometry;
 my $do_server;
 my $server_filename = "$ENV{HOME}/.idletermchecker-server";
