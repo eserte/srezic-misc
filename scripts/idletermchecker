@@ -18,10 +18,6 @@ use IO::Select;
 use IO::Socket::UNIX;
 use Getopt::Long;
 
-my $lsof = is_in_path("lsof");
-undef $lsof; # XXX unfortunately lsof may become wild and eat memory
-             # and loop wildly on freebsd...
-
 my @terminals;
 my $default_timeout  = 30;
 my $default_timeout2 = 60;
@@ -36,9 +32,11 @@ my $server_filename = "$ENV{HOME}/.idletermchecker-server";
 my $server_pid;
 my $permanently_shown;
 my $do_remove;
+my $debug = 0;
 GetOptions("t|timeout=i" => \$timeout,
 	   "t2|timeout2=i" => \$timeout2,
 	   "q" => \$q,
+	   "debug+" => \$debug,
 	   "tk" => \$do_tk,
 	   "geometry=s" => \$geometry,
 	   "s|server" => \$do_server,
@@ -188,7 +186,7 @@ sub abbrev_to_dev {
     my $abbrev = shift;
     if (File::Spec->file_name_is_absolute($abbrev)) {
 	$abbrev;
-    } elsif ($^O eq 'linux') {
+    } elsif ($^O eq 'linux' || $^O eq 'freebsd') {
 	"/dev/pts/$abbrev";
     } else {
 	"/dev/tty$abbrev";
@@ -196,7 +194,7 @@ sub abbrev_to_dev {
 }
 
 sub term_glob {
-    if ($^O eq 'linux') {
+    if ($^O eq 'linux' || $^O eq 'freebsd') {
 	"/dev/pts/*";
     } else {
 	"/dev/tty*";
@@ -357,7 +355,8 @@ sub check_tk {
 
     {
 	my $new_term;
-	my $control = MainWindow->new(-title => "Control idletermchecker");
+	my $control = $mw->Toplevel(-title => "Control idletermchecker");
+	$control->protocol('WM_DELETE_WINDOW' => sub { $mw->destroy });
 	$control->Label(-text => "Add terminal:")->pack;
 	my $e = $control->Entry(-textvariable => \$new_term)->pack;
 	$e->focus;
@@ -380,11 +379,9 @@ sub check_tk {
 			     )->pack;
 	$control->Button(-text => "Watch all terminals",
 			 -command => sub {
-			     my $term_glob = term_glob();
 			     my %active_terminal = map {($_,1)} @terminals;
-			     for my $term (glob($term_glob)) {
+			     for my $term (get_all_terminals()) {
 				 next if $active_terminal{$term};
-				 next if !terminal_alive($term);
 				 push @terminals, $term;
 				 $add_term_sub->($term);
 			     }
@@ -419,13 +416,17 @@ sub check_tk {
 		push @timeouted, $terminal;
 	    }
 	    $age{$terminal} = $age;
+	    next if !Tk::Exists($age_l{$terminal}); # may happen if script is about to exit
 	    $age_l{$terminal}->configure(-text => $age);
 	}
 
 	my %timeouted = map{($_,1)} @timeouted;
 	my @non_timeouted = grep { !$timeouted{$_} } @terminals;
 	for my $term (@non_timeouted) {
-	    $_->configure(-background => 'green') for $l{$term}, $f{$term}, $age_l{$term};
+	    for my $w ($l{$term}, $f{$term}, $age_l{$term}) {
+		next if !Tk::Exists($w); # may happen if script is about to exit
+		$w->configure(-background => 'green');
+	    }
 	}
 	if (@timeouted) {
 	    if ($mw->state ne 'normal') {
@@ -443,9 +444,8 @@ sub check_tk {
 	    }
 	    my @remove_term;
 	    for my $term (@timeouted) {
-		if (-r $term && $lsof && $remove_term_tk) {
-		    my $out = `$lsof -w $term`;
-		    if (!$out) {
+		if (-r $term && $remove_term_tk) {
+		    if (!terminal_alive($term)) {
 			warn "Terminal <$term> vanished";
 			$remove_term_tk->($term);
 		    }
@@ -465,8 +465,39 @@ sub check_tk {
 
 sub terminal_alive {
     my $term = shift;
-    my $res = `lsof $term 2>/dev/null | wc -l`;
-    $res > 0;
+    if (eval { require Proc::ProcessTable; 1 }) {
+	my $t = Proc::ProcessTable->new;
+	for my $p (@{ $t->table }) {
+	    if ($p->ttydev eq $term) {
+		return 1;
+	    }
+	}
+    } else {
+	my $res = `lsof -w $term 2>/dev/null | wc -l`;
+	$res > 0;
+    }
+}
+
+sub get_all_terminals {
+    if (eval { require Proc::ProcessTable; 1 }) {
+	my $t = Proc::ProcessTable->new;
+	my %term;
+	for my $p (@{ $t->table }) {
+	    my $tty = $p->ttydev;
+	    if ($tty && -e $tty) {
+		$term{$tty} = 1;
+	    }
+	}
+	sort keys %term;
+    } else {
+	my @terminals;
+	my $term_glob = term_glob();
+	for my $term (glob($term_glob)) {
+	    next if !terminal_alive($term);
+	    push @terminals, $term;
+	}
+	sort @terminals;
+    }
 }
 
 sub server_cleanup {
