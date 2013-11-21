@@ -215,7 +215,8 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 	       -command => sub {
 		   require CGI;
 		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . CGI->new({dist=>$currdist, reports=>"1"})->query_string);
+		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . CGI->new({dist=>$currdist,# reports=>"1"
+												   })->query_string);
 	       })->pack(-side => "left");
     $f->Button(-text => "ctgetreports",
 	       -command => sub {
