@@ -465,7 +465,7 @@ sub check_tk {
 
 sub terminal_alive {
     my $term = shift;
-    if (eval { require Proc::ProcessTable; 1 }) {
+    if (eval { require XXXProc::ProcessTable; 1 }) {
 	my $t = Proc::ProcessTable->new;
 	for my $p (@{ $t->table }) {
 	    if ($p->ttydev eq $term) {
@@ -473,6 +473,15 @@ sub terminal_alive {
 	    }
 	}
     } else {
+	if ($^O eq 'freebsd') {
+	    if (!our $Proc_ProcessTable_warning++) {
+		warn <<EOF;
+WARN: Proc::ProcessTable not available and we cannot fallback to lsof...
+      assume terminal '$term' (and all subsequent terminals) alive...
+EOF
+	    }
+	    return 1;
+	}
 	my $res = `lsof -w $term 2>/dev/null | wc -l`;
 	$res > 0;
     }
