@@ -39,25 +39,38 @@ if ($do_maintperl) {
     system('xterm-conf -f -title "INIT maintperl"');
     # really tests 5.8.8 and 5.8.9, installs everything stable and
     # tests also developer versions
-    (getpwuid($<))[0] eq 'cpansand'
-	or die "Works only for cpansand!";
 
-    run_smoker '5.18.0', 'devel',  '-3d';
-    run_smoker '5.18.0', 'stable', '-20d';
+    #(getpwuid($<))[0] eq 'cpansand'
+    #	or die "Works only for cpansand!";
 
-    run_smoker '5.16.0-RC0', 'devel',  '-3d';
-    run_smoker '5.16.0-RC0', 'stable', '-20d';
+    run_smoker '5.18.1', 'devel', '-3d';
+    run_smoker '5.18.1', 'stable', '-20d';
 
-    run_smoker '5.14.0', 'devel',  '-3d';
-    run_smoker '5.12.3', 'devel',  '-3d';
-    #run_smoker '5.12.0', 'devel',  '-3d';
-    run_smoker '5.10.1', 'devel',  '-3d';
-    run_smoker '5.8.9',  'devel',  '-3d';
-    run_smoker '5.14.0', 'stable', '-20d';
-    run_smoker '5.12.3', 'stable', '-20d';
-    #run_smoker '5.12.0', 'stable', '-20d';
-    run_smoker '5.10.1', 'stable', '-20d';
-    run_smoker '5.8.9',  'stable', '-20d';
+    run_smoker '5.19.6', 'devel', '-3d';
+    run_smoker '5.19.6', 'stable', '-20d';
+
+    run_smoker '5.8.9t', 'devel', '-3d';
+    run_smoker '5.8.9t', 'stable', '-20d';
+
+    run_smoker '5.16.3', 'devel', '-3d';
+    run_smoker '5.16.3', 'stable', '-20d';
+
+    #run_smoker '5.18.0', 'devel',  '-3d';
+    #run_smoker '5.18.0', 'stable', '-20d';
+    #
+    #run_smoker '5.16.0-RC0', 'devel',  '-3d';
+    #run_smoker '5.16.0-RC0', 'stable', '-20d';
+    #
+    #run_smoker '5.14.0', 'devel',  '-3d';
+    #run_smoker '5.12.3', 'devel',  '-3d';
+    ##run_smoker '5.12.0', 'devel',  '-3d';
+    #run_smoker '5.10.1', 'devel',  '-3d';
+    #run_smoker '5.8.9',  'devel',  '-3d';
+    #run_smoker '5.14.0', 'stable', '-20d';
+    #run_smoker '5.12.3', 'stable', '-20d';
+    ##run_smoker '5.12.0', 'stable', '-20d';
+    #run_smoker '5.10.1', 'stable', '-20d';
+    #run_smoker '5.8.9',  'stable', '-20d';
 
     system('xterm-conf -f -title "FINISHED maintperl"');
 } elsif (0 && $do_maintperl) { # old, somewhat newer
@@ -180,7 +193,9 @@ sub run_smoker ($$$) {
 	    die "Cannot find a perl $perl_version, tried in /usr/perlXXX and $perl_exe";
 	}
     }
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . ($stability eq 'stable' ? '-install' : '') . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    #my $install_arg = ($stability eq 'stable' ? '-install' : '');
+    my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . $install_arg . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
     if ($? == 2) {
