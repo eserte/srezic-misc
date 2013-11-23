@@ -465,7 +465,7 @@ sub check_tk {
 
 sub terminal_alive {
     my $term = shift;
-    if (eval { require XXXProc::ProcessTable; 1 }) {
+    if (eval { require Proc::ProcessTable; 1 }) {
 	my $t = Proc::ProcessTable->new;
 	for my $p (@{ $t->table }) {
 	    if ($p->ttydev eq $term) {
