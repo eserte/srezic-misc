@@ -100,7 +100,7 @@ if ($v) {
     $MyCPANShell::VERBOSE = 1;
 }
 
-warn "Range from " . scalar(localtime $from) . " to " . scalar(localtime $to) . "\n" if $v;
+warn "INFO: Range from " . scalar(localtime $from) . " to " . scalar(localtime $to) . "\n" if $v;
 
 # XXX is this really necessary?
 $ENV{FTP_PASSIVE} = 1;
@@ -123,7 +123,7 @@ $url =~ s{/+$}{}; # normalize?
 my $ua = $LWP_UserAgent->new(%LWP_options);
 
 my $recent = $url . "/authors/RECENT-1h.yaml";
-warn "Fetching from $recent...\n" if $v;
+warn "INFO: Fetching from $recent...\n" if $v;
 my $resp = $ua->get($recent);
 if (!$resp->is_success) {
     die "Error while fetching $recent: " . $resp->status_line;
@@ -133,7 +133,7 @@ my $recent_data = Load($resp->decoded_content);
 my @aggregator = @{ $recent_data->{meta}->{aggregator} || [] };
 
 if ($v && $v >= 2) {
-    *debug      = sub { warn "$_[0]\n" };
+    *debug      = sub { warn "DEBUG: $_[0]\n" };
     *debug_code = sub { $_[0]->() };
 } else {
     *debug      = sub { };
