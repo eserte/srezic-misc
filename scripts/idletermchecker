@@ -236,7 +236,8 @@ sub check_tk {
 	    $mw->after(1500, sub {
 			   $mw->destroy;
 		       });
-	    $mw->messageBox(-message => "No more watchers, exiting...");
+	    my $msgbox = $mw->Toplevel;
+	    $msgbox->Label(-text => "No more watchers, exiting...")->pack;
 	} else {
 	    $f->destroy;
 	}
