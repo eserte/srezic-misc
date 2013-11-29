@@ -310,9 +310,9 @@ sub set_currfile {
 		    $section = 'PREREQUISITES';
 		} elsif ($section eq 'PROGRAM OUTPUT') {
 		    if      (/^Warning: Perl version \S+ or higher required\. We run \S+\.$/) {
-			$analysis_tags{'low perl'} = 1;
+			$analysis_tags{'low perl'} = { line => $. };
 		    } elsif (/^Result: NOTESTS$/) {
-			$analysis_tags{'notests'} = 1;
+			$analysis_tags{'notests'} = { line => $. };
 		    }
 		}
 	    }
@@ -338,11 +338,17 @@ sub set_currfile {
 
     $_->destroy for $analysis_frame->children;
     for my $analysis_tag (sort keys %analysis_tags) {
-	$analysis_frame->Label(-text => $analysis_tag,
-			       -bg => 'yellow',
-			       -borderwidth => 1,
-			       -relief => 'raised'
-			      )->pack;
+	my $line = $analysis_tags{$analysis_tag}->{line};
+	$analysis_frame->Button(-text => $analysis_tag,
+				-padx => 0,
+				-pady => 0,
+				-bg => 'yellow',
+				-borderwidth => 1,
+				-relief => 'raised',
+				-command => sub {
+				    $more->Subwidget('scrolled')->see("$line.0");
+				},
+			       )->pack;
     }
 
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
