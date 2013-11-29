@@ -19,6 +19,10 @@ use Tk::More;
 use Tk::ErrorDialog;
 use Getopt::Long;
 
+# Patterns for report analysis
+my $v_version_qr = qr{v[\d\.]+};
+my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]> line \d+)?\.};
+
 my $only_good;
 my $auto_good;
 my $only_pass_is_good;
@@ -309,10 +313,34 @@ sub set_currfile {
 		} elsif (/^PREREQUISITES$/) {
 		    $section = 'PREREQUISITES';
 		} elsif ($section eq 'PROGRAM OUTPUT') {
-		    if      (/^Warning: Perl version \S+ or higher required\. We run \S+\.$/) {
-			$analysis_tags{'low perl'} = { line => $. };
-		    } elsif (/^Result: NOTESTS$/) {
-			$analysis_tags{'notests'} = { line => $. };
+		    if      (
+			     /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
+			     /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
+			     /^Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/
+			    ) {
+			$analysis_tags{'low perl'}       = { line => $. };
+		    } elsif (
+			     /^Result: NOTESTS$/ ||
+			     /^No tests defined for \S+ extension\.$/
+			    ) {
+			$analysis_tags{'notests'}        = { line => $. };
+		    } elsif (
+			     /^OS unsupported$/ ||
+			     /^OS unsupported $at_source_qr$/
+			    ) {
+			$analysis_tags{'os unsupported'} = { line => $. };
+		    } elsif (
+			     /^(?:Smartmatch|given|when) is experimental $at_source_qr$/
+			    ) {
+			$analysis_tags{'smartmatch'}     = { line => $. };
+		    } elsif (
+			     /^#\s+Failed test 'POD test for [^']+'$/
+			    ) {
+			$analysis_tags{'pod test'}       = { line => $. };
+		    } elsif (
+			     /^#\s+Error:\s+Can't locate \S+ in \@INC/
+			    ) {
+			$analysis_tags{'prereq fail'}    = { line => $. };
 		    }
 		}
 	    }
