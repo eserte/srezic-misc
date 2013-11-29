@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: ctr_good_or_invalid.pl,v 1.23 2012/03/27 18:41:09 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -166,6 +165,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
     $f->Label(-text => "/ " . $#files)->pack(-side => "right");
     $f->Label(-textvariable => \$currfile_i)->pack(-side => "right");
 }
+my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
 {
     my $f = $mw->Frame->pack(-fill => "x");
     $prev_b = $f->Button(-text => "Prev (F4)",
@@ -280,7 +280,9 @@ sub set_currfile {
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
     my $currfulldist;
+    my %analysis_tags;
     if (open my $fh, $currfile) {
+	# Parse header
 	my $subject;
 	my $x_test_reporter_perl;
 	while(<$fh>) {
@@ -295,6 +297,24 @@ sub set_currfile {
 		$x_test_reporter_perl = $1;
 	    } elsif (/^$/) {
 		last;
+	    }
+	}
+
+	# Parse body
+	{
+	    my $section = '';
+	    while(<$fh>) {
+		if (/^PROGRAM OUTPUT$/) {
+		    $section = 'PROGRAM OUTPUT';
+		} elsif (/^PREREQUISITES$/) {
+		    $section = 'PREREQUISITES';
+		} elsif ($section eq 'PROGRAM OUTPUT') {
+		    if      (/^Warning: Perl version \S+ or higher required\. We run \S+\.$/) {
+			$analysis_tags{'low perl'} = 1;
+		    } elsif (/^Result: NOTESTS$/) {
+			$analysis_tags{'notests'} = 1;
+		    }
+		}
 	    }
 	}
 
@@ -315,6 +335,16 @@ sub set_currfile {
 	warn "Can't open $currfile: $!";
 	$modtime = "N/A";
     }
+
+    $_->destroy for $analysis_frame->children;
+    for my $analysis_tag (sort keys %analysis_tags) {
+	$analysis_frame->Label(-text => $analysis_tag,
+			       -bg => 'yellow',
+			       -borderwidth => 1,
+			       -relief => 'raised'
+			      )->pack;
+    }
+
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 }
 
