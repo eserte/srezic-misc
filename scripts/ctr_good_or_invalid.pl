@@ -338,6 +338,10 @@ sub set_currfile {
 			    ) {
 			$analysis_tags{'pod test'}       = { line => $. };
 		    } elsif (
+			     /^#\s+Failed test 'Pod coverage on [^']+'$/
+			    ) {
+			$analysis_tags{'pod coverage test'} = { line => $. };
+		    } elsif (
 			     /^#\s+Error:\s+Can't locate \S+ in \@INC/
 			    ) {
 			$analysis_tags{'prereq fail'}    = { line => $. };
