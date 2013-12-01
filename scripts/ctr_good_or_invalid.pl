@@ -21,7 +21,7 @@ use Getopt::Long;
 
 # Patterns for report analysis
 my $v_version_qr = qr{v[\d\.]+};
-my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]> line \d+)?\.};
+my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.};
 
 my $only_good;
 my $auto_good;
@@ -316,12 +316,14 @@ sub set_currfile {
 		    if      (
 			     /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
 			     /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
+			     /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
 			     /^Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/
 			    ) {
 			$analysis_tags{'low perl'}       = { line => $. };
 		    } elsif (
 			     /^Result: NOTESTS$/ ||
-			     /^No tests defined for \S+ extension\.$/
+			     /^No tests defined for \S+ extension\.$/ ||
+			     /^No tests defined\.$/
 			    ) {
 			$analysis_tags{'notests'}        = { line => $. };
 		    } elsif (
