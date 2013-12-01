@@ -55,6 +55,9 @@ if ($do_maintperl) {
     run_smoker '5.16.3', 'devel', '-3d';
     run_smoker '5.16.3', 'stable', '-20d';
 
+    run_smoker '5.10.1t', 'devel', '-3d';
+    run_smoker '5.10.1t', 'stable', '-20d';
+
     #run_smoker '5.18.0', 'devel',  '-3d';
     #run_smoker '5.18.0', 'stable', '-20d';
     #
