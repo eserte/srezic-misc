@@ -33,8 +33,6 @@ my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
 my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
 
-# No need to blacklist users anymore --- no mails are sent directly anymore.
-my @blacklist_author; # = qw(MLEHMANN PJFL);
 my @perls;
 my $dists;
 my $reports_sent_seek_pos;
@@ -428,7 +426,6 @@ TRY_PARTIAL_RESOLVE: {
     my %seen_dist_maturity;
     my %seen_dist_released;
     my %seen_mod;
-    my %blacklist_author = map{($_,1)} @blacklist_author;
     for my $dist_or_mod (@dist_or_mods) {
 	my $d_info = CPAN::DistnameInfo->new($dist_or_mod);
 	if (!$d_info || !$d_info->dist) {
@@ -444,10 +441,6 @@ TRY_PARTIAL_RESOLVE: {
 	    if (!$cpanid) {
 		# assume "short" distname
 		($cpanid) = $dist_or_mod =~ m{([^/]+)};
-	    }
-	    if ($cpanid && $blacklist_author{$cpanid}) {
-		warn "Remove blacklisted distribution " . $d_info->distvname . " from list...\n";
-		next;
 	    }
 	    my($dist, $maturity) = ($d_info->dist, $d_info->maturity);
 	    if ($dist && $dist =~ m{/Bundle-Everything-}) { # XXX why it doesn't work through distroprefs?
@@ -1106,7 +1099,15 @@ sub check_disk_free {
 	die "Should not happen: cannot parse build directory using <@cmd>";
     }
     if (!-d $build_dir) {
-	die "Build directory <$build_dir> for perl <$perl> does not exist";
+	die <<EOF;
+Build directory <$build_dir> for perl <$perl> does not exist.
+Usually this can be fixed by running a dummy build once, e.g.
+
+    $perl -MCPAN -eshell
+    test Kwalify
+    quit
+
+EOF
     }
     if (eval { require Filesys::DfPortable; 1 }) {
 	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent);
