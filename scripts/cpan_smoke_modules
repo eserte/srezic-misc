@@ -916,7 +916,7 @@ EOF
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
 	    } else {
-		warn "*** WARNING: Neither limits(1) nor BSD::Resource available, not resource limits possible.\n";
+		warn "*** WARNING: Neither limits(1) nor BSD::Resource available, resource limits cannot be set.\n";
 	    }
 	}
 
