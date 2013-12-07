@@ -67,9 +67,6 @@ if (!-w $download_directory) {
     $download_directory = "/tmp";
     warn "Download directory '$original_download_directory' is not writable, fallback to '$download_directory'\n";
 }
-my $perl_tar_gz = "perl-$perlver.tar.gz";
-my $downloaded_perl = "$download_directory/$perl_tar_gz";
-my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz";
 my $srezic_misc = "$ENV{HOME}/src/srezic-misc";
 if (!-d $srezic_misc) {
     $srezic_misc = "$ENV{HOME}/work/srezic-misc";
@@ -77,6 +74,19 @@ if (!-d $srezic_misc) {
 	warn "* WARN: srezic-misc directory not found, install will very probably fail!\n";
     }
 }
+
+my $perl_tar_gz  = "perl-$perlver.tar.gz";
+my $perl_tar_bz2 = "perl-$perlver.tar.bz2";
+my $downloaded_perl_gz  = "$download_directory/$perl_tar_gz";
+my $downloaded_perl_bz2 = "$download_directory/$perl_tar_bz2";
+my $downloaded_perl;
+if (-f $downloaded_perl_bz2 && -s $downloaded_perl_bz2) {
+    $downloaded_perl = $downloaded_perl_bz2;
+} else {
+    $downloaded_perl = $downloaded_perl_gz;
+}
+my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
+
 step "Download perl $perlver",
     ensure => sub {
 	-f $downloaded_perl && -s $downloaded_perl
