@@ -70,9 +70,9 @@ if (!-w $download_directory) {
 my $perl_tar_gz = "perl-$perlver.tar.gz";
 my $downloaded_perl = "$download_directory/$perl_tar_gz";
 my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz";
-my $srezic_misc = "$ENV{HOME}/work/srezic-misc";
+my $srezic_misc = "$ENV{HOME}/src/srezic-misc";
 if (!-d $srezic_misc) {
-    $srezic_misc = "$ENV{HOME}/work2/srezic-misc";
+    $srezic_misc = "$ENV{HOME}/work/srezic-misc";
     if (!-d $srezic_misc) {
 	warn "* WARN: srezic-misc directory not found, install will very probably fail!\n";
     }
@@ -228,11 +228,11 @@ step "Report toolchain modules",
 #	  gebaut wurden. Siehe "typemap problems in newer perls" in TODO.
 
 #	- Bundle::BBBike installieren (Achtung: X11::Protocol ist interaktiv!)
-#	  cd ~eserte/src/bbbike && ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nobatch -shell -perl $MYPERLDIR/bin/perl
+#	  cd ~eserte/src/bbbike && ~eserte/src/srezic-misc/scripts/cpan_smoke_modules -nobatch -shell -perl $MYPERLDIR/bin/perl
 #	  und dann: install Bundle::BBBike
 
 #	- Consider to add the new perl to
-#	  ~/work/srezic-misc/scripts/cpan_smoke_modules_wrapper3
+#	  ~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3
 
 END {
     if ($sudo_validator_pid) {
