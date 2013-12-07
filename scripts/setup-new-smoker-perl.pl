@@ -18,9 +18,9 @@ use File::Temp qw(tempfile);
 use Getopt::Long;
 
 use autodie qw(:all);
-use Commands::Guarded;
 
 sub save_pwd2 ();
+sub step ($%);
 sub sudo (@);
 
 my $perlver;
@@ -77,11 +77,11 @@ if (!-d $srezic_misc) {
 	warn "* WARN: srezic-misc directory not found, install will very probably fail!\n";
     }
 }
-step "Download perl $perlver" =>
-    ensure {
+step "Download perl $perlver",
+    ensure => sub {
 	-f $downloaded_perl && -s $downloaded_perl
-    }
-    using {
+    },
+    using => sub {
 	my $save_pwd = save_pwd2;
 	chdir $download_directory;
 	my $tmp_perl_tar_gz = $perl_tar_gz.".~".$$."~";
@@ -95,11 +95,11 @@ if (!-d $src_dir || !-w $src_dir) {
     warn "Not on a FreeBSD system? Adjusting src dir to $src_dir\n";
 }
 my $perl_src_dir = "$src_dir/perl-$perlver";
-step "Extract in $src_dir" =>
-    ensure {
+step "Extract in $src_dir",
+    ensure => sub {
 	-f "$perl_src_dir/.extracted";
-    }
-    using {
+    },
+    using => sub {
 	my $save_pwd = save_pwd2;
 	chdir $src_dir;
 	system "tar", "xf", $downloaded_perl;
@@ -107,11 +107,11 @@ step "Extract in $src_dir" =>
     };
 
 my $built_file = "$perl_src_dir/.built" . ($build_debug || $build_threads ? "_" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "") : "");
-step "Build perl" =>
-    ensure {
+step "Build perl",
+    ensure => sub {
 	-x "$perl_src_dir/perl" && -f $built_file;
-    }
-    using {
+    },
+    using => sub {
 	my $save_pwd = save_pwd2;
 	for my $looks_like_built (glob(".built*")) {
 	    unlink $looks_like_built;
@@ -145,11 +145,11 @@ step "Build perl" =>
     };
 
 my $state_dir = "$perldir/.install_state";
-step "Install perl" =>
-    ensure {
+step "Install perl",
+    ensure => sub {
 	-d $perldir && -f "$state_dir/.installed"
-    }
-    using {
+    },
+    using => sub {
 	my $save_pwd = save_pwd2;
 	chdir $perl_src_dir;
 	sudo 'make', 'install';
@@ -161,19 +161,19 @@ step "Install perl" =>
     };
 
 my $symlink_src = "/usr/local/bin/perl$perlver" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "");
-step "Symlink in /usr/local/bin" =>
-    ensure {
+step "Symlink in /usr/local/bin",
+    ensure => sub {
 	-l $symlink_src
-    }
-    using {
+    },
+    using => sub {
 	sudo 'ln', '-s', "$perldir/bin/perl$perlver", $symlink_src;
     };
 
-step "Symlink perl for devel perls" =>
-    ensure {
+step "Symlink perl for devel perls",
+    ensure => sub {
 	-x "$perldir/bin/perl"
-    }
-    using {
+    },
+    using => sub {
 	sudo 'ln', '-s', "perl$perlver", "$perldir/bin/perl";
     };
 
@@ -186,29 +186,29 @@ step "Symlink perl for devel perls" =>
 # set to YAML::Syck)
 my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl CPAN::Reporter);
 
-step "Install modules needed for CPAN::Reporter" =>
-    ensure {
+step "Install modules needed for CPAN::Reporter",
+    ensure => sub {
 	toolchain_modules_installed_check();
-    }
-    using {
+    }, 
+    using => sub {
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
     };
 
-step "Report Kwalify" =>
-    ensure {
+step "Report Kwalify",
+    ensure => sub {
 	-f "$state_dir/.reported_kwalify"
-    }
-    using {
+    },
+    using => sub {
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-savereports", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_kwalify";
     };
 
-step "Report toolchain modules" =>
-    ensure {
+step "Report toolchain modules",
+    ensure => sub {
 	-f "$state_dir/.reported_toolchain"
-    }
-    using {
+    },
+    using => sub {
 	# note: as this is the last step (currently), explicitely use -signalend
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-signalend", "-savereports", @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
@@ -277,6 +277,15 @@ sub toolchain_modules_installed_check {
 	}
     }
     $total_success;
+}
+
+sub step ($%) {
+    my($step_name, %doings) = @_;
+    my $ensure = $doings{ensure} || die "ensure => sub { ... } missing";
+    my $using  = $doings{using}  || die "using => sub { ... } missing";
+    return if $ensure->();
+    $using->();
+    die "Step '$step_name' failed" if !$ensure->();
 }
 
 sub sudo (@) {
