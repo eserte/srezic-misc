@@ -32,6 +32,7 @@ my $start_time = time;
 my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
 my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
+my $cpan_smoke_typescripts_dir = "$ENV{HOME}/.cpan_smoke_modules_typescripts";
 
 my @perls;
 my $dists;
@@ -74,6 +75,8 @@ my @cpan_conf;
 my $strace;
 my $truss;
 my $ktrace;
+my $do_typescript;
+my $typescript_file;
 my $use_distroprefs = 1;
 my $use_limits = 1;
 my $prefs_dir;
@@ -130,6 +133,7 @@ GetOptions("n" => \$n,
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
+	   'typescript' => \$do_typescript,
 	   'distroprefs!' => \$use_distroprefs,
 	   'prefsdir=s' => \$prefs_dir,
 	   'limits!' => \$use_limits,
@@ -154,7 +158,7 @@ usage: $0
      [-pre dist/module [...]]
      [-cpanconf key=value [-cpanconf ...]]
      [-[no]destroyperl]
-     [-strace|-truss|-ktrace file]
+     [-strace|-truss|-ktrace file] [-typescript]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc]
@@ -207,6 +211,31 @@ if ($ktrace && -e $ktrace) {
 }
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
+}
+if ($do_typescript) {
+    if ($^O !~ m{^(linux|freebsd)$}) {
+	die "-typescript implemented only for linux and freebsd";
+    }
+    if (!is_in_path('script')) {
+	die "-typescript specified, but 'script' executable is not in path\n";
+    }
+    if ($^O eq 'linux') {
+	require String::ShellQuote;
+    }
+    if (!-d $cpan_smoke_typescripts_dir) {
+	mkdir $cpan_smoke_typescripts_dir
+	    or die "Can't create $cpan_smoke_typescripts_dir: $!";
+    }
+    require POSIX;
+    my $now = time;
+    my $typescript_day_dir = "$cpan_smoke_typescripts_dir/" . POSIX::strftime("%Y%m%d", localtime $now);
+    if (!-d $typescript_day_dir) {
+	mkdir $typescript_day_dir;
+	if (!-d $typescript_day_dir) {
+	    die "Can't create $typescript_day_dir: $!";
+	}
+    }
+    $typescript_file = $typescript_day_dir . "/" . POSIX::strftime("%H%M%S", localtime) . ".typescript";
 }
 my @dist_or_mods = @ARGV;
 if ($do_action eq 'shell' && !@dist_or_mods) {
@@ -923,6 +952,21 @@ EOF
 
 	if ($n) {
 	    unshift @cmd, "echo";
+	}
+
+	if ($do_typescript) {
+	    if ($^O eq 'freebsd') {
+		unshift @cmd, 'script', '-a', $typescript_file;
+	    } elsif ($^O eq 'linux') {
+		my($tmpfh,$tmpfile) = tempfile(UNLINK => 1, SUFFIX => '.typescript.sh') or die $!;
+		print $tmpfh "#!/bin/sh\n";
+		print $tmpfh join(" ", map { String::ShellQuote::shell_quote($_) } @cmd), "\n";
+		close $tmpfh or die $!;
+		chmod 0755, $tmpfile or die "Can't chmod $tmpfile: $!";
+		@cmd = ('script', '-a', '-c', $tmpfile, $typescript_file);
+	    } else {
+		die "should not happen";
+	    }
 	}
 
 	check_disk_free($perl);
