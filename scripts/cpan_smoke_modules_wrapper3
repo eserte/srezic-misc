@@ -198,7 +198,7 @@ sub run_smoker ($$$) {
     }
     my $install_arg = ($stability eq 'stable' ? '-install' : '');
     #my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -nosignalend } . $install_arg . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -typescript -nosignalend } . $install_arg . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
     if ($? == 2) {
