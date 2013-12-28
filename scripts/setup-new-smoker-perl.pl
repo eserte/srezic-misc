@@ -170,21 +170,22 @@ step "Install perl",
 	system 'touch', "$state_dir/.installed";
     };
 
-my $symlink_src = "/usr/local/bin/perl$perlver" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "");
-step "Symlink in /usr/local/bin",
-    ensure => sub {
-	-l $symlink_src
-    },
-    using => sub {
-	sudo 'ln', '-s', "$perldir/bin/perl$perlver", $symlink_src;
-    };
-
 step "Symlink perl for devel perls",
     ensure => sub {
 	-x "$perldir/bin/perl"
     },
     using => sub {
 	sudo 'ln', '-s', "perl$perlver", "$perldir/bin/perl";
+    };
+
+
+my $symlink_src = "/usr/local/bin/perl$perlver" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "");
+step "Symlink in /usr/local/bin",
+    ensure => sub {
+	-l $symlink_src
+    },
+    using => sub {
+	sudo 'ln', '-s', "$perldir/bin/perl", $symlink_src;
     };
 
 #- change ownership to cpansand:
