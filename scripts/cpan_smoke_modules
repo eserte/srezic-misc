@@ -88,6 +88,7 @@ my $mirror_url = 'http://cpan.cpantesters.org/';
 my $hidemod;
 my $use_vncserver;
 my $x11_display = ':9'; # ssh begins at :10
+my @touch_files;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -635,6 +636,7 @@ if ($save_reports) {
 	mkdir $dir if !-d $dir;
     }
     $ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
+    push @touch_files, $tmpfile;
 } elsif ($no_fail_reports) {
     my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini"; # XXX maybe use PERL_CPAN_REPORTER_DIR?
     if (!-r $confignofail) {
@@ -977,6 +979,7 @@ EOF
 	}
 
 	check_disk_free($perl);
+	touch_files();
 
 	print STDERR "# @cmd\n";
 	local %ENV = %ENV;
@@ -1218,6 +1221,18 @@ sub check_disk_free_directory {
 	} else {
 	    print STDERR qq{(sleeping for 60 seconds...)\n};
 	    sleep 60;
+	}
+    }
+}
+
+# A list of files, probably in temporary directory, which need regular touch
+# --- otherwise other cleanup jobs could remove them.
+sub touch_files {
+    for my $file (@touch_files) {
+	if (-e $file) {
+	    my $now = time;
+	    utime $now, $now, $file
+		or warn "Can't touch $file: $!";
 	}
     }
 }
