@@ -7,27 +7,15 @@ use Getopt::Long;
 sub run_smoker ($$$);
 sub spec_usage (;$);
 
-my $do_this_month = 1;
-my $do_last_month = 1;
-my $do_recent;
-
 my $do_maintperl;
-
-my $skip_update;
-
+my $spec;
 my $mirror_url = "http://cpan.cpantesters.org/";
 
-my $spec;
-
 GetOptions("maintperl" => \$do_maintperl,
-	   "this!"     => \$do_this_month,
-	   "last!"     => \$do_last_month,
-	   "recent"    => \$do_recent,
-	   "skip-update" => \$skip_update,
 	   "mirrorurl=s" => \$mirror_url,
 	   "spec=s"    => \$spec,
 	  )
-    or die "usage?";
+    or die "usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]";
 
 my $recent_url = $mirror_url;
 
