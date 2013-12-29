@@ -46,9 +46,8 @@ if ($spec) {
     run_smoker $perlver, $stableness, $range;
     system('xterm-conf -f -title "FINISHED cpan_smoke_modules wrapper"');
 } elsif ($do_maintperl) {
+    # installs everything stable and tests also developer versions
     system('xterm-conf -f -title "INIT maintperl"');
-    # really tests 5.8.8 and 5.8.9, installs everything stable and
-    # tests also developer versions
 
     (getpwuid($<))[0] eq 'cpansand'
     	or die "Works only for cpansand!";
@@ -67,23 +66,6 @@ if ($spec) {
 
     run_smoker '5.10.1t', 'devel', '-3d';
     run_smoker '5.10.1t', 'stable', '-20d';
-
-    #run_smoker '5.18.0', 'devel',  '-3d';
-    #run_smoker '5.18.0', 'stable', '-20d';
-    #
-    #run_smoker '5.16.0-RC0', 'devel',  '-3d';
-    #run_smoker '5.16.0-RC0', 'stable', '-20d';
-    #
-    #run_smoker '5.14.0', 'devel',  '-3d';
-    #run_smoker '5.12.3', 'devel',  '-3d';
-    ##run_smoker '5.12.0', 'devel',  '-3d';
-    #run_smoker '5.10.1', 'devel',  '-3d';
-    #run_smoker '5.8.9',  'devel',  '-3d';
-    #run_smoker '5.14.0', 'stable', '-20d';
-    #run_smoker '5.12.3', 'stable', '-20d';
-    ##run_smoker '5.12.0', 'stable', '-20d';
-    #run_smoker '5.10.1', 'stable', '-20d';
-    #run_smoker '5.8.9',  'stable', '-20d';
 
     system('xterm-conf -f -title "FINISHED maintperl"');
 }
