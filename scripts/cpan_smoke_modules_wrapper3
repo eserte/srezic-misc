@@ -13,7 +13,6 @@ my $do_recent;
 
 my $do_maintperl;
 my $do_all;
-my $do_special;
 
 my $skip_update;
 
@@ -23,7 +22,6 @@ my $spec;
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
-	   "special"   => \$do_special,
 	   "this!"     => \$do_this_month,
 	   "last!"     => \$do_last_month,
 	   "recent"    => \$do_recent,
@@ -35,8 +33,8 @@ GetOptions("maintperl" => \$do_maintperl,
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !$do_all && !$do_special && !$spec) {
-    die "Please specify either -maintperl or -all or -special or -spec";
+if (!$do_maintperl && !$do_all && !$spec) {
+    die "Please specify either -maintperl or -all or -spec";
 }
 
 if ($spec) {
@@ -181,22 +179,6 @@ EOF
     warn "@cmd...\n";
     if (system(@cmd) != 0) {
 	die "Failure while running command\n";
-    }
-} elsif ($do_special) {
-    warn <<EOF;
-*** 5.8.9: Special test: test breakage of the Test::Pod 1.40 change
-    (some L<...> errors recognized, see
-     http://perlbuzz.com/2009/07/testpod-140-now-checks-for-illegal-l-constructs.html
-    )...
-EOF
-    system q{env PERL_BATCH=yes PERL_CPAN_REPORTER_DIR=$HOME/.cpanreporter/set-perl589@RC2-7.0 ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -nosignalend -perl /usr/perl5.8.9@RC2/bin/perl } . q{ -filelist ~eserte/trash/has_podt2};
-} else {
-    chomp(my @dists = `$FindBin::RealBin/cpan_recent_uploads2 -v -from -6d -url $recent_url`);
-    my @cmd = ("$FindBin::RealBin/cpan_smoke_modules", "-pv", "5.10.0,5.8.8t,5.10.0t,5.6.2,5.8.8",
-	       "-skiptested", "--", @dists);
-    warn "Running: @cmd\n";
-    if (system(@cmd) != 0) {
-	die "Failure while running command: @cmd\n";
     }
 }
 
