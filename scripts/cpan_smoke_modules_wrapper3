@@ -5,6 +5,7 @@ use FindBin;
 use Getopt::Long;
 
 sub run_smoker ($$$);
+sub spec_usage (;$);
 
 my $do_this_month = 1;
 my $do_last_month = 1;
@@ -18,6 +19,8 @@ my $skip_update;
 
 my $mirror_url = "http://cpan.cpantesters.org/";
 
+my $spec;
+
 GetOptions("maintperl" => \$do_maintperl,
 	   "all"       => \$do_all,
 	   "special"   => \$do_special,
@@ -26,16 +29,27 @@ GetOptions("maintperl" => \$do_maintperl,
 	   "recent"    => \$do_recent,
 	   "skip-update" => \$skip_update,
 	   "mirrorurl=s" => \$mirror_url,
+	   "spec=s"    => \$spec,
 	  )
     or die "usage?";
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !$do_all && !$do_special) {
-    die "Please specify either -maintperl or -all or -special";
+if (!$do_maintperl && !$do_all && !$do_special && !$spec) {
+    die "Please specify either -maintperl or -all or -special or -spec";
 }
 
-if ($do_maintperl) {
+if ($spec) {
+    my($perlver, $stableness, $range) = split /,/, $spec;
+    spec_usage if !defined $range;
+    spec_usage("perl version does not look like expected") if $perlver !~ m{^\d+\.\d+\.}; # does not look like a perl version (be not to strict here)
+    spec_usage("stableness must be 'stable' or 'devel'") if $stableness !~ m{^(devel|stable)$};
+    spec_usage("time range does not look like '-\${DAYS}d'") if $range !~ m{^-\d+.*};
+
+    system('xterm-conf -f -title "INIT cpan_smoke_modules wrapper"');
+    run_smoker $perlver, $stableness, $range;
+    system('xterm-conf -f -title "FINISHED cpan_smoke_modules wrapper"');
+} elsif ($do_maintperl) {
     system('xterm-conf -f -title "INIT maintperl"');
     # really tests 5.8.8 and 5.8.9, installs everything stable and
     # tests also developer versions
@@ -204,4 +218,13 @@ sub run_smoker ($$$) {
     if ($? == 2) {
 	die "SIGINT";
     }
+}
+
+sub spec_usage (;$) {
+    my $msg = shift;
+    die "spec format is perlversion,stableness,daterange where
+perlversion is something like '5.18.2'
+stableness is either 'devel' or 'stable'
+daterange is amount of days written as '-20d'
+" . ($msg ? "$msg\n" : '');
 }
