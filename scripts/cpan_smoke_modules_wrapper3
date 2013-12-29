@@ -50,8 +50,8 @@ if ($spec) {
     # really tests 5.8.8 and 5.8.9, installs everything stable and
     # tests also developer versions
 
-    #(getpwuid($<))[0] eq 'cpansand'
-    #	or die "Works only for cpansand!";
+    (getpwuid($<))[0] eq 'cpansand'
+    	or die "Works only for cpansand!";
 
     run_smoker '5.18.1', 'devel', '-3d';
     run_smoker '5.18.1', 'stable', '-20d';
