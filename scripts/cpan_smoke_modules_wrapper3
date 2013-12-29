@@ -12,7 +12,6 @@ my $do_last_month = 1;
 my $do_recent;
 
 my $do_maintperl;
-my $do_all;
 
 my $skip_update;
 
@@ -21,7 +20,6 @@ my $mirror_url = "http://cpan.cpantesters.org/";
 my $spec;
 
 GetOptions("maintperl" => \$do_maintperl,
-	   "all"       => \$do_all,
 	   "this!"     => \$do_this_month,
 	   "last!"     => \$do_last_month,
 	   "recent"    => \$do_recent,
@@ -33,8 +31,8 @@ GetOptions("maintperl" => \$do_maintperl,
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !$do_all && !$spec) {
-    die "Please specify either -maintperl or -all or -spec";
+if (!$do_maintperl && !$spec) {
+    die "Please specify either -maintperl or -spec";
 }
 
 if ($spec) {
