@@ -328,7 +328,8 @@ sub set_currfile {
 			$analysis_tags{'notests'}        = { line => $. };
 		    } elsif (
 			     /^OS unsupported$/ ||
-			     /^OS unsupported $at_source_qr$/
+			     /^OS unsupported $at_source_qr$/ ||
+			     /^No support for OS at /
 			    ) {
 			$analysis_tags{'os unsupported'} = { line => $. };
 		    } elsif (
@@ -344,9 +345,13 @@ sub set_currfile {
 			    ) {
 			$analysis_tags{'pod coverage test'} = { line => $. };
 		    } elsif (
-			     /^#\s+Error:\s+Can't locate \S+ in \@INC/
+			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/
 			    ) {
 			$analysis_tags{'prereq fail'}    = { line => $. };
+		    } elsif (
+			     /Type of arg \d+ to (?:keys|each) must be hash \(not private (?:variable|array)\)/
+			    ) {
+			$analysis_tags{'container func on ref'} = { line => $. };
 		    }
 		}
 	    }
