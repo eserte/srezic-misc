@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -258,7 +258,7 @@ set_currfile();
 $mw->bind("<Control-q>" => sub { $mw->destroy });
 $mw->bind("<Control-g>" => sub { $good_b->invoke });
 $mw->bind("<F4>" => sub { $prev_b->invoke });
-$mw->bind("<F5>" => sub { $prev_b->invoke });
+$mw->bind("<F5>" => sub { $next_b->invoke });
 
 if ($auto_good) {
     $mw->repeat(2*1000, sub {
