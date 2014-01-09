@@ -41,6 +41,9 @@ if ($spec) {
     (getpwuid($<))[0] eq 'cpansand'
     	or die "Works only for cpansand!";
 
+    run_smoker '5.18.2', 'devel', '-3d';
+    run_smoker '5.18.2', 'stable', '-3d'; # XXX fix some day?
+
     run_smoker '5.18.1', 'devel', '-3d';
     run_smoker '5.18.1', 'stable', '-20d';
 
