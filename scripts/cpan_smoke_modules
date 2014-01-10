@@ -796,7 +796,7 @@ EOF
 	my $std_title = "smoke($short_hostname:$short_tty): $perl";
 	xterm_conf('-title', $std_title);
 
-	if ($prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
+	if ($use_distroprefs && $prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
 	    if (is_in_path("slaymake")) {
 		save_pwd {
 		    if (chdir $prefs_dir) {
