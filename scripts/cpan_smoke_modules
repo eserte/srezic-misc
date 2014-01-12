@@ -828,12 +828,10 @@ EOF
 	my $cpan_shell_init = "";
 	$cpan_shell_init .= q#{ package CPAN::SRTShell; @ISA = $CPAN::Frontend; sub mysleep { shift; sleep shift()/10 }} $CPAN::Frontend="CPAN::SRTShell";#;
 	$cpan_shell_init .= q#CPAN::HandleConfig->load; #;
-	if ($do_action eq 'test' || $do_action eq 'shell') {
-	    if ($^O ne 'MSWin32') { # somehow does not work under Windows
-		$cpan_shell_init .= q{$CPAN::VERSION >= 1.9205 or warn(("*"x70)."\n*** Old CPAN version $CPAN::VERSION\n".("*"x70)."\n"); };
-	    }
-	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
+	if ($^O ne 'MSWin32') { # somehow does not work under Windows
+	    $cpan_shell_init .= q{$CPAN::VERSION >= 1.9205 or warn(("*"x70)."\n*** Old CPAN version $CPAN::VERSION\n".("*"x70)."\n"); };
 	}
+	$cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
 	$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(} . $mirror_url . q{)]; };
 	$cpan_shell_init .= q{$CPAN::FTP::connect_to_internet_ok=1; };
 	# The new feature seems to be problematic:
