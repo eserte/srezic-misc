@@ -9,31 +9,37 @@ sub spec_usage (;$);
 sub maybe_xterm_conf ($);
 
 my $do_maintperl;
-my $spec;
+my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
-	   "spec=s"    => \$spec,
+	   'spec=s@'     => \@specs,
 	  )
     or die "usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]";
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !$spec) {
+if (!$do_maintperl && !@specs) {
     die "Please specify either -maintperl or -spec";
 }
 
-if ($spec) {
-    my($perlver, $stableness, $range) = split /,/, $spec;
-    spec_usage if !defined $range;
-    spec_usage("perl version does not look like expected") if $perlver !~ m{^\d+\.\d+\.}; # does not look like a perl version (be not to strict here)
-    spec_usage("stableness must be 'stable' or 'devel'") if $stableness !~ m{^(devel|stable)$};
-    spec_usage("time range does not look like '-\${DAYS}d'") if $range !~ m{^-\d+.*};
+if (@specs) {
+    # First just check
+    for my $spec (@specs) {
+	my($perlver, $stableness, $range) = split /,/, $spec;
+	spec_usage if !defined $range;
+	spec_usage("perl version in '$spec' does not look like expected") if $perlver !~ m{^\d+\.\d+\.}; # does not look like a perl version (be not to strict here)
+	spec_usage("stableness in '$spec' must be 'stable' or 'devel'") if $stableness !~ m{^(devel|stable)$};
+	spec_usage("time range in '$spec' does not look like '-\${DAYS}d'") if $range !~ m{^-\d+.*};
+    }
 
-    maybe_xterm_conf "INIT cpan_smoke_modules wrapper";
-    run_smoker $perlver, $stableness, $range;
-    maybe_xterm_conf "FINISHED cpan_smoke_modules wrapper";
+    for my $spec (@specs) {
+	my($perlver, $stableness, $range) = split /,/, $spec;
+	maybe_xterm_conf "INIT cpan_smoke_modules wrapper";
+	run_smoker $perlver, $stableness, $range;
+	maybe_xterm_conf "FINISHED cpan_smoke_modules wrapper";
+    }
 } elsif ($do_maintperl) {
     # installs everything stable and tests also developer versions
     maybe_xterm_conf "INIT maintperl";
@@ -84,11 +90,12 @@ sub run_smoker ($$$) {
 
 sub spec_usage (;$) {
     my $msg = shift;
-    die "spec format is perlversion,stableness,daterange where
+    die "ERROR: " . ($msg ? "$msg\n\n" : '') .
+	"spec format is perlversion,stableness,daterange where
 perlversion is something like '5.18.2'
 stableness is either 'devel' or 'stable'
 daterange is amount of days written as '-20d'
-" . ($msg ? "$msg\n" : '');
+";
 }
 
 sub maybe_xterm_conf ($) {
