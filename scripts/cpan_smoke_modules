@@ -63,7 +63,7 @@ my $has_xterm_conf;
 my $skip_tested;
 my $skip_tested_nondiscarded;
 my $no_fail_reports;
-my $save_reports;
+my $save_reports = 1;
 my $reports_workflow_dir;
 my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
@@ -76,7 +76,7 @@ my @cpan_conf;
 my $strace;
 my $truss;
 my $ktrace;
-my $do_typescript;
+my $do_typescript = 1;
 my $typescript_file;
 my $use_distroprefs = 1;
 my $use_limits = 1;
@@ -136,7 +136,7 @@ GetOptions("n" => \$n,
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
-	   'typescript' => \$do_typescript,
+	   'typescript!' => \$do_typescript,
 	   'distroprefs!' => \$use_distroprefs,
 	   'prefsdir=s' => \$prefs_dir,
 	   'limits!' => \$use_limits,
