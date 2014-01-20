@@ -349,7 +349,7 @@ sub set_currfile {
 			    ) {
 			$analysis_tags{'prereq fail'}    = { line => $. };
 		    } elsif (
-			     /Type of arg \d+ to (?:keys|each) must be hash \(not private (?:variable|array)\)/
+			     /Type of arg \d+ to (?:keys|each) must be hash \(not (?:hash element|private (?:variable|array))\)/
 			    ) {
 			$analysis_tags{'container func on ref'} = { line => $. };
 		    }
