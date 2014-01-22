@@ -42,7 +42,19 @@ GetOptions("t|timeout=i" => \$timeout,
 	   "s|server" => \$do_server,
 	   "remove" => \$do_remove,
 	  )
-    or die "usage!";
+    or die <<EOF;
+usage: $0 [-t secs] [-t2 secs] [-q] [-debug [-debug ...]] [-tk] [-geometry x11geom] [-s] [-remove] [ttys]
+
+-t: first timeout
+-t2: second timeout
+-q: be quiet on stderr
+-debug: increase debugging level
+-tk: Tk operation (may also be achieved by calling tkidletermchecker)
+-geometry: geometry of X11 control window
+-s: server mode
+-remove: remove (when started in server mode)
+EOF
+
 if ($timeout  != $default_timeout &&
     $timeout2 == $default_timeout2) {
     # keep delta:
@@ -203,7 +215,8 @@ sub term_glob {
 
 sub check_tk {
     my(@terminals) = @_;
-    die "No terminals given..." if !@terminals;
+    # It seems that specifying `tty` within this script does not work...
+    die "No terminals given... please specify on command line or use `tty` for the current terminal" if !@terminals;
     @terminals = map { abbrev_to_dev($_) } @ARGV;
 
     require Tk;
