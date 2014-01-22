@@ -442,6 +442,7 @@ sub check_tk {
 		$w->configure(-background => 'green');
 	    }
 	}
+	exit if !Tk::Exists($mw);
 	if (@timeouted) {
 	    if ($mw->state ne 'normal') {
 		$mw->deiconify;
