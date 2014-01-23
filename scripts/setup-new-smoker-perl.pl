@@ -249,6 +249,9 @@ step "Report toolchain modules",
 #	- Consider to add the new perl to
 #	  ~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3
 
+#	- Consider to set the new perl (if it's the latest stable one)
+#	  as "pistacchio-perl".
+
 END {
     if ($sudo_validator_pid) {
 	kill $sudo_validator_pid;
