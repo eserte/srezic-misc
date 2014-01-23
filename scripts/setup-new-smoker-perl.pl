@@ -202,7 +202,11 @@ step "Install modules needed for CPAN::Reporter",
 	toolchain_modules_installed_check();
     }, 
     using => sub {
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
+	# -notypescript, because -typescript uses another terminal,
+	# and in this terminal the sudo_keeper is not active. Anyway,
+	# tests are run later again with -typescript turned on (or
+	# whatever the default is).
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
     };
 
 step "Report Kwalify",
@@ -210,7 +214,7 @@ step "Report Kwalify",
 	-f "$state_dir/.reported_kwalify"
     },
     using => sub {
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-savereports", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_kwalify";
     };
@@ -221,7 +225,7 @@ step "Report toolchain modules",
     },
     using => sub {
 	# note: as this is the last step (currently), explicitely use -signalend
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-signalend", "-savereports", @toolchain_modules, "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-signalend", @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_toolchain";
     };
