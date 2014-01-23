@@ -209,12 +209,12 @@ step "Install modules needed for CPAN::Reporter",
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
     };
 
-step "Report Kwalify",
+step "Install and report Kwalify",
     ensure => sub {
 	-f "$state_dir/.reported_kwalify"
     },
     using => sub {
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-nosignalend", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_kwalify";
     };
