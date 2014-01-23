@@ -48,13 +48,13 @@ if (@specs) {
     	or die "Works only for cpansand!";
 
     run_smoker '5.18.2', 'devel', '-3d';
-    run_smoker '5.18.2', 'stable', '-3d'; # XXX fix some day?
+    run_smoker '5.18.2', 'stable', '-20d';
+
+    run_smoker '5.19.8', 'devel', '-3d';
+    run_smoker '5.19.8', 'stable', '-3d'; # XXX change some day
 
     run_smoker '5.18.1', 'devel', '-3d';
     run_smoker '5.18.1', 'stable', '-20d';
-
-    run_smoker '5.19.7', 'devel', '-3d';
-    run_smoker '5.19.7', 'stable', '-20d';
 
     run_smoker '5.8.9t', 'devel', '-3d';
     run_smoker '5.8.9t', 'stable', '-20d';
@@ -64,6 +64,9 @@ if (@specs) {
 
     run_smoker '5.10.1t', 'devel', '-3d';
     run_smoker '5.10.1t', 'stable', '-20d';
+
+    run_smoker '5.19.7', 'devel', '-3d';
+    run_smoker '5.19.7', 'stable', '-20d';
 
     maybe_xterm_conf "FINISHED maintperl";
 }
