@@ -1287,15 +1287,6 @@ BEGIN {
 # REPO NAME save_pwd /home/e/eserte/work/srezic-repository 
 # REPO MD5 0f7791cf8e3b62744d7d5cfbd9ddcb07
 
-=head2 save_pwd(sub { ... })
-
-=for category File
-
-Save the current directory and assure that outside the block the old
-directory will still be valid.
-
-=cut
-
 sub save_pwd (&) {
     my $code = shift;
     require Cwd;
@@ -1312,14 +1303,6 @@ sub save_pwd (&) {
 # REPO BEGIN
 # REPO NAME is_interactive /home/e/eserte/work/srezic-repository 
 # REPO MD5 3c8170d60ac3c3648e9b93a995ec6615
-
-=head2 is_interactive()
-
-=for category Term
-
-Return true, if the process has a terminal.
-
-=cut
 
 sub is_interactive {
     if ($^O eq 'MSWin32' || !eval { require POSIX; 1 }) {
@@ -1420,7 +1403,7 @@ available, then the normal non-sqlite internal storage will be used.
 
 Specify a file with the listed distributions/modules.
 
-=imte -builddirreuse
+=item -builddirreuse
 
 set the build_dir_reuse flag of CPAN.pm. Not well tested.
 
