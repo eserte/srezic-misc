@@ -83,7 +83,7 @@ __END__
 
 =head1 NAME
 
-dsh-diff.pl - make a diff over multiple hosts
+dsh-diff - make a diff over multiple hosts
 
 =head1 AUTHOR
 
