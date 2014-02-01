@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# This package is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+
+use strict;
+use warnings;
+our $VERSION = 0.001;
+
+use File::Temp qw(tempfile);
+use Getopt::Long;
+use IPC::Run qw(run);
+
+GetOptions()
+    or die "usage?";
+my @files = @ARGV;
+@files or die "usage?";
+
+my $principal_file = shift @files;
+print "="x70, "\n";
+print "=== $principal_file is principal file\n";
+for my $file (@files) {
+    print "="x70, "\n";
+    print "=== $file\n";
+    my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', "-u", $principal_file, $file);
+    my $success = run [@cmd], "<", $principal_file;
+}    
+__END__
+
+=head1 NAME
+
+multi-diff.pl - make a diff over multiple files
+
+=head1 AUTHOR
+
+Slaven Rezic <srezic@cpan.org>
+
+=cut
