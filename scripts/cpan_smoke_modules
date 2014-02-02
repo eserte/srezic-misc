@@ -76,7 +76,7 @@ my @cpan_conf;
 my $strace;
 my $truss;
 my $ktrace;
-my $do_typescript = 1;
+my $do_typescript; # undef means: maybe
 my $typescript_file;
 my $use_distroprefs = 1;
 my $use_limits = 1;
@@ -161,7 +161,7 @@ usage: $0
      [-pre dist/module [...]]
      [-cpanconf key=value [-cpanconf ...]]
      [-[no]destroyperl]
-     [-strace|-truss|-ktrace file] [-typescript]
+     [-strace|-truss|-ktrace file] [-[no]typescript]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc]
@@ -215,30 +215,56 @@ if ($ktrace && -e $ktrace) {
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
 }
-if ($do_typescript) {
-    if ($^O !~ m{^(linux|freebsd)$}) {
-	die "-typescript implemented only for linux and freebsd";
-    }
-    if (!is_in_path('script')) {
-	die "-typescript specified, but 'script' executable is not in path\n";
-    }
-    if ($^O eq 'linux') {
-	require String::ShellQuote;
-    }
-    if (!-d $cpan_smoke_typescripts_dir) {
-	mkdir $cpan_smoke_typescripts_dir
-	    or die "Can't create $cpan_smoke_typescripts_dir: $!";
-    }
-    require POSIX;
-    my $now = time;
-    my $typescript_day_dir = "$cpan_smoke_typescripts_dir/" . POSIX::strftime("%Y%m%d", localtime $now);
-    if (!-d $typescript_day_dir) {
-	mkdir $typescript_day_dir;
-	if (!-d $typescript_day_dir) {
-	    die "Can't create $typescript_day_dir: $!";
+TRY_TYPESCRIPT: {
+    if ($do_typescript || !defined $do_typescript) {
+	my $no_typescript_sub = sub {
+	    my $msg = shift;
+	    if ($do_typescript) {
+		die "ERROR: $msg";
+	    } else {
+		warn "INFO: $msg, switch off usage of typescript...\n";
+		$do_typescript = 0;
+		no warnings 'exiting';
+		last TRY_TYPESCRIPT;
+	    }
+	};
+
+	if ($^O !~ m{^(linux|freebsd)$}) {
+	    $no_typescript_sub->("-typescript implemented only for linux and freebsd");
 	}
+	if (!is_in_path('script')) {
+	    $no_typescript_sub->("-typescript specified, but 'script' executable is not in path");
+	}
+	if ($^O eq 'linux') {
+	    if ($do_typescript) {
+		require String::ShellQuote;
+	    } else {
+		eval q{ require String::ShellQuote };
+		if ($@) {
+		    $no_typescript_sub->($@);
+		}
+	    }
+	}
+	# From this point we have all prereqs for typescript operation,
+	# everything else is fatal even with $do_typescript=undef
+	if (!-d $cpan_smoke_typescripts_dir) {
+	    mkdir $cpan_smoke_typescripts_dir
+		or die "Can't create $cpan_smoke_typescripts_dir: $!";
+	}
+	require POSIX;
+	my $now = time;
+	my $typescript_day_dir = "$cpan_smoke_typescripts_dir/" . POSIX::strftime("%Y%m%d", localtime $now);
+	if (!-d $typescript_day_dir) {
+	    mkdir $typescript_day_dir;
+	    if (!-d $typescript_day_dir) {
+		die "Can't create $typescript_day_dir: $!";
+	    }
+	}
+	$typescript_file = $typescript_day_dir . "/" . POSIX::strftime("%H%M%S", localtime) . ".typescript";
+
+	# At this point typescript operations is really possible
+	$do_typescript = 1;
     }
-    $typescript_file = $typescript_day_dir . "/" . POSIX::strftime("%H%M%S", localtime) . ".typescript";
 }
 my @dist_or_mods = @ARGV;
 if ($do_action eq 'shell' && !@dist_or_mods) {
