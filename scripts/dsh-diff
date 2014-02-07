@@ -12,15 +12,42 @@ use File::Temp qw(tempfile);
 use Getopt::Long;
 use IPC::Run qw(run);
 
-my(@dsh_files, @dsh_groups, @hosts, $reference_host);
+my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer);
 GetOptions('f=s@' => \@dsh_files,
 	   'g=s@' => \@dsh_groups,
            'h|host=s@' => \@hosts,
 	   "ref|reference=s" => \$reference_host,
+	   'normalizer=s@' => sub {
+	       push @use_normalizer, split /,/, $_[1];
+	   },
 	  )
     or die "usage?";
 @ARGV == 1 or die "usage? Need exactly one file to diff!";
 my $file_to_diff = shift @ARGV;
+
+my $normalizer;
+if (@use_normalizer) {
+    my $code = <<'EOF';
+sub {
+    my $s = shift;
+    my @s = split /\n/, $s;
+EOF
+    for my $normalizer (@use_normalizer) {
+	my $sub = 'normalizer_' . $normalizer;
+	if (!defined &$sub) {
+	    die "Normalizer '$normalizer' does not exist";
+	}
+	$code .= '@s = ' . $sub . '(@s);' . "\n";
+    }
+    $code .= <<'EOF';
+    join "\n", @s;
+}
+EOF
+    $normalizer = eval $code;
+    if (!$normalizer) {
+	die "Compilation of '$code' failed: $@";
+    }
+}
 
 my(@other_hosts);
 if (@dsh_groups) {
@@ -65,18 +92,59 @@ close $sshfh
 close $tmp2fh
     or die $!;
 
+if ($normalizer) {
+    my $buf = $normalizer->(do { open my $fh, $principal_file or die $!; local $/; <$fh> });
+    open my $ofh, ">", $principal_file or die $!;
+    print $ofh $buf;
+    close $ofh or die $!;
+}
+
 print "="x70, "\n";
 print "=== $reference_host (reference)\n";
 
 for my $other_host (@other_hosts) {
     print "="x70, "\n";
     print "=== $other_host\n";
-    my @cmd = ("ssh", "-o", "ClearAllForwardings=yes", $other_host, "diff -I '\$HeadURL:' -I '\$Id:' -u - $file_to_diff");
-    my $success = run [@cmd], "<", $principal_file;
-    ## No: a diff run with diffs exists with status!=0
-    # if (!$success) {
-    # 	warn "No success running '@cmd'";
-    # }
+    my @ssh_base_cmd = ("ssh", "-o", "ClearAllForwardings=yes", $other_host);
+    if ($normalizer) {
+	my($tmp3fh,$remote_file) = tempfile(UNLINK => 1, SUFFIX => "_$other_host.tmp")
+	    or die "Can't create temporary file: $!";
+	my @cmd = (@ssh_base_cmd, "cat", $file_to_diff);
+	my $buf;
+	my $success = run [@cmd], ">", \$buf;
+	if (!$success) {
+	    warn "Error while fetching $file_to_diff from $other_host";
+	} else {
+	    print $tmp3fh $normalizer->($buf);
+	    close $tmp3fh
+		or die "Error while writing to temporary file '$remote_file'";
+	    my @diff_cmd = ("diff", "-u", $remote_file, $principal_file);
+	    system @diff_cmd; # no success check here, diff returns non-zero on diffs
+	}
+    } else {
+	my @cmd = (@ssh_base_cmd, "diff -u - $file_to_diff");
+	run [@cmd], "<", $principal_file; # no success check here, diff returns non-zero on diffs
+    }
+}
+
+sub normalizer_sort {
+    my(@s) = @_;
+    sort @s;
+}
+
+sub normalizer_removecomments {
+    my(@s) = @_;
+    grep { !/^\s*#/ } @s;
+}
+
+sub normalizer_removeemptylines {
+    my(@s) = @_;
+    grep { !/^\s*$/ } @s;
+}
+
+sub normalizer_rcskeywords {
+    my(@s) = @_;
+    grep { !/\$(?:HeadURL|Id):/ } @s;
 }
 
 __END__
