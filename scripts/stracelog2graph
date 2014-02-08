@@ -25,6 +25,7 @@ my $title;
 
 my $tk;
 my $org;
+my $debug;
 
 my %pending_http_request;
 my %pending_http_serving;
@@ -61,6 +62,7 @@ GetOptions(
            "font=s"             => \$font,
            "tk!"                => \$tk,
            "org!"               => \$org,
+           "debug"              => \$debug,
 	  ) or die "usage: $0 [-firstrequest] [-wwwcachemapfile ...] [...]";
 
 lock_keys %auto;
@@ -273,23 +275,55 @@ push @markers, ["__END__", $delta];
 $delta -= $markers[0]->[1];
 
 @markers = sort { $a->[1] <=> $b->[1] } @markers;
-if (!$org) { # XXX or never?
-require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\@markers],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
-require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\%http_per_pid],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
 
-{
-    for my $var (qw(pending_http_request pending_http_serving pending_mogilefs_stored_request pending_dns_request)) {
-        my $hashref = eval '\%' . $var;
-        die if !$hashref;
-        if (keys %$hashref) {
-            require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([$hashref],[$var])->Indent(1)->Useqq(1)->Dump;
+if ($debug) {
+    debug_output();
+}
+
+if ($org) {
+    org_output();
+}
+
+print "\n* marker stats\n" if $org;
+my %markerstat;
+for my $marker (@markers) {
+    $markerstat{$marker->[0]}++;
+}
+for my $marker (sort { $markerstat{$b} <=> $markerstat{$a} } keys %markerstat) {
+    print "** " if $org;
+    printf "%3d %-50s\n", $markerstat{$marker}, $marker;
+}
+
+if (%memory_per_pid) {
+    print "\n";
+    print "* " if $org;
+    print "\nMemory stats:\n";
+    for my $pid (sort { $memory_per_pid{$b} <=> $memory_per_pid{$a} } keys %memory_per_pid) {
+        print "** " if $org;
+        printf "%06d %10d\n", $pid, $memory_per_pid{$pid};
+    }
+}
+
+if ($tk) {
+    tk_operation();
+}
+
+sub debug_output {
+    require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\@markers],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+    require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\%http_per_pid],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+
+    {
+        for my $var (qw(pending_http_request pending_http_serving pending_mogilefs_stored_request pending_dns_request)) {
+            my $hashref = eval '\%' . $var;
+            die if !$hashref;
+            if (keys %$hashref) {
+                require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([$hashref],[$var])->Indent(1)->Useqq(1)->Dump;
+            }
         }
     }
 }
 
-}
-
-if ($org) {
+sub org_output {
     print "strace log\t\t\t-*- org -*-\n\n";
     my $level = 1;
     my $last_level;
@@ -323,129 +357,146 @@ if ($org) {
     }
 }
 
-print "\n* marker stats\n" if $org;
-my %markerstat;
-for my $marker (@markers) {
-    $markerstat{$marker->[0]}++;
-}
-for my $marker (sort { $markerstat{$b} <=> $markerstat{$a} } keys %markerstat) {
-    print "** " if $org;
-    printf "%3d %-50s\n", $markerstat{$marker}, $marker;
-}
+sub tk_operation {
+    require Tk;
+    require Tk::Balloon;
 
-if (%memory_per_pid) {
-    print "\n";
-    print "* " if $org;
-    print "\nMemory stats:\n";
-    for my $pid (sort { $memory_per_pid{$b} <=> $memory_per_pid{$a} } keys %memory_per_pid) {
-        print "** " if $org;
-        printf "%06d %10d\n", $pid, $memory_per_pid{$pid};
+    my $c_width = 700;
+    my $c_height = 1000;
+
+    my $scale = 1;
+    if ($normalize_time) {
+        $scale *= $delta/$normalize_time;
     }
-}
+    my $start_scale = $scale;
 
-exit if !$tk;
-require Tk;
-require Tk::Balloon;
+    # parts taken from bbbike
+    my $get_transpose = sub {
+        my($scale) = @_;
+        my $transpose = sub {
+            my($time) = @_;
+            ($scale*$time*$c_height)/($delta);
+        };
+        $transpose;
+    };
+    my $get_anti_transpose = sub {
+        my($scale) = @_;
+        my $anti_transpose = sub {
+            my($y) = @_;
+            ($delta*$y)/($c_height*$scale);
+        };
+        $anti_transpose;
+    };
 
-my $c_width = 700;
-my $c_height = 1000;
+    my $transpose      = $get_transpose->($scale);
+    my $anti_transpose = $get_anti_transpose->($scale);
 
-my $scale = 1;
-if ($normalize_time) {
-    $scale *= $delta/$normalize_time;
-}
-my $start_scale = $scale;
+    my $mw = MainWindow->new;
+    if (defined $title) {
+        $mw->title($title);
+    } else {
+        $mw->title("stracelog2graph:" .
+                   (defined $only_pid ? " pid=$only_pid" : "") .
+                   " " . join(",", keys %auto)
+                  );
+    }
+    my $bln = $mw->Balloon;
+    my $c = $mw->Scrolled("Canvas", -width => $c_width, -height => $c_height, -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
+    my $real_c = $c->Subwidget("scrolled");
 
-my $transpose      = get_transpose($scale);
-my $anti_transpose = get_anti_transpose($scale);
+    my @textitemargs;
+    if ($font) {
+        push @textitemargs, -font => $font;
+    }
 
-my $mw = MainWindow->new;
-if (defined $title) {
-    $mw->title($title);
-} else {
-    $mw->title("stracelog2graph:" .
-               (defined $only_pid ? " pid=$only_pid" : "") .
-               " " . join(",", keys %auto)
-              );
-}
-my $bln = $mw->Balloon;
-my $c = $mw->Scrolled("Canvas", -width => $c_width, -height => $c_height, -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
-my $real_c = $c->Subwidget("scrolled");
+    for my $marker_def (@markers) {
+        my($name, $time) = @$marker_def;
+        my $y = $transpose->($time);
+        $c->createText(130, $y, -text => $name, -anchor => "w", @textitemargs);
+    }
 
-my @textitemargs;
-if ($font) {
-    push @textitemargs, -font => $font;
-}
+    my @colors = ("red", "blue");
 
-for my $marker_def (@markers) {
-    my($name, $time) = @$marker_def;
-    my $y = $transpose->($time);
-    $c->createText(130, $y, -text => $name, -anchor => "w", @textitemargs);
-}
-
-my @colors = ("red", "blue");
-
-{
-    my $start_time = $markers[0]->[1];
-    for my $marker_i (1 .. $#markers) {
-        my($marker1_name, $marker1_time) = @{ $markers[$marker_i-1] };
-        my($marker2_name, $marker2_time) = @{ $markers[$marker_i  ] };
-        my $y1 = $transpose->($marker1_time);
-        my $y2 = $transpose->($marker2_time);
-        my $this_time = $marker2_time-$marker1_time;
-        my $total_time = $marker2_time-$start_time;
-        my @rectangle_tags = ($marker1_name . " ($this_time, total: $total_time)");
-        $c->createRectangle(0, $y1, 125, $y2, -fill => $colors[$marker_i % @colors], -tags => \@rectangle_tags);
-        $c->createLine(62, $y1, 62, $y2, -tags => \@rectangle_tags);
-        if ($y2-$y1 > 12) {
-            my $text_y = ($y2-$y1)/2+$y1;
-            $c->createText(62, $text_y, -text => sprintf("%.5ss ", $this_time), -anchor => "e", @textitemargs);
-            $c->createText(125, $text_y, -text => sprintf("%.5ss ", $total_time), -anchor => "e", @textitemargs);
+    {
+        my $start_time = $markers[0]->[1];
+        for my $marker_i (1 .. $#markers) {
+            my($marker1_name, $marker1_time) = @{ $markers[$marker_i-1] };
+            my($marker2_name, $marker2_time) = @{ $markers[$marker_i  ] };
+            my $y1 = $transpose->($marker1_time);
+            my $y2 = $transpose->($marker2_time);
+            my $this_time = $marker2_time-$marker1_time;
+            my $total_time = $marker2_time-$start_time;
+            my @rectangle_tags = ($marker1_name . " ($this_time, total: $total_time)");
+            $c->createRectangle(0, $y1, 125, $y2, -fill => $colors[$marker_i % @colors], -tags => \@rectangle_tags);
+            $c->createLine(62, $y1, 62, $y2, -tags => \@rectangle_tags);
+            if ($y2-$y1 > 12) {
+                my $text_y = ($y2-$y1)/2+$y1;
+                $c->createText(62, $text_y, -text => sprintf("%.5ss ", $this_time), -anchor => "e", @textitemargs);
+                $c->createText(125, $text_y, -text => sprintf("%.5ss ", $total_time), -anchor => "e", @textitemargs);
+            }
         }
     }
+
+    # parts taken from bbbike's scalecanvas
+    my $do_scale = sub {
+        my($scalefactor) = @_;
+        my(@oldx) = $c->xview;
+        my(@oldy) = $c->yview;
+        my($xwidth) = $oldx[1]-$oldx[0];
+        my($ywidth) = $oldy[1]-$oldy[0];
+        $c->scale("all", 0, 0, $scalefactor, $scalefactor);
+        $c->configure(-scrollregion => [ $c->bbox("all") ]);
+        # in die Mitte des vorherigen Ausschnitts positionieren
+        $c->xview('moveto' => $oldx[0]+($xwidth-$xwidth/$scalefactor)/2);
+        $c->yview('moveto' => $oldy[0]+($ywidth-$ywidth/$scalefactor)/2);
+
+        $scale *= $scalefactor;
+        $transpose = $get_transpose->($scale);
+        $anti_transpose = $get_anti_transpose->($scale);
+    };
+
+    $c->configure(-scrollregion => [ $c->bbox("all") ]);
+    $c->focus;
+    $mw->bind("all","<plus>" => sub { $do_scale->(2); });
+    $mw->bind("all","<minus>" => sub { $do_scale->(0.5); });
+    $mw->bind("all","<Control-q>" => sub { $mw->destroy });
+    $mw->bind("all","<Key-1>" => sub { $do_scale->($start_scale/$scale) });
+
+    my($drag_start_time);
+    $mw->bind("all", "<ButtonPress-1>" => sub {
+                  my $e = $real_c->XEvent;
+                  $drag_start_time = $anti_transpose->($real_c->canvasy($e->y));
+              });
+    # $mw->bind("all", "<Motion>" => sub {
+    #               return if !defined $drag_start_time;
+    #               my $e = $real_c->XEvent;
+    #               my $time = $anti_transpose->($real_c->canvasy($e->y));
+    #               warn $time - $drag_start_time;
+    #           });
+    $mw->bind("all", "<ButtonRelease-1>" => sub {
+                  undef $drag_start_time;
+              });
+
+    my $canvasmsg;
+    $bln->attach($real_c,
+                 -baloonposition => "mouse",
+                 -msg => \$canvasmsg,
+                 -postcommand => sub {
+                     if (defined $drag_start_time) {
+                         my $e = $real_c->XEvent;
+                         my $time = $anti_transpose->($real_c->canvasy($e->y));
+                         $canvasmsg = $time - $drag_start_time;
+                     } else {
+                         my(@tags) = grep { !/^current$/ } $c->gettags("current");
+                         $canvasmsg = $tags[0];
+                     }
+                     #return 0 if !@tags; # does not work!
+                     join ",", $c->pointerxy;
+                 },
+                );
+
+    Tk::MainLoop();
 }
-
-$c->configure(-scrollregion => [ $c->bbox("all") ]);
-$c->focus;
-$mw->bind("all","<plus>" => sub { do_scale(2); });
-$mw->bind("all","<minus>" => sub { do_scale(0.5); });
-$mw->bind("all","<Control-q>" => sub { $mw->destroy });
-$mw->bind("all","<Key-1>" => sub { do_scale($start_scale/$scale) });
-
-my($drag_start_time);
-$mw->bind("all", "<ButtonPress-1>" => sub {
-              my $e = $real_c->XEvent;
-              $drag_start_time = $anti_transpose->($real_c->canvasy($e->y));
-          });
-# $mw->bind("all", "<Motion>" => sub {
-#               return if !defined $drag_start_time;
-#               my $e = $real_c->XEvent;
-#               my $time = $anti_transpose->($real_c->canvasy($e->y));
-#               warn $time - $drag_start_time;
-#           });
-$mw->bind("all", "<ButtonRelease-1>" => sub {
-              undef $drag_start_time;
-          });
-
-my $canvasmsg;
-$bln->attach($real_c,
-	     -baloonposition => "mouse",
-	     -msg => \$canvasmsg,
-	     -postcommand => sub {
-                 if (defined $drag_start_time) {
-                     my $e = $real_c->XEvent;
-                     my $time = $anti_transpose->($real_c->canvasy($e->y));
-                     $canvasmsg = $time - $drag_start_time;
-                 } else {
-                     my(@tags) = grep { !/^current$/ } $c->gettags("current");
-                     $canvasmsg = $tags[0];
-                 }
-		 #return 0 if !@tags; # does not work!
-		 join ",", $c->pointerxy;
-	     },
-	    );
-
-Tk::MainLoop();
 
 sub load_meta {
     my($prefix, $meta) = @_;
@@ -464,42 +515,6 @@ sub load_meta {
 	$marker = "$prefix!!!$meta!!!";
     }
     $marker;
-}
-
-# parts taken from bbbike's scalecanvas
-sub do_scale {
-    my($scalefactor) = @_;
-    my(@oldx) = $c->xview;
-    my(@oldy) = $c->yview;
-    my($xwidth) = $oldx[1]-$oldx[0];
-    my($ywidth) = $oldy[1]-$oldy[0];
-    $c->scale("all", 0, 0, $scalefactor, $scalefactor);
-    $c->configure(-scrollregion => [ $c->bbox("all") ]);
-    # in die Mitte des vorherigen Ausschnitts positionieren
-    $c->xview('moveto' => $oldx[0]+($xwidth-$xwidth/$scalefactor)/2);
-    $c->yview('moveto' => $oldy[0]+($ywidth-$ywidth/$scalefactor)/2);
-
-    $scale *= $scalefactor;
-    $transpose = get_transpose($scale);
-    $anti_transpose = get_anti_transpose($scale);
-}
-
-sub get_transpose {
-    my($scale) = @_;
-    my $transpose = sub {
-        my($time) = @_;
-        ($scale*$time*$c_height)/($delta);
-    };
-    $transpose;
-}
-
-sub get_anti_transpose {
-    my($scale) = @_;
-    my $anti_transpose = sub {
-        my($y) = @_;
-        ($delta*$y)/($c_height*$scale);
-    };
-    $anti_transpose;
 }
 
 =head1 NAME
