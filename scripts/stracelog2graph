@@ -1,0 +1,520 @@
+#!/usr/bin/perl
+#
+# Copyright (c) 2008,2012,2014 Slaven Rezic. All rights reserved.
+#
+
+use strict;
+use warnings;
+our $VERSION = '2.00';
+
+use Getopt::Long;
+use Hash::Util qw(lock_keys);
+
+my @all_auto = qw(httpclient httpserver open stderr wwwcache xmlparser mogilefs dns);
+my %auto = map{($_,0)} @all_auto;
+
+my $wwwcache_mapfile;
+my $wwwcache_map;
+
+my $only_request_number;
+my $only_pid;
+my $from_time;
+my $to_time;
+my $in_httprequest;
+my $title;
+
+my $tk;
+my $org;
+
+my %pending_http_request;
+my %pending_http_serving;
+my %pending_mogilefs_stored_request;
+my %pending_dns_request;
+my %memory_per_pid;
+my %http_per_pid;
+
+my $normalize_time;
+
+my $font;
+
+GetOptions(
+           "all|a"              => sub {
+               $auto{$_} = 1 for @all_auto;
+           },
+	   "httpclient"         => \$auto{httpclient},
+           "httpserver|httpsrv" => \$auto{httpserver},
+	   "open"               => \$auto{open},
+           "stderr"             => \$auto{stderr},
+	   "wwwcache"           => \$auto{wwwcache},
+           "xmlparser"          => \$auto{xmlparser},
+           "memory"             => \$auto{memory},
+           "dns"		=> \$auto{dns},
+
+           "fromtime=s"         => \$from_time,
+           "totime=s"           => \$to_time,
+           "wwwcachemapfile=s"  => \$wwwcache_mapfile,
+           "firstrequest"       => sub { $only_request_number = 1 },
+           "request-number=i"   => \$only_request_number,
+           "nt=f"               => \$normalize_time,
+           "pid=i"              => \$only_pid,
+           "title=s"		=> \$title,
+           "font=s"             => \$font,
+           "tk!"                => \$tk,
+           "org!"               => \$org,
+	  ) or die "usage: $0 [-firstrequest] [-wwwcachemapfile ...] [...]";
+
+lock_keys %auto;
+
+for my $check ([\$from_time, '$from_time', 0],
+               [\$to_time,   '$to_time',   999999],
+              ) {
+    my($ref, $varname, $us_fallback) = @$check;
+    if ($$ref) {
+        if (my($h,$m,$s,$us) = $$ref =~ m{^(\d+):(\d+):(\d+)(?:\.(\d+))?}) {
+            if (!defined $us) {
+                $us = $us_fallback;
+            }
+            $us = "0.$us";
+            my $ss = $h*3600+$m*60+$s+$us;
+            $$ref = $ss;
+        } else {
+            die "Invalid format for $varname ($$ref), expected hh:mm:ss[.us]";
+        }
+    }
+}          
+
+if ($auto{wwwcache}) {
+    require YAML::Syck;
+    if ($wwwcache_mapfile) {
+        $wwwcache_map = YAML::Syck::LoadFile($wwwcache_mapfile);
+    }
+}
+
+if ($auto{memory}) {
+    warn "Note that memory information is very rough and not accurate at all!\n";
+}
+
+if (!grep { $_ } values %auto) {
+    die "Please use any of the switches or -all";
+}
+
+my $start_time;
+my $prev_time;
+
+my @markers;
+
+my %pending_line; # pid -> [syscall, beginning_of_line]
+
+print STDERR "Reading from STDIN...\n";
+while(<>) {
+    s{^(?:\[pid\s+)?(\d+)\]?\s+}{}; # throw pid away. accept both forms (stderr and -o)
+    my $pid = $1;
+    next if (defined $only_pid && $pid != $only_pid);
+    if (m{^\*\*\*\s*(.*)}) {
+	my $marker = $1;
+	push @markers, [$marker, $prev_time-$start_time];
+    } elsif (my($h,$m,$s,$us,$syscall) = $_ =~ m{^(\d+):(\d+):(\d+)(?:\.(\d+))\s+(.*)}) {
+	$us ||= 0;
+	$us = "0.$us";
+	my $ss = $h*3600+$m*60+$s+$us;
+        next if (defined $from_time && $from_time > $ss);
+        next if (defined $to_time && $to_time < $ss);
+	$prev_time = $ss;
+
+        # deal with unfinished/resumed lines
+        if ($syscall =~ m{^(([^\(]+).*?)\s*<unfinished \.\.\.>$}) {
+            my($syscall_line, $syscall_name) = ($1, $2);
+            if ($pending_line{$pid}) {
+                warn "Mismatch in strace log: found unfinished line for pid <$pid>, but still have a pending line.\n";
+            }
+            $pending_line{$pid} = [$syscall_name, $syscall_line];
+            next;
+        } elsif ($syscall =~ m{^<\.\.\. (\S+) resumed> (.*)}) {
+            my($resumed_syscall_name, $resumed_syscall_line) = ($1, $2);
+            if (!$pending_line{$pid}) {
+                warn "Mismatch in strace log: found resumed line for pid <$pid>, but we are not waiting for a pending line.\n";
+            } else {
+                my($syscall_name, $syscall_line) = @{ $pending_line{$pid} };
+                if ($syscall_name ne $resumed_syscall_name) {
+                    warn "Mismatch in strace log: expecting syscall <$syscall_name>, but got <$resumed_syscall_name>.\n";
+                } else {
+                    $syscall = $syscall_line . " " . $resumed_syscall_line;
+                }
+                delete $pending_line{$pid};
+            }
+        }
+
+        my $markers_before = $#markers;
+	if (!defined $start_time) {
+	    $start_time = $prev_time;
+	    push @markers, ["__START__", 0];
+	}
+	if ($auto{wwwcache} && $syscall =~ m{^open\(\"(.+?\.meta)\", }) {
+	    my $meta = $1;
+	    my $marker = load_meta("META: ", $meta);
+	    push @markers, [$marker, $prev_time-$start_time];
+	} elsif ($auto{wwwcache} && $syscall =~ m{^open\(\"(.+?/cmlt2/cache/[^/]+/[^/]+)\", }) {
+	    my $datafile = $1;
+	    my $meta = $1 . ".meta";
+	    my $marker = load_meta("DATA: ", $meta);
+	    push @markers, [$marker, $prev_time-$start_time];
+	} elsif ($auto{open} && $syscall =~ m{^open\(\"(.+?)\", }) {
+	    my $file = $1;
+	    if (   $file ne "/var/www/" # uninteresting, Apache artefact (documentroot checking)
+		&& (!defined $pid || $file !~ m{[\.-]$pid$}) # tempfile for LWP mirror/mf::wwwcache
+		&& $file !~ m{/\.tmp/} # mf::images temporary file
+	       ) {
+		push @markers, ["open $1", $prev_time-$start_time];
+	    }
+	} elsif ($auto{httpclient} && $syscall =~ m{^write\((\d+),\s+\"(GET|POST|HEAD)\s+(\S+)(?:.*?Host:\s*([^\s\\]+))?}) {
+	    my($fd, $method, $path, $host) = ($1, $2, $3, $4);
+            if (exists $pending_http_request{"$pid $fd"}) {
+                my($method, $hostpath, $time) = @{ $pending_http_request{"$pid $fd"} };
+                push @markers, ["httpclient END (forced) $method $hostpath", $time-$start_time];
+                delete $pending_http_request{"$pid $fd"};
+                push @{ $http_per_pid{$pid} }, sprintf('httpclient %.6fs END   %-4s %s', $prev_time-$time, $method, "$host$path");
+            }
+	    $host = $host ? "http://$host/" : "";
+	    push @markers, ["httpclient START $method $host$path", $prev_time-$start_time];
+            $pending_http_request{"$pid $fd"} = [$method, "$host$path", $prev_time];
+            push @{ $http_per_pid{$pid} }, sprintf('httpclient           START %-4s %s', $method, "$host$path");
+        } elsif ($auto{httpclient} && ($syscall =~ m{^close\((\d+)} ||
+                                       $syscall =~ m{^read\((\d+),\s+\"HTTP/1.[01]\s+\d{3}}
+                                       )
+                 && exists $pending_http_request{"$pid $1"}
+                ) {
+            my($fd) = ($1);
+            my($method, $hostpath, $time) = @{ $pending_http_request{"$pid $fd"} };
+            push @markers, ["httpclient END $method $hostpath", $time-$start_time];
+            delete $pending_http_request{"$pid $fd"};
+            push @{ $http_per_pid{$pid} }, sprintf('httpclient %.6fs END   %-4s %s', $prev_time-$time, $method, $hostpath);
+        } elsif ($auto{httpclient} && $syscall =~ m{^connect\(\d+,.*sin_port=htons\(80\), sin_addr=inet_addr\("([^"]+)"\)}) {
+            push @markers, ["httpclient CONNECT to $2", $prev_time-$start_time];
+	} elsif ($auto{httpserver} && $syscall =~ m{^read\(\d+,\s+\"(GET|POST|HEAD)\s+(\S+)\s+HTTP/}) {
+            my($method, $path) = ($1, $2);
+            push @markers, ["httpserver START $method $path", $prev_time-$start_time];
+            $in_httprequest = 1;
+            if (!defined $only_pid) {
+                if (defined $only_request_number) {
+                    $only_request_number--;
+                    if ($only_request_number == 0) {
+                        $only_pid = $pid;
+                    }
+                }
+            }
+            $pending_http_serving{$pid} = [$method, $path, $prev_time];
+            push @{ $http_per_pid{$pid} }, sprintf("httpserver           START %-4s %s", $method, $path);
+        } elsif ($auto{httpserver} && $syscall =~ m{^write\(\d+,.*?\[.*?\] \\\"(GET|POST|HEAD)\s+(\S+)\s+HTTP/}) { # a standard apache log line
+            my($method, $path) = ($1, $2);
+            push @markers, ["httpserver END $method $path", $prev_time-$start_time];
+            if (exists $pending_http_serving{$pid}) {
+                my($method, $path, $time) = @{ $pending_http_serving{$pid} };
+                push @{ $http_per_pid{$pid} }, sprintf('httpserver %.6fs END   %-4s %s', $prev_time-$time, $method, $path);
+                push @{ $http_per_pid{$pid} }, "-"x70;
+                delete $pending_http_serving{$pid};
+            }
+            last if ($in_httprequest && defined $only_request_number && $only_request_number == 0);
+        } elsif ($auto{xmlparser} && $syscall =~ m{^stat\d*\(".*/(?:mobile)?framework.*/etc/dtd/catalog",}) {
+            push @markers, ["xmlparser (catalog stat)", $prev_time-$start_time];
+        } elsif ($auto{httpclient} && $syscall =~ m{^read\((\d+),}) { # should be rather last
+            my($fd) = ($1);
+            if (exists $pending_http_request{"$pid $fd"}) {
+                $pending_http_request{"$pid $fd"}->[2] = $prev_time;
+            }
+        } elsif ($auto{stderr} && $syscall =~ m{^write\(2, "(.*?)"}) {
+            push @markers, ["stderr $1", $prev_time-$start_time];
+        } elsif ($auto{memory} && $syscall =~ m{^m(un)?map2?\(\S+, (\d+)}) {
+            my $free = !!$1;
+            my $amount = $2;
+            $amount *= -1 if $free;
+            $memory_per_pid{$pid} += $amount;
+            push @markers, [sprintf("memory %10d %10d", $memory_per_pid{$pid}, $amount), $prev_time-$start_time];
+        } elsif ($auto{mogilefs} && $syscall =~ m{^connect\(\d+,\s+.*sin_port=htons\(7001\).*\s+=\s+0$}) {
+            push @markers, ['mogilefs tracker', $prev_time-$start_time];
+        } elsif ($auto{mogilefs} && $syscall =~ m{^connect\((\d+),\s+.*sin_port=htons\(7500\).*\s+=\s+0$}) {
+            my($fd) = ($1);
+            $pending_mogilefs_stored_request{"$pid $fd"} = $prev_time;
+            push @markers, ['mogilefs stored', $prev_time-$start_time];
+        } elsif ($auto{mogilefs} && $syscall =~ m{^close\((\d+)} && exists $pending_mogilefs_stored_request{"$pid $1"}) {
+            my($fd) = ($1);
+            push @markers, ['mogilefs stored END', $prev_time-$start_time];
+            delete $pending_mogilefs_stored_request{"$pid $fd"};
+        } elsif ($auto{dns} && $syscall =~ m{^connect\((\d+),.*sin_port=htons\(53\).*\s+=\s+0$}) {
+            my($fd) = ($1);
+            $pending_dns_request{"$pid $fd"} = $prev_time;
+            push @markers, ['dns request', $prev_time-$start_time];
+        } elsif ($auto{dns} && $syscall =~ m{^close\((\d+)} && exists $pending_dns_request{"$pid $1"}) {
+            my($fd) = ($1);
+            push @markers, ['dns request END', $prev_time-$start_time];
+            delete $pending_dns_request{"$pid $fd"};
+        }
+
+        if ($org) {
+            push @markers, ["strace: $syscall", $prev_time-$start_time];
+        }
+
+        # we're not in the http request, throw something away
+        if (defined $only_request_number && !$in_httprequest) {
+            $#markers = $markers_before;
+        }
+
+    } elsif (m{^\s*$}) {
+	# ignore empty lines
+    } else {
+	warn "Can't parse $_";
+    }
+}
+
+my $end_time = $prev_time;
+my $delta = $end_time-$start_time;
+push @markers, ["__END__", $delta];
+
+# fix delta, if we used $only_firstrequest or so
+$delta -= $markers[0]->[1];
+
+@markers = sort { $a->[1] <=> $b->[1] } @markers;
+if (!$org) { # XXX or never?
+require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\@markers],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\%http_per_pid],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
+
+{
+    for my $var (qw(pending_http_request pending_http_serving pending_mogilefs_stored_request pending_dns_request)) {
+        my $hashref = eval '\%' . $var;
+        die if !$hashref;
+        if (keys %$hashref) {
+            require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([$hashref],[$var])->Indent(1)->Useqq(1)->Dump;
+        }
+    }
+}
+
+}
+
+if ($org) {
+    print "strace log\t\t\t-*- org -*-\n\n";
+    my $level = 1;
+    my $last_level;
+    for my $marker_def (@markers) {
+        my($name, $time) = @$marker_def;
+        if ($name =~ m{^strace:\s*(.*)}) {
+            if ($level > $last_level) {
+                # insert a dummy level, so folding in org-mode works better
+                print "*"x$level;
+                print " ---\n";
+            }
+            print "*"x$level; $last_level = $level;
+            printf "* %10.6s %s\n", $time, $1;
+        } else {
+            if ($name eq '__END__') {
+                # nop
+            } elsif ($name =~ m{\bEND\b}) {
+                $level--;
+            }
+            print "*"x$level; $last_level = $level;
+            printf " %10.6s %s\n", $time, $name;
+            if ($name eq '__START__') {
+                # nop
+            } elsif ($name =~ m{\bSTART\b}) {
+                $level++;
+            }
+        }
+    }
+    if ($level != 1) {
+        warn "Mismatched level count at end: $level (expected 1)\n";
+    }
+}
+
+print "\n* marker stats\n" if $org;
+my %markerstat;
+for my $marker (@markers) {
+    $markerstat{$marker->[0]}++;
+}
+for my $marker (sort { $markerstat{$b} <=> $markerstat{$a} } keys %markerstat) {
+    print "** " if $org;
+    printf "%3d %-50s\n", $markerstat{$marker}, $marker;
+}
+
+if (%memory_per_pid) {
+    print "\n";
+    print "* " if $org;
+    print "\nMemory stats:\n";
+    for my $pid (sort { $memory_per_pid{$b} <=> $memory_per_pid{$a} } keys %memory_per_pid) {
+        print "** " if $org;
+        printf "%06d %10d\n", $pid, $memory_per_pid{$pid};
+    }
+}
+
+exit if !$tk;
+require Tk;
+require Tk::Balloon;
+
+my $c_width = 700;
+my $c_height = 1000;
+
+my $scale = 1;
+if ($normalize_time) {
+    $scale *= $delta/$normalize_time;
+}
+my $start_scale = $scale;
+
+my $transpose      = get_transpose($scale);
+my $anti_transpose = get_anti_transpose($scale);
+
+my $mw = MainWindow->new;
+if (defined $title) {
+    $mw->title($title);
+} else {
+    $mw->title("stracelog2graph:" .
+               (defined $only_pid ? " pid=$only_pid" : "") .
+               " " . join(",", keys %auto)
+              );
+}
+my $bln = $mw->Balloon;
+my $c = $mw->Scrolled("Canvas", -width => $c_width, -height => $c_height, -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
+my $real_c = $c->Subwidget("scrolled");
+
+my @textitemargs;
+if ($font) {
+    push @textitemargs, -font => $font;
+}
+
+for my $marker_def (@markers) {
+    my($name, $time) = @$marker_def;
+    my $y = $transpose->($time);
+    $c->createText(130, $y, -text => $name, -anchor => "w", @textitemargs);
+}
+
+my @colors = ("red", "blue");
+
+{
+    my $start_time = $markers[0]->[1];
+    for my $marker_i (1 .. $#markers) {
+        my($marker1_name, $marker1_time) = @{ $markers[$marker_i-1] };
+        my($marker2_name, $marker2_time) = @{ $markers[$marker_i  ] };
+        my $y1 = $transpose->($marker1_time);
+        my $y2 = $transpose->($marker2_time);
+        my $this_time = $marker2_time-$marker1_time;
+        my $total_time = $marker2_time-$start_time;
+        my @rectangle_tags = ($marker1_name . " ($this_time, total: $total_time)");
+        $c->createRectangle(0, $y1, 125, $y2, -fill => $colors[$marker_i % @colors], -tags => \@rectangle_tags);
+        $c->createLine(62, $y1, 62, $y2, -tags => \@rectangle_tags);
+        if ($y2-$y1 > 12) {
+            my $text_y = ($y2-$y1)/2+$y1;
+            $c->createText(62, $text_y, -text => sprintf("%.5ss ", $this_time), -anchor => "e", @textitemargs);
+            $c->createText(125, $text_y, -text => sprintf("%.5ss ", $total_time), -anchor => "e", @textitemargs);
+        }
+    }
+}
+
+$c->configure(-scrollregion => [ $c->bbox("all") ]);
+$c->focus;
+$mw->bind("all","<plus>" => sub { do_scale(2); });
+$mw->bind("all","<minus>" => sub { do_scale(0.5); });
+$mw->bind("all","<Control-q>" => sub { $mw->destroy });
+$mw->bind("all","<Key-1>" => sub { do_scale($start_scale/$scale) });
+
+my($drag_start_time);
+$mw->bind("all", "<ButtonPress-1>" => sub {
+              my $e = $real_c->XEvent;
+              $drag_start_time = $anti_transpose->($real_c->canvasy($e->y));
+          });
+# $mw->bind("all", "<Motion>" => sub {
+#               return if !defined $drag_start_time;
+#               my $e = $real_c->XEvent;
+#               my $time = $anti_transpose->($real_c->canvasy($e->y));
+#               warn $time - $drag_start_time;
+#           });
+$mw->bind("all", "<ButtonRelease-1>" => sub {
+              undef $drag_start_time;
+          });
+
+my $canvasmsg;
+$bln->attach($real_c,
+	     -baloonposition => "mouse",
+	     -msg => \$canvasmsg,
+	     -postcommand => sub {
+                 if (defined $drag_start_time) {
+                     my $e = $real_c->XEvent;
+                     my $time = $anti_transpose->($real_c->canvasy($e->y));
+                     $canvasmsg = $time - $drag_start_time;
+                 } else {
+                     my(@tags) = grep { !/^current$/ } $c->gettags("current");
+                     $canvasmsg = $tags[0];
+                 }
+		 #return 0 if !@tags; # does not work!
+		 join ",", $c->pointerxy;
+	     },
+	    );
+
+Tk::MainLoop();
+
+sub load_meta {
+    my($prefix, $meta) = @_;
+    my $marker;
+    if ($wwwcache_map && exists $wwwcache_map->{$meta}) {
+        $marker = $prefix . $wwwcache_map->{$meta};
+    } elsif (-r $meta) {
+	my $yml = do { YAML::Syck::LoadFile($meta) };
+	if (!$yml) {
+	    $marker = "!!$meta!!";
+	} else {
+	    $marker = $yml->{url};
+	    $marker = $marker ? "$prefix$marker" : "!$meta!";
+	}
+    } else {
+	$marker = "$prefix!!!$meta!!!";
+    }
+    $marker;
+}
+
+# parts taken from bbbike's scalecanvas
+sub do_scale {
+    my($scalefactor) = @_;
+    my(@oldx) = $c->xview;
+    my(@oldy) = $c->yview;
+    my($xwidth) = $oldx[1]-$oldx[0];
+    my($ywidth) = $oldy[1]-$oldy[0];
+    $c->scale("all", 0, 0, $scalefactor, $scalefactor);
+    $c->configure(-scrollregion => [ $c->bbox("all") ]);
+    # in die Mitte des vorherigen Ausschnitts positionieren
+    $c->xview('moveto' => $oldx[0]+($xwidth-$xwidth/$scalefactor)/2);
+    $c->yview('moveto' => $oldy[0]+($ywidth-$ywidth/$scalefactor)/2);
+
+    $scale *= $scalefactor;
+    $transpose = get_transpose($scale);
+    $anti_transpose = get_anti_transpose($scale);
+}
+
+sub get_transpose {
+    my($scale) = @_;
+    my $transpose = sub {
+        my($time) = @_;
+        ($scale*$time*$c_height)/($delta);
+    };
+    $transpose;
+}
+
+sub get_anti_transpose {
+    my($scale) = @_;
+    my $anti_transpose = sub {
+        my($y) = @_;
+        ($delta*$y)/($c_height*$scale);
+    };
+    $anti_transpose;
+}
+
+=head1 NAME
+
+stracelog2graph - visual representation of strace logs
+
+=head1 AUTHOR
+
+Slaven Rezic <srezic@cpan.org>
+
+=cut
+
+# Local Variables:
+# mode: cperl
+# cperl-indent-level: 4
+# indent-tabs-mode: nil
+# End:
+# vim:sw=4:ts=8:sta:et
