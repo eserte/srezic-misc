@@ -11,10 +11,12 @@ sub maybe_xterm_conf ($);
 my $do_maintperl;
 my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
+my $min_build_dir_avail;
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
+	   "minbuilddiravail=s" => \$min_build_dir_avail,
 	  )
     or die "usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]";
 
@@ -83,7 +85,14 @@ sub run_smoker ($$$) {
     }
     my $install_arg = ($stability eq 'stable' ? '-install' : '');
     #my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -typescript -nosignalend } . $install_arg . q{ -perl } . $perl_exe . q{ -skiptested -r } . "-mirrorurl $mirror_url" . q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -typescript -nosignalend -skiptested -r };
+    $cmd .= $install_arg;
+    $cmd .= q{ -perl } . $perl_exe;
+    $cmd .= q{ -mirrorurl } . $mirror_url;
+    if ($min_build_dir_avail) {
+	$cmd .= q{ -minbuilddiravail } . $min_build_dir_avail;
+    }
+    $cmd .= q{ -- `~eserte/work/srezic-misc/scripts/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
     warn "$cmd ...\n";
     system $cmd;
     if ($? == 2) {
