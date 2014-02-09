@@ -142,7 +142,7 @@ GetOptions("n" => \$n,
 	   'limits!' => \$use_limits,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
-	   'minbuilddiravail=i' => \$min_build_dir_avail,
+	   'minbuilddiravail=s' => \$min_build_dir_avail,
 	   'hidemod=s' => \$hidemod,
 	   'vnc!'  => \$use_vncserver,
 	  )
@@ -165,6 +165,7 @@ usage: $0
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc]
+     [-minbuilddiravail bytes|...k|...M|...G]
      [dist ...]
 
 -i: test and install
@@ -1187,6 +1188,12 @@ Usually this can be fixed by running a dummy build once, e.g.
     quit
 
 EOF
+    }
+    if ($min_build_dir_avail) {
+	$min_build_dir_avail =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
+	if ($min_build_dir_avail !~ m{^[\d\.]+$}) {
+	    die "(expanded) -minbuilddiravail value '$min_build_dir_avail' does not look like a number";
+	}
     }
     if (eval { require Filesys::DfPortable; 1 }) {
 	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent);
