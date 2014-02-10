@@ -15,7 +15,7 @@ use IPC::Run qw(run);
 my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer);
 GetOptions('f=s@' => \@dsh_files,
 	   'g=s@' => \@dsh_groups,
-           'h|host=s@' => \@hosts,
+           'm|h|host=s@' => \@hosts,
 	   "ref|reference=s" => \$reference_host,
 	   'normalizer=s@' => sub {
 	       push @use_normalizer, split /,/, $_[1];
