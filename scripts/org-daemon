@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2009,2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2009,2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -47,6 +47,12 @@ use Tk qw(tkinit Ev MainLoop);
 	$formatted_text =~ s{^\s+}{};
 	$formatted_text =~ s{^(TODO|DONE|WAITING|WONTFIX|LATER)\s+}{};
 	$formatted_text;
+    }
+    sub copy {
+	my($self, $src) = @_;
+	while(my($k,$v) = each %$src) {
+	    $self->{$k} = $v;
+	}
     }
 }
 
@@ -347,7 +353,25 @@ sub check_for_updates {
 	}
 	delete $open_warning{$org_file};
 	if (!$org_data->{modified} || $org_data->{modified} < $modtime) {
-	    $org_data->{dates} = [ find_dates_in_org_file($org_file) ];
+	    my @new_org_data_dates = find_dates_in_org_file($org_file);
+	    my %old_org_data_dates; # id -> date
+	    if ($org_data->{dates}) {
+		for my $date (@{ $org_data->{dates} }) {
+		    my $date_id = $date->id;
+		    $old_org_data_dates{$date_id} = $date;
+		}
+	    }
+	    $org_data->{dates} = [];
+	    for my $date (@new_org_data_dates) {
+		my $date_id = $date->id;
+		if (exists $old_org_data_dates{$date_id}) {
+		    my $old_date = $old_org_data_dates{$date_id};
+		    $old_date->copy($date);
+		    push @{ $org_data->{dates} }, $old_date; # re-use old date object with new values
+		} else {
+		    push @{ $org_data->{dates} }, $date;
+		}
+	    }
 	    $org_data->{modified} = $modtime;
 	    $changes++;
 	}
