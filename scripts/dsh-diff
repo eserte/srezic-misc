@@ -6,15 +6,17 @@
 
 use strict;
 use warnings;
-our $VERSION = 0.001;
+our $VERSION = 0.002;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
 use IPC::Run qw(run);
 
-my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer);
+my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer, $jobs);
+Getopt::Long::Configure("bundling_override");
 GetOptions('f=s@' => \@dsh_files,
 	   'g=s@' => \@dsh_groups,
+	   'j=i' => \$jobs,
            'm|h|host=s@' => \@hosts,
 	   "ref|reference=s" => \$reference_host,
 	   'normalizer=s@' => sub {
@@ -24,6 +26,24 @@ GetOptions('f=s@' => \@dsh_files,
     or die "usage?";
 @ARGV == 1 or die "usage? Need exactly one file to diff!";
 my $file_to_diff = shift @ARGV;
+
+my $pfm;
+if (defined $jobs) {
+    require Parallel::ForkManager;
+    $pfm = Parallel::ForkManager->new($jobs);
+    $pfm->run_on_finish
+	(
+	 sub {
+	     my($pid, $exit_code, $ident, $exit_signal, $core_dump, $data_structure_reference) = @_;
+	     if ($exit_code == 0) {
+		 my $other_host = $ident;
+		 print_separator($other_host);
+		 my $diff = $data_structure_reference->{diff};
+		 print $diff;
+	     }
+	 }
+	);
+}
 
 my $normalizer;
 if (@use_normalizer) {
@@ -99,12 +119,14 @@ if ($normalizer) {
     close $ofh or die $!;
 }
 
-print "="x70, "\n";
-print "=== $reference_host (reference)\n";
+print_separator("$reference_host (reference)");
 
 for my $other_host (@other_hosts) {
-    print "="x70, "\n";
-    print "=== $other_host\n";
+    if ($pfm) {
+	$pfm->start($other_host) and next;
+    } else {
+	print_separator($other_host);
+    }
     my @ssh_base_cmd = ("ssh", "-o", "ClearAllForwardings=yes", $other_host);
     if ($normalizer) {
 	my($tmp3fh,$remote_file) = tempfile(UNLINK => 1, SUFFIX => "_$other_host.tmp")
@@ -113,18 +135,39 @@ for my $other_host (@other_hosts) {
 	my $buf;
 	my $success = run [@cmd], ">", \$buf;
 	if (!$success) {
-	    warn "Error while fetching $file_to_diff from $other_host";
+	    my $errmsg = "Error while fetching $file_to_diff from $other_host";
+	    if ($pfm) {
+		$pfm->finish(0, { diff => $errmsg });
+	    } else {
+		warn $errmsg;
+	    }
 	} else {
 	    print $tmp3fh $normalizer->($buf);
 	    close $tmp3fh
 		or die "Error while writing to temporary file '$remote_file'";
 	    my @diff_cmd = ("diff", "-u", $remote_file, $principal_file);
-	    system @diff_cmd; # no success check here, diff returns non-zero on diffs
+	    if ($pfm) {
+		my $diff;
+		run [@diff_cmd], ">", \$diff; # no success check here, diff returns non-zero on diffs
+		$pfm->finish(0, {diff => $diff});
+	    } else {
+		system @diff_cmd; # no success check here, diff returns non-zero on diffs
+	    }
 	}
     } else {
-	my @cmd = (@ssh_base_cmd, "diff -u - $file_to_diff");
-	run [@cmd], "<", $principal_file; # no success check here, diff returns non-zero on diffs
+	my @remote_diff_cmd = (@ssh_base_cmd, "diff -u - $file_to_diff");
+	if ($pfm) {
+	    my $diff;
+	    run [@remote_diff_cmd], "<", $principal_file, ">", \$diff; # no success check here, diff returns non-zero on diffs
+	    $pfm->finish(0, {diff => $diff});
+	} else {
+	    run [@remote_diff_cmd], "<", $principal_file; # no success check here, diff returns non-zero on diffs
+	}
     }
+}
+
+if ($pfm) {
+    $pfm->wait_all_children;
 }
 
 sub normalizer_sort {
@@ -145,6 +188,12 @@ sub normalizer_removeemptylines {
 sub normalizer_rcskeywords {
     my(@s) = @_;
     grep { !/\$(?:HeadURL|Id):/ } @s;
+}
+
+sub print_separator {
+    my($other_host) = @_;
+    print "="x70, "\n";
+    print "=== $other_host\n";
 }
 
 __END__
