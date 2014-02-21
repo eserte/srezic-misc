@@ -48,7 +48,7 @@ GetOptions("good" => \$only_good,
 	  )
     or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-xterm-title] [directory [file ...]]";
 
-my $reportdir = shift || "$ENV{HOME}/var/ctr";
+my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
 if ($auto_good) {
     # just to check if X11::Protocol etc. is available

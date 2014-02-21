@@ -26,7 +26,7 @@ GetOptions(
 	  )
     or die "usage: $0 [-mail] [-cpan-uid ...]";
 
-my $reportdir = shift || "$ENV{HOME}/var/ctr";
+my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
 my $sync_dir = "$reportdir/sync";
 my $done_root_dir = "$reportdir/done";
