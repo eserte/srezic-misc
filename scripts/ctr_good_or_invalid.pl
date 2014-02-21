@@ -18,10 +18,21 @@ use Tk;
 use Tk::More;
 use Tk::ErrorDialog;
 use Getopt::Long;
+use POSIX qw(strftime);
 
 # Patterns for report analysis
 my $v_version_qr = qr{v[\d\.]+};
 my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.};
+
+my $the_ct_states_rx = qr{(?:pass|unknown|na|fail)};
+
+my @common_analysis_button_config =
+    (
+     -padx => 0,
+     -pady => 0,
+     -borderwidth => 1,
+     -relief => 'raised',
+    );
 
 my $only_good;
 my $auto_good = 1;
@@ -89,6 +100,20 @@ if (!-d $invalid_directory) {
 my $undecided_directory = "$reportdir/undecided";
 if (!-d $undecided_directory) {
     mkdir $undecided_directory or die "While creating $undecided_directory: $!";
+}
+my $done_directory = "$reportdir/done";
+my @recent_done_directories;
+if (-d $done_directory) {
+    my @l = localtime;
+    my $this_month = strftime "%Y-%m", @l;
+    $l[4]--;
+    if ($l[4] < 0) { $l[4] = 11; $l[5]-- }
+    my $prev_month = strftime "%Y-%m", @l;
+    for my $month ($this_month, $prev_month) {
+	my $check_directory = "$done_directory/$month";
+	push @recent_done_directories, $check_directory
+	    if -d $check_directory;
+    }
 }
 
 my $good_rx = $only_pass_is_good ? qr{/(pass)\.} : qr{/(pass|unknown|na)\.};
@@ -375,17 +400,51 @@ sub set_currfile {
 	$modtime = "N/A";
     }
 
+    my %recent_states;
+    if (@recent_done_directories && (my($this_file_dist) = $currfile =~ m{(?:^|/)$the_ct_states_rx\.([^\.]+).*\.rpt$})) {
+	my @recent_reports;
+	for my $recent_done_directory (@recent_done_directories) {
+	    if (opendir(my $DIR, $recent_done_directory)) {
+		while(defined(my $file = readdir $DIR)) {
+		    if (my($recent_state, $recent_file_dist) = $file =~ m{^($the_ct_states_rx)\.([^\.]+)}) {
+			if ($recent_file_dist eq $this_file_dist) {
+			    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
+			}
+		    }
+		}
+	    } else {
+		warn "ERROR: cannot open $recent_done_directory: $!";
+	    }
+	}
+    }
+
     $_->destroy for $analysis_frame->children;
     for my $analysis_tag (sort keys %analysis_tags) {
 	my $line = $analysis_tags{$analysis_tag}->{line};
 	$analysis_frame->Button(-text => $analysis_tag,
-				-padx => 0,
-				-pady => 0,
+				@common_analysis_button_config,
 				-bg => 'yellow',
-				-borderwidth => 1,
-				-relief => 'raised',
 				-command => sub {
 				    $more->Subwidget('scrolled')->see("$line.0");
+				},
+			       )->pack;
+    }
+    for my $recent_state (keys %recent_states) {
+	my $count = scalar @{ $recent_states{$recent_state} };
+	my $color = (
+		     $recent_state eq 'pass' ? 'green' :
+		     $recent_state eq 'fail' ? 'red'   : 'orange'
+		    );
+	my $sample_recent_file = $recent_states{$recent_state}->[0];
+	$analysis_frame->Button(-text => "$recent_state: $count",
+				@common_analysis_button_config,
+				-bg => $color,
+				-command => sub {
+				    my $t = $more->Toplevel(-title => $sample_recent_file);
+				    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
+				    $more->Load($sample_recent_file);
+				    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
+				    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 				},
 			       )->pack;
     }
