@@ -422,13 +422,97 @@ sub is_user_at_computer {
 
 __END__
 
+=head1 NAME
+
+ctr_good_or_invalid.pl - interactively decide if CPAN Tester reports are good
+
+=head1 SYNOPSIS
+
+    ctr_good_or_invalid.pl [options] [reportworkflowdir]
+
+=head1 DESCRIPTION
+
+C<ctr_good_or_invalid.pl> is part of a CPAN Tester workflow where all
+FAIL (or all non-PASS) reports are interactively checked before sent
+to metabase. This script shows unprocessed test reports in a GUI
+window (using L<Tk>), where the report is displayed and the user can
+decide whether the report is "good" or "invalid" or "undecided" (and
+check this report later). Also part of the GUI window is a number of
+links to helpful tools in the CPAN Testers ecosystem
+(L<http://matrix.cpantesters.org>, L<http://rt.cpan.org>, a solver
+based on L<CPAN::Testers::ParseReport>).
+
+=head2 RELATED SCRIPTS
+
+The other scripts in the workflow system are:
+
+=over
+
+=item * C<L<cpan_smoke_modules_wrapper3>> - a wrapper to call
+L<cpan_smoke_modules> for a number of perl installations
+
+=item * C<L<cpan_smoke_modules>> - a wrapper around L<CPAN.pm|CPAN>
+and L<CPAN::Reporter>, capable of smoke testing recent modules or a
+given list of modules
+
+=item * C<ctr_good_or_invalid.pl> - this script, an interactive
+checker for the validness of reports
+
+=item * C<L<send_tr_reports.pl>> - a wrapper around L<Test::Reporter>
+to send valid reports to metabase
+
+=back
+
+=head2 DIRECTORY STRUCTURE
+
+Part of the workflow is a directory structure which reflects the
+phases of the workflow. The default root directory for the workflow is
+C<~/var/cpansmoker>, but may be changed by the individual scripts. The
+subdirectories here are:
+
+=over
+
+=item * C<new> - here C<L<cpan_smoke_modules>> (or a manually
+configured CPAN shell) writes new test reports
+
+=item * C<sync> - reports marked by C<ctr_good_or_invalid.pl> as
+"good" are moved to this directory for later processing
+
+=item * C<invalid> - reports marked by C<ctr_good_or_invalid.pl> as
+"invalid" are moved to this directory and will stay here
+
+=item * C<undecided> - reports marked by C<ctr_good_or_invalid.pl> as
+"undecided" are moved to this directory and will stay here; a user
+should check these reports later manually and then move them to either
+C<sync> or C<invalid>
+
+=item * C<process> - C<send_tr_reports.pl> moves reports which are
+about to be sent to metabase into this directory; in case of metabase
+problems the report will be left here
+
+=item * C<done> - after successfully sending to metabase the reports
+will be archived into this directory; this directory is organized in
+monthly subdirectories I<YYYY-MM>. =back
+
+=back
+
 =head1 EXAMPLES
 
-Following needs forever (unreleased), ctr_good_or_invalid.pl (this
-file), send_tr_reports.pl (available at same place like
-ctr_good_or_invalid.pl). Note that the perl executable is hardcoded
+Following needs the scripts C<forever> (unreleased, otherwise use a
+shell C<while> loop), C<ctr_good_or_invalid.pl> (this script), and
+C<L<send_tr_reports.pl>>. Note that the perl executable is hardcoded
 here:
 
-    forever -countdown -181 -pulse 'echo "*** WORK ***";sleep 1;perl5.12.4 -S ctr_good_or_invalid.pl -auto-good -xterm-title ~cpansand/var/cpansmoker; perl5.12.4 -S send_tr_reports.pl ~cpansand/var/cpansmoker/; echo "*** DONE ***"'
+    forever -countdown -181 -pulse 'echo "*** WORK ***"; sleep 1; ./ctr_good_or_invalid.pl -auto-good -xterm-title ~cpansand/var/cpansmoker; ./send_tr_reports.pl ~cpansand/var/cpansmoker/; echo "*** DONE ***"'
+
+=head1 AUTHOR
+
+Slaven Rezic C<srezic AT cpan DOT org>
+
+=head1 SEE ALSO
+
+L<cpan_smoke_modules_wrapper3>, L<cpan_smoke_modules>,
+L<send_tr_reports.pl>, L<Test::Reporter>, L<CPAN>,
+L<CPAN::Testers::ParseReport>.
 
 =cut
