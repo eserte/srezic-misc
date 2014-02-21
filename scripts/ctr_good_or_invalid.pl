@@ -24,15 +24,15 @@ my $v_version_qr = qr{v[\d\.]+};
 my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.};
 
 my $only_good;
-my $auto_good;
+my $auto_good = 1;
 my $only_pass_is_good;
 my $sort_by_date;
 my $reversed;
 my $geometry;
 my $quit_at_end = 1;
-my $do_xterm_title;
+my $do_xterm_title = 1;
 GetOptions("good" => \$only_good,
-	   "auto-good" => \$auto_good,
+	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
@@ -46,7 +46,7 @@ GetOptions("good" => \$only_good,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
 	  )
-    or die "usage: $0 [-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-xterm-title] [directory [file ...]]";
+    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -57,7 +57,7 @@ if ($auto_good) {
 
 if ($do_xterm_title) {
     if (!eval { require XTerm::Conf; 1 }) {
-	warn "No XTerm::Conf available, turning -xterm-title off...\n";
+	warn "No XTerm::Conf available, turning -xterm-title off (specify -no-xterm-title to cease this warning)...\n";
 	$do_xterm_title = 0;
     }
 }
@@ -441,6 +441,23 @@ check this report later). Also part of the GUI window is a number of
 links to helpful tools in the CPAN Testers ecosystem
 (L<http://matrix.cpantesters.org>, L<http://rt.cpan.org>, a solver
 based on L<CPAN::Testers::ParseReport>).
+
+=head2 OPTIONS
+
+=over
+
+=item C<-noxterm-title>
+
+By default, the current status (number of reports) is displayed in the
+xterm title. This requires L<XTerm::Conf>. Set this option to turn
+this feature off.
+
+=item C<-only-pass-is-good>
+
+By default, only FAIL reports are checked interactively and everything
+else is moved automatically to the C<sync> directory. Using this
+switch also NA and UNKNOWN reports are checked interactively.
+
 
 =head2 RELATED SCRIPTS
 
