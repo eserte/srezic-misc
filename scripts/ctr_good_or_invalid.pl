@@ -15,6 +15,7 @@
 use strict;
 use File::Copy qw(move);
 use Tk;
+use Tk::Balloon;
 use Tk::More;
 use Tk::ErrorDialog;
 use Getopt::Long;
@@ -176,6 +177,7 @@ if ($do_xterm_title) {
 
 my $mw = tkinit;
 $mw->geometry($geometry) if $geometry;
+my $balloon = $mw->Balloon;
 
 my $currfile_i = 0;
 my $currfile;
@@ -374,7 +376,8 @@ sub set_currfile {
 			    ) {
 			$analysis_tags{'prereq fail'}    = { line => $. };
 		    } elsif (
-			     /Type of arg \d+ to (?:keys|each) must be hash \(not (?:hash element|private (?:variable|array))\)/
+			     /Type of arg \d+ to (?:keys|each) must be hash \(not (?:hash element|private (?:variable|array))\)/ ||
+			     /Type of arg \d+ to (?:push|unshift) must be array \(not array element\)/
 			    ) {
 			$analysis_tags{'container func on ref'} = { line => $. };
 		    }
@@ -401,19 +404,28 @@ sub set_currfile {
     }
 
     my %recent_states;
-    if (@recent_done_directories && (my($this_file_dist) = $currfile =~ m{(?:^|/)$the_ct_states_rx\.([^\.]+).*\.rpt$})) {
-	my @recent_reports;
-	for my $recent_done_directory (@recent_done_directories) {
-	    if (opendir(my $DIR, $recent_done_directory)) {
-		while(defined(my $file = readdir $DIR)) {
-		    if (my($recent_state, $recent_file_dist) = $file =~ m{^($the_ct_states_rx)\.([^\.]+)}) {
-			if ($recent_file_dist eq $this_file_dist) {
-			    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
+    if (@recent_done_directories) {
+	my $res = parse_report_filename($currfile);
+	if (!$res) {
+	    warn "WARN: cannot parse $currfile";
+	} else {
+	    my $distv = $res->{distv};
+	    my @recent_reports;
+	    for my $recent_done_directory (@recent_done_directories) {
+		if (opendir(my $DIR, $recent_done_directory)) {
+		    while(defined(my $file = readdir $DIR)) {
+			if (index($file, $distv) >= 0) { # quick check
+			    if (my $recent_res = parse_report_filename($file)) {
+				if ($recent_res->{distv} eq $distv) {
+				    my $recent_state = $recent_res->{state};
+				    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
+				}
+			    }
 			}
 		    }
+		} else {
+		    warn "ERROR: cannot open $recent_done_directory: $!";
 		}
-	    } else {
-		warn "ERROR: cannot open $recent_done_directory: $!";
 	    }
 	}
     }
@@ -436,17 +448,42 @@ sub set_currfile {
 		     $recent_state eq 'fail' ? 'red'   : 'orange'
 		    );
 	my $sample_recent_file = $recent_states{$recent_state}->[0];
-	$analysis_frame->Button(-text => "$recent_state: $count",
-				@common_analysis_button_config,
-				-bg => $color,
-				-command => sub {
-				    my $t = $more->Toplevel(-title => $sample_recent_file);
-				    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
-				    $more->Load($sample_recent_file);
-				    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
-				    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
-				},
-			       )->pack;
+	my $b = $analysis_frame->Button(-text => "$recent_state: $count",
+					@common_analysis_button_config,
+					-bg => $color,
+					-command => sub {
+					    my $t = $more->Toplevel(-title => $sample_recent_file);
+					    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
+					    $more->Load($sample_recent_file);
+					    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
+					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
+					},
+				       )->pack;
+	my @balloon_msg;
+	for my $f (@{ $recent_states{$recent_state} }) {
+	    if (open my $fh, $f) {
+		my $subject;
+		my $x_test_reporter_perl;
+		while(<$fh>) {
+		    chomp;
+		    if (m{^X-Test-Reporter-Perl: (.*)}) {
+			$x_test_reporter_perl = $1;
+		    } elsif (m{^Subject: (.*)}) {
+			$subject = $1;
+		    } elsif (m{^$}) {
+			warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
+			last;
+		    }
+		    if ($x_test_reporter_perl && $subject) {
+			push @balloon_msg, "perl $x_test_reporter_perl $subject";
+			last;
+		    }
+		}
+	    } else {
+		warn "WARN: cannot open $f: $!";
+	    }
+	}
+	$balloon->attach($b, -msg => join("\n", @balloon_msg));
     }
 
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
@@ -477,6 +514,33 @@ sub is_user_at_computer {
 	or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
     my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
     $on_or_off eq 'On' ? 0 : 1;
+}
+
+sub parse_report_filename {
+    my $filename = shift;
+    if (my($state, $distv_arch, $epoch, $pid) = $filename =~ m{(?:^|/)($the_ct_states_rx)\.(.*)\.(\d+)\.(\d+)\.rpt$}) {
+	my @tokens = split /\./, $distv_arch;
+	my $distv = shift @tokens;
+	my $arch;
+	while(my $token = shift @tokens) {
+	    if ($token =~ m{^\d}) {
+		$distv .= ".$token";
+	    } else {
+		$arch = join(".", $token, @tokens);
+		last;
+	    }
+	}
+	my $res =  +{
+		     distv => $distv,
+		     state => $state,
+		     arch  => $arch,
+		     epoch => $epoch,
+		     pid   => $pid,
+		    };
+	return $res;
+    } else {
+	undef;
+    }
 }
 
 __END__
