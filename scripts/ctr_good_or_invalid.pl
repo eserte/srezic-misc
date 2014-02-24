@@ -380,6 +380,10 @@ sub set_currfile {
 			     /Type of arg \d+ to (?:push|unshift) must be array \(not array element\)/
 			    ) {
 			$analysis_tags{'container func on ref'} = { line => $. };
+		    } elsif (
+			     /This Perl not built to support threads/
+			    ) {
+			$analysis_tags{'unthreaded perl'} = { line => $. };
 		    }
 		}
 	    }
