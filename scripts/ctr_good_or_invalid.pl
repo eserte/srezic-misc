@@ -348,9 +348,10 @@ sub set_currfile {
 			    ) {
 			$analysis_tags{'low perl'}       = { line => $. };
 		    } elsif (
-			     /^Result: NOTESTS$/ ||
-			     /^No tests defined for \S+ extension\.$/ ||
-			     /^No tests defined\.$/
+			     /^Result: NOTESTS$/
+			     ## Rely solely on the above regexp --- the below may happen because a sub-module has no tests
+			     # || /^No tests defined for \S+ extension\.$/
+			     # || /^No tests defined\.$/
 			    ) {
 			$analysis_tags{'notests'}        = { line => $. };
 		    } elsif (
