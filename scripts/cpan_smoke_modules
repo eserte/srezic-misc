@@ -1247,7 +1247,15 @@ sub check_disk_free_directory {
 	}
 	print STDERR qq{Please cleanup the directory and go on with <RETURN>: };
 	if (is_interactive()) {
-	    <STDIN>;
+	    local $SIG{ALRM} = sub { die "Timeout" };
+	    alarm(60*10);
+	    eval {
+		<STDIN>;
+	    };
+	    alarm(0);
+	    if ($@ && $@ =~ /Timeout/) {
+		warn "Timeout (at " . POSIX::strftime("%H:%M:%S", localtime) . "), check again if disk space is available...\n";
+	    }
 	    sleep 1; # help against overruns
 	} else {
 	    print STDERR qq{(sleeping for 60 seconds...)\n};
