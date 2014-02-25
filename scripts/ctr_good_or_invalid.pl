@@ -446,7 +446,7 @@ sub set_currfile {
 				},
 			       )->pack;
     }
-    for my $recent_state (keys %recent_states) {
+    for my $recent_state (sort keys %recent_states) {
 	my $count = scalar @{ $recent_states{$recent_state} };
 	my $color = (
 		     $recent_state eq 'pass' ? 'green' :
