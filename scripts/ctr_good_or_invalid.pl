@@ -488,6 +488,11 @@ sub set_currfile {
 		warn "WARN: cannot open $f: $!";
 	    }
 	}
+	if (eval { require Sort::Naturally; 1 }) {
+	    @balloon_msg = Sort::Naturally::nsort(@balloon_msg);
+	} else {
+	    @balloon_msg = sort @balloon_msg;
+	}
 	$balloon->attach($b, -msg => join("\n", @balloon_msg));
     }
 
