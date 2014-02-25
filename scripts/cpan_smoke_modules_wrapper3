@@ -64,7 +64,7 @@ if (@specs) {
     run_smoker '5.10.1t', 'devel', '-3d';
     run_smoker '5.10.1t', 'stable', '-20d';
 
-    run_smoker '5.19.9', 'stable', '-3d';
+    run_smoker '5.19.9', 'stable', '-14d';
     run_smoker '5.19.9', 'devel', '-3d';
 
     run_smoker '5.19.8', 'stable', '-14d';
