@@ -39,7 +39,9 @@ if (defined $jobs) {
 		 my $other_host = $ident;
 		 print_separator($other_host);
 		 my $diff = $data_structure_reference->{diff};
-		 print $diff;
+		 if (defined $diff) { # is undef if there are no differences
+		     print $diff;
+		 }
 	     }
 	 }
 	);
