@@ -6,17 +6,22 @@
 
 use strict;
 use warnings;
-our $VERSION = 0.002;
+our $VERSION = 0.003;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
 use IPC::Run qw(run);
+
+my $default_jobs_for_c = 20;
 
 my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer, $jobs);
 Getopt::Long::Configure("bundling_override");
 GetOptions('f=s@' => \@dsh_files,
 	   'g=s@' => \@dsh_groups,
 	   'j=i' => \$jobs,
+	   "c" => sub {
+	       $jobs = $default_jobs_for_c;
+	   },
            'm|h|host=s@' => \@hosts,
 	   "ref|reference=s" => \$reference_host,
 	   'normalizer=s@' => sub {
