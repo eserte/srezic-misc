@@ -30,6 +30,7 @@ my $file_to_diff = shift @ARGV;
 my $pfm;
 if (defined $jobs) {
     require Parallel::ForkManager;
+    Parallel::ForkManager->VERSION('0.7.6'); # for data retrieval
     $pfm = Parallel::ForkManager->new($jobs);
     $pfm->run_on_finish
 	(
@@ -38,6 +39,9 @@ if (defined $jobs) {
 	     if ($exit_code == 0) {
 		 my $other_host = $ident;
 		 print_separator($other_host);
+		 if (!$data_structure_reference) {
+		     die "No data structure returned --- too old Parallel::ForkManager, or another problem? (ident=$ident)";
+		 }
 		 my $diff = $data_structure_reference->{diff};
 		 if (defined $diff) { # is undef if there are no differences
 		     print $diff;
