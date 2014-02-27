@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -16,6 +16,9 @@ use strict;
 
 my $perl = shift
     or die "Please specify perl to use (full path)";
+
+if (!-x $perl) {
+    die "'$perl' is not a perl executable";
 
 my $imagemagick_port_directory = "/usr/ports/graphics/ImageMagick";
 if (!-d $imagemagick_port_directory) {
