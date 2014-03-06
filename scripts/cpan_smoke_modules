@@ -405,6 +405,9 @@ if (!@perls) {
 {
     my @new_perls;
     for my $perl (@perls) {
+	if (-d $perl) {
+	    $perl = "$perl/bin/perl"; # directory specified, guess on perl executable
+	}
 	if (!is_in_path($perl)) {
 	    warn "*** WARNING: $perl is not available, removing from list...\n";
 	} else {
