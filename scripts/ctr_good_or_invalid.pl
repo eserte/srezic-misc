@@ -339,6 +339,8 @@ sub set_currfile {
 		    $section = 'PROGRAM OUTPUT';
 		} elsif (/^PREREQUISITES$/) {
 		    $section = 'PREREQUISITES';
+		} elsif (/^ENVIRONMENT AND OTHER CONTEXT$/) {
+		    $section = 'ENVIRONMENT';
 		} elsif ($section eq 'PROGRAM OUTPUT') {
 		    if      (
 			     /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
@@ -385,6 +387,13 @@ sub set_currfile {
 			     /This Perl not built to support threads/
 			    ) {
 			$analysis_tags{'unthreaded perl'} = { line => $. };
+		    }
+		} elsif ($section eq 'PREREQUISITES') {
+		    if (/^\s*!\s*perl\s*([\d\.]+)\s+([\d\.]+)\s*$/) {
+			my($perl_need, $perl_have) = ($1, $2);
+			if ($perl_need > $perl_have) {
+			    $analysis_tags{'low perl'} = { line => $. };
+			}
 		    }
 		}
 	    }
