@@ -43,6 +43,7 @@ my $reversed;
 my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title = 1;
+my $show_recent_states = 1;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -57,8 +58,9 @@ GetOptions("good" => \$only_good,
 	   "geometry=s" => \$geometry,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
+	   "recent-states!" => \$show_recent_states,
 	  )
-    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title] [directory [file ...]]";
+    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title] [-[no]recent-states] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -418,30 +420,8 @@ sub set_currfile {
     }
 
     my %recent_states;
-    if (@recent_done_directories) {
-	my $res = parse_report_filename($currfile);
-	if (!$res) {
-	    warn "WARN: cannot parse $currfile";
-	} else {
-	    my $distv = $res->{distv};
-	    my @recent_reports;
-	    for my $recent_done_directory (@recent_done_directories) {
-		if (opendir(my $DIR, $recent_done_directory)) {
-		    while(defined(my $file = readdir $DIR)) {
-			if (index($file, $distv) >= 0) { # quick check
-			    if (my $recent_res = parse_report_filename($file)) {
-				if ($recent_res->{distv} eq $distv) {
-				    my $recent_state = $recent_res->{state};
-				    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
-				}
-			    }
-			}
-		    }
-		} else {
-		    warn "ERROR: cannot open $recent_done_directory: $!";
-		}
-	    }
-	}
+    if ($show_recent_states) {
+	%recent_states = get_recent_states();
     }
 
     $_->destroy for $analysis_frame->children;
@@ -506,6 +486,38 @@ sub set_currfile {
     }
 
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+}
+
+sub get_recent_states {
+    my %recent_states;
+
+    if (@recent_done_directories) {
+	my $res = parse_report_filename($currfile);
+	if (!$res) {
+	    warn "WARN: cannot parse $currfile";
+	} else {
+	    my $distv = $res->{distv};
+	    my @recent_reports;
+	    for my $recent_done_directory (@recent_done_directories) {
+		if (opendir(my $DIR, $recent_done_directory)) {
+		    while(defined(my $file = readdir $DIR)) {
+			if (index($file, $distv) >= 0) { # quick check
+			    if (my $recent_res = parse_report_filename($file)) {
+				if ($recent_res->{distv} eq $distv) {
+				    my $recent_state = $recent_res->{state};
+				    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
+				}
+			    }
+			}
+		    }
+		} else {
+		    warn "ERROR: cannot open $recent_done_directory: $!";
+		}
+	    }
+	}
+    }
+
+    %recent_states;
 }
 
 sub nextfile {
@@ -663,6 +675,13 @@ C<L<send_tr_reports.pl>>. Note that the perl executable is hardcoded
 here:
 
     forever -countdown -181 -pulse 'echo "*** WORK ***"; sleep 1; ./ctr_good_or_invalid.pl -auto-good -xterm-title ~cpansand/var/cpansmoker; ./send_tr_reports.pl ~cpansand/var/cpansmoker/; echo "*** DONE ***"'
+
+The script's defaults may be quite demanding. If you don't have
+C<X11::Protocol::Ext::MIT_SCREEN_SAVER> installed, and the
+F<cpansmoker> is on an expensive file system (e.g. a remote mount),
+then consider to set the C<-noauto-good> and C<-norecent-states> switches:
+
+    ctr_good_or_invalid.pl -noauto-good -norecent-states ~/var/cpansmoker
 
 =head1 AUTHOR
 
