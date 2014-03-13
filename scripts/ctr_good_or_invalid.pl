@@ -44,6 +44,7 @@ my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title = 1;
 my $show_recent_states = 1;
+my $do_check_screensaver = 1;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -59,8 +60,10 @@ GetOptions("good" => \$only_good,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
 	   "recent-states!" => \$show_recent_states,
+	   "check-screensaver!" => \$do_check_screensaver,
 	  )
-    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title] [-[no]recent-states] [directory [file ...]]";
+    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title]
+[-[no]recent-states] [-[no]check-screesaver] [directory [file ...]]";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -141,7 +144,7 @@ if (!@files) {
     exit;
 }
 if ($auto_good) {
-    if (!is_user_at_computer()) {
+    if (!$do_check_screensaver || !is_user_at_computer()) {
 	my $msg = scalar(@files) . " distribution(s) with FAILs (inactive user)";
 	warn "Skipping $msg.\n";
 	if ($do_xterm_title) {
