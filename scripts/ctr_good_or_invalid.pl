@@ -339,10 +339,18 @@ sub set_currfile {
 	# Parse body
 	{
 	    my $section = '';
+
+	    my $program_output = {}; # collects only one line in PROGRAM OUTPUT
+
 	    while(<$fh>) {
 		if (/^PROGRAM OUTPUT$/) {
 		    $section = 'PROGRAM OUTPUT';
 		} elsif (/^PREREQUISITES$/) {
+		    if ($section eq 'PROGRAM OUTPUT' && defined $program_output->{content}) {
+			if ($program_output->{content} =~ /No tests defined for \S+ extension\.$/) {
+			    $analysis_tags{'notests'}    = { line => $program_output->{line} };
+			}
+		    }
 		    $section = 'PREREQUISITES';
 		} elsif (/^ENVIRONMENT AND OTHER CONTEXT$/) {
 		    $section = 'ENVIRONMENT';
@@ -357,6 +365,7 @@ sub set_currfile {
 		    } elsif (
 			     /^Result: NOTESTS$/
 			     ## Rely solely on the above regexp --- the below may happen because a sub-module has no tests
+			     ## but see $program_output logic before PREREQUISITES section
 			     # || /^No tests defined for \S+ extension\.$/
 			     # || /^No tests defined\.$/
 			    ) {
@@ -392,6 +401,21 @@ sub set_currfile {
 			     /This Perl not built to support threads/
 			    ) {
 			$analysis_tags{'unthreaded perl'} = { line => $. };
+		    } else {
+			# collect PROGRAM OUTPUT string (maybe)
+			if (!$program_output->{skip_collector}) {
+			    if (/^-*$/) {
+				# skip newlines and dashes
+			    } elsif (/^Output\s+from\s+'.*make\s+test':/) {
+				# skip
+			    } elsif (defined $program_output->{content}) {
+				# collect just one line
+				$program_output->{skip_collector} = 1;
+			    } else {
+				$program_output->{content} .= $_;
+				$program_output->{line} = $. if !defined $program_output->{line};
+			    }
+			}
 		    }
 		} elsif ($section eq 'PREREQUISITES') {
 		    if (/^\s*!\s*perl\s*([\d\.]+)\s+([\d\.]+)\s*$/) {
