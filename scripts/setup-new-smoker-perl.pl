@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -27,13 +27,15 @@ my $perlver;
 my $build_debug;
 my $build_threads;
 my $morebits;
+my $for_cpansand;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
 	   "threads"   => \$build_threads,
-	   "morebits" => \$morebits,
+	   "morebits"  => \$morebits,
+	   "cpansand"  => \$for_cpansand,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] -perlver 5.X.Y\n";
 
 if (!$perlver) {
     die "-perlver is mandatory";
@@ -229,6 +231,37 @@ step "Report toolchain modules",
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_toolchain";
     };
+
+if ($for_cpansand) {
+    step "chown for cpansand",
+	ensure => sub {
+	    my($cpansand_uid, $cpansand_gid) = (getpwnam("cpansand"))[2,3];
+	    if (!defined $cpansand_uid) {
+		die "No uid found for user <cpansand>, maybe user is not defined?";
+	    }
+	    if (!defined $cpansand_gid) {
+		die "No gid found for group <cpansand>, maybe group is not defined?";
+	    }
+
+	    my($perldir_uid,$perldir_gid) = (stat($perldir))[4,5];
+	    if ($perldir_uid != $cpansand_uid || $perldir_gid != $cpansand_gid) {
+		return 0;
+	    } else {
+		my($perlexe_uid,$perlexe_gid) = (stat("$perldir/bin/perl"))[4,5];
+		if ($perlexe_uid != $cpansand_uid || $perlexe_gid != $cpansand_gid) {
+		    return 0;
+		}
+	    }
+	    1;
+	},
+	using => sub {
+	    sudo 'chown', '-R', 'cpansand:cpansand', $perldir;
+	    if ($? != 0) {
+		warn "<chown -R cpansand:cpansand $perldir> failed, reverting the permissions at least for the root directory...\n";
+		sudo 'chown', 'root:root', $perldir; # just to signal the wrong permission for next run
+	    }
+	};
+}
 
 #- ImageMagick manuell installieren (von CPAN geht nicht) und zwar
 #gegen die Version, die schon mit FreeBSD kommt (does not work
