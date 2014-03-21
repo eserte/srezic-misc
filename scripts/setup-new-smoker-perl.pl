@@ -104,7 +104,7 @@ step "Download perl $perlver",
 my $src_dir = "/usr/local/src";
 if (!-d $src_dir || !-w $src_dir) {
     $src_dir = "/tmp";
-    warn "Not on a FreeBSD system? Adjusting src dir to $src_dir\n";
+    warn "/usr/local/src missing, adjusting src dir to $src_dir\n";
 }
 my $perl_src_dir = "$src_dir/perl-$perlver";
 step "Extract in $src_dir",
