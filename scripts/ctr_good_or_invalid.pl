@@ -347,7 +347,10 @@ sub set_currfile {
 		    $section = 'PROGRAM OUTPUT';
 		} elsif (/^PREREQUISITES$/) {
 		    if ($section eq 'PROGRAM OUTPUT' && defined $program_output->{content}) {
-			if ($program_output->{content} =~ /No tests defined for \S+ extension\.$/) {
+			if (
+			    $program_output->{content} =~ /No tests defined for \S+ extension\.$/ || # EUMM version
+			    $program_output->{content} =~ /No tests defined\.$/                      # MB version
+			   ) {
 			    $analysis_tags{'notests'}    = { line => $program_output->{line} };
 			}
 		    }
@@ -406,7 +409,7 @@ sub set_currfile {
 			if (!$program_output->{skip_collector}) {
 			    if (/^-*$/) {
 				# skip newlines and dashes
-			    } elsif (/^Output\s+from\s+'.*make\s+test':/) {
+			    } elsif (/^Output\s+from\s+'.*(?:make|Build)\s+test':/) {
 				# skip
 			    } elsif (defined $program_output->{content}) {
 				# collect just one line
