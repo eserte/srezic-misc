@@ -956,7 +956,7 @@ EOF
 	}
 
 	if ($use_limits) {
-	    my $data_limit = 500*1024*1024;
+	    my $data_limit = 1024*1024*1024;
 	    my $cputime_limit = 3600*1;
 	    my $openfiles_limit = 2048; # the freebsd default is at 22500
 	    if (is_in_path("limits") && $^O ne 'MSWin32') {
