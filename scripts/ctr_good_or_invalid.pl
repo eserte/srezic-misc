@@ -583,7 +583,7 @@ sub parse_report_filename {
 	my @tokens = split /\./, $distv_arch;
 	my $distv = shift @tokens;
 	my $arch;
-	while(my $token = shift @tokens) {
+	while(defined(my $token = shift @tokens)) {
 	    if ($token =~ m{^\d}) {
 		$distv .= ".$token";
 	    } else {
