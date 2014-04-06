@@ -19,6 +19,7 @@ my $perl = shift
 
 if (!-x $perl) {
     die "'$perl' is not a perl executable";
+}
 
 my $imagemagick_port_directory = "/usr/ports/graphics/ImageMagick";
 if (!-d $imagemagick_port_directory) {
