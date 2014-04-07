@@ -79,9 +79,12 @@ sub run_smoker ($$$) {
     warn "*** $perl_version: Just test uploads last $interval, " . ($stability eq 'stable' ? 'only stable' : 'also devel') . " versions...\n";
     my $perl_exe = '/usr/perl' . $perl_version . '/bin/perl' . $perl_version;
     if (!-x $perl_exe) {
-	$perl_exe = '/usr/local/bin/perl' . $perl_version;
+	$perl_exe = '/usr/perl' . $perl_version . '/bin/perl';
 	if (!-x $perl_exe) {
-	    die "Cannot find a perl $perl_version, tried in /usr/perlXXX and $perl_exe";
+	    $perl_exe = '/usr/local/bin/perl' . $perl_version;
+	    if (!-x $perl_exe) {
+		die "Cannot find a perl $perl_version, tried in /usr/perlXXX and $perl_exe";
+	    }
 	}
     }
     my $install_arg = ($stability eq 'stable' ? '-install' : '');
