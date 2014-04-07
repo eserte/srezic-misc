@@ -85,7 +85,7 @@ sub run_smoker ($$$) {
     }
     my $install_arg = ($stability eq 'stable' ? '-install' : '');
     #my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
-    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -savereports -typescript -nosignalend -skiptested -r };
+    my $cmd = q{env PERL_BATCH=yes ~eserte/work/srezic-misc/scripts/cpan_smoke_modules -cpanconf halt_on_failure=1 -savereports -typescript -nosignalend -skiptested -r };
     $cmd .= $install_arg;
     $cmd .= q{ -perl } . $perl_exe;
     $cmd .= q{ -mirrorurl } . $mirror_url;
