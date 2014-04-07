@@ -582,12 +582,21 @@ chomp(my $tty = `tty`);
 (my $short_tty = $tty) =~ s{^.*/}{};
 
 my $idletermchecker_pid;
+my @idletermchecker_cmd;
 if ($warntimeout) {
     if (is_in_path("idletermchecker")) {
 	if ($tty) {
+	    if (is_in_path('pistachio-perl')) {
+		# If pistachio-perl exists then use it, because it has
+		# Tk available, this is not necessarily the case for
+		# the system perl
+		@idletermchecker_cmd = ('pistachio-perl', '-S', 'idletermchecker');
+	    } else {
+		@idletermchecker_cmd = ('idletermchecker');
+	    }
 	    $idletermchecker_pid = fork;
 	    if ($idletermchecker_pid == 0) {
-		exec "idletermchecker", "-tk", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
+		exec @idletermchecker_cmd, "-tk", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
 		die $!;
 	    }
 	} else {
@@ -1066,7 +1075,7 @@ END {
 
     if (defined $idletermchecker_pid) {
 	#kill KILL => $idletermchecker_pid;
-	system "idletermchecker", "-tk", "-s", "-remove", $tty;
+	system @idletermchecker_cmd, "-tk", "-s", "-remove", $tty;
     }
 
     if ($signal_end && time-$start_time>60 && is_in_path("tkmessage")) {
