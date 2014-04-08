@@ -454,6 +454,7 @@ sub set_currfile {
 	%recent_states = get_recent_states();
     }
 
+    # Create the "analysis tags"
     $_->destroy for $analysis_frame->children;
     for my $analysis_tag (sort keys %analysis_tags) {
 	my $line = $analysis_tags{$analysis_tag}->{line};
@@ -465,6 +466,19 @@ sub set_currfile {
 				},
 			       )->pack;
     }
+
+    # Highlight the lines in the text which caused the analysis
+    # process to match
+    {
+	my $textw = $more->Subwidget("scrolled");
+	$textw->tagConfigure('analysis_highlight', -background => '#eeeeee');
+	while(my($analysis_tag, $info) = each %analysis_tags) {
+	    my $line = $info->{line};
+	    $textw->tagAdd('analysis_highlight', "$line.0", "$line.end");
+	}
+    }
+
+    # Create the tags with the recent states for this distribution.
     for my $recent_state (sort keys %recent_states) {
 	my $count = scalar @{ $recent_states{$recent_state} };
 	my $color = (
