@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007,2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007,2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -17,6 +17,7 @@ use File::Spec;
 use IO::Select;
 use IO::Socket::UNIX;
 use Getopt::Long;
+use Sys::Hostname qw(hostname);
 
 my @terminals;
 my $default_timeout  = 30;
@@ -33,6 +34,7 @@ my $server_pid;
 my $permanently_shown;
 my $do_remove;
 my $debug = 0;
+my $with_hostname;
 GetOptions("t|timeout=i" => \$timeout,
 	   "t2|timeout2=i" => \$timeout2,
 	   "q" => \$q,
@@ -41,9 +43,10 @@ GetOptions("t|timeout=i" => \$timeout,
 	   "geometry=s" => \$geometry,
 	   "s|server" => \$do_server,
 	   "remove" => \$do_remove,
+	   "with-hostname" => \$with_hostname,
 	  )
     or die <<EOF;
-usage: $0 [-t secs] [-t2 secs] [-q] [-debug [-debug ...]] [-tk] [-geometry x11geom] [-s] [-remove] [ttys]
+usage: $0 [-t secs] [-t2 secs] [-q] [-debug [-debug ...]] [-tk] [-geometry x11geom] [-s] [-remove] [-with-hostname] [ttys]
 
 -t: first timeout
 -t2: second timeout
@@ -53,6 +56,7 @@ usage: $0 [-t secs] [-t2 secs] [-q] [-debug [-debug ...]] [-tk] [-geometry x11ge
 -geometry: geometry of X11 control window
 -s: server mode
 -remove: remove (when started in server mode)
+-with-hostname: add hostname to terminal label
 EOF
 
 if ($timeout  != $default_timeout &&
@@ -266,7 +270,7 @@ sub check_tk {
     my $add_term_sub = sub {
 	my($term) = @_;
 	my $f = $f{$term} = $mw->Frame->pack(-fill => 'x', -expand => 1);
-	$l{$term} = $f->Label(-text => $term)->pack(-side => "left", -fill => 'x');
+	$l{$term} = $f->Label(-text => ($with_hostname ? hostname.':' : '') . $term)->pack(-side => "left", -fill => 'x');
 	$age_l{$term} = $f->Label(-width => 5, -anchor => "w")->pack(-side => "left", -fill => 'x');
 	$f->Button(-text => 'x',
 		   #-background => undef,
