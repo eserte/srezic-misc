@@ -596,7 +596,7 @@ if ($warntimeout) {
 	    }
 	    $idletermchecker_pid = fork;
 	    if ($idletermchecker_pid == 0) {
-		exec @idletermchecker_cmd, "-tk", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
+		exec @idletermchecker_cmd, "-tk", "-with-hostname", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
 		die $!;
 	    }
 	} else {
