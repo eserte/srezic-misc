@@ -73,10 +73,8 @@ possibly a dangerous operation. This option is off by default.
 YAML as a format is neat: it's human readable, portable across
 languages, unfortunately too complex.
 
-Unfortunately the pure perl implementation L<YAML> has many many bugs.
-It's really only suitable for simple stuff, but not for complex things
-(e.g. data with self references, serialized code refs, unicode data
-etc.).
+The first YAML module is the pure perl implementation L<YAML>. It is
+somewhat slower than the competitors written in C/XS.
 
 L<YAML::Syck> is a C based parser for the YAML language. It's API
 compatible with L<YAML> (has the same Load/Dump methods), but it's not
