@@ -970,7 +970,7 @@ Using L<FFI>, L<C::DynaLib> or L<P5NCI> C library functions may be
 accessed without the need to write intermediate C code at all. Under
 Windows, L<Win32::API> may be used to access the Windows API.
 
-Last, with C<Inline::C> C code may be embedded in Perl code.
+Last, with L<Inline::C> C code may be embedded in Perl code.
 
 =head2 Interfacing with other languages
 
