@@ -260,9 +260,11 @@ support...). A list of DateTime-related modules may be found at
 L<http://datetime.perl.org/?Modules>.
 
 A classic one is L<Date::Calc>, a rather complete implementation of
-date/time functions with a functional (somewhat non-perlish naming)
-und object-oriented interfaces. It's written in C, so there's also a
-pure perl replacement L<Date::Pcalc>.
+date/time functions with a functional (using somewhat non-perlish
+naming) und object-oriented interfaces. It's written in C, but the
+functionality is also available in the pure perl L<Date::Calc::PP>
+module (and historically there was another pure perl replacement
+L<Date::Pcalc>).
 
 The standard perl functions and modules: time, localtime, strftime and
 mktime in L<POSIX>, L<Time::Local>.
