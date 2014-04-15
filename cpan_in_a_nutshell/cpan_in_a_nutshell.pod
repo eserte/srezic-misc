@@ -688,6 +688,8 @@ developed) and others. TBD: Look which one is the best nowadays.
 
 L<Git> is included in the git core.
 
+L<Git::PurePerl> is a pure perl interface to Git repositories.
+
 =head2 Regexp tools
 
 L<Regexp::Assemble>: combine multiple regexpes into one. A faster but
