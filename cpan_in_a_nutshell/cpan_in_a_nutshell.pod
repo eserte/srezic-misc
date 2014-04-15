@@ -212,6 +212,12 @@ appeared in the Ruby community.
 L<Data::Rx> and L<Data::Schema> are new players in the data validation
 business.
 
+L<JSON::Schema> is a module handling a schema language originally
+written for JSON data, but may also be used for simple Perl data
+structures.
+
+L<Sah> is another schema for data structures.
+
 =head2 Hash tools
 
 To get ordered hashes, use either L<Tie::IxHash> (which is old and
