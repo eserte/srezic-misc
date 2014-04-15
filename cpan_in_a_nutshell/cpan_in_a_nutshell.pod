@@ -1043,6 +1043,8 @@ distributions are expected to ship C<Module::Install> and all
 dependencies. Under the hood it is using L<ExtUtils::MakeMaker> and
 relies on a C<make> tool.
 
+L<Dist::Zilla> is a distribution builder.
+
 A C<make> replacement as a perl module: L<Make>, together with a
 command line tool C<pmake>.
 
