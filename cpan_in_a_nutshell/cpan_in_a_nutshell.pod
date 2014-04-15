@@ -735,6 +735,10 @@ L<PerlIO::gzip> and L<PerlIO::via::gzip> both provide transparent gzip
 compression and decompression while reading from/writing to file
 handles.
 
+L<IO::Compress::Base> and L<IO::Uncompress::Base> are base classes for
+a number of modules dealing with compression, including gzip, zip, and
+bzip2. This modules are in core since perl 5.9.4.
+
 =head1 File Name Systems Locking
 
 =head2 File type detection
