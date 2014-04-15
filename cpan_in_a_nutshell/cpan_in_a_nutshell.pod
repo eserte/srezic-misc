@@ -1016,10 +1016,13 @@ and that L<Email::MIME> should be preferred.
 
 =head2 Module installation
 
-The classic module is L<CPAN>, which comes with core perl. Someday,
-L<CPANPLUS> will be the successor of CPAN.pm some day (once it is
-stable etc.). L<CPAN::Mini> is a module for creating a minimal mirror
-of the CPAN repository.
+The classic module is L<CPAN>, which comes with core perl. An
+alternative is L<CPANPLUS>, which was temporarily part of the perl
+core (but not anymore since 5.16.0). L<App::cpanminus> (aka L<cpanm>)
+is another alternative.
+
+L<CPAN::Mini> is a module for creating a minimal mirror of the CPAN
+repository.
 
 =head2 Logic programming
 
