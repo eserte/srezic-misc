@@ -91,6 +91,10 @@ solved in the forthcoming 0.28 release.
 L<YAML::Tiny> is a small parser/generator which only implements a
 subset of YAML.
 
+L<CPAN::Meta::YAML> handles a subset of YAML, just enough to parse
+CPAN Meta files. It has the advantage for being in the perl core since
+5.13.9.
+
 =head3 JSON/Javascript
 
 JSON is a human readable format which is based on javascript syntax.
