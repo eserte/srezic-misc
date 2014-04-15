@@ -1327,9 +1327,6 @@ very simple to use. Note the overwhelming bug list on
 L<http://rt.cpan.org>, but for normal configuration files it should
 work OK.
 
-L<savevars>: my own pragma module for conveniently storing and
-retrieving a configuration.
-
 L<Config::IniFiles>: most people recommend this module for Windows-ini
 styled configuration files. More modules in this game:
 L<Config::Tiny>, L<Config::IniHash>, L<Config::Mini>, and
