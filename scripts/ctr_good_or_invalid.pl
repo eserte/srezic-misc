@@ -404,6 +404,14 @@ sub set_currfile {
 			     /This Perl not built to support threads/
 			    ) {
 			$analysis_tags{'unthreaded perl'} = { line => $. };
+		    } elsif (
+			     /error: .*?\.h: No such file or directory/
+			    ) {
+			$analysis_tags{'missing_c_include'} = { line => $. };
+		    } elsif (
+			     /Out of memory!/
+			    ) {
+			$analysis_tags{'out_of_memory'} = { line => $. };
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
