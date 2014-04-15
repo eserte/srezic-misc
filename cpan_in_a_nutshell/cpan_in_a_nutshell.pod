@@ -671,6 +671,16 @@ L<http://rt.cpan.org/Public/Bug/Display.html?id=28916>.
 The C<corelist> script, part of the L<Module::CoreList> module
 distribution, knows when modules were part of the perl core, if ever.
 
+=head3 Module prerequisites
+
+L<Module::PrintUsed> prints the list of used modules at the end of a
+script run.
+
+L<Perl::PrereqScanner> gets a list of used modules by scanning perl
+files.
+
+Another helper module: L<Module::Extract::Use>.
+
 =head2 Versioning control systems
 
 L<VCS> (old, unmaintained), L<VCI> (new, at the moment actively
