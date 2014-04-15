@@ -1113,6 +1113,9 @@ restart a script after a previous failure and determining errors is
 not done by checking error coded, but by checking the
 should-condition.
 
+L<Rex> stands for remote execution and is a collection of modules to
+help for system administrating remote servers.
+
 =head2 Geo modules
 
 =head3 Distance calculation
