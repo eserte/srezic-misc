@@ -407,7 +407,8 @@ using Sortkeys(1) with L<Data::Dumper> or by setting
 C<$Storable::canonical>.
 
 See also L<below|/Generic test modules> for comparing within test
-scripts (L<Test::Deep>).
+scripts (L<Test::Differences>, L<Test::Deep>,
+L<Test::More/is_deeply>).
 
 To compare files, use the core module L<File::Compare>.
 
