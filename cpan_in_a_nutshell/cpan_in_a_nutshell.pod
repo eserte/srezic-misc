@@ -1480,11 +1480,11 @@ Apache::ASP.
 
 =head2 PDF handling
 
-L<PDF::Create> works. Best to use version 0.06 from sourceforge
-(project perl-pdf).
+L<PDF::Create> is a pure-perl module and works fine for generating pdf
+documents, including ones with simple vector graphics.
 
-L<PDF::API2> is big and complete. But its seems to be slower than
-PDF::Create, at least for my needs.
+L<PDF::API2> is big and complete. But it seems to be slower than
+PDF::Create.
 
 In L<CAM::PDF>'s SEE ALSO Pod section there's a comparison between a
 couple of PDF-related modules.
