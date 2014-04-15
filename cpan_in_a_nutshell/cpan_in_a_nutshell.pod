@@ -1402,6 +1402,9 @@ the parsing performance of the existing XML parsers.
 There are L<XML::Normalize::LibXML> and L<XML::CanonicalizeXML>
 available. The latter implements W3C recommendations.
 
+L<XML::LibXML::Document> has also canonicalisation methods
+(toStringC14N...).
+
 =head3 Feeds
 
 Parsing and generating RSS: L<XML::RSS> generally works fine, but may
