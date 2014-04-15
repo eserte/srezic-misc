@@ -695,7 +695,8 @@ L<Git::PurePerl> is a pure perl interface to Git repositories.
 L<Regexp::Assemble>: combine multiple regexpes into one. A faster but
 more restricted module doing the same is L<Regexp::Trie>. Other
 modules doing similar things are L<Regexp::Optimizer> and
-L<Regex::PreSuf>.
+L<Regex::PreSuf>. L<Regexp::Debugger> shows nicely how the regexp
+engine is working, step by step.
 
 =head1 Documentation
 
