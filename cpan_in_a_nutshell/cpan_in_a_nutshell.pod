@@ -1313,6 +1313,8 @@ need an ssh installed.
 L<Net::SSH::Expect> also uses the system's ssh like L<Net::SSH>, but
 adds also the capabilities of L<Expect> into it.
 
+L<Net::SSH2> is a wrapper built around libssh2.
+
 L<Net::OpenSSH> is a new player. The Pod documentation of this module
 has a comparison against the other available ssh implementations.
 
