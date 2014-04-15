@@ -1377,9 +1377,9 @@ L<XML::SAX::PurePerl>: a pure perl XML parser with SAX2 interface
 =head3 Parser/Generators
 
 L<XML::LibXML>, an interface to the libxml2 library. The library comes
-with a number of methods to access an XML document: the SAX parser,
-which feels rather low-level, but is OK; also accessing through DOM
-with XPath support.
+with a number of methods to access an XML document: using DOM
+functions with XPath support, or using a pull parser (SAX), or a push
+parser (L<XML::LibXML::Reader>).
 
 L<XML::Simple>, a high-level interface. For serious work there's a
 lot of options to fiddle with, but the documentation is extensive and
