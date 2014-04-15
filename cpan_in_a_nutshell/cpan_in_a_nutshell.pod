@@ -94,22 +94,21 @@ subset of YAML.
 =head3 JSON/Javascript
 
 JSON is a human readable format which is based on javascript syntax.
-It's not so complex as YAML, but has the other advantages of YAML. A
-pure perl implementation is L<JSON>. This module changed its main API
-between 1.x and 2.x, so I cannot recommend it really for applications
-which need stability.
-
-L<JSON::Syck> is a C based parser for the JSON language.
+It's not so complex as YAML (especially is unable to serialize many
+perl types like blessed objects, regexps, code references,
+self-referential data...), but has the other advantages of YAML. A
+pure perl implementation is L<JSON>.
 
 L<JSON::XS> is another C based parser/generator for JSON. It seems to
-be the only one which handles Unicode correctly. Like in L<JSON>, this
-module also changed the main API functions between 1.x and 2.x.
+be the only one which handles Unicode correctly.
 
-L<JSON::PC> is now declared as non-maintained and buggy.
+L<JSON::Syck> is a C based parser for the JSON language.
 
 L<JSON::Any> is a wrapper which uses any installed available JSON
 parser/generator. Using this module is a safe way to protect one from
 the API changes in L<JSON> and L<JSON::XS>.
+
+L<JSON::PC> is now declared as non-maintained and buggy.
 
 L<Data::JavaScript> serializes data structures from perl to
 javascript, can handle circular structures, but output is quite
