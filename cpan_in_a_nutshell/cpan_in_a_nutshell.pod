@@ -800,7 +800,7 @@ L<File::PerlMove> provides a shell command C<pmv> to rename files
 using perl expressions. Another implementation doing this is C<rename>
 (originally by Larry Wall, and currently exists in numerous variants),
 and sometimes part of operating system installs (e.g. available for
-Debian or as a FreeBSD port).
+Debian or as a FreeBSD port). And another one is L<File::Rename>.
 
 =head3 Walking a file hierarchy
 
