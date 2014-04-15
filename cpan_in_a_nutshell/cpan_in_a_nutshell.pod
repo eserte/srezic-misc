@@ -1663,6 +1663,8 @@ L<HTTP::Daemon> for a pure perl HTTP daemon. Other pure perl http
 daemons: tinyhttpd, httpi (links missing). For perl support in the
 Apache server see L<mod_perl> and the CGI support in Apache.
 
+L<Starman> - a high-performance preforking PSGI/Plack web server.
+
 =head2 Web Frameworks
 
 There's a wiki page some of the existing frameworks for web
@@ -1679,6 +1681,8 @@ templating systems (is this true XXX?).
 L<Jifty>.
 
 L<Dancer> - lightweight yet powerful web application framework.
+
+L<Plack> - PSGI toolkit, may also be used to create web sites.
 
 =head3 CGI based frameworks
 
