@@ -13,11 +13,13 @@ my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
 my $min_build_dir_avail;
 my $scripts_dir = $FindBin::RealBin;
+my $halt_on_failure;
 
 GetOptions("maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
 	   "minbuilddiravail=s" => \$min_build_dir_avail,
+	   "haltonfailure!" => \$halt_on_failure,
 	  )
     or die "usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]";
 
@@ -103,7 +105,9 @@ sub run_smoker ($$$) {
     }
     my $install_arg = ($stability eq 'stable' ? '-install' : '');
     #my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
-    my $cmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules -cpanconf halt_on_failure=1 -savereports -typescript -nosignalend -skiptested -r };
+    my $cmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
+    $cmd .= q{ -cpanconf halt_on_failure=1} if $halt_on_failure;
+    $cmd .= q{ -savereports -typescript -nosignalend -skiptested -r };
     $cmd .= $install_arg;
     $cmd .= q{ -perl } . $perl_exe;
     $cmd .= q{ -mirrorurl } . $mirror_url;
