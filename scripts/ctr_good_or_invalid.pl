@@ -342,6 +342,14 @@ sub set_currfile {
 
 	    my $program_output = {}; # collects only one line in PROGRAM OUTPUT
 
+	    my $add_analysis_tag = sub {
+		my($tag, $line) = @_;
+		if (!defined $line) { $line = $. }
+		if (!exists $analysis_tags{$tag}) {
+		    $analysis_tags{$tag} = { line => $line };
+		}
+	    };
+
 	    while(<$fh>) {
 		if (/^PROGRAM OUTPUT$/) {
 		    $section = 'PROGRAM OUTPUT';
@@ -351,7 +359,7 @@ sub set_currfile {
 			    $program_output->{content} =~ /No tests defined for \S+ extension\.$/ || # EUMM version
 			    $program_output->{content} =~ /No tests defined\.$/                      # MB version
 			   ) {
-			    $analysis_tags{'notests'}    = { line => $program_output->{line} };
+			    $add_analysis_tag->('notests', $program_output->{line});
 			}
 		    }
 		    $section = 'PREREQUISITES';
@@ -364,7 +372,7 @@ sub set_currfile {
 			     /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
 			     /^Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/
 			    ) {
-			$analysis_tags{'low perl'}       = { line => $. };
+			$add_analysis_tag->('low perl');
 		    } elsif (
 			     /^Result: NOTESTS$/
 			     ## Rely solely on the above regexp --- the below may happen because a sub-module has no tests
@@ -372,46 +380,46 @@ sub set_currfile {
 			     # || /^No tests defined for \S+ extension\.$/
 			     # || /^No tests defined\.$/
 			    ) {
-			$analysis_tags{'notests'}        = { line => $. };
+			$add_analysis_tag->('notests');
 		    } elsif (
 			     /^OS unsupported$/ ||
 			     /^OS unsupported $at_source_qr$/ ||
 			     /^No support for OS at /
 			    ) {
-			$analysis_tags{'os unsupported'} = { line => $. };
+			$add_analysis_tag->('os unsupported');
 		    } elsif (
 			     /^(?:Smartmatch|given|when) is experimental $at_source_qr$/
 			    ) {
-			$analysis_tags{'smartmatch'}     = { line => $. };
+			$add_analysis_tag->('smartmatch');
 		    } elsif (
 			     /^#\s+Failed test 'POD test for [^']+'$/
 			    ) {
-			$analysis_tags{'pod test'}       = { line => $. };
+			$add_analysis_tag->('pod test');
 		    } elsif (
 			     /^#\s+Failed test 'Pod coverage on [^']+'$/
 			    ) {
-			$analysis_tags{'pod coverage test'} = { line => $. };
+			$add_analysis_tag->('pod coverage test');
 		    } elsif (
 			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/
 			    ) {
-			$analysis_tags{'prereq fail'}    = { line => $. };
+			$add_analysis_tag->('prereq fail');
 		    } elsif (
 			     /Type of arg \d+ to (?:keys|each) must be hash \(not (?:hash element|private (?:variable|array))\)/ ||
 			     /Type of arg \d+ to (?:push|unshift) must be array \(not array element\)/
 			    ) {
-			$analysis_tags{'container func on ref'} = { line => $. };
+			$add_analysis_tag->('container func on ref');
 		    } elsif (
 			     /This Perl not built to support threads/
 			    ) {
-			$analysis_tags{'unthreaded perl'} = { line => $. };
+			$add_analysis_tag->('unthreaded perl');
 		    } elsif (
 			     /error: .*?\.h: No such file or directory/
 			    ) {
-			$analysis_tags{'missing_c_include'} = { line => $. };
+			$add_analysis_tag->('missing c include');
 		    } elsif (
 			     /Out of memory!/
 			    ) {
-			$analysis_tags{'out_of_memory'} = { line => $. };
+			$add_analysis_tag->('out of memory');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
@@ -432,7 +440,7 @@ sub set_currfile {
 		    if (/^\s*!\s*perl\s*([\d\.]+)\s+([\d\.]+)\s*$/) {
 			my($perl_need, $perl_have) = ($1, $2);
 			if ($perl_need > $perl_have) {
-			    $analysis_tags{'low perl'} = { line => $. };
+			    $add_analysis_tag->('low perl');
 			}
 		    }
 		}
