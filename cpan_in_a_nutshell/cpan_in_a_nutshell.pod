@@ -218,6 +218,11 @@ L<Hash::Case>.
 Locking hash keys and/or values is done with the core module
 L<Hash::Util>. See also L</Constants>.
 
+To create a "flat" representation from a nested hash structure
+L<Hash::Flatten> may be used. Its Pod documentation mentions more
+similar modules: L<CGI::Expand> and L<Tie::MultiDim>. L<Hash::Fold> is
+similar to L<Hash::Flatten>, but is built using Moose.
+
 =head2 Iterators
 
 Check for L<Iterator> and L<Object::Realize::Later> (lazy
