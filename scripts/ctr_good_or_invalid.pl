@@ -417,6 +417,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('missing c include');
 		    } elsif (
+			     /gcc: not found/
+			    ) {
+			$add_analysis_tag->('gcc not found');
+		    } elsif (
 			     /Out of memory!/
 			    ) {
 			$add_analysis_tag->('out of memory');
