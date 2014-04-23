@@ -421,6 +421,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('gcc not found');
 		    } elsif (
+			     /^.*?\.(?:h|c|hh|cc):\d+:\s+error:\s+/
+			    ) {
+			$add_analysis_tag->('c compilation error');
+		    } elsif (
 			     /Out of memory!/
 			    ) {
 			$add_analysis_tag->('out of memory');
