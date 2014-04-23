@@ -423,7 +423,11 @@ sub set_currfile {
 		    } elsif (
 			     /^.*?\.(?:h|c|hh|cc):\d+:\s+error:\s+/
 			    ) {
-			$add_analysis_tag->('c compilation error');
+			$add_analysis_tag->('c compilation error (gcc)');
+		    } elsif (
+			     /^.*?\.(?:h|c|hh|cc):\d+:\d+:\s+error:\s+/
+			    ) {
+			$add_analysis_tag->('c compilation error (clang)')
 		    } elsif (
 			     /Out of memory!/
 			    ) {
