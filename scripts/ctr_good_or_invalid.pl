@@ -417,7 +417,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('missing c include');
 		    } elsif (
-			     /gcc: not found/
+			     /gcc: not found/ ||
+			     /gcc: Kommando nicht gefunden/
 			    ) {
 			$add_analysis_tag->('gcc not found');
 		    } elsif (
