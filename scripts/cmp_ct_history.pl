@@ -17,7 +17,11 @@
 
 use strict;
 use FindBin;
-use lib "$FindBin::RealBin/../lib";
+# for CPAN::Testers::ParallelSmoker:
+use lib (
+	 "$FindBin::RealBin/../lib",
+	 "$FindBin::RealBin/../../lib",
+	);
 
 use CPAN;
 use Getopt::Long;
