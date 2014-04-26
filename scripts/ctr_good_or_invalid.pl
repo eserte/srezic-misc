@@ -144,7 +144,7 @@ if (!@files) {
     exit;
 }
 if ($auto_good) {
-    if (!$do_check_screensaver || !is_user_at_computer()) {
+    if (!is_user_at_computer()) {
 	my $msg = scalar(@files) . " distribution(s) with FAILs (inactive user)";
 	warn "Skipping $msg.\n";
 	if ($do_xterm_title) {
@@ -612,12 +612,22 @@ sub nextfile {
 }
 
 sub is_user_at_computer {
-    require X11::Protocol;
-    my $X = X11::Protocol->new;
-    $X->init_extension('MIT-SCREEN-SAVER')
-	or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
-    my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
-    $on_or_off eq 'On' ? 0 : 1;
+    my $ret = eval {
+	require X11::Protocol;
+	my $X = X11::Protocol->new;
+	$X->init_extension('MIT-SCREEN-SAVER')
+	    or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
+	my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
+	$on_or_off eq 'On' ? 0 : 1;
+    };
+    if ($@) {
+	if ($do_check_screensaver) {
+	    die $@;
+	} else {
+	    return 1;
+	}
+    }
+    $ret;
 }
 
 sub parse_report_filename {
