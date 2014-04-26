@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: cmp_ct_history.pl,v 1.9 2011/12/12 22:37:51 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2012 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -17,6 +16,9 @@
 # smokes)
 
 use strict;
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
 use CPAN;
 use Getopt::Long;
 use List::MoreUtils qw(uniq);
@@ -34,22 +36,55 @@ my $show_missing;
 my $show_fulldist;
 my $show_minimal;
 my $org_file;
+my $use_default_org_file;
+my $do_dump_org_file;
+my $smoke_config_file;
 GetOptions("missing!"     => \$show_missing,
 	   "fulldist!"    => \$show_fulldist,
 	   "minimal|min+" => \$show_minimal,
 	   "org=s"        => \$org_file,
+	   "defaultorg!"  => \$use_default_org_file,
+	   "dumporg"      => \$do_dump_org_file,
+	   "config=s"     => \$smoke_config_file,
 	  )
-    or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] newhistory oldhistory";
+    or die "usage: $0 [-missing] [-fulldist] [-minimal [-minimal]] [-defaultorg|-org ...] -config file | newhistory oldhistory";
 
-my $hist1 = shift or die "left history (usually the history with the *newer* system)?";
-my $hist2 = shift or die "right history (usually the history with the *older* system)?";
+my($hist1, $hist2);
+if ($smoke_config_file) {
+    require CPAN::Testers::ParallelSmoker;
+    CPAN::Testers::ParallelSmoker::load_config($smoke_config_file);
+    CPAN::Testers::ParallelSmoker::set_home((getpwnam("cpansand"))[7]); # XXX do not hardcode!!!
+    CPAN::Testers::ParallelSmoker::expand_config();
+    $hist2 = $CPAN::Testers::ParallelSmoker::CONFIG->{perl1}->{configdir} . '/cpanreporter/reports-sent.db';
+    $hist1 = $CPAN::Testers::ParallelSmoker::CONFIG->{perl2}->{configdir} . '/cpanreporter/reports-sent.db';
+    -e $hist2 or die "Right history file $hist2 does not exist";
+    -e $hist1 or die "Left history file $hist1 does not exist";
+    -r $hist2 or die "Right history file $hist2 not readable";
+    -r $hist1 or die "Left history file $hist2 not readable";
+    if ($use_default_org_file) {
+	my $_org_file = $CPAN::Testers::ParallelSmoker::CONFIG->{smokerdir} . '/smoke_' . $CPAN::Testers::ParallelSmoker::CONFIG->{testlabel} . '.txt';
+	if (-e $_org_file) {
+	    $org_file = $_org_file;
+	} else {
+	    $org_file = $CPAN::Testers::ParallelSmoker::CONFIG->{smokerdir} . '/smoke.txt';
+	}
+    }
+} else {
+    $hist1 = shift or die "left history (usually the history with the *newer* system)?";
+    $hist2 = shift or die "right history (usually the history with the *older* system)?";
+    if ($use_default_org_file) {
+	die "Cannot use -defaultorg without -config, please specify -org /path/to/smoke.txt instead\n";
+    }
+}
 
 my $dist2rt;
 my $dist2fixed;
+my $dist2ignore;
 if ($org_file) {
     my %res = read_org_file($org_file);
-    $dist2rt    = $res{dist2rt};
-    $dist2fixed = $res{dist2fixed};
+    $dist2rt     = $res{dist2rt};
+    $dist2fixed  = $res{dist2fixed};
+    $dist2ignore = $res{dist2ignore};
 }
 
 my %hist1 = %{ read_history($hist1) };
@@ -89,7 +124,9 @@ DIST: for my $dist (sort keys %dists) {
 	    }
 	}
 	if ($show_minimal && $show_minimal >= 4) {
-	    unless ($grade_left eq 'FAIL' && $grade_right =~ m{^(UNKNOWN|PASS|NA)$}) {
+	    if ($grade_left =~ m{^(PASS|DISCARD)$}) {
+		next DIST;
+	    } elsif ($grade_right ne 'PASS') {
 		next DIST;
 	    }
 	}
@@ -98,11 +135,15 @@ DIST: for my $dist (sort keys %dists) {
 	}
     }
     if ($res) {
+	my $dist_or_fulldist = $dist;
 	if ($show_fulldist) {
 	    my $fulldist = CPAN::Shell->expand("Distribution", "/\\/$dist/");
-	    $dist = $fulldist->id if $fulldist;
+	    $dist_or_fulldist = $fulldist->id if $fulldist;
 	}
-	printf "%-55s %s", $dist, $res;
+	if ($show_minimal && $show_minimal >= 3 && $dist2ignore->{$dist}) {
+	    next DIST;
+	}
+	printf "%-55s %s", $dist_or_fulldist, $res;
 	if ($dist2rt->{$dist}) {
 	    print "\t$dist2rt->{$dist}";
 	}
@@ -116,9 +157,8 @@ DIST: for my $dist (sort keys %dists) {
 sub read_history {
     my $file = shift;
     my %hist;
-    -f $file or die "$file is not a file";
     open my $ifh, $file
-	or die "Can't open $file: $!";
+	or die $!;
     while(<$ifh>) {
 	next if m{^#};
 	chomp;
@@ -126,7 +166,7 @@ sub read_history {
 	my($phase, $grade, $dist, $perl, $arch) = $_ =~
 	    m{^(\S+)\s+(\S+)\s+(\S+)\s+\((.*?)\)\s+(.*)};
 	if (!defined $phase) {
-	    warn "Cannot parse $_";
+	    warn "Cannot parse <$_> in $file, skipping line";
 	    next;
 	}
 	push @{ $hist{$dist} }, [$phase, $grade, $perl, $arch];
@@ -140,22 +180,72 @@ sub read_org_file {
 	or die "Can't open $file: $!";
     my %dist2rt;
     my %dist2fixed;
+    my %dist2ignore;
     my $maybe_current_dist;
+    my $ignore_current_section = 0;
+    my $current_section_is_fixed_or_redo = 0;
     while(<$fh>) {
 	chomp;
-	if (/^\*+\s*(\S+)/) {
+	if (/^\*\s+(.*)/) {
+	    my $section_line = $1;
+	    if ($section_line =~ m{:IGNORE_IN_COMPARISONS:}) {
+		$ignore_current_section = 1;
+	    } else {
+		$ignore_current_section = 0;
+	    }
+	    if ($section_line =~ m{:(FIXED|REDO):}) {
+		$current_section_is_fixed_or_redo = 1;
+	    } else {
+		$current_section_is_fixed_or_redo = 0;
+	    }
+	} elsif (/^\*\*+\s*(\S+)/) {
 	    $maybe_current_dist = $1;
+	    if ($current_section_is_fixed_or_redo) {
+		next;
+	    }
+	    if ($ignore_current_section) {
+		$dist2ignore{$maybe_current_dist} = 1;
+	    }
 	} elsif ($maybe_current_dist) {
-	    if (m{(http.*?rt.cpan.org\S+Display.html\?id=\d+)}) {
+	    if (m{(
+		      http.*?rt.cpan.org\S+Display.html\?id=\d+
+		  |   http.*?rt.perl.org\S+Display.html\?id=\d+
+		  |   https://github.com/.*/.*/issues/\d+
+		  )}x) {
+		if ($current_section_is_fixed_or_redo) {
+		    next;
+		}
 		$dist2rt{$maybe_current_dist} = $1;
 	    } elsif (m{(fixed in \d\S*)}) {
 		$dist2fixed{$maybe_current_dist} = $1;
+	    } elsif (m{\bignore\b}) {
+		$dist2ignore{$maybe_current_dist} = 1;
 	    }
 	}
     }
-    (dist2rt    => \%dist2rt,
-     dist2fixed => \%dist2fixed,
-    );
+    my %res = (dist2rt    => \%dist2rt,
+	       dist2fixed => \%dist2fixed,
+	       dist2ignore => \%dist2ignore,
+	      );
+    if ($do_dump_org_file) {
+	require Data::Dumper;
+	print Data::Dumper::Dumper(\%res);
+	exit 0;
+    }
+    %res;
 }
  
 __END__
+
+# TODO: documentation, especially of the org mode file
+#
+# org mode file, special tags and text:
+# * first level sections may contain the tag :IGNORE_IN_COMPARISONS:
+#   which will cause all distributions in this section to be
+#   ignored in comparisons
+# * distribution names (without author, with version) in section level
+#   two or higher
+# * a full cpan rt link is detected and displayed in a special column
+# * a "fixed in ...." string is detected
+# * if the word "ignore" appears in the text, then the distribution
+#   will be ignored in comparisons
