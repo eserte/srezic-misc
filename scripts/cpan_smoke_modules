@@ -63,6 +63,7 @@ my $has_xterm_conf;
 my $skip_tested;
 my $skip_tested_nondiscarded;
 my $no_fail_reports;
+my $test_unpatched;
 my $save_reports = 1;
 my $reports_workflow_dir;
 my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
@@ -122,6 +123,7 @@ GetOptions("n" => \$n,
 	       $skip_tested_nondiscarded = 1;
 	   },
 	   'nofailreport' => \$no_fail_reports,
+	   'testunpatched' => \$test_unpatched,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
 	   'mirrorurl=s' => \$mirror_url,
@@ -1026,6 +1028,9 @@ EOF
 	    #$ENV{PERL_MM_USE_DEFAULT} = 1; --- currently bad idea ... turns CPAN::Reporter questions off
 	    $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps};
 	    $ENV{PERL_BATCH} = 'yes'; # private extension, used in 01.DISABLED.yml
+	}
+	if ($test_unpatched) {
+	    $ENV{PERL_TEST_UNPATCHED} = 'yes'; # private extension, used in distroprefs files to skip a fix and force a failure
 	}
 	if ($for_parallel_smoker) {
 	    $ENV{PERL_PARALLEL_SMOKER} = 'yes'; # private extension, used in distroprefs files
