@@ -624,58 +624,60 @@ open my $logfh, ">>", $cpan_smoke_log
 $logfh->autoflush(1);
 
 if ($save_reports) {
-    my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
-	or die "Can't create tempfile: $!";
-    my $config_ini_path = "$ENV{HOME}/.cpanreporter/config.ini";
-    open my $ifh, "<", $config_ini_path
-	or die "Can't open $config_ini_path: $!";
+    if (!$for_parallel_smoker) { # parallel smoker already have a correct cpanreporter config
+	my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
+	    or die "Can't create tempfile: $!";
+	my $config_ini_path = "$ENV{HOME}/.cpanreporter/config.ini";
+	open my $ifh, "<", $config_ini_path
+	    or die "Can't open $config_ini_path: $!";
 
-    if (!$reports_workflow_dir) {
-	$reports_workflow_dir = $reports_workflow_default_dir;
-	if (!-d $reports_workflow_dir) {
-	    mkpath $reports_workflow_dir;
+	if (!$reports_workflow_dir) {
+	    $reports_workflow_dir = $reports_workflow_default_dir;
+	    if (!-d $reports_workflow_dir) {
+		mkpath $reports_workflow_dir;
+	    }
+	    if (!-d $reports_workflow_dir) {
+		die "Cannot create $reports_workflow_dir";
+	    }
+	} else {
+	    if (!-d $reports_workflow_dir) {
+		die "The directory $reports_workflow_dir does not exist";
+	    } # the subdirs may be missing and will be created
 	}
-	if (!-d $reports_workflow_dir) {
-	    die "Cannot create $reports_workflow_dir";
+	my $new_reports_dir = "$reports_workflow_dir/new";
+	my $changed_transport = 0;
+	my $new_transport_setting = "transport=File $new_reports_dir\n";
+	while(<$ifh>) {
+	    if (/^transport\s*=/) {
+		print $tmpfh $new_transport_setting;
+		$changed_transport++;
+	    } elsif (/^edit_report\s*=/) {
+		print $tmpfh "edit_report=default:no\n";
+	    } elsif (/^cc_author\s*=/) {
+		# skip
+	    } elsif (/^send_report\s*=/) {
+		print $tmpfh "send_report=default:yes\n";
+	    } else {
+		print $tmpfh $_;
+	    }
 	}
-    } else {
-	if (!-d $reports_workflow_dir) {
-	    die "The directory $reports_workflow_dir does not exist";
-	} # the subdirs may be missing and will be created
-    }
-    my $new_reports_dir = "$reports_workflow_dir/new";
-    my $changed_transport = 0;
-    my $new_transport_setting = "transport=File $new_reports_dir\n";
-    while(<$ifh>) {
-	if (/^transport\s*=/) {
+	if (!$changed_transport) {
 	    print $tmpfh $new_transport_setting;
 	    $changed_transport++;
-	} elsif (/^edit_report\s*=/) {
-	    print $tmpfh "edit_report=default:no\n";
-	} elsif (/^cc_author\s*=/) {
-	    # skip
-	} elsif (/^send_report\s*=/) {
-	    print $tmpfh "send_report=default:yes\n";
-	} else {
-	    print $tmpfh $_;
 	}
+	close $tmpfh
+	    or die "Error while closing: $!";
+	for my $dir ($new_reports_dir,
+		     "$reports_workflow_dir/sync",
+		     "$reports_workflow_dir/process",
+		     "$reports_workflow_dir/done",
+		     "$reports_workflow_dir/undecided",
+		    ) {
+	    mkdir $dir if !-d $dir;
+	}
+	$ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
+	push @touch_files, $tmpfile;
     }
-    if (!$changed_transport) {
-	print $tmpfh $new_transport_setting;
-	$changed_transport++;
-    }
-    close $tmpfh
-	or die "Error while closing: $!";
-    for my $dir ($new_reports_dir,
-		 "$reports_workflow_dir/sync",
-		 "$reports_workflow_dir/process",
-		 "$reports_workflow_dir/done",
-		 "$reports_workflow_dir/undecided",
-		) {
-	mkdir $dir if !-d $dir;
-    }
-    $ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
-    push @touch_files, $tmpfile;
 } elsif ($no_fail_reports) {
     my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini"; # XXX maybe use PERL_CPAN_REPORTER_DIR?
     if (!-r $confignofail) {
