@@ -330,8 +330,8 @@ array by key.
 
 L<Sort::Naturally> simultaneously sorts lexically and nummerically.
 
-L<Sort::Versions>, L<CPAN::Version> L<version> may be used to compare
-and sort version numbers.
+L<Sort::Versions>, L<CPAN::Version>, L<version>, L<Version::Compare>
+may be used to compare and sort version numbers.
 
 =head2 Weak references
 
