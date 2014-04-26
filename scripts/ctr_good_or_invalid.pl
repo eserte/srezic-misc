@@ -62,8 +62,11 @@ GetOptions("good" => \$only_good,
 	   "recent-states!" => \$show_recent_states,
 	   "check-screensaver!" => \$do_check_screensaver,
 	  )
-    or die "usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom] [-noquit-at-end] [-[no]xterm-title]
-[-[no]recent-states] [-[no]check-screesaver] [directory [file ...]]";
+    or die <<EOF;
+usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
+          [-noquit-at-end] [-[no]xterm-title]
+          [-[no]recent-states] [-[no]check-screesaver] [directory [file ...]]
+EOF
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -73,10 +76,7 @@ if ($auto_good) {
 }
 
 if ($do_xterm_title) {
-    if (!eval { require XTerm::Conf; 1 }) {
-	warn "No XTerm::Conf available, turning -xterm-title off (specify -no-xterm-title to cease this warning)...\n";
-	$do_xterm_title = 0;
-    }
+    check_term_title();
 }
 
 my @files = @ARGV;
@@ -89,9 +89,7 @@ if (!@files) {
 }
 if (!@files) {
     my $msg = "No files given or found";
-    if ($do_xterm_title) {
-	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
-    }
+    set_term_title("report sender: $msg");
     die "$msg.\n";
 }
 
@@ -138,26 +136,20 @@ for my $file (@files) {
 if (!@files) {
     my $msg = "No file needs to be checked manually";
     warn "$msg, finishing.\n";
-    if ($do_xterm_title) {
-	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
-    }
+    set_term_title("report sender: $msg");
     exit;
 }
 if ($auto_good) {
     if (!is_user_at_computer()) {
 	my $msg = scalar(@files) . " distribution(s) with FAILs (inactive user)";
 	warn "Skipping $msg.\n";
-	if ($do_xterm_title) {
-	    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
-	}
+	set_term_title("report sender: $msg");
 	exit 1;
     }
 } elsif ($only_good) {
     my $msg = scalar(@files) . " distribution(s) with FAILs";
     warn "Skipping $msg.\n";
-    if ($do_xterm_title) {
-	print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: $msg");
-    }
+    set_term_title("report sender: $msg");
     exit 1;
 }
 
@@ -176,9 +168,7 @@ if ($reversed) {
     @files = reverse @files;
 }
 
-if ($do_xterm_title) {
-    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: interactive mode");
-}
+set_term_title("report sender: interactive mode");
 
 my $mw = tkinit;
 $mw->geometry($geometry) if $geometry;
@@ -305,9 +295,7 @@ if ($auto_good) {
 #$mw->attributes(-fullscreen => 1); # does not work (with fvwm2 only?)
 MainLoop;
 
-if ($do_xterm_title) {
-    print STDERR XTerm::Conf::xterm_conf_string(-title => "report sender: finished");
-}
+set_term_title("report sender: finished");
 
 sub set_currfile {
     $currfile = $files[$currfile_i];
@@ -654,6 +642,25 @@ sub parse_report_filename {
 	return $res;
     } else {
 	undef;
+    }
+}
+
+sub check_term_title {
+    if (!eval { require XTerm::Conf; 1 }) {
+	if (!eval { require Term::Title; 1 }) {
+	    warn "No XTerm::Conf and/or Term::Title available, turning -xterm-title off (specify -no-xterm-title to cease this warning)...\n";
+	    $do_xterm_title = 0;
+	}
+    }
+}
+
+sub set_term_title {
+    return if !$do_xterm_title;
+    my $string = shift;
+    if (defined &XTerm::Conf::xterm_conf_string) {
+	print STDERR XTerm::Conf::xterm_conf_string(-title => $string);
+    } else {
+	Term::Title::set_titlebar($string);
     }
 }
 
