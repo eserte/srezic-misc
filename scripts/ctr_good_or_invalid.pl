@@ -27,6 +27,8 @@ my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.}
 
 my $the_ct_states_rx = qr{(?:pass|unknown|na|fail)};
 
+my $c_ext_qr = qr{\.(?:h|c|hh|cc|xs)};
+
 my @common_analysis_button_config =
     (
      -padx => 0,
@@ -410,11 +412,11 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('gcc not found');
 		    } elsif (
-			     /^.*?\.(?:h|c|hh|cc):\d+:\s+error:\s+/
+			     /^.*?$c_ext_qr:\d+:\s+error:\s+/
 			    ) {
 			$add_analysis_tag->('c compile error (gcc)');
 		    } elsif (
-			     /^.*?\.(?:h|c|hh|cc):\d+:\d+:\s+error:\s+/
+			     /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/
 			    ) {
 			$add_analysis_tag->('c compile error (clang)')
 		    } elsif (
