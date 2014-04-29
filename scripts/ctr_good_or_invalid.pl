@@ -423,6 +423,11 @@ sub set_currfile {
 			     /Out of memory!/
 			    ) {
 			$add_analysis_tag->('out of memory');
+		    } elsif (
+			     /^#\s+Failed test '.*'$/ ||
+			     /^#\s+Failed test at .* line \d+\.$/
+			    ) {
+			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
@@ -475,6 +480,10 @@ sub set_currfile {
 
     # Create the "analysis tags"
     $_->destroy for $analysis_frame->children;
+    my $generic_analysis_tag_value = delete $analysis_tags{__GENERIC_TEST_FAILURE__};
+    if (!%analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
+	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
+    }
     for my $analysis_tag (sort keys %analysis_tags) {
 	my $line = $analysis_tags{$analysis_tag}->{line};
 	$analysis_frame->Button(-text => $analysis_tag,
