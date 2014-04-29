@@ -424,8 +424,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('out of memory');
 		    } elsif (
-			     /^#\s+Failed test '.*'$/ ||
-			     /^#\s+Failed test at .* line \d+\.$/
+			     /^\s*#\s+Failed test '.*'$/ ||
+			     /^\s*#\s+Failed test at .* line \d+\.$/
 			    ) {
 			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		    } else {
