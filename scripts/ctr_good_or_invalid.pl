@@ -424,6 +424,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('out of memory');
 		    } elsif (
+			     /^# Perl::Critic found these violations in .*:$/
+			    ) {
+			$add_analysis_tag->('perl critic');
+		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/
 			    ) {
