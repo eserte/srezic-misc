@@ -425,7 +425,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('perl critic');
 		    } elsif (
-			     /syntax error.*\bnear "\$\w+ qw\(/
+			     /syntax error.*\bnear "\$\w+ qw\(/ ||
+			     /syntax error.*\bnear "->\w+ qw\(/
 			    ) {
 			$add_analysis_tag->('qw without parentheses');
 		    } elsif (
