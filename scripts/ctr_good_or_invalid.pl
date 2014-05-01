@@ -382,6 +382,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('smartmatch');
 		    } elsif (
+			     /^(?:push|keys|shift) on reference is experimental $at_source_qr$/
+			    ) {
+			$add_analysis_tag->('experimental functions on references');
+		    } elsif (
 			     /^#\s+Failed test 'POD test for [^']+'$/
 			    ) {
 			$add_analysis_tag->('pod test');
