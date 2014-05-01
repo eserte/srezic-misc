@@ -428,9 +428,14 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('perl critic');
 		    } elsif (
+			     /syntax error.*\bnear "\$\w+ qw\(/
+			    ) {
+			$add_analysis_tag->('qw without parentheses');
+		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
-			     /^\s*#\s+Failed test \(.*\)$/
+			     /^\s*#\s+Failed test \(.*\)$/ ||
+			     /^\s*#\s+Failed test \d+ in .* at line \d+$/
 			    ) {
 			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		    } else {
