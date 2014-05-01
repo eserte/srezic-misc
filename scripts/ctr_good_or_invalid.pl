@@ -434,6 +434,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('qw without parentheses');
 		    } elsif (
+			     /==> MISMATCHED content between MANIFEST and distribution files! <==/
+			    ) {
+			$add_analysis_tag->('signature mismatch');
+		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
 			     /^\s*#\s+Failed test \(.*\)$/ ||
