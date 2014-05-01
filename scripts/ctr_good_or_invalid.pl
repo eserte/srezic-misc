@@ -412,13 +412,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('gcc not found');
 		    } elsif (
-			     /^.*?$c_ext_qr:\d+:\s+error:\s+/
+			     /^.*?$c_ext_qr:\d+:\s+error:\s+/ || # gcc
+			     /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ # gcc or clang
 			    ) {
-			$add_analysis_tag->('c compile error (gcc)');
-		    } elsif (
-			     /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/
-			    ) {
-			$add_analysis_tag->('c compile error (clang)')
+			$add_analysis_tag->('c compile error');
 		    } elsif (
 			     /Out of memory!/
 			    ) {
