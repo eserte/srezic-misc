@@ -975,6 +975,10 @@ EOF
 	    unshift @cmd, "nice";
 	}
 
+	if (!$unkind && $^O eq 'linux' && is_in_path('ionice')) {
+	    unshift @cmd, 'ionice', '-c2', '-n6';
+	}
+
 	if ($use_limits) {
 	    my $data_limit = 1024*1024*1024;
 	    my $cputime_limit = 3600*1;
