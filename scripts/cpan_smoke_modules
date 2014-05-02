@@ -90,6 +90,7 @@ my $hidemod;
 my $use_vncserver;
 my $x11_display = ':9'; # ssh begins at :10
 my @touch_files;
+my $reload_index;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -147,6 +148,7 @@ GetOptions("n" => \$n,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
 	   'hidemod=s' => \$hidemod,
 	   'vnc!'  => \$use_vncserver,
+	   'reloadindex|reload-index' => \$reload_index,
 	  )
     or die <<EOF;
 usage: $0
@@ -168,6 +170,7 @@ usage: $0
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc]
      [-minbuilddiravail bytes|...k|...M|...G]
+     [-reloadindex]
      [dist ...]
 
 -i: test and install
@@ -917,6 +920,10 @@ EOF
 
 	if ($debug) {
 	    $cpan_shell_init .= q#use Data::Dumper; warn Dumper $CPAN::Config; #;
+	}
+
+	if ($reload_index) {
+	    $cpan_shell_init .= q{CPAN::Index->force_reload(); };
 	}
 
 	for my $cpan_conf (@cpan_conf) {
