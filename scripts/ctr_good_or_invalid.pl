@@ -438,6 +438,14 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('signature mismatch');
 		    } elsif (
+			     m{^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+? at .*/Mouse/Util\.pm line \d+\.$}
+			    ) {
+			$add_analysis_tag->('type constraint (Mouse)');
+		    } elsif (
+			     /^(?:# died: )?Insecure .+? while running with -T switch $at_source_qr$/
+			    ) {
+			$add_analysis_tag->('taint');
+		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
 			     /^\s*#\s+Failed test \(.*\)$/ ||
