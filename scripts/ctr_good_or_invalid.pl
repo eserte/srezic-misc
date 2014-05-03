@@ -511,13 +511,15 @@ sub set_currfile {
     $_->destroy for $analysis_frame->children;
     my $generic_analysis_tag_value = delete $analysis_tags{__GENERIC_TEST_FAILURE__};
     if (!%analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
+	$generic_analysis_tag_value->{__bgcolor__} = 'white'; # different color than the other analysis tags
 	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
     }
     for my $analysis_tag (sort keys %analysis_tags) {
 	my $line = $analysis_tags{$analysis_tag}->{line};
+	my $bgcolor = $analysis_tags{$analysis_tag}->{__bgcolor__} || 'yellow';
 	$analysis_frame->Button(-text => $analysis_tag,
 				@common_analysis_button_config,
-				-bg => 'yellow',
+				-bg => $bgcolor,
 				-command => sub {
 				    $more->Subwidget('scrolled')->see("$line.0");
 				},
