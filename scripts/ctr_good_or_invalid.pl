@@ -27,7 +27,7 @@ my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.}
 
 my $the_ct_states_rx = qr{(?:pass|unknown|na|fail)};
 
-my $c_ext_qr = qr{\.(?:h|c|hh|cc|xs|cpp|hpp)};
+my $c_ext_qr = qr{\.(?:h|c|hh|cc|xs|cpp|hpp|cxx)};
 
 my @common_analysis_button_config =
     (
