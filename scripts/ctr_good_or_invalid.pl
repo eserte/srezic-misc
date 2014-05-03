@@ -394,6 +394,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('pod coverage test');
 		    } elsif (
+			     /^#\s+Failed test 'POD spelling for [^']+'$/
+			    ) {
+			$add_analysis_tag->('pod spelling test');
+		    } elsif (
 			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/
 			    ) {
 			$add_analysis_tag->('prereq fail');
