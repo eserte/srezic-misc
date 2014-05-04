@@ -148,6 +148,7 @@ GetOptions("n" => \$n,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
 	   'hidemod=s' => \$hidemod,
 	   'vnc!'  => \$use_vncserver,
+	   'x11display=s' => \$x11_display,
 	   'reloadindex|reload-index' => \$reload_index,
 	  )
     or die <<EOF;
@@ -168,7 +169,7 @@ usage: $0
      [-strace|-truss|-ktrace file] [-[no]typescript]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
-     [-[no]limits] [-vnc]
+     [-[no]limits] [-vnc] [-x11display :...]
      [-minbuilddiravail bytes|...k|...M|...G]
      [-reloadindex]
      [dist ...]
