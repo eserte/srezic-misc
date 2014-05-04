@@ -427,6 +427,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('c compile error');
 		    } elsif (
+			     /^\s*#\s+Error:  Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/
+			    ) {
+			$add_analysis_tag->('undefined symbol in shared lib');
+		    } elsif (
 			     /Out of memory!/
 			    ) {
 			$add_analysis_tag->('out of memory');
