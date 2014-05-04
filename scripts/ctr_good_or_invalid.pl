@@ -23,7 +23,8 @@ use POSIX qw(strftime);
 
 # Patterns for report analysis
 my $v_version_qr = qr{v[\d\.]+};
-my $at_source_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?\.};
+my $at_source_without_dot_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?};
+my $at_source_qr = qr{$at_source_without_dot_qr\.};
 
 my $the_ct_states_rx = qr{(?:pass|unknown|na|fail)};
 
@@ -390,7 +391,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('pod test');
 		    } elsif (
-			     /^#\s+Failed test 'Pod coverage on [^']+'$/
+			     /^#\s+Failed test 'Pod coverage on [^']+'$/ ||
+			     /^#\s+Coverage for \S+ is [\d\.]+%, with \d+ naked subroutines?:$/
 			    ) {
 			$add_analysis_tag->('pod coverage test');
 		    } elsif (
@@ -443,9 +445,9 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('signature mismatch');
 		    } elsif (
-			     m{^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+? at .*/Mouse/Util\.pm line \d+\.$}
+			     /^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+ $at_source_without_dot_qr$/
 			    ) {
-			$add_analysis_tag->('type constraint (Mouse)');
+			$add_analysis_tag->('type constraint violation');
 		    } elsif (
 			     /^(?:# died: )?Insecure .+? while running with -T switch $at_source_qr$/
 			    ) {
@@ -455,7 +457,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('meta.yml spec');
 		    } elsif (
-			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/
+			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$}
 			    ) {
 			$add_analysis_tag->('possibly old bundled modules');
 		    } elsif (
@@ -469,6 +472,10 @@ sub set_currfile {
 			     /\S+ uses NEXT, which is deprecated. Please see the Class::C3::Adopt::NEXT documentation for details. NEXT used\s+$at_source_qr/
 			    ) {
 			$add_analysis_tag->('deprecation (NEXT)');
+		    } elsif (
+			     /Class::MOP::load_class is deprecated/
+			    ) {
+			$add_analysis_tag->('deprecation (Class::MOP)');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
