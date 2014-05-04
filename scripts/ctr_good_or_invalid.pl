@@ -451,12 +451,24 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('taint');
 		    } elsif (
+			     /# Error: META.yml does not conform to any recognised META.yml Spec./
+			    ) {
+			$add_analysis_tag->('meta.yml spec');
+		    } elsif (
+			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/
+			    ) {
+			$add_analysis_tag->('possibly old bundled modules');
+		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
 			     /^\s*#\s+Failed test \(.*\)$/ ||
 			     /^\s*#\s+Failed test \d+ in .* at line \d+$/
 			    ) {
 			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
+		    } elsif (
+			     /\S+ uses NEXT, which is deprecated. Please see the Class::C3::Adopt::NEXT documentation for details. NEXT used\s+$at_source_qr/
+			    ) {
+			$add_analysis_tag->('deprecation (NEXT)');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
