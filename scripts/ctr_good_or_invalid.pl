@@ -386,7 +386,7 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('os unsupported');
 		    } elsif (
-			     /^(?:Smartmatch|given|when) is experimental $at_source_qr$/
+			     /^(?:#\s+Error:\s+)?(?:Smartmatch|given|when) is experimental $at_source_qr$/
 			    ) {
 			$add_analysis_tag->('smartmatch');
 		    } elsif (
