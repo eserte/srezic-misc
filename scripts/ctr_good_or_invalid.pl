@@ -122,7 +122,7 @@ if (-d $done_directory) {
     my $this_month = strftime "%Y-%m", @l;
     $add_done_directory->($this_month);
 
-    for (1..3) { # XXX make number of prev months configurable?
+    for (1..1) { # XXX make number of prev months configurable?
 	$l[4]--;
 	if ($l[4] < 0) { $l[4] = 11; $l[5]-- }
 	my $month = strftime "%Y-%m", @l;
