@@ -111,15 +111,22 @@ if (!-d $undecided_directory) {
 my $done_directory = "$reportdir/done";
 my @recent_done_directories;
 if (-d $done_directory) {
-    my @l = localtime;
-    my $this_month = strftime "%Y-%m", @l;
-    $l[4]--;
-    if ($l[4] < 0) { $l[4] = 11; $l[5]-- }
-    my $prev_month = strftime "%Y-%m", @l;
-    for my $month ($this_month, $prev_month) {
+    my $add_done_directory = sub {
+	my $month = shift;
 	my $check_directory = "$done_directory/$month";
 	push @recent_done_directories, $check_directory
 	    if -d $check_directory;
+    };
+
+    my @l = localtime;
+    my $this_month = strftime "%Y-%m", @l;
+    $add_done_directory->($this_month);
+
+    for (1..3) { # XXX make number of prev months configurable?
+	$l[4]--;
+	if ($l[4] < 0) { $l[4] = 11; $l[5]-- }
+	my $month = strftime "%Y-%m", @l;
+	$add_done_directory->($month);
     }
 }
 
