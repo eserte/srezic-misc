@@ -469,6 +469,7 @@ sub set_currfile {
 			$add_analysis_tag->('meta.yml spec');
 		    } elsif (
 			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
 			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$}
 			    ) {
 			$add_analysis_tag->('possibly old bundled modules');
