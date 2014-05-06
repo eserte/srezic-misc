@@ -821,6 +821,9 @@ L<File::Zglob> provides globbing like the core L<File::Glob>, but adds
 zsh's "**" pattern, which can be used to recursively descend into
 subdirectories.
 
+L<File::Locate> uses the locate/slocate database which is usually
+updated every night on Unix boxes.
+
 =head2 Free disk space
 
 L<Filesys::DfPortable> is probably the best choice. It supports both
