@@ -145,7 +145,7 @@ step "Build perl",
 	    }
 	    my @build_cmd = (
 			     "nice ./configure.gnu --prefix=$perldir" .
-			     ($need_usedevel ? ' -Dusedevel' : '') .
+			     ($need_usedevel ? ' -Dusedevel -Dusemallocwrap=no' : '') .
 			     ($build_debug ? ' -DDEBUGGING' : '') .
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : ()) .
