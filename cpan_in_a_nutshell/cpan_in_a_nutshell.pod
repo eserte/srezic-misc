@@ -808,6 +808,15 @@ L<File::Find> is in the core.
 
 L<File::Find::Rule> is different XXX. Many plugins.
 
+Other modules here are: L<File::Next>, L<Path::Class::Rule>,
+L<Path::Iterator::Rule>, L<File::Find::Rule>, L<File::Find::Object>,
+L<File::Find::Iterator>. These are covered in this rjbs article:
+L<http://rjbs.manxome.org/rubric/entry/1981>. rjbs also mentions the
+following modules which do not do lazy iteration, so these are
+probably slow on large trees: L<File::Find::Declare>,
+L<File::Find::Match>, L<File::Find::Node>. And finally there's
+L<File::Find::Wanted>.
+
 L<File::Zglob> provides globbing like the core L<File::Glob>, but adds
 zsh's "**" pattern, which can be used to recursively descend into
 subdirectories.
