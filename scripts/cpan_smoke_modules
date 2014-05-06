@@ -451,9 +451,17 @@ TRY_PARTIAL_RESOLVE: {
 	    if (!keys %partial_to_full) {
 		if (!eval {
 		    require CPAN::DistnameInfo;
-		    require PerlIO::gzip;
-		    open my $FH, "<:gzip", $packages_file
-			or die "Can't open $packages_file: $!";
+		    my $FH;
+		    if (!eval {
+			require PerlIO::gzip;
+			open $FH, "<:gzip", $packages_file
+			    or die "Can't open $packages_file: $!";
+		    }) {
+			require IO::Zlib;
+			$FH = IO::Zlib->new;
+			$FH->open($packages_file, "rb")
+			    or die "Can't open $packages_file: $!";
+		    }
 		    my $state = "h";
 		    while(<$FH>) {
 			if ($state eq 'h') {
