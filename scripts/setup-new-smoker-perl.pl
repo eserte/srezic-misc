@@ -129,30 +129,43 @@ step "Build perl",
 	    unlink $looks_like_built;
 	}
 	chdir $perl_src_dir;
-	my @build_cmd;
 	if (-e "$ENV{HOME}/FreeBSD/perl/build") {
-	    @build_cmd = (
-			  'nice', "$ENV{HOME}/FreeBSD/perl/build",
-			  '-prefix' => $perldir,
-			  ($build_debug ? "-debug" : ()),
-			  ($build_threads ? "-threads" : ()),
-			  ($morebits ? "-morebits" : ()),
-			 );
+	    my @build_cmd = (
+			     'nice', "$ENV{HOME}/FreeBSD/perl/build",
+			     '-prefix' => $perldir,
+			     ($build_debug ? "-debug" : ()),
+			     ($build_threads ? "-threads" : ()),
+			     ($morebits ? "-morebits" : ()),
+			    );
+	    system @build_cmd;
 	} else {
 	    my $need_usedevel;
 	    if ($perlver =~ m{^5\.(\d+)} && $1 >= 7 && $1%2 == 1) {
 		$need_usedevel = 1;
 	    }
-	    @build_cmd = (
-			  "nice ./configure.gnu --prefix=$perldir" .
-			  ($need_usedevel ? ' -Dusedevel' : '') .
-			  ($build_debug ? ' -DDEBUGGING' : '') .
-			  ($build_threads ? ' -Dusethreads' : '') .
-			  ($morebits ? die("No support for morebits") : ()) .
-			  ' && make all test'
-			 );
+	    my @build_cmd = (
+			     "nice ./configure.gnu --prefix=$perldir" .
+			     ($need_usedevel ? ' -Dusedevel' : '') .
+			     ($build_debug ? ' -DDEBUGGING' : '') .
+			     ($build_threads ? ' -Dusethreads' : '') .
+			     ($morebits ? die("No support for morebits") : ()) .
+			     ' && make all'
+			    );
+	    system @build_cmd;
+	    if (!eval { system 'make', 'test'; 1 }) {
+		while () {
+		    print STDERR "make test failed. Continue nevertheless? (y/n) ";
+		    chomp(my $yn = <STDIN>);
+		    if ($yn eq 'y') {
+			last;
+		    } elsif ($yn eq 'n') {
+			die "Aborting.\n";
+		    } else {
+			print STDERR "Please reply either y or n.\n";
+		    }
+		}
+	    }
 	}
-	system @build_cmd;
 	system "touch", $built_file;
     };
 
