@@ -817,6 +817,9 @@ probably slow on large trees: L<File::Find::Declare>,
 L<File::Find::Match>, L<File::Find::Node>. And finally there's
 L<File::Find::Wanted>.
 
+L<Directory::Iterator::XS> is a recursive directory lister,
+implemented as XS.
+
 L<File::Zglob> provides globbing like the core L<File::Glob>, but adds
 zsh's "**" pattern, which can be used to recursively descend into
 subdirectories.
