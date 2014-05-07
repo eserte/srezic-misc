@@ -325,10 +325,11 @@ sub toolchain_modules_installed_check {
     #
     # On first-time install there will be a "Can't location
     # CPAN/Reporter/PrereqCheck..." error.
-    my $prereq_result = qx/$this_perl -MCPAN::Reporter::PrereqCheck -e "CPAN::Reporter::PrereqCheck::_run()" < $tmpfile/;
+    my $prereq_result = eval { qx/$this_perl -MCPAN::Reporter::PrereqCheck -e "CPAN::Reporter::PrereqCheck::_run()" < $tmpfile/ };
+    my $err = $@;
     unlink $tmpfile; # do it early
 
-    if ($? != 0) {
+    if ($? != 0 || $err) {
 	$total_success = 0; # probably no CPAN::Reporter::PrereqCheck available
     } else {
 	for my $line (split "\n", $prereq_result) {
