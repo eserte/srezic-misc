@@ -14,6 +14,7 @@
 
 use strict;
 use FindBin;
+use File::Path qw(mkpath);
 use File::Temp qw(tempfile);
 use Getopt::Long;
 
@@ -88,6 +89,59 @@ if (-f $downloaded_perl_bz2 && -s $downloaded_perl_bz2) {
     $downloaded_perl = $downloaded_perl_gz;
 }
 my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
+
+# Possibly interactive, so do it first
+my $cpan_myconfig = "$ENV{HOME}/.cpan/CPAN/MyConfig.pm";
+step "CPAN/MyConfig.pm exists",
+    ensure => sub {
+	-s $cpan_myconfig
+    },
+    using => sub {
+	if (!-e $cpan_myconfig) {
+	    my $cpan_myconfig_dir = dirname($cpan_myconfig);
+	    mkpath $cpan_myconfig_dir if !-d $cpan_myconfig_dir;
+	    open my $ofh, ">", $cpan_myconfig;
+	    my $conf_contents = <<'EOF';
+$CPAN::Config = {
+  'colorize_output' => q[1],
+  'colorize_print' => q[blue],
+  'colorize_warn' => q[bold red],
+  'index_expire' => q[0.05],
+  'make_install_make_command' => q[sudo /usr/bin/make],
+  'mbuild_install_build_command' => q[sudo ./Build],
+  'prefs_dir' => q[__HOME__/.cpan/prefs],
+  'test_report' => q[1],
+  'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
+};
+1;
+__END__
+EOF
+	    $conf_contents =~ s{__HOME__}{$ENV{HOME}};
+	    print $ofh $conf_contents;
+	    require CPAN;
+	    CPAN::HandleConfig->load;
+	}
+    };
+
+my $cpanreporter_config_ini = "$ENV{HOME}/.cpanreporter/config.ini";
+step ".cpanreporter/config.ini exists",
+    ensure => sub {
+	-s $cpanreporter_config_ini
+    },
+    using => sub {
+	if (!-e $cpanreporter_config_ini) {
+	    my $cpanreporter_config_ini_dir = dirname($cpanreporter_config_ini);
+	    mkpath $cpanreporter_config_ini_dir if !-d $cpanreporter_config_ini_dir;
+	    open my $ofh, ">", $cpanreporter_config_ini;
+	    my $conf_contents = <<'EOF';
+edit_report=default:no
+email_from=srezic@cpan.org
+send_report=default:yes fail:ask/yes
+transport = Metabase uri http://metabase.cpantesters.org/beta/ id_file /home/e/eserte/.cpanreporter/srezic_metabase_id.json
+EOF
+	    print $ofh $conf_contents;
+	}
+    };
 
 step "Download perl $perlver",
     ensure => sub {
