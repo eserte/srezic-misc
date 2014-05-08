@@ -245,6 +245,16 @@ step "Report toolchain modules",
 	system "touch", "$state_dir/.reported_toolchain";
     };
 
+step "Force a fail report",
+    ensure => sub {
+	-f "$state_dir/.reported_fail"
+    },
+    using => sub {
+	eval { system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
+	# XXX unfortunately, won't fail if reporting did not work for some reason
+	system "touch", "$state_dir/.reported_fail";
+    };
+
 if ($for_cpansand) {
     step "chown for cpansand",
 	ensure => sub {
