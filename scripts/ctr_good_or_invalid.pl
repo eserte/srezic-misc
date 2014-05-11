@@ -407,7 +407,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('pod spelling test');
 		    } elsif (
-			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/
+			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/ ||
+			     /^(?:#\s+Error:\s+)?Base class package ".*?" is empty\.$/
 			    ) {
 			$add_analysis_tag->('prereq fail');
 		    } elsif (
@@ -456,7 +457,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('signature mismatch');
 		    } elsif (
-			     /^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+ $at_source_without_dot_qr$/
+			     /^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+ $at_source_without_dot_qr$/ ||
+			     /^Attribute \(.+?\) is required $at_source_without_dot_qr$/
 			    ) {
 			$add_analysis_tag->('type constraint violation');
 		    } elsif (
@@ -488,6 +490,31 @@ sub set_currfile {
 			     /Class::MOP::load_class is deprecated/
 			    ) {
 			$add_analysis_tag->('deprecation (Class::MOP)');
+		    } elsif (
+			     /DBD::SQLite::st execute failed: database is locked $at_source_qr$/ ||
+			     /DBD::SQLite::db do failed: database is locked \[for Statement "/
+			    ) {
+			$add_analysis_tag->('locking issue (File::Temp?)');
+		    } elsif (
+			     /Perl lib version \(.*?\) doesn't match executable '.*?' version (.*?) $at_source_qr/
+			    ) {
+			$add_analysis_tag->('perl version mismatch (lib)');
+		    } elsif (
+			     /Can't connect to \S+ \((Invalid argument|Bad hostname)\) $at_source_qr/
+			    ) {
+			$add_analysis_tag->('remote connection problem');
+		    } elsif (
+			     /^Files=\d+, Tests=\d+, (\d+) wallclock secs /
+			    ) {
+			if ($1 >= 1800) {
+			    $add_analysis_tag->('very long runtime (>= 30 min)');
+			} elsif ($1 >= 900) {
+			    $add_analysis_tag->('long runtime (>= 15 min)');
+			}
+		    } elsif (
+			     /Unrecognized character .* at \._\S+ line \d+\./
+			    ) {
+			$add_analysis_tag->('hidden MacOSX file');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
