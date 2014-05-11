@@ -406,6 +406,10 @@ sub set_currfile {
 			     /^#\s+Failed test 'POD spelling for [^']+'$/
 			    ) {
 			$add_analysis_tag->('pod spelling test');
+		    } elsif ( # this should come before the generic 'prereq fail' test
+			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl}
+			    ) {
+			$add_analysis_tag->('system perl used');
 		    } elsif (
 			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/ ||
 			     /^(?:#\s+Error:\s+)?Base class package ".*?" is empty\.$/
@@ -457,7 +461,7 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('signature mismatch');
 		    } elsif (
-			     /^Attribute \(.+?\) does not pass the type constraint because: Validation failed for '.+?' with value .+ $at_source_without_dot_qr$/ ||
+			     /^Attribute \(.+?\) does not pass the type constraint because: .* $at_source_without_dot_qr$/ || # Validation failed for '.+?' with value or ... is too long
 			     /^Attribute \(.+?\) is required $at_source_without_dot_qr$/
 			    ) {
 			$add_analysis_tag->('type constraint violation');
@@ -491,7 +495,11 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('deprecation (Class::MOP)');
 		    } elsif (
-			     /DBD::SQLite::st execute failed: database is locked $at_source_qr$/ ||
+			     /Passing a list of values to enum is deprecated. Enum values should be wrapped in an arrayref. $at_source_qr/
+			    ) {
+			$add_analysis_tag->('deprecation (Moose)');
+		    } elsif (
+			     /DBD::SQLite::st execute failed: database is locked/ ||
 			     /DBD::SQLite::db do failed: database is locked \[for Statement "/
 			    ) {
 			$add_analysis_tag->('locking issue (File::Temp?)');
