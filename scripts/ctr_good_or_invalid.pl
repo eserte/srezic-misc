@@ -407,7 +407,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('pod spelling test');
 		    } elsif ( # this should come before the generic 'prereq fail' test
-			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl}
+			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
+			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
 			    ) {
 			$add_analysis_tag->('system perl used');
 		    } elsif (
@@ -523,6 +524,18 @@ sub set_currfile {
 			     /Unrecognized character .* at \._\S+ line \d+\./
 			    ) {
 			$add_analysis_tag->('hidden MacOSX file');
+		    } elsif (
+			     m{^Unknown regexp modifier "/[^"]+" at }
+			    ) {
+			$add_analysis_tag->('unknown regexp modifier');
+		    } elsif (
+			     m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
+			    ) {
+			$add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
+		    } elsif (
+			     m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
+			    ) {
+			$add_analysis_tag->('possibly missing use Carp');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
