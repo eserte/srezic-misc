@@ -357,7 +357,7 @@ if (!@perls) {
 	    }
 	}
 
-	my $latest_blead;
+	my %latest_blead; # type ("", "t") -> version --- make sure that all availables types (debug, threaded, normal) of the latest bleadperls are tested
 	my $max_stable_perl_ver;
 	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
 	    next if !-x $candidate;
@@ -371,7 +371,8 @@ if (!@perls) {
 		    next;
 		}
 	    }
-	    if (my($ver, $minor) = $candidate =~ m{/perl(5\.(\d+)\.\d+)}) {
+	    if (my($ver, $minor, $type) = $candidate =~ m{/perl(5\.(\d+)\.\d+)(.*)}) {
+		$type ||= "";
 		my $safe_ver = safe_version($ver);
 		my $is_devel = $minor % 2 == 1;
 		if (!$is_devel) {
@@ -380,19 +381,19 @@ if (!@perls) {
 			$max_stable_perl_ver = $safe_ver;
 		    }
 		} else {
-		    if (!$latest_blead || $latest_blead->[1] < $safe_ver) {
-			$latest_blead = [$candidate, $safe_ver];
+		    if (!$latest_blead{$type} || $latest_blead{$type}->[1] < $safe_ver) {
+			$latest_blead{$type} = [$candidate, $safe_ver];
 		    }
 		}
 	    }
 	}
 
 	# Test blead only if it's newer than the newest stable perl
-	if ($latest_blead) {
-	    if ($max_stable_perl_ver && $max_stable_perl_ver > $latest_blead->[1]) {
-		warn "Don't test $latest_blead->[0] --- $latest_blead->[1] < $max_stable_perl_ver...";
+	for my $latest_blead_type (sort keys %latest_blead) {
+	    if ($max_stable_perl_ver && $max_stable_perl_ver > $latest_blead{$latest_blead_type}->[1]) {
+		warn "Don't test $latest_blead{$latest_blead_type}->[0] --- $latest_blead{$latest_blead_type}->[1] < $max_stable_perl_ver...";
 	    } else {
-		push @all_perl_defs, $latest_blead;
+		push @all_perl_defs, $latest_blead{$latest_blead_type};
 	    }
 	}
 
