@@ -15,13 +15,20 @@ my $min_build_dir_avail;
 my $scripts_dir = $FindBin::RealBin;
 my $cpan_smoke_modules_options;
 
+sub usage () {
+    die <<EOF;
+usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]
+EOF
+}
+
 GetOptions("maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
 	   "minbuilddiravail=s" => \$min_build_dir_avail,
 	   "cpansmokemodulesoptions=s" => \$cpan_smoke_modules_options,
 	  )
-    or die "usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]";
+    or usage;
+@ARGV and usage;
 
 my $recent_url = $mirror_url;
 
