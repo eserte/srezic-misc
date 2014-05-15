@@ -1235,7 +1235,7 @@ EOF
 	    die "(expanded) -minbuilddiravail value '$min_build_dir_avail' does not look like a number";
 	}
     }
-    if (eval { require Filesys::DfPortable; 1 }) {
+    if (_can_df()) {
 	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent);
 	require File::Spec;
 	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent);
@@ -1244,10 +1244,28 @@ EOF
 ***************************************************************************
 * WARNING:
 *
-*   Filesys::DfPortable is not available, so no disk free check can be done
+*   Filesys::DfPortable and Filesys::Df are not available,
+*   so no disk free check can be done
 *
 ***************************************************************************
 EOF
+    }
+}
+
+sub _can_df {
+    eval { require Filesys::DfPortable; 1 } || eval { require Filesys::Df; 1 };
+}
+
+sub _df {
+    my $dir = shift;
+    if (defined &Filesys::DfPortable::dfportable) {
+	Filesys::DfPortable::dfportable($dir);
+    } else {
+	my $dfres = Filesys::Df::df($dir);
+	if ($dfres) {
+	    $dfres->{bavail} *= 1024;
+	}
+	$dfres;
     }
 }
 
@@ -1255,7 +1273,7 @@ sub check_disk_free_directory {
     my($dir, $min_space_free_bytes, $min_inode_free_percent) = @_;
 
     while () {
-	my $dfres = Filesys::DfPortable::dfportable($dir);
+	my $dfres = _df($dir);
 	if (!$dfres) {
 	    die "Cannot get filesys information for $dir";
 	}
