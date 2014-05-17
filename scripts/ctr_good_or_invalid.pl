@@ -390,7 +390,7 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('smartmatch');
 		    } elsif (
-			     /^(?:push|pop|keys|shift|unshift) on reference is experimental $at_source_qr$/
+			     /^(?:#\s+Error:\s+)?(?:push|pop|keys|shift|unshift|splice) on reference is experimental $at_source_qr$/
 			    ) {
 			$add_analysis_tag->('experimental functions on references');
 		    } elsif (
