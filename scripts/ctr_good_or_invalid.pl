@@ -417,7 +417,7 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('prereq fail');
 		    } elsif (
-			     /Type of arg \d+ to (?:keys|each) must be hash \(not (?:hash element|private (?:variable|array))\)/ ||
+			     /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array))\)/ ||
 			     /Type of arg \d+ to (?:push|unshift) must be array \(not array element\)/
 			    ) {
 			$add_analysis_tag->('container func on ref');
