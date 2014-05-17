@@ -37,7 +37,21 @@ if (!$do_maintperl && !@specs) {
 }
 
 if (@specs) {
-    # First just check
+    # First expand perl versions {5.8.9,5.10.1,...}
+    my @new_specs;
+    for my $spec (@specs) {
+	if ($spec =~ m<^\{(.*)\}(.*)>) {
+	    my($perlvers,$rest) = ($1,$2);
+	    for my $perlver (split /,/, $perlvers) {
+		push @new_specs, "$perlver$rest";
+	    }
+	} else {
+	    push @new_specs, $spec;
+	}
+    }
+    @specs = @new_specs;
+
+    # Then check
     for my $spec (@specs) {
 	my($perlver, $stableness, $range) = split /,/, $spec;
 	spec_usage if !defined $range;
