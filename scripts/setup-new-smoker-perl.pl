@@ -24,6 +24,9 @@ sub save_pwd2 ();
 sub step ($%);
 sub sudo (@);
 
+sub check_term_title ();
+sub set_term_title ($);
+
 my $perlver;
 my $build_debug;
 my $build_threads;
@@ -45,6 +48,9 @@ if (!$perlver) {
 if ($perlver !~ m{^5\.\d+\.\d+(-RC\d+)?$}) {
     die "'$perlver' does not look like a perl5 version";
 }
+
+check_term_title;
+set_term_title "Setup new smoker perl $perlver";
 
 my $perldir = "/usr/perl$perlver";
 if ($^O eq 'linux') {
@@ -367,6 +373,8 @@ END {
 	kill $sudo_validator_pid;
 	undef $sudo_validator_pid;
     }
+
+    set_term_title "Setup new smoker perl $perlver finished";
 }
 
 sub toolchain_modules_installed_check {
@@ -412,6 +420,7 @@ sub step ($%) {
     my $ensure = $doings{ensure} || die "ensure => sub { ... } missing";
     my $using  = $doings{using}  || die "using => sub { ... } missing";
     return if $ensure->();
+    set_term_title "Setup new smoker perl $perlver: $step_name";
     $using->();
     die "Step '$step_name' failed" if !$ensure->();
 }
@@ -434,6 +443,28 @@ sub sudo (@) {
 	}
     }
     system 'sudo', @cmd;
+}
+
+{
+    my $cannot_xterm_title;
+
+    sub check_term_title () {
+	if (!eval { require XTerm::Conf; 1 }) {
+	    if (!eval { require Term::Title; 1 }) {
+		$cannot_xterm_title = 1;
+	    }
+	}
+    }
+
+    sub set_term_title ($) {
+	return if $cannot_xterm_title;
+	my $string = shift;
+	if (defined &XTerm::Conf::xterm_conf_string) {
+	    print STDERR XTerm::Conf::xterm_conf_string(-title => $string);
+	} else {
+	    Term::Title::set_titlebar($string);
+	}
+    }
 }
 
 # REPO BEGIN
