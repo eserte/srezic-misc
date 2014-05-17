@@ -221,3 +221,48 @@ BEGIN {
 }
 # REPO END
 
+__END__
+
+=head1 NAME
+
+cpan_smoke_modules_wrapper3 - call L<cpan_smoke_modules> with module lists
+
+=head1 SYNOPSIS
+
+    cpan_smoke_modules_wrapper3 -spec 5.18.2,stable,-1d -mirrorurl http://cpan.develooper.com --cpansmokemodulesoptions="-vnc"
+    cpan_smoke_modules_wrapper3 -spec "{5.18.2,5.19.11},devel,-1d"
+
+=head1 DESCRIPTION
+
+B<cpan_smoke_modules_wrapper3> creates lists of recently uploaded CPAN
+modules, runs tests against these modules for specified perl versions,
+and optionally installs them.
+
+Specification of what should be tested is done with one or more
+C<-spec> options. A spec is a string with a comma-separated triple:
+
+=over
+
+=item * a perl version specified as I<5.X.Y> (for example C<5.19.11>)
+or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>
+
+=item * the "stableness" type (C<devel> or C<stable>)
+
+=item * a day range specified as C<-I<days>d> (for example C<-1d>)
+
+=back
+
+For stableness=C<stable> only "stable" distributions (non-TRIAL and
+non-underscore) are tested _and_ installed. For stableness=C<devel>
+all distributions are tested but not installed.
+
+More options can be passed to L<cpan_smoke_modules> using the
+C<-cpansmokemodulesoptions> switch.
+
+=head1 BUGS
+
+The module list is passed via command line parameters and is subject
+to operating system limits. The module list produced with "-1000d" may
+work on Linux systems, but much larger values do not.
+
+=cut
