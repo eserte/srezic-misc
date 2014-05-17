@@ -350,10 +350,15 @@ if (!@perls) {
     if ($all_perls) {
 	my @all_perl_defs;
 
-	my $system_perl;
+	my $system_perl; # if symlinked
+	my $system_perl_id; # if hardlinked, then use dev+ino for stat()
 	if ($^O eq 'freebsd') {
 	    if (-l "/usr/local/bin/perl5") {
 		$system_perl = readlink "/usr/local/bin/perl5";
+	    } else {
+		if (my(@stat) = stat "/usr/local/bin/perl5") {
+		    $system_perl_id = join(",", @stat[0,1]);
+		}
 	    }
 	}
 
@@ -361,13 +366,23 @@ if (!@perls) {
 	my $max_stable_perl_ver;
 	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
 	    next if !-x $candidate;
-	    if ($system_perl && $candidate eq $system_perl) {
+	    my $candidate_id = do {
+		if (my @stat = stat $candidate) {
+		    join(",", @stat[0,1]);
+		} else {
+		    undef;
+		}
+	    };
+	    if (
+		($system_perl && $candidate eq $system_perl) ||
+		($system_perl_id && $candidate_id && $candidate_id eq $system_perl_id)
+	       ) {
 		if ($do_action eq 'install') {
-		    warn "Skip system perl '$system_perl' for '$do_action' action...\n";
+		    warn "Skip system perl '$candidate' for '$do_action' action...\n";
 		    next;
 		}
 		if ($skip_system_perl) {
-		    warn "Skip system perl '$system_perl', required by option...\n";
+		    warn "Skip system perl '$candidate', required by option...\n";
 		    next;
 		}
 	    }
