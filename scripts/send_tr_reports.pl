@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -17,6 +17,9 @@ use Getopt::Long;
 use Test::Reporter;
 use File::Basename;
 use POSIX qw(strftime);
+
+sub check_term_title ();
+sub set_term_title ($);
 
 my $use_mail;
 my $cpan_uid = 'srezic';
@@ -46,11 +49,35 @@ if (!-d $process_dir) {
     mkdir $process_dir or die "While creating $process_dir: $!";
 }
 
-for my $file (glob("$sync_dir/pass.*.rpt"),
-	      glob("$sync_dir/unknown.*.rpt"),
-	      glob("$sync_dir/na.*.rpt"),
-	      glob("$sync_dir/fail.*.rpt"),
-	     ) {
+check_term_title;
+
+my @reports = (
+	       glob("$sync_dir/pass.*.rpt"),
+	       glob("$sync_dir/unknown.*.rpt"),
+	       glob("$sync_dir/na.*.rpt"),
+	       glob("$sync_dir/fail.*.rpt"),
+	      );
+
+if (!@reports) {
+    set_term_title 'No reports to send';
+    exit 0;
+}
+
+my $sending_reports_msg = sub {
+    my $reports_i = shift;
+    "Sending reports (" . $reports_i . "/" . scalar(@reports) . ")";
+};
+
+set_term_title $sending_reports_msg->(0);
+
+my $reports_i = 0;
+my $term_title_last_changed = time;
+for my $file (@reports) {
+    $reports_i++;
+    if (time - $term_title_last_changed >= 1) {
+	set_term_title $sending_reports_msg->($reports_i);
+	$term_title_last_changed = time;
+    }
     warn "File $file does not exist anymore?", next if !-r $file;
     warn "$file...\n";
     my $process_file = $process_dir . "/" . basename($file);
@@ -100,6 +127,30 @@ for my $file (glob("$sync_dir/pass.*.rpt"),
     my $done_file = $done_dir . "/" . basename($file);
     rename $process_file, $done_file
 	or die "Cannot move $process_file to $done_file: $!";
+}
+
+set_term_title "Report sender finished";
+
+{
+    my $cannot_xterm_title;
+
+    sub check_term_title () {
+	if (!eval { require XTerm::Conf; 1 }) {
+	    if (!eval { require Term::Title; 1 }) {
+		$cannot_xterm_title = 1;
+	    }
+	}
+    }
+
+    sub set_term_title ($) {
+	return if $cannot_xterm_title;
+	my $string = shift;
+	if (defined &XTerm::Conf::xterm_conf_string) {
+	    print STDERR XTerm::Conf::xterm_conf_string(-title => $string);
+	} else {
+	    Term::Title::set_titlebar($string);
+	}
+    }
 }
 
 __END__
