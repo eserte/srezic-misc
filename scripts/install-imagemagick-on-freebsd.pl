@@ -84,7 +84,21 @@ if ($@) {
     }
 }
 
-system 'sudo', 'make', 'install';
+{
+    my @install_cmd = ('make', 'install');
+    my $perl_owner_uid = (stat($perl))[4];
+    if (!defined $perl_owner_uid) {
+	die "Unexpected: cannot get owner of '$perl': $!";
+    }
+    if ($perl_owner_uid == $<) {
+	# no sudo necessary
+    } else {
+	unshift @install_cmd, 'sudo', '-u', '#'.$perl_owner_uid;
+    }
+
+    print STDERR "Running '@install_cmd'...\n";
+    system @install_cmd;
+}
 
 sub maybe_sudo {
     my(@cmd) = @_;
