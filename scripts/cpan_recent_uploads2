@@ -113,7 +113,7 @@ warn "INFO: Range from " . scalar(localtime $from) . " to " . scalar(localtime $
 $ENV{FTP_PASSIVE} = 1;
 
 if (!$url) {
-    CPAN::HandleConfig->load;
+    cpan_handleconfig();
 ## unfortunately my http mirrors are not as recent as funet:
 #    ($url) = grep { m{^http://} } @{ $CPAN::Config->{urllist} }; # prefer http
     if (!$url) {
@@ -150,6 +150,8 @@ if ($v && $v >= 2) {
 my %deleted_dist;
 
 if ($only_indexed) {
+    cpan_handleconfig();
+    unshift @{ $CPAN::Config->{urllist} }, $url;
     CPAN::Index->force_reload();
 }
  
@@ -208,5 +210,15 @@ GATHER_DATA: {
 	    die "Error while fetching $next_recent_url: " . $resp->status_line;
 	}
 	$recent_data = Load($resp->decoded_content);
+    }
+}
+
+{
+    my $CPAN_HandleConfig_loaded;
+    sub cpan_handleconfig {
+	if (!$CPAN_HandleConfig_loaded) {
+	    CPAN::HandleConfig->load;
+	    $CPAN_HandleConfig_loaded = 1;
+	}
     }
 }
