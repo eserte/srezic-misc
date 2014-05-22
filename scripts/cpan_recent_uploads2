@@ -36,8 +36,13 @@ use YAML::Syck qw(Load);
     package MyCPANShell;
     use vars qw(@ISA $VERBOSE);
     @ISA = $CPAN::Frontend;
-    sub myprint { shift; warn @_ if $VERBOSE }
-    sub mywarn  { shift; warn @_ if $VERBOSE }
+    sub myprint {
+	if ($VERBOSE) {
+	    shift;
+	    print STDERR @_;
+	}
+    }
+    sub mywarn  { shift->myprint(@_) }
     $CPAN::Frontend = "MyCPANShell";
 }
 
