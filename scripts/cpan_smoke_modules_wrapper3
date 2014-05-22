@@ -135,7 +135,15 @@ sub run_smoker ($$$) {
     if ($min_build_dir_avail) {
 	$cmd .= q{ -minbuilddiravail } . $min_build_dir_avail;
     }
-    $cmd .= q{ -- `} . $scripts_dir . q{/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'`};
+    $cmd .= q{ -- `};
+    if (0) { # just looking at the distribution name to decide whether
+             # it's stable or not
+	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'};
+    } else { # checking the CPAN index to decide whether it's stable
+             # or not (but the index is sometimes somewhat slow)
+	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-indexed' : '');
+    }
+    $cmd .= q{`};
     warn "$cmd ...\n";
     system $cmd;
     if ($? == 2) {
