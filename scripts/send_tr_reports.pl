@@ -53,8 +53,8 @@ check_term_title;
 
 my @reports = (
 	       glob("$sync_dir/pass.*.rpt"),
-	       glob("$sync_dir/unknown.*.rpt"),
 	       glob("$sync_dir/na.*.rpt"),
+	       glob("$sync_dir/unknown.*.rpt"),
 	       glob("$sync_dir/fail.*.rpt"),
 	      );
 
