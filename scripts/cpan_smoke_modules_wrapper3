@@ -96,26 +96,23 @@ if ($scenario) {
     (getpwuid($<))[0] eq 'cpansand'
     	or die "Works only for cpansand!";
 
-    run_smoker '5.8.9', 'stable', '-14d';
-    run_smoker '5.8.9', 'devel', '-3d';
-
-    run_smoker '5.10.1', 'stable', '-14d';
-    run_smoker '5.10.1', 'devel', '-3d';
-
-    run_smoker '5.14.4', 'stable', '-14d';
-    run_smoker '5.14.4', 'devel', '-3d';
+    run_smoker '5.20.0-RC1', 'stable', '-14d';
+    run_smoker '5.20.0-RC1', 'devel', '-3d';
 
     run_smoker '5.18.2', 'stable', '-14d';
     run_smoker '5.18.2', 'devel', '-3d';
 
-    #run_smoker '5.19.11', 'stable', '-14d';
-    #run_smoker '5.19.11', 'devel', '-3d';
-
-    run_smoker '5.20.0-RC1', 'stable', '-14d';
-    run_smoker '5.20.0-RC1', 'devel', '-3d';
-
     run_smoker '5.16.3t', 'stable', '-14d';
     run_smoker '5.16.3t', 'devel', '-3d';
+
+    run_smoker '5.14.4', 'stable', '-14d';
+    run_smoker '5.14.4', 'devel', '-3d';
+
+    run_smoker '5.10.1', 'stable', '-14d';
+    run_smoker '5.10.1', 'devel', '-3d';
+
+    run_smoker '5.8.9', 'stable', '-14d';
+    run_smoker '5.8.9', 'devel', '-3d';
 
     maybe_xterm_conf "FINISHED maintperl";
 }
