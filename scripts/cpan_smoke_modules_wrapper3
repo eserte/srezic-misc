@@ -48,10 +48,14 @@ if (!$do_maintperl && !@specs && !$scenario) {
 }
 
 if ($scenario) {
+    my $scenario_args;
+    if ($scenario =~ m{^(.*?),(.*)}) {
+	($scenario, $scenario_args) = ($1, $2);
+    }
     my $sub = 'scenario_' . $scenario;
     if (defined &$sub) {
 	no strict 'refs';
-	&$sub;
+	&$sub($scenario_args);
     } else {
 	die "Invalid scenario '$scenario'\n";
     }
@@ -171,9 +175,7 @@ sub run_smoker ($$$) {
 }
 
 sub scenario_locale {
-    my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
-    $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
-    $basecmd .= q{ } . join(' ', @scenario_modules);
+    my $basecmd = _scenario_basecmd();
     {
 	warn "env LC_ALL=C $basecmd ...\n";
 	local $ENV{LC_ALL} = 'C';
@@ -189,9 +191,7 @@ sub scenario_locale {
 }
 
 sub scenario_hashrandomization {
-    my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
-    $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
-    $basecmd .= q{ } . join(' ', @scenario_modules);
+    my $basecmd = _scenario_basecmd();
     for my $pass (1..2) # simply call twice, in the hope that we
                         # have both pass and fail. Theoretically we
                         # could restrict to >= 5.17.6
@@ -200,6 +200,61 @@ sub scenario_hashrandomization {
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
+}
+
+sub scenario_prereq {
+    my $scenario_args = shift;
+    if (!defined $scenario_args || !length $scenario_args) {
+	die "Please specify prereq modules: --scenario=prereq,Module::A,Module::B\n";
+    }
+    my @prereqs = split /,/, $scenario_args;
+    my $basecmd = _scenario_basecmd();
+    {
+	my $cmd = $basecmd . ' ' . join(' ', map { "-pre $_" } @prereqs);
+	warn "(with prereqs) $cmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	warn "(without prereqs) $basecmd ...\n";
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
+sub scenario_testpod {
+    _scenario_hidemod('Test::Pod');
+}
+
+sub scenario_testpodcoverage {
+    _scenario_hidemod('Test::Pod::Coverage');
+}
+
+sub scenario_testperlcritic {
+    _scenario_hidemod('Test::Perl::Critic');
+}
+
+sub _scenario_hidemod {
+    my $hidemod = shift;
+    my $basecmd = _scenario_basecmd();
+    {
+	my $cmd = $basecmd . ' -hidemod ' . $hidemod;
+	warn "(with hidden $hidemod) $cmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	warn "(without hidden $hidemod) $basecmd ...\n";
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
+sub _scenario_basecmd {
+    my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
+    $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
+    $basecmd .= q{ } . join(' ', @scenario_modules);
+    $basecmd;
 }
 
 sub spec_usage (;$) {
