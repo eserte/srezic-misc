@@ -188,6 +188,20 @@ sub scenario_locale {
     }
 }
 
+sub scenario_hashrandomization {
+    my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
+    $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
+    $basecmd .= q{ } . join(' ', @scenario_modules);
+    for my $pass (1..2) # simply call twice, in the hope that we
+                        # have both pass and fail. Theoretically we
+                        # could restrict to >= 5.17.6
+    {
+	warn "(pass $pass) $basecmd ...\n";
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
 sub spec_usage (;$) {
     my $msg = shift;
     die "ERROR: " . ($msg ? "$msg\n\n" : '') .
