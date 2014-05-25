@@ -14,6 +14,8 @@ my $mirror_url = "http://cpan.cpantesters.org/";
 my $min_build_dir_avail;
 my $scripts_dir = $FindBin::RealBin;
 my $cpan_smoke_modules_options;
+my $scenario;
+my @scenario_modules;
 
 sub usage () {
     die <<EOF;
@@ -21,22 +23,39 @@ usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]
 EOF
 }
 
-GetOptions("maintperl" => \$do_maintperl,
+GetOptions(
+	   "maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
 	   "minbuilddiravail=s" => \$min_build_dir_avail,
 	   "cpansmokemodulesoptions=s" => \$cpan_smoke_modules_options,
+	   "scenario=s" => \$scenario,
 	  )
     or usage;
-@ARGV and usage;
+if ($scenario) {
+    @scenario_modules = @ARGV;
+    if (!@scenario_modules) {
+	die "No modules given for scenario '$scenario'";
+    }
+} else {
+    @ARGV and usage;
+}
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !@specs) {
-    die "Please specify either -maintperl or -spec";
+if (!$do_maintperl && !@specs && !$scenario) {
+    die "Please specify either -maintperl or -spec or -scenario";
 }
 
-if (@specs) {
+if ($scenario) {
+    my $sub = 'scenario_' . $scenario;
+    if (defined &$sub) {
+	no strict 'refs';
+	&$sub;
+    } else {
+	die "Invalid scenario '$scenario'\n";
+    }
+} elsif (@specs) {
     # First expand perl versions {5.8.9,5.10.1,...}
     my @new_specs;
     for my $spec (@specs) {
@@ -148,6 +167,24 @@ sub run_smoker ($$$) {
     system $cmd;
     if ($? == 2) {
 	die "SIGINT";
+    }
+}
+
+sub scenario_locale {
+    my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
+    $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
+    $basecmd .= q{ } . join(' ', @scenario_modules);
+    {
+	warn "env LC_ALL=C $basecmd ...\n";
+	local $ENV{LC_ALL} = 'C';
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	warn "env LC_ALL=de_DE.UTF-8 $basecmd ...\n";
+	local $ENV{LC_ALL} = 'de_DE.UTF-8';
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
     }
 }
 
