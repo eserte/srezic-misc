@@ -495,7 +495,7 @@ sub terminal_alive {
 		return 1;
 	    }
 	}
-    } elsif (is_in_path('lsof')) {
+    } elsif ($^O ne 'freebsd' && is_in_path('lsof')) { # lsof -w ... on freebsd returns very slowly if the terminal is deadish
 	my $res = `lsof -w $term 2>/dev/null | wc -l`;
 	$res > 0;
     } else {
