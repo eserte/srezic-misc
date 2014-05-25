@@ -188,6 +188,7 @@ my $currfile_i = 0;
 my $currfile;
 my($currdist, $currversion);
 my $modtime;
+my $following_dists_text;
 
 my $prev_b;
 my $next_b;
@@ -197,6 +198,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
     my $f = $mw->Frame->pack(-fill => "x");
     $f->Label(-text => "Report created:")->pack(-side => "left");
     $f->Label(-textvariable => \$modtime)->pack(-side => "left");
+    $f->Label(-textvariable => \$following_dists_text)->pack(-side => "left");
 
     $f->Label(-text => "/ " . $#files)->pack(-side => "right");
     $f->Label(-textvariable => \$currfile_i)->pack(-side => "right");
@@ -580,6 +582,38 @@ sub set_currfile {
     } else {
 	warn "Can't open $currfile: $!";
 	$modtime = "N/A";
+    }
+
+    {
+	# fill "$following_dists_text" label
+
+	my $get_base = sub {
+	    my $file = shift;
+	    (my $base = $file) =~ s{.*/}{};
+	    $base =~ s{-thread-multi}{}; # normalize threaded vs. non-threaded
+	    $base =~ s{\.\d+\.\d+\.rpt$}{};
+	    $base;
+	};
+
+	my $curr_base = $get_base->($currfile);
+	# assume files are sorted
+	my $following_same_dist = 0;
+	for my $i ($currfile_i+1 .. $#files) {
+	    my $base = $get_base->($files[$i]);
+	    if ($base eq $curr_base) {
+		$following_same_dist++;
+	    } else {
+		last;
+	    }
+	}
+
+	if ($following_same_dist > 1) {
+	    $following_dists_text = "/ following $following_same_dist reports for same dist";
+	} elsif ($following_same_dist == 1) {
+	    $following_dists_text = "/ following a report for same dist";
+	} else {
+	    $following_dists_text = '';
+	}
     }
 
     my %recent_states;
