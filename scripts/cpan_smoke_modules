@@ -86,7 +86,7 @@ my $signal_end = 1;
 my $module_printused;
 my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
-my $hidemod;
+my @hidemod;
 my $use_vncserver;
 my $x11_display = ':9'; # ssh begins at :10
 my @touch_files;
@@ -146,7 +146,7 @@ GetOptions("n" => \$n,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
-	   'hidemod=s' => \$hidemod,
+	   'hidemod=s@' => \@hidemod,
 	   'vnc!'  => \$use_vncserver,
 	   'x11display=s' => \$x11_display,
 	   'reloadindex|reload-index' => \$reload_index,
@@ -1076,10 +1076,10 @@ EOF
 	if ($module_printused) {
 	    $ENV{PERL5OPT} .= " -MModule::PrintUsed";
 	}
-	if ($hidemod) {
+	if (@hidemod) {
 	    $ENV{PERL5OPT} .= " -MDevel::Hide";
 	    $ENV{DEVEL_HIDE_VERBOSE} = 0;
-	    $ENV{DEVEL_HIDE_PM} = $hidemod;
+	    $ENV{DEVEL_HIDE_PM} = "@hidemod";
 	}
 	if ($effective_x11_display) {
 	    $ENV{DISPLAY} = $effective_x11_display;
