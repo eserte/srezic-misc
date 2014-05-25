@@ -454,7 +454,8 @@ sub set_currfile {
 		    } elsif (
 			     /syntax error.*\bnear "\$\w+ qw\(/ ||
 			     /syntax error.*\bnear "\$\w+ qw\// ||
-			     /syntax error.*\bnear "->\w+ qw\(/
+			     /syntax error.*\bnear "->\w+ qw\(/ ||
+			     /\QUse of qw(...) as parentheses is deprecated\E $at_source_qr/
 			    ) {
 			$add_analysis_tag->('qw without parentheses');
 		    } elsif (
