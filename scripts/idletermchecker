@@ -484,7 +484,11 @@ sub check_tk {
 
 sub terminal_alive {
     my $term = shift;
-    if (eval { require Proc::ProcessTable; 1 }) {
+    if ($^O =~ m{^(freebsd|linux)$} && !-e $term) {
+	# quick check: if the device file does not exist, then the
+	# terminal is most likely dead
+	return 0;
+    } elsif (eval { require Proc::ProcessTable; 1 }) {
 	my $t = Proc::ProcessTable->new;
 	for my $p (@{ $t->table }) {
 	    if ($p->ttydev eq $term) {
