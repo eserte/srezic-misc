@@ -491,18 +491,17 @@ sub terminal_alive {
 		return 1;
 	    }
 	}
-    } else {
-	if ($^O eq 'freebsd') {
-	    if (!our $Proc_ProcessTable_warning++) {
-		warn <<EOF;
-WARN: Proc::ProcessTable not available and we cannot fallback to lsof...
-      assume terminal '$term' (and all subsequent terminals) alive...
-EOF
-	    }
-	    return 1;
-	}
+    } elsif (is_in_path('lsof')) {
 	my $res = `lsof -w $term 2>/dev/null | wc -l`;
 	$res > 0;
+    } else {
+	if (!our $Proc_ProcessTable_warning++) {
+	    warn <<EOF;
+WARN: neither Proc::ProcessTable nor lsof available ...
+      assume terminal '$term' (and all subsequent terminals) alive...
+EOF
+	}
+	return 1;
     }
 }
 
