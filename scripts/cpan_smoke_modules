@@ -817,7 +817,12 @@ EOF
 	my $thisarch = `$perl -MConfig -e 'print \$Config{archname}." ".\$Config{osvers}'`;
 
 	warn "About to parse sent reports...\n";
-	parse_reports_sent();
+	if (@perls == 1) {
+	    # optimization: just parse results for this perl only
+	    parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch);
+	} else {
+	    parse_reports_sent();
+	}
 
 	my @new_dist_or_mods;
 	for my $dist (@dist_or_mods) {
@@ -1145,7 +1150,13 @@ sub kill_x11_server {
 }
 
 # from cpan_allpackages and changed (seek magic)
+# may be restricted to only the given perl/arch
 sub parse_reports_sent { # takes ~3 seconds
+    my(%args) = @_;
+    my $onlyperl = delete $args{onlyperl};
+    my $onlyarch = delete $args{onlyarch};
+    die "Unhandled arguments: " . join(' ', %args) if %args;
+
     my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
     open my $fh, "$cpan_reporter_dir/reports-sent.db"
 	or do {
@@ -1168,6 +1179,10 @@ sub parse_reports_sent { # takes ~3 seconds
 			\(([^\)]+)\)\s+
 			(.+)
 			$}x) {
+	    next if (
+		     (defined $onlyperl && $perl ne $onlyperl) ||
+		     (defined $onlyarch && $arch ne $onlyarch)
+		    );
 	    my $d = CPAN::DistnameInfo->new($dist.".tar.gz");
 	    my $maturity = $d->maturity;
 	    if (my $old_d = $dists->{$maturity}->{$d->dist}->{$perl}->{$arch}) {
