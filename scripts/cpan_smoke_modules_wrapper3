@@ -249,6 +249,7 @@ sub _scenario_hidemod {
 
 sub _scenario_basecmd {
     my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
+    $basecmd .= q{ -nosignalend};
     $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $basecmd .= q{ } . join(' ', @scenario_modules);
     $basecmd;
