@@ -48,6 +48,7 @@ my $quit_at_end = 1;
 my $do_xterm_title = 1;
 my $show_recent_states = 1;
 my $do_check_screensaver = 1;
+my $do_scenario_buttons;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -64,6 +65,7 @@ GetOptions("good" => \$only_good,
 	   "xterm-title!" => \$do_xterm_title,
 	   "recent-states!" => \$show_recent_states,
 	   "check-screensaver!" => \$do_check_screensaver,
+	   "scenario-buttons!" => \$do_scenario_buttons,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
@@ -702,7 +704,37 @@ sub set_currfile {
 	$balloon->attach($b, -msg => join("\n", @balloon_msg));
     }
 
+    if ($do_scenario_buttons) {
+	my %map_to_scenario = (
+			       'pod test' => 'testpod',
+			       'pod coverage test' => 'testpodcoverage',
+			       'perl critic' => 'testperlcritic',
+			      );
+	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
+	push @scenarios, qw(locale hashrandomization generic);
+	for my $_scenario (@scenarios) {
+	    my $scenario = $_scenario;
+	    $analysis_frame->Button(-text => "Again: $scenario",
+				    @common_analysis_button_config,
+				    -command => sub {
+					schedule_recheck($currfulldist, $scenario);
+				    })->pack;
+	}
+    }
+
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+}
+
+sub schedule_recheck {
+    my($currfulldist, $scenario) = @_;
+    open my $ofh, ">>", "$ENV{HOME}/trash/cpan_smoker_recheck"
+	or die "Can't open file: $!";
+    if ($scenario eq 'generic') {
+	print $ofh "cpan_smoke_modules $currfulldist\n";
+    } else {
+	print $ofh "~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -scenario $scenario $currfulldist\n";
+    }
+    close $ofh;
 }
 
 sub get_recent_states {
