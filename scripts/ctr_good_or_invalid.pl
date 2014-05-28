@@ -729,16 +729,23 @@ sub set_currfile {
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 }
 
-sub schedule_recheck {
-    my($currfulldist, $scenario) = @_;
-    open my $ofh, ">>", "$ENV{HOME}/trash/cpan_smoker_recheck"
-	or die "Can't open file: $!";
-    if ($scenario eq 'generic') {
-	print $ofh "cpan_smoke_modules $currfulldist\n";
-    } else {
-	print $ofh "~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -scenario $scenario $currfulldist\n";
+{
+    my $date_comment_added;
+    sub schedule_recheck {
+	my($currfulldist, $scenario) = @_;
+	open my $ofh, ">>", "$ENV{HOME}/trash/cpan_smoker_recheck"
+	    or die "Can't open file: $!";
+	if (!$date_comment_added) {
+	    print $ofh "# added " . scalar(localtime) . "\n";
+	    $date_comment_added = 1;
+	}
+	if ($scenario eq 'generic') {
+	    print $ofh "cpan_smoke_modules $currfulldist\n";
+	} else {
+	    print $ofh "~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -scenario $scenario $currfulldist\n";
+	}
+	close $ofh;
     }
-    close $ofh;
 }
 
 sub get_recent_states {
