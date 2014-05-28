@@ -463,6 +463,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('qw without parentheses');
 		    } elsif (
+			     m{Bareword found where operator expected $at_source_without_dot_qr, near "s/.*/r"$}
+			    ) {
+			$add_analysis_tag->('r flag in s///');
+		    } elsif (
 			     /==> MISMATCHED content between MANIFEST and distribution files! <==/
 			    ) {
 			$add_analysis_tag->('signature mismatch');
