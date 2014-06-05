@@ -467,7 +467,7 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('r flag in s///');
 		    } elsif (
-			     /==> MISMATCHED content between MANIFEST and distribution files! <==/
+			     /==> MISMATCHED content between \S+ and distribution files! <==/
 			    ) {
 			$add_analysis_tag->('signature mismatch');
 		    } elsif (
@@ -713,6 +713,7 @@ sub set_currfile {
 			       'pod test' => 'testpod',
 			       'pod coverage test' => 'testpodcoverage',
 			       'perl critic' => 'testperlcritic',
+			       'signature mismatch' => 'testsignature',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
