@@ -231,6 +231,10 @@ sub scenario_testperlcritic {
     _scenario_hidemod('Test::Perl::Critic');
 }
 
+sub scenario_testsignature {
+    _scenario_hidemod_and_prereq('Test::Signature');
+}
+
 sub _scenario_hidemod {
     my $hidemod = shift;
     my $basecmd = _scenario_basecmd();
@@ -242,6 +246,23 @@ sub _scenario_hidemod {
     }
     {
 	warn "(without hidden $hidemod) $basecmd ...\n";
+	system $basecmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
+sub _scenario_hidemod_and_prereq {
+    my $hidemod = shift;
+    my $basecmd = _scenario_basecmd();
+    {
+	my $cmd = $basecmd . ' -hidemod ' . $hidemod;
+	warn "(with hidden $hidemod) $cmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	my $cmd = $basecmd . ' -pre ' . $hidemod;
+	warn "(with installed $hidemod) $basecmd ...\n";
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
