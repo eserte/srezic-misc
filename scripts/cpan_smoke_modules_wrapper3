@@ -198,7 +198,6 @@ sub scenario_hashrandomization {
 	warn "(deterministic hashs) $basecmd ...\n";
 	local $ENV{PERL_HASH_SEED} = "0";
 	local $ENV{PERL_PERTURB_KEYS} = "NO";
-	local $ENV{PERL_HASH_SEED_DEBUG} = "1"; # additional debugging
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
