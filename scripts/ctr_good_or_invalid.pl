@@ -187,6 +187,7 @@ $mw->geometry($geometry) if $geometry;
 my $balloon = $mw->Balloon;
 
 my $currfile_i = 0;
+my $currfile_st = '';
 my $currfile;
 my($currdist, $currversion);
 my $modtime;
@@ -202,8 +203,8 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
     $f->Label(-textvariable => \$modtime)->pack(-side => "left");
     $f->Label(-textvariable => \$following_dists_text)->pack(-side => "left");
 
-    $f->Label(-text => "/ " . $#files)->pack(-side => "right");
-    $f->Label(-textvariable => \$currfile_i)->pack(-side => "right");
+    $f->Label(-text => "/ " . scalar(@files))->pack(-side => "right");
+    $f->Label(-textvariable => \$currfile_st)->pack(-side => "right");
 }
 my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
 {
@@ -313,6 +314,7 @@ set_term_title("report sender: finished");
 
 sub set_currfile {
     $currfile = $files[$currfile_i];
+    $currfile_st = $currfile_i + 1;
     $more->Load($currfile);
     my $textw = $more->Subwidget("scrolled");
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
