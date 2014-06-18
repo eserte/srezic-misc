@@ -852,9 +852,16 @@ implement locking a different way.
 
 L<File::Flock> is a wrapper around flock(). It knows about blocking
 and non-blocking locks and has a convenient OO interface which removes
-the lock file if the object goes out of scope. L<File::Basic::Flock>
-is similar like F<File::Flock>, but the user has to create the lock
-file himself.
+the lock file if the object goes out of scope. The distribution
+includes also File::Flock::Subprocess which handles locks in
+subprocesses for operating system which do not do this normally (e.g.
+Solaris), but this makes the dependency chain a little bit longer.
+
+L<File::Flock::Tiny> is another, probably smaller wrapper around
+flock().
+
+L<File::Basic::Flock> is similar like F<File::Flock>, but the user has
+to create the lock file himself.
 
 L<File::FcntlLock> uses fcntl() instead of flock() for locking. One
 advantage is that fcntl() can do range locking. Disadvantage is that
