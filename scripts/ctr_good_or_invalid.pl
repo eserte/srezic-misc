@@ -321,6 +321,7 @@ sub set_currfile {
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
     my $currfulldist;
     my %analysis_tags;
+    my %prereq_fails;
     if (open my $fh, $currfile) {
 	# Parse header
 	my $subject;
@@ -418,7 +419,13 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('system perl used');
 		    } elsif (
-			     /^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC/ ||
+			     /^(?:#\s+Error:\s+)?Can't locate (\S+) in \@INC/
+			    ) {
+			(my $prereq_fail = $1) =~ s{\.pm$}{};
+			$prereq_fail =~ s{/}{::}g;
+			$prereq_fails{$prereq_fail} = 1;
+			$add_analysis_tag->('prereq fail');
+		    } elsif (
 			     /^(?:#\s+Error:\s+)?Base class package ".*?" is empty\.$/
 			    ) {
 			$add_analysis_tag->('prereq fail');
@@ -716,11 +723,15 @@ sub set_currfile {
 			       'pod coverage test' => 'testpodcoverage',
 			       'perl critic' => 'testperlcritic',
 			       'signature mismatch' => 'testsignature',
+			       'prereq fail' => 'prereq',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
 	for my $_scenario (@scenarios) {
 	    my $scenario = $_scenario;
+	    if ($scenario eq 'prereq' && %prereq_fails) {
+		$scenario .= ',' . join ',', keys %prereq_fails;
+	    }
 	    $analysis_frame->Button(-text => "Again: $scenario",
 				    @common_analysis_button_config,
 				    -command => sub {
