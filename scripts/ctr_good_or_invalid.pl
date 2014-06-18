@@ -554,6 +554,10 @@ sub set_currfile {
 			     m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
 			    ) {
 			$add_analysis_tag->('possibly missing use Carp');
+		    } elsif (
+			     m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
+			    ) {
+			$add_analysis_tag->('possible file temp locking issue');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
