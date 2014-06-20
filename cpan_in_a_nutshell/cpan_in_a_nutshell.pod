@@ -827,6 +827,8 @@ subdirectories.
 L<File::Locate> uses the locate/slocate database which is usually
 updated every night on Unix boxes.
 
+A speed research: L<http://rjbs.manxome.org/rubric/entry/1981>.
+
 =head2 Free disk space
 
 L<Filesys::DfPortable> is probably the best choice. It supports both
