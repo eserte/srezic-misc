@@ -439,7 +439,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('unthreaded perl');
 		    } elsif (
-			     /error: .*?\.h: No such file or directory/
+			     /error: .*?\.h: No such file or directory/ ||
+			     /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/
 			    ) {
 			$add_analysis_tag->('missing c include');
 		    } elsif (
