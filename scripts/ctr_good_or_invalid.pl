@@ -576,9 +576,9 @@ sub set_currfile {
 			}
 		    }
 		} elsif ($section eq 'PREREQUISITES') {
-		    if (/^\s*!\s*perl\s*([\d\.]+)\s+([\d\.]+)\s*$/) {
-			my($perl_need, $perl_have) = ($1, $2);
-			if ($perl_need > $perl_have) {
+		    if (my($perl_need, $perl_have) = $_ =~ /^\s*!\s*perl\s*(v?[\d\.]+)\s+(v?[\d\.]+)\s*$/) {
+			require version;
+			if (eval { version->new($perl_need) } > eval { version->new($perl_have) }) {
 			    $add_analysis_tag->('low perl');
 			}
 		    }
