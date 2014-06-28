@@ -25,6 +25,16 @@ for my $search_lib (@search_libs) {
     File::Find::find({wanted => \&wanted}, $search_lib);
 }
 
+# Remove some exceptions
+for my $mod (
+	     'Text::BibTeX', # libbtparse is installed under perl/lib
+	    ) {
+    if (exists $broken_module{$mod}) {
+	print STDERR "INFO: removing false positive $mod from list\n";
+	delete $broken_module{$mod};
+    }
+}
+
 if (%broken_module) {
     my $broken_list = join(" ", sort keys %broken_module);
     print STDERR <<EOF;
