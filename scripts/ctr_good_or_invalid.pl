@@ -445,7 +445,8 @@ sub set_currfile {
 			$add_analysis_tag->('missing c include');
 		    } elsif (
 			     /gcc: not found/ ||
-			     /gcc: Kommando nicht gefunden/
+			     /gcc: Kommando nicht gefunden/ ||
+			     /\Qmake: exec(gcc) failed (No such file or directory)/
 			    ) {
 			$add_analysis_tag->('gcc not found');
 		    } elsif (
