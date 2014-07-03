@@ -320,6 +320,7 @@ sub set_currfile {
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
     my $currfulldist;
+    my $x_test_reporter_distfile;
     my %analysis_tags;
     my %prereq_fails;
     if (open my $fh, $currfile) {
@@ -336,6 +337,8 @@ sub set_currfile {
 		}
 	    } elsif (/^X-Test-Reporter-Perl:\s*(.*)/i) {
 		$x_test_reporter_perl = $1;
+	    } elsif (/^X-Test-Reporter-Distfile:\s*(.*)/i) {
+		$x_test_reporter_distfile = $1;
 	    } elsif (/^$/) {
 		last;
 	    }
@@ -741,7 +744,7 @@ sub set_currfile {
 	    $analysis_frame->Button(-text => "Again: $scenario",
 				    @common_analysis_button_config,
 				    -command => sub {
-					schedule_recheck($currfulldist, $scenario);
+					schedule_recheck($x_test_reporter_distfile, $scenario);
 				    })->pack;
 	}
     }
