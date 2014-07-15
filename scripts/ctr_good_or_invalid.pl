@@ -443,7 +443,8 @@ sub set_currfile {
 			$add_analysis_tag->('unthreaded perl');
 		    } elsif (
 			     /error: .*?\.h: No such file or directory/ ||
-			     /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/
+			     /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/ ||
+			     /^.*?$c_ext_qr:\d+:\d+:\s+fatal error:\s+'.*?\.h' file not found/
 			    ) {
 			$add_analysis_tag->('missing c include');
 		    } elsif (
@@ -507,7 +508,9 @@ sub set_currfile {
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
 			     /^\s*#\s+Failed test \(.*\)$/ ||
-			     /^\s*#\s+Failed test \d+ in .* at line \d+$/
+			     /^\s*#\s+Failed test \d+ in .* at line \d+$/ ||
+			     /^# Looks like your test exited with \d+ just after / ||
+			     /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/
 			    ) {
 			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		    } elsif (
@@ -555,6 +558,10 @@ sub set_currfile {
 			     m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
 			    ) {
 			$add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
+		    } elsif (
+			     m{^Execution of Build.PL aborted due to compilation errors\.$}
+			    ) {
+			$add_analysis_tag->('compilation error in Build.PL');
 		    } elsif (
 			     m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
 			    ) {
