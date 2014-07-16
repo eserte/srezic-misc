@@ -463,6 +463,10 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('undefined symbol in shared lib');
 		    } elsif (
+			     /^collect2: error: ld returned 1 exit status/
+			    ) {
+			$add_analysis_tag->('linker error');
+		    } elsif (
 			     /Out of memory!/
 			    ) {
 			$add_analysis_tag->('out of memory');
