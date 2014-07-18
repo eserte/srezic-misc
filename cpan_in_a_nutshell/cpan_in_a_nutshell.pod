@@ -879,6 +879,10 @@ L<Paranoid::Lockfile> (but check the RT queue here!).
 L<File::Lockfile> is not recommended, as race conditions are easily
 possible (checked with at least v1.0.5).
 
+L<Sys::RunAlone> is a convenient wrapper around C<flock()> for scripts
+which should run only once at a time, optionally with a retry option
+and being silent or loud, if there's another script running.
+
 =head1 Graphics
 
 =head2 Graphic libraries
