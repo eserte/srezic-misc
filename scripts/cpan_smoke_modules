@@ -25,7 +25,7 @@ use Sys::Hostname qw(hostname);
 
 sub save_pwd (&);
 
-$ENV{PATH} = $ENV{PATH} . $Config{path_sep} . $FindBin::RealBin;
+$ENV{PATH} = $ENV{PATH} . $Config{path_sep} . $FindBin::RealBin; # e.g. for sudo_keeper
 
 my $start_time = time;
 
@@ -929,11 +929,19 @@ EOF
 	}
 
 	# perl belongs to this user -> no sudo necessary
+	my $need_sudo_keeper;
 	if ($do_action eq 'install' || $do_action eq 'shell') {
 	    my $perl_fullpath = is_in_path($perl);
 	    my $perl_uid = (stat($perl_fullpath))[4];
 	    if ($perl_uid == $<) {
 		$cpan_shell_init .= q#$CPAN::Config->{make_install_make_command}=q{make}; $CPAN::Config->{mbuild_install_build_command}=q{./Build}; #;
+	    }
+	    if ($perl_uid != $< && $do_action eq 'install') {
+		if (is_in_path('sudo_keeper')) {
+		    $need_sudo_keeper = 1;
+		} else {
+		    warn "sudo operation necessary, but no sudo_keeper program available...\n";
+		}
 	    }
 	}
 	
@@ -1039,6 +1047,10 @@ EOF
 	    } else {
 		warn "*** WARNING: Neither limits(1) nor BSD::Resource available, resource limits cannot be set.\n";
 	    }
+	}
+
+	if ($need_sudo_keeper) {
+	    unshift @cmd, 'sudo_keeper';
 	}
 
 	if ($n) {
