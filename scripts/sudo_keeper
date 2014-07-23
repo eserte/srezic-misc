@@ -1,0 +1,72 @@
+#!/usr/bin/env perl
+
+use strict;
+use Getopt::Long;
+
+sub sudo (@);
+
+sub usage () {
+    die "usage: $0 [--help] command [args]\n";
+}
+
+Getopt::Long::Configure('require_order');
+GetOptions("help|h|?" => sub { usage });
+# XXX signal handling?
+sudo 'echo', 'Starting sudo keeper...';
+system { $ARGV[0] } @ARGV;
+my $exit_code = $? >> 8;
+exit $exit_code;
+
+# REPO BEGIN
+# REPO NAME sudo-keeper /home/e/eserte/src/srezic-repository 
+# REPO MD5 e40d732769b5fdbb80d18667d1378040
+
+=head2 sudo
+
+=for category System
+
+Executes the given command using L<sudo(1)>. Also a "sudo keeper" or
+"sudo validator" is created on the first invocation, which makes sure
+that the sudo password is refreshed every minute.
+
+The "sudo keeper" is automatically destroyed on process end, or
+explicitly calling the function C<sudo_keeper_destroy>.
+
+=cut
+
+{
+    my $sudo_keeper_pid;
+
+    sub sudo (@) {
+	my(@cmd) = @_;
+	system 'sudo', '-v';
+	if (!$sudo_keeper_pid) {
+	    my $parent = $$;
+	    $sudo_keeper_pid = fork;
+	    if ($sudo_keeper_pid == 0) {
+		# child
+		while() {
+		    sleep 60; # assumes that sudo timeout is larger than one minute!!!
+		    if (!kill 0 => $parent) {
+			exit;
+		    }
+		    system 'sudo', '-v';
+		}
+	    }
+	}
+	system 'sudo', @cmd;
+    }
+
+    sub sudo_keeper_destroy () {
+	if ($sudo_keeper_pid) {
+	    kill $sudo_keeper_pid;
+	    undef $sudo_keeper_pid;
+	}
+    }
+
+    END {
+	sudo_keeper_destroy;
+    }
+}
+# REPO END
+
