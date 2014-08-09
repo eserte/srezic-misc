@@ -190,14 +190,14 @@ sub scenario_locale {
 sub scenario_hashrandomization {
     my $basecmd = _scenario_basecmd();
     {
-	warn "(random hashes) $basecmd ...\n";
+	warn "(deterministic hashes) $basecmd ...\n";
+	local $ENV{PERL_HASH_SEED} = "0";
+	local $ENV{PERL_PERTURB_KEYS} = "NO";
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
     {
-	warn "(deterministic hashes) $basecmd ...\n";
-	local $ENV{PERL_HASH_SEED} = "0";
-	local $ENV{PERL_PERTURB_KEYS} = "NO";
+	warn "(random hashes) $basecmd ...\n";
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
