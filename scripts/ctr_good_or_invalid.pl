@@ -519,10 +519,6 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		    } elsif (
-			     /^\QBailout called.  Further testing stopped:/
-			    ) {
-			$add_analysis_tag->('bailout');
-		    } elsif (
 			     /\S+ uses NEXT, which is deprecated. Please see the Class::C3::Adopt::NEXT documentation for details. NEXT used\s+$at_source_qr/
 			    ) {
 			$add_analysis_tag->('deprecation (NEXT)');
@@ -579,6 +575,11 @@ sub set_currfile {
 			     m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
 			    ) {
 			$add_analysis_tag->('possible file temp locking issue');
+		    } elsif (
+			     /^\QBailout called.  Further testing stopped:/
+			    ) {
+			# rather unspecific, do as rather last check
+			$add_analysis_tag->('bailout');
 		    } else {
 			# collect PROGRAM OUTPUT string (maybe)
 			if (!$program_output->{skip_collector}) {
