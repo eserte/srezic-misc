@@ -32,14 +32,18 @@ my $build_debug;
 my $build_threads;
 my $morebits;
 my $for_cpansand;
+my $use_patchperl;
+my $patchperl_path;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
 	   "threads"   => \$build_threads,
 	   "morebits"  => \$morebits,
 	   "cpansand"  => \$for_cpansand,
+	   "patchperl" => \$use_patchperl,
+	   "patchperlpath=s" => \$patchperl_path,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-patchperl | -patchperlpath /path/to/patchperl] -perlver 5.X.Y\n";
 
 if (!$perlver) {
     die "-perlver is mandatory";
@@ -47,6 +51,13 @@ if (!$perlver) {
 
 if ($perlver !~ m{^5\.\d+\.\d+(-RC\d+)?$}) {
     die "'$perlver' does not look like a perl5 version";
+}
+
+if ($use_patchperl && !defined $patchperl_path) {
+    $patchperl_path = "$ENV{HOME}/bin/pistachio-perl/bin/patchperl";
+}
+if (defined $patchperl_path && !-x $patchperl_path) {
+    die "patchperl script '$patchperl_path' is not available";
 }
 
 check_term_title;
@@ -177,6 +188,19 @@ step "Extract in $src_dir",
 	system "tar", "xf", $downloaded_perl;
 	system "touch", "$perl_src_dir/.extracted";
     };
+
+if (defined $patchperl_path) {
+    step "Patch perl",
+	ensure => sub {
+	    -f "$perl_src_dir/.patched";
+	},
+	using => sub {
+	    my $save_pwd = save_pwd2;
+	    chdir $perl_src_dir;
+	    system $patchperl_path;
+	    system "touch", ".patched";
+	};
+}
 
 my $built_file = "$perl_src_dir/.built" . ($build_debug || $build_threads ? "_" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "") : "");
 step "Build perl",
