@@ -463,7 +463,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('undefined symbol in shared lib');
 		    } elsif (
-			     /^collect2: error: ld returned 1 exit status/
+			     /^collect2: error: ld returned 1 exit status/ ||
+			     m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC}
 			    ) {
 			$add_analysis_tag->('linker error');
 		    } elsif (
