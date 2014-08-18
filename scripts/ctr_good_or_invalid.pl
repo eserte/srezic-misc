@@ -560,6 +560,17 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('unknown regexp modifier');
 		    } elsif (
+			     m{\QSequence (?^...) not recognized in regex;} ||
+			     m{\QSequence (?&...) not recognized in regex;} ||
+			     m{\QSequence (?<u...) not recognized in regex;}
+			    ) {
+			$add_analysis_tag->('new regexp feature');
+		    } elsif (
+			     m{\Q(Might be a runaway multi-line // string starting on line \E\d+} ||
+			     m{\QSearch pattern not terminated \E$at_source_qr}
+			    ) {
+			$add_analysis_tag->('defined-or');
+		    } elsif (
 			     m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
 			    ) {
 			$add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
