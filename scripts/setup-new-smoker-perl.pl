@@ -470,18 +470,19 @@ sub sudo (@) {
 }
 
 {
-    my $cannot_xterm_title;
+    my $can_xterm_title;
 
     sub check_term_title () {
+	$can_xterm_title = 1;
 	if (!eval { require XTerm::Conf; 1 }) {
 	    if (!eval { require Term::Title; 1 }) {
-		$cannot_xterm_title = 1;
+		$can_xterm_title = 0;
 	    }
 	}
     }
 
     sub set_term_title ($) {
-	return if $cannot_xterm_title;
+	return if !$can_xterm_title;
 	my $string = shift;
 	if (defined &XTerm::Conf::xterm_conf_string) {
 	    print STDERR XTerm::Conf::xterm_conf_string(-title => $string);
