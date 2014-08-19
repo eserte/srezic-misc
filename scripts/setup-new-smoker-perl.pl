@@ -34,6 +34,7 @@ my $morebits;
 my $for_cpansand;
 my $use_patchperl;
 my $patchperl_path;
+my $jobs;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -42,8 +43,9 @@ GetOptions(
 	   "cpansand"  => \$for_cpansand,
 	   "patchperl" => \$use_patchperl,
 	   "patchperlpath=s" => \$patchperl_path,
+	   "j|jobs=i" => \$jobs,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-patchperl | -patchperlpath /path/to/patchperl] -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] -perlver 5.X.Y\n";
 
 if (!$perlver) {
     die "-perlver is mandatory";
@@ -233,10 +235,15 @@ step "Build perl",
 			     ($build_debug ? ' -DDEBUGGING' : '') .
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : ()) .
-			     ' && make all'
+			     ' && make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
 	    system @build_cmd;
-	    if (!eval { system 'make', 'test'; 1 }) {
+	    if (!eval {
+		local $ENV{TEST_JOBS};
+		$ENV{TEST_JOBS} = $jobs if $jobs > 1;
+		system 'make', 'test';
+		1;
+	    }) {
 		while () {
 		    print STDERR "make test failed. Continue nevertheless? (y/n) ";
 		    chomp(my $yn = <STDIN>);
