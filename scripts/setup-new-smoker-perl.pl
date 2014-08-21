@@ -14,6 +14,7 @@
 
 use strict;
 use FindBin;
+use File::Basename qw(basename);
 use File::Path qw(mkpath);
 use File::Temp qw(tempfile);
 use Getopt::Long;
@@ -35,6 +36,7 @@ my $for_cpansand;
 my $use_patchperl;
 my $patchperl_path;
 my $jobs;
+my $download_url;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -44,8 +46,9 @@ GetOptions(
 	   "patchperl" => \$use_patchperl,
 	   "patchperlpath=s" => \$patchperl_path,
 	   "j|jobs=i" => \$jobs,
+	   "downloadurl=s" => \$download_url,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-downloadurl ...] -perlver 5.X.Y\n";
 
 if (!$perlver) {
     die "-perlver is mandatory";
@@ -107,7 +110,12 @@ if (-f $downloaded_perl_bz2 && -s $downloaded_perl_bz2) {
 } else {
     $downloaded_perl = $downloaded_perl_gz;
 }
-my $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
+if (!defined $download_url) {
+    $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
+} else {
+    basename($download_url) eq $perl_tar_gz
+	or die "Unexpected download URL '$download_url' does not match expected basename '$perl_tar_gz'";
+}
 
 # Possibly interactive, so do it first
 my $cpan_myconfig = "$ENV{HOME}/.cpan/CPAN/MyConfig.pm";
