@@ -14,6 +14,8 @@
 
 use strict;
 
+sub yn ();
+
 # portversion => { testscript => number_of_failures, ... }
 my %accepted_test_failures = ('6.8.0-7' => {'t/montage.t' => 19});
 
@@ -55,7 +57,8 @@ if (($port_version) = $port_version =~ m{^ImageMagick-(.*)\.tar\.}) {
 }
 
 if ($image_magick_version ne $port_version) {
-    die "Currently installed ImageMagick and port versions do not match: $image_magick_version != $port_version";
+    print STDERR "Currently installed ImageMagick and port versions do not match: $image_magick_version != $port_version. Continue (y/n)? ";
+    yn();
 }
 
 if (-d "work") {
@@ -114,16 +117,7 @@ maybe_sudo('make', 'all');
 	    }
 	
 	    print STDERR "Test failed. Continue (y/n)? ";
-	    while() {
-		chomp(my $yn = <STDIN>);
-		if ($yn eq 'y') {
-		    last;
-		} elsif ($yn eq 'n') {
-		    exit 1;
-		} else {
-		    warn "Please answer y or n!\n";
-		}
-	    }
+	    yn();
 	}
     }
 }
@@ -157,6 +151,19 @@ sub maybe_sudo_cmd {
 	@cmd = ('sudo', @cmd);
     }
     @cmd;
+}
+
+sub yn () {
+    while() {
+	chomp(my $yn = <STDIN>);
+	if ($yn eq 'y') {
+	    last;
+	} elsif ($yn eq 'n') {
+	    exit 1;
+	} else {
+	    warn "Please answer y or n!\n";
+	}
+    }
 }
 
 __END__
