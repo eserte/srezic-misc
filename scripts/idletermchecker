@@ -272,13 +272,47 @@ sub check_tk {
 	my $f = $f{$term} = $mw->Frame->pack(-fill => 'x', -expand => 1);
 	$l{$term} = $f->Label(-text => ($with_hostname ? hostname.':' : '') . $term)->pack(-side => "left", -fill => 'x');
 	$age_l{$term} = $f->Label(-width => 5, -anchor => "w")->pack(-side => "left", -fill => 'x');
+
+	my @common_button_opts =
+	    (
+	     -padx => 0,
+	     -pady => 0,
+	     -relief => 'flat',
+	     -bd => 0,
+	    );
+	$f->Button(-text => 'i',
+		   @common_button_opts,
+		   -command => sub {
+		       if (!eval { require Proc::ProcessTable; 1 }) {
+			   $mw->messageBox(-message => "Proc::ProcessTable is not available: $@",
+					   -type => 'Ok',
+					   -icon => 'error',
+					  );
+			   return;
+		       }
+		       my @matching_processes;
+		       my $p = Proc::ProcessTable->new;
+		       for my $proc (@{ $p->table }) {
+			   if ($proc->{ttydev} eq $term) {
+			       push @matching_processes, $proc->{cmndline} . " [since " . (time - $proc->{start}) . " second(s)]";
+			   }
+		       }
+		       if (!@matching_processes) {
+			   $mw->messageBox(-message => 'No processes in this terminal',
+					   -type => 'Ok',
+					   -icon => 'info',
+					  );
+			   return;
+		       }
+		       my $tl = $mw->Toplevel(-title => "Processes in $term");
+		       require Tk::ROText;
+		       my $txt = $tl->Scrolled('ROText', -scrollbars => 'osoe', -width => 120, -height => 10)->pack(qw(-fill both -expand 1));
+		       $txt->insert('end', join("\n", @matching_processes));
+		   })->pack(-side => 'right');
 	$f->Button(-text => 'x',
 		   #-background => undef,
 		   -foreground => 'red',
-		   -padx => 0,
-		   -pady => 0,
-		   -relief => 'flat',
-		   -bd => 0,
+		   @common_button_opts,
 		   -command => sub {
 ## Don't ask anymore...
 # 		       my $yesno = $f->messageBox(-type => "yesno",
