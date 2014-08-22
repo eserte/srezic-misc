@@ -452,7 +452,7 @@ if ($prefs_dir) {
 
 # to make it easy to copy'n'paste download URLs from a CPAN http mirror:
 for (@dist_or_mods, @pre_dist_or_mods) {
-    s{^http://.*/authors/id/./../}{};
+    s{^https?://.*/authors/id/./../}{};
 }
 
 # And allow also partial distribution names without author name
