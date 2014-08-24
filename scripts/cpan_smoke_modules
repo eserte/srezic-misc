@@ -91,6 +91,7 @@ my $use_vncserver;
 my $x11_display = ':9'; # ssh begins at :10
 my @touch_files;
 my $reload_index;
+my $hack_checksum_check_file = 1;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -970,6 +971,10 @@ EOF
 		die "Probably invalid cpan_conf value '$cpan_conf'";
 	    }
 	    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+	}
+
+	if ($hack_checksum_check_file) { # hack: try to suppress the "... the checksum has not yet been calculated" prompt
+	    $cpan_shell_init .= q#{ my $orig_check_file = \&CPAN::Distribution::CHECKSUM_check_file; *CPAN::Distribution::CHECKSUM_check_file = sub { my($self,$file)=@_; $orig_check_file->($self,$file,1) }; } #;
 	}
 
 	my @cmd = ($perl);
