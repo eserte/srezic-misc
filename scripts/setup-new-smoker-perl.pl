@@ -413,7 +413,11 @@ END {
 	undef $sudo_validator_pid;
     }
 
-    set_term_title "Setup new smoker perl $perlver finished";
+    if ($? == 0) {
+	set_term_title "Setup new smoker perl $perlver finished";
+    } else {
+	set_term_title "Setup new smoker perl $perlver aborted";
+    }
 }
 
 sub toolchain_modules_installed_check {
