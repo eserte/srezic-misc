@@ -61,7 +61,6 @@ my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
-my $skip_tested_nondiscarded;
 my $no_fail_reports;
 my $test_unpatched;
 my $save_reports = 1;
@@ -120,10 +119,6 @@ GetOptions("n" => \$n,
 	   'builddirreuse!' => \$build_dir_reuse,
 	   'splitdists=i' => \$split_dists,
 	   'skiptested!' => \$skip_tested,
-	   'skipndtested!' => sub {
-	       $skip_tested = 1;
-	       $skip_tested_nondiscarded = 1;
-	   },
 	   'nofailreport' => \$no_fail_reports,
 	   'testunpatched' => \$test_unpatched,
 	   'savereports!' => \$save_reports,
