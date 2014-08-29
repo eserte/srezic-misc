@@ -506,7 +506,8 @@ sub set_currfile {
 		    } elsif (
 			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
 			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
-			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$}
+			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
+			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.23 at }
 			    ) {
 			$add_analysis_tag->('possibly old bundled modules');
 		    } elsif (
@@ -586,6 +587,10 @@ sub set_currfile {
 			     m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
 			    ) {
 			$add_analysis_tag->('possible file temp locking issue');
+		    } elsif (
+			     m{UNIVERSAL does not export anything}
+			    ) {
+			$add_analysis_tag->('UNIVERSAL export');
 		    } elsif (
 			     /^\QBailout called.  Further testing stopped:/
 			    ) {
