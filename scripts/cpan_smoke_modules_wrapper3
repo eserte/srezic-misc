@@ -239,6 +239,10 @@ sub scenario_testsignature {
     _scenario_hidemod_and_prereq('Test::Signature');
 }
 
+sub scenario_testprereq {
+    _scenario_hidemod('Test::Prereq');
+}
+
 sub _scenario_hidemod {
     my $hidemod = shift;
     my $basecmd = _scenario_basecmd();
