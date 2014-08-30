@@ -203,6 +203,22 @@ sub scenario_hashrandomization {
     }
 }
 
+sub scenario_systemperl {
+    my $basecmd = _scenario_basecmd();
+    {
+	my $cmd = $basecmd . ' -perl /usr/bin/perl';
+	warn "(run with system perl) $basecmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	my $cmd = $basecmd . ' -destroyperl';
+	warn "(make system perl unusable) $basecmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
 sub scenario_prereq {
     my $scenario_args = shift;
     if (!defined $scenario_args || !length $scenario_args) {
