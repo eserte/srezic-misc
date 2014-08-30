@@ -771,6 +771,7 @@ sub set_currfile {
 			       'signature mismatch' => 'testsignature',
 			       'prereq fail' => 'prereq',
 			       'prereq test' => 'testprereq',
+			       'system perl used' => 'systemperl',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
