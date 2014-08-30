@@ -416,6 +416,10 @@ sub set_currfile {
 			     /^#\s+Failed test 'POD spelling for [^']+'$/
 			    ) {
 			$add_analysis_tag->('pod spelling test');
+		    } elsif (
+			     /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
+			    ) {
+			$add_analysis_tag->('prereq test');
 		    } elsif ( # this should come before the generic 'prereq fail' test
 			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
 			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
@@ -766,6 +770,7 @@ sub set_currfile {
 			       'perl critic' => 'testperlcritic',
 			       'signature mismatch' => 'testsignature',
 			       'prereq fail' => 'prereq',
+			       'prereq test' => 'testprereq',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
