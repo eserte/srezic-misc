@@ -275,7 +275,7 @@ sub _scenario_hidemod_and_prereq {
     {
 	my $cmd = $basecmd . ' -pre ' . $hidemod;
 	warn "(with installed $hidemod) $basecmd ...\n";
-	system $basecmd;
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
 }
