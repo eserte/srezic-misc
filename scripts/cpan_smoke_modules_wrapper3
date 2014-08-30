@@ -243,6 +243,10 @@ sub scenario_testprereq {
     _scenario_hidemod('Test::Prereq');
 }
 
+sub scenario_testkwalitee {
+    _scenario_hidemod('Test::Kwalitee');
+}
+
 sub _scenario_hidemod {
     my $hidemod = shift;
     my $basecmd = _scenario_basecmd();
