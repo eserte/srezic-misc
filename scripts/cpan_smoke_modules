@@ -61,6 +61,7 @@ my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
+my $skip_tested_fail;
 my $no_fail_reports;
 my $test_unpatched;
 my $save_reports = 1;
@@ -119,6 +120,9 @@ GetOptions("n" => \$n,
 	   'builddirreuse!' => \$build_dir_reuse,
 	   'splitdists=i' => \$split_dists,
 	   'skiptested!' => \$skip_tested,
+	   'skiptestedfail' => sub {
+	       $skip_tested_fail = $skip_tested = 1;
+	   },
 	   'nofailreport' => \$no_fail_reports,
 	   'testunpatched' => \$test_unpatched,
 	   'savereports!' => \$save_reports,
@@ -813,11 +817,12 @@ EOF
 	my $thisarch = `$perl -MConfig -e 'print \$Config{archname}." ".\$Config{osvers}'`;
 
 	warn "About to parse sent reports...\n";
+	my %stdopts = (skiptestedfail => $skip_tested_fail);
 	if (@perls == 1) {
 	    # optimization: just parse results for this perl only
-	    parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch);
+	    parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch, %stdopts);
 	} else {
-	    parse_reports_sent();
+	    parse_reports_sent(%stdopts);
 	}
 
 	my @new_dist_or_mods;
@@ -1167,6 +1172,7 @@ sub parse_reports_sent { # takes ~3 seconds
     my(%args) = @_;
     my $onlyperl = delete $args{onlyperl};
     my $onlyarch = delete $args{onlyarch};
+    my $skip_tested_fail = delete $args{skiptestedfail};
     die "Unhandled arguments: " . join(' ', %args) if %args;
 
     my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
@@ -1195,6 +1201,7 @@ sub parse_reports_sent { # takes ~3 seconds
 		     (defined $onlyperl && $perl ne $onlyperl) ||
 		     (defined $onlyarch && $arch ne $onlyarch)
 		    );
+	    next if $skip_tested_fail && $action ne 'FAIL';
 	    my $d = CPAN::DistnameInfo->new($dist.".tar.gz");
 	    my $maturity = $d->maturity;
 	    if (my $old_d = $dists->{$maturity}->{$d->dist}->{$perl}->{$arch}) {
