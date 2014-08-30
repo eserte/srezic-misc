@@ -13,6 +13,10 @@ my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
 my $min_build_dir_avail;
 my $scripts_dir = $FindBin::RealBin;
+if (!-e "$scripts_dir/cpan_smoke_modules" && !-e "$scripts_dir/cpan_recent_uploads2") {
+    # fallback
+    $scripts_dir = "$ENV{HOME}/src/srezic-misc/scripts";
+}
 my $cpan_smoke_modules_options;
 my $scenario;
 my @scenario_modules;
