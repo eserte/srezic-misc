@@ -724,7 +724,6 @@ if ($destroy_perl_in_path) {
     open my $ofh, ">> $perlbin" or die "Cannot write to $perlbin: $!";
     print $ofh <<'EOF' or die $!;
 #! /bin/sh
-echo '#'
 echo '# Please use $^X instead of perl in system()'
 echo '# and similar calls.'
 echo '#'
