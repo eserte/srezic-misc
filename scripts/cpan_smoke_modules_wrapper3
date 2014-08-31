@@ -260,11 +260,11 @@ sub scenario_testsignature {
 }
 
 sub scenario_testprereq {
-    _scenario_hidemod('Test::Prereq');
+    _scenario_hidemod_and_prereq('Test::Prereq');
 }
 
 sub scenario_testkwalitee {
-    _scenario_hidemod('Test::Kwalitee');
+    _scenario_hidemod_and_prereq('Test::Kwalitee');
 }
 
 sub _scenario_hidemod {
