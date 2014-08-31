@@ -479,6 +479,14 @@ sub set_currfile {
 			     /^# Perl::Critic found these violations in .*:$/
 			    ) {
 			$add_analysis_tag->('perl critic');
+		    } elsif ( # note: these checks have to happen before the 'qw without parentheses' check
+			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
+			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.23 at } ||
+			     m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"}
+			    ) {
+			$add_analysis_tag->('possibly old bundled modules');
 		    } elsif (
 			     /syntax error.*\bnear "\$\w+ qw\(/ ||
 			     /syntax error.*\bnear "\$\w+ qw\// ||
@@ -507,13 +515,6 @@ sub set_currfile {
 			     /# Error: META.yml does not conform to any recognised META.yml Spec./
 			    ) {
 			$add_analysis_tag->('meta.yml spec');
-		    } elsif (
-			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
-			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
-			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
-			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.23 at }
-			    ) {
-			$add_analysis_tag->('possibly old bundled modules');
 		    } elsif (
 			     /^\s*#\s+Failed test '.*'$/ ||
 			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
