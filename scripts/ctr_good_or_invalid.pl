@@ -653,6 +653,7 @@ sub set_currfile {
 	    my $file = shift;
 	    (my $base = $file) =~ s{.*/}{};
 	    $base =~ s{-thread-multi}{}; # normalize threaded vs. non-threaded
+	    $base =~ s{(-freebsd\.[\d\.]+)-release(-p\d+)?}{$1}; # normalize freebsd patch levels
 	    $base =~ s{\.\d+\.\d+\.rpt$}{};
 	    $base;
 	};
