@@ -483,7 +483,7 @@ sub set_currfile {
 			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
 			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
 			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
-			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.23 at } ||
+			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.\E\d+\Q at } ||
 			     m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"}
 			    ) {
 			$add_analysis_tag->('possibly old bundled modules');
