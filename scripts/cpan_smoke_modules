@@ -63,7 +63,6 @@ my $has_xterm_conf;
 my $skip_tested;
 my $skip_tested_fail;
 my $skip_tested_pass;
-my $no_fail_reports;
 my $test_unpatched;
 my $save_reports = 1;
 my $reports_workflow_dir;
@@ -127,7 +126,6 @@ GetOptions("n" => \$n,
 	   'skiptestedpass' => sub {
 	       $skip_tested_pass = $skip_tested = 1;
 	   },
-	   'nofailreport' => \$no_fail_reports,
 	   'testunpatched' => \$test_unpatched,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
@@ -712,13 +710,6 @@ if ($save_reports) {
 	$ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
 	push @touch_files, $tmpfile;
     }
-} elsif ($no_fail_reports) {
-    my $confignofail = "$ENV{HOME}/.cpanreporter/confignofail.ini"; # XXX maybe use PERL_CPAN_REPORTER_DIR?
-    if (!-r $confignofail) {
-	die "Cannot read <$confignofail>, needed for -skipfail...";
-    }
-    warn "Skipping FAIL reports...\n";
-    $ENV{PERL_CPAN_REPORTER_CONFIG} = $confignofail;
 }
 
 if ($destroy_perl_in_path) {
