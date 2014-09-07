@@ -267,7 +267,7 @@ sub scenario_testkwalitee {
     _scenario_hidemod_and_prereq('Test::Kwalitee');
 }
 
-# Note: this scenario is unusual, because it only tried
+# Note: this scenario is unusual, because it only tries
 # to fix things, not to break things.
 sub scenario_nolimits {
     my $basecmd = _scenario_basecmd();
