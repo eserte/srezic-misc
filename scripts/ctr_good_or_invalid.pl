@@ -472,7 +472,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('linker error');
 		    } elsif (
-			     /Out of memory!/
+			     /Out of memory!/ ||
+			     /out of memory allocating \d+ bytes after a total of \d+ bytes/ # gcc
 			    ) {
 			$add_analysis_tag->('out of memory');
 		    } elsif (
@@ -774,6 +775,7 @@ sub set_currfile {
 			       'prereq fail' => 'prereq',
 			       'prereq test' => 'testprereq',
 			       'system perl used' => 'systemperl',
+			       'out of memory' => 'nolimits',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
