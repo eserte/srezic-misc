@@ -48,7 +48,14 @@ GetOptions(
 	   "j|jobs=i" => \$jobs,
 	   "downloadurl=s" => \$download_url,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-downloadurl ...] -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] -downloadurl ... | -perlver 5.X.Y\n";
+
+if (!$perlver && $download_url) {
+    if ($download_url =~ m{/perl-(5\.\d+\.\d+(?:-RC\d+)?)\.tar\.(?:gz|bz2)$}) {
+	$perlver = $1;
+	print STDERR "Guess perl version from download URL: $perlver\n";
+    }
+}
 
 if (!$perlver) {
     die "-perlver is mandatory";
