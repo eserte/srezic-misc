@@ -267,6 +267,18 @@ sub scenario_testkwalitee {
     _scenario_hidemod_and_prereq('Test::Kwalitee');
 }
 
+# Note: this scenario is unusual, because it only tried
+# to fix things, not to break things.
+sub scenario_nolimits {
+    my $basecmd = _scenario_basecmd();
+    {
+	my $cmd = $basecmd . ' -nolimits';
+	warn "(run without resource limits) $basecmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
 sub _scenario_hidemod {
     my $hidemod = shift;
     my $basecmd = _scenario_basecmd();
