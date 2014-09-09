@@ -317,6 +317,7 @@ set_term_title("report sender: finished");
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $currfile_st = $currfile_i + 1;
+    $_->destroy for $analysis_frame->children; # remove as early as possible
     $more->Load($currfile);
     my $textw = $more->Subwidget("scrolled");
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
@@ -690,7 +691,6 @@ sub set_currfile {
     }
 
     # Create the "analysis tags"
-    $_->destroy for $analysis_frame->children;
     my $generic_analysis_tag_value = delete $analysis_tags{__GENERIC_TEST_FAILURE__};
     if (!%analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
 	$generic_analysis_tag_value->{__bgcolor__} = 'white'; # different color than the other analysis tags
