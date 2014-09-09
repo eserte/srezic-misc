@@ -47,6 +47,7 @@ my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title = 1;
 my $show_recent_states = 1;
+my $recent_months = 1;
 my $do_check_screensaver = 1;
 my $do_scenario_buttons;
 GetOptions("good" => \$only_good,
@@ -64,6 +65,7 @@ GetOptions("good" => \$only_good,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
 	   "recent-states!" => \$show_recent_states,
+	   "recent-months=i" => \$recent_months,
 	   "check-screensaver!" => \$do_check_screensaver,
 	   "scenario-buttons!" => \$do_scenario_buttons,
 	  )
@@ -124,7 +126,7 @@ if (-d $done_directory) {
     my $this_month = strftime "%Y-%m", @l;
     $add_done_directory->($this_month);
 
-    for (1..1) { # XXX make number of prev months configurable?
+    for (1..$recent_months) {
 	$l[4]--;
 	if ($l[4] < 0) { $l[4] = 11; $l[5]-- }
 	my $month = strftime "%Y-%m", @l;
