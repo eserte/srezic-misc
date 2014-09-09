@@ -489,7 +489,7 @@ sub set_currfile {
 			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
 			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.\E\d+\Q at } ||
 			     m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"} ||
-			     m{\QError:  Undefined subroutine &Scalar::Util::set_prototype called at }
+			     m{\QUndefined subroutine &Scalar::Util::set_prototype called at }
 			    ) {
 			$add_analysis_tag->('possibly old bundled modules');
 		    } elsif (
