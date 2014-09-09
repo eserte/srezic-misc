@@ -518,7 +518,8 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('taint');
 		    } elsif (
-			     /# Error: META.yml does not conform to any recognised META.yml Spec./
+			     /\Q# Error: META.yml does not conform to any recognised META.yml Spec./ ||
+			     /\Q# Error: The META.yml file of this distribution could not be parsed by the version of CPAN::Meta::YAML.pm CPANTS is using./
 			    ) {
 			$add_analysis_tag->('meta.yml spec');
 		    } elsif (
