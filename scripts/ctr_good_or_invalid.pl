@@ -433,8 +433,9 @@ sub set_currfile {
 			$prereq_fails{$prereq_fail} = 1;
 			$add_analysis_tag->('prereq fail');
 		    } elsif (
-			     /^(?:#\s+Error:\s+)?Base class package ".*?" is empty\.$/
+			     /^(?:#\s+Error:\s+)?Base class package "(.*?)" is empty\.$/
 			    ) {
+			$prereq_fails{$1} = 1;
 			$add_analysis_tag->('prereq fail');
 		    } elsif (
 			     /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array))\)/ ||
