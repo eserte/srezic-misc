@@ -158,9 +158,7 @@ sub run_smoker ($$$) {
     $cmd .= $install_arg;
     $cmd .= q{ -perl } . $perl_exe;
     $cmd .= q{ -mirrorurl } . $mirror_url;
-    if ($min_build_dir_avail) {
-	$cmd .= q{ -minbuilddiravail } . $min_build_dir_avail;
-    }
+    $cmd .= _args_minbuilddiravail();
     $cmd .= _args_pv();
     $cmd .= q{ -- `};
     if (0) { # just looking at the distribution name to decide whether
@@ -318,6 +316,7 @@ sub _scenario_hidemod_and_prereq {
 sub _scenario_basecmd {
     my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
     $basecmd .= q{ -nosignalend};
+    $basecmd .= _args_minbuilddiravail();
     $basecmd .= _args_pv();
     $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $basecmd .= q{ } . join(' ', @scenario_modules);
@@ -347,6 +346,14 @@ sub maybe_xterm_conf ($) {
 sub _args_pv {
     if (@pv) {
 	join '', map { qq{ -pv $_} } @pv;
+    } else {
+	'';
+    }
+}
+
+sub _args_minbuilddiravail {
+    if ($min_build_dir_avail) {
+	q{ -minbuilddiravail } . $min_build_dir_avail;
     } else {
 	'';
     }
