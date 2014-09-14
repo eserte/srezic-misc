@@ -93,6 +93,7 @@ my @touch_files;
 my $reload_index;
 my $hack_checksum_check_file = 1;
 my $ignore_history;
+my $deterministic_hashes;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -154,6 +155,7 @@ GetOptions("n" => \$n,
 	   'x11display=s' => \$x11_display,
 	   'reloadindex|reload-index' => \$reload_index,
 	   'ignorehistory' => \$ignore_history,
+	   'deterministichashes' => \$deterministic_hashes,
 	  )
     or die <<EOF;
 usage: $0
@@ -1106,6 +1108,10 @@ EOF
 	}
 	if ($effective_x11_display) {
 	    $ENV{DISPLAY} = $effective_x11_display;
+	}
+	if ($deterministic_hashes) {
+	    $ENV{PERL_HASH_SEED} = "0";
+	    $ENV{PERL_PERTURB_KEYS} = "NO";
 	}
 	system @cmd;
 	if ($? & 127) {
