@@ -736,6 +736,8 @@ sub set_currfile {
 					    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
 					    $more->Load($sample_recent_file);
 					    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
+					    my $modtime = scalar localtime ((stat($sample_recent_file))[9]);
+					    $t->Label(-text => "Report created: $modtime", -anchor => 'w')->pack(qw(-fill x -expand 1));
 					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 					},
 				       )->pack;
