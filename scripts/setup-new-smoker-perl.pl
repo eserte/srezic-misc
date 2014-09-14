@@ -538,3 +538,19 @@ sub sudo (@) {
 # REPO END
 
 __END__
+
+=head1 TROUBLESHOOTING
+
+=over
+
+=item wget refuses to download from metacpan because of certificate issues
+
+Formerly it worked to replace the C<https> URL by a C<http> URL. This
+does not work anymore, so make sure the required root certificates are
+installed. For FreeBSD, install the security/ca_root_nss package, and
+make sure that the /etc/ssl symlink is created (see the port options).
+Double check if the port is creating this symlink at all.
+
+=back
+
+=cut
