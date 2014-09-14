@@ -381,7 +381,8 @@ sub set_currfile {
 			     /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
 			     /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
 			     /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
-			     /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/
+			     /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
+			     /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
 			    ) {
 			$add_analysis_tag->('low perl');
 		    } elsif (
