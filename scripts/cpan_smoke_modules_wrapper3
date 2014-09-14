@@ -12,6 +12,7 @@ my $do_maintperl;
 my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
 my $min_build_dir_avail;
+my @pv;
 my $scripts_dir = $FindBin::RealBin;
 if (!-e "$scripts_dir/cpan_smoke_modules" && !-e "$scripts_dir/cpan_recent_uploads2") {
     # fallback
@@ -32,6 +33,7 @@ GetOptions(
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
 	   "minbuilddiravail=s" => \$min_build_dir_avail,
+	   'pv=s@' => \@pv,
 	   "cpansmokemodulesoptions=s" => \$cpan_smoke_modules_options,
 	   "scenario=s" => \$scenario,
 	  )
@@ -159,6 +161,7 @@ sub run_smoker ($$$) {
     if ($min_build_dir_avail) {
 	$cmd .= q{ -minbuilddiravail } . $min_build_dir_avail;
     }
+    $cmd .= _args_pv();
     $cmd .= q{ -- `};
     if (0) { # just looking at the distribution name to decide whether
              # it's stable or not
@@ -315,6 +318,7 @@ sub _scenario_hidemod_and_prereq {
 sub _scenario_basecmd {
     my $basecmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
     $basecmd .= q{ -nosignalend};
+    $basecmd .= _args_pv();
     $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $basecmd .= q{ } . join(' ', @scenario_modules);
     $basecmd;
@@ -338,6 +342,14 @@ sub maybe_xterm_conf ($) {
     }
     return if !$HAVE_XTERM_CONF;
     system('xterm-conf', '-f', '-title', $title);
+}
+
+sub _args_pv {
+    if (@pv) {
+	join '', map { qq{ -pv $_} } @pv;
+    } else {
+	'';
+    }
 }
 
 # REPO BEGIN
