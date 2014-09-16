@@ -421,6 +421,11 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('pod spelling test');
 		    } elsif (
+			     /^#\s+Failed test 'has_human_readable_license'/ ||
+			     /^#\s+Failed test 'has_license_in_source_file'/
+			    ) {
+			$add_analysis_tag->('kwalitee test');
+		    } elsif (
 			     /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
 			    ) {
 			$add_analysis_tag->('prereq test');
@@ -782,6 +787,7 @@ sub set_currfile {
 			       'signature mismatch' => 'testsignature',
 			       'prereq fail' => 'prereq',
 			       'prereq test' => 'testprereq',
+			       'kwalitee test' => 'testkwalitee',
 			       'system perl used' => 'systemperl',
 			       'out of memory' => 'nolimits',
 			      );
