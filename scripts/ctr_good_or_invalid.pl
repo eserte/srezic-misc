@@ -422,7 +422,8 @@ sub set_currfile {
 			$add_analysis_tag->('pod spelling test');
 		    } elsif (
 			     /^#\s+Failed test 'has_human_readable_license'/ ||
-			     /^#\s+Failed test 'has_license_in_source_file'/
+			     /^#\s+Failed test 'has_license_in_source_file'/ ||
+			     /^#\s+Failed test 'metayml_is_parsable'/
 			    ) {
 			$add_analysis_tag->('kwalitee test');
 		    } elsif (
@@ -524,7 +525,6 @@ sub set_currfile {
 			    ) {
 			$add_analysis_tag->('taint');
 		    } elsif (
-			     /\Q# Error: META.yml does not conform to any recognised META.yml Spec./ ||
 			     /\Q# Error: The META.yml file of this distribution could not be parsed by the version of CPAN::Meta::YAML.pm CPANTS is using./
 			    ) {
 			$add_analysis_tag->('meta.yml spec');
