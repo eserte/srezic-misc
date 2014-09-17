@@ -15,14 +15,28 @@
 use strict;
 use Config;
 use File::Find;
+use Getopt::Long;
+
+my $v;
+GetOptions("v+" => \$v)
+    or die "usage: $0 [-v]";
 
 my @search_libs = $Config{'sitearch'};
 
 my %seen;
 my %broken_module;
+my %so_not_found;
 
 for my $search_lib (@search_libs) {
     File::Find::find({wanted => \&wanted}, $search_lib);
+}
+
+if (%so_not_found) {
+    print STDERR "The following .so could not be found:\n";
+    for my $so (sort keys %so_not_found) {
+	print STDERR "  $so (used in: " . join(', ', sort keys %{$so_not_found{$so}}) . ")\n";
+    }
+    print STDERR "\n";
 }
 
 # Remove some exceptions
@@ -57,6 +71,11 @@ sub wanted {
 	    $module =~ s{.*/auto/}{};
 	    $module =~ s{/}{::}g;
 	    $broken_module{$module} = 1;
+	    if ($v) {
+		while ($res =~ m{^\s+(.*?)\s+=>.*not found}gm) {
+		    $so_not_found{$1}->{$File::Find::name} = 1;
+		}
+	    }
 	}
 	$seen{$File::Find::name} = 1;
     }
