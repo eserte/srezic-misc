@@ -136,11 +136,29 @@ if (-d $done_directory) {
 }
 
 my $good_rx = $only_pass_is_good ? qr{/(pass)\.} : qr{/(pass|unknown|na)\.};
+my $maybe_good_rx = $only_pass_is_good ? qr{/(unknown|na)\.} : undef;
 
 my @new_files;
-# pass, na, unknown are always good:
+# "pass" is always good
+# "na" and "unknown" is good if --only-pass-is-good given
+# exception: 'notests' and 'low perl' are also considered as 'good'
 for my $file (@files) {
+    my $is_good;
     if ($file =~ $good_rx) {
+	$is_good = 1;
+    } elsif (defined $maybe_good_rx && $file =~ $maybe_good_rx) {
+	my $ret = parse_test_report($file);
+	if (!$ret->{error} &&
+	    (
+	     $ret->{analysis_tags}{'notests'} ||
+	     $ret->{analysis_tags}{'low perl'}
+	    )
+	   ) {
+	    $is_good = 1;
+	}
+    }
+
+    if ($is_good) {
 	move $file, $good_directory
 	    or die "Cannot move $file to $good_directory: $!";
     } else {
@@ -1014,8 +1032,10 @@ this feature off.
 
 By default, only FAIL reports are checked interactively and everything
 else is moved automatically to the C<sync> directory. Using this
-switch also NA and UNKNOWN reports are checked interactively.
-
+switch also NA and UNKNOWN reports are checked interactively. An
+exception are such reports where the analysis thinks that it's due to
+"notests" or "low perl"; these reports are also moved automatically
+for syncing.
 
 =head2 RELATED SCRIPTS
 
