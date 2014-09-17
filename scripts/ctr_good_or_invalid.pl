@@ -14,6 +14,7 @@
 
 use strict;
 use File::Copy qw(move);
+use Hash::Util qw(lock_keys);
 use Tk;
 use Tk::Balloon;
 use Tk::More;
@@ -314,6 +315,347 @@ MainLoop;
 
 set_term_title("report sender: finished");
 
+sub parse_test_report {
+    my($file) = @_;
+
+    my $subject;
+    my $x_test_reporter_perl;
+    my $x_test_reporter_distfile;
+    my $currfulldist;
+    my %analysis_tags;
+    my %prereq_fails;
+
+    my $fh;
+    if (!open($fh, $file)) {
+	return { error => $! };
+    }
+
+    # Parse header
+    while(<$fh>) {
+	if (/^Subject:\s*(.*)/) {
+	    $subject = $1;
+	    if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
+		$currfulldist = $1;
+	    } else {
+		warn "Cannot parse distribution out of '$subject'";
+	    }
+	} elsif (/^X-Test-Reporter-Perl:\s*(.*)/i) {
+	    $x_test_reporter_perl = $1;
+	} elsif (/^X-Test-Reporter-Distfile:\s*(.*)/i) {
+	    $x_test_reporter_distfile = $1;
+	} elsif (/^$/) {
+	    last;
+	}
+    }
+
+    # Parse body
+    {
+	my $section = '';
+
+	my $program_output = {}; # collects only one line in PROGRAM OUTPUT
+
+	my $add_analysis_tag = sub {
+	    my($tag, $line) = @_;
+	    if (!defined $line) { $line = $. }
+	    if (!exists $analysis_tags{$tag}) {
+		$analysis_tags{$tag} = { line => $line };
+	    }
+	};
+
+	while(<$fh>) {
+	    if (/^PROGRAM OUTPUT$/) {
+		$section = 'PROGRAM OUTPUT';
+	    } elsif (/^PREREQUISITES$/) {
+		if ($section eq 'PROGRAM OUTPUT' && defined $program_output->{content}) {
+		    if (
+			$program_output->{content} =~ /No tests defined for \S+ extension\.$/ || # EUMM version
+			$program_output->{content} =~ /No tests defined\.$/                      # MB version
+		       ) {
+			$add_analysis_tag->('notests', $program_output->{line});
+		    }
+		}
+		$section = 'PREREQUISITES';
+	    } elsif (/^ENVIRONMENT AND OTHER CONTEXT$/) {
+		$section = 'ENVIRONMENT';
+	    } elsif ($section eq 'PROGRAM OUTPUT') {
+		if (
+		    /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
+		    /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
+		    /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
+		    /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
+		    /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
+		   ) {
+		    $add_analysis_tag->('low perl');
+		} elsif (
+			 /^Result: NOTESTS$/
+			 ## Rely solely on the above regexp --- the below may happen because a sub-module has no tests
+			 ## but see $program_output logic before PREREQUISITES section
+			 # || /^No tests defined for \S+ extension\.$/
+			 # || /^No tests defined\.$/
+			) {
+		    $add_analysis_tag->('notests');
+		} elsif (
+			 /^OS unsupported$/ ||
+			 /^OS unsupported $at_source_qr$/ ||
+			 /^No support for OS at /
+			) {
+		    $add_analysis_tag->('os unsupported');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?(?:Smartmatch|given|when) is experimental $at_source_qr$/
+			) {
+		    $add_analysis_tag->('smartmatch');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|shift|unshift|splice) on reference is experimental $at_source_qr$/
+			) {
+		    $add_analysis_tag->('experimental functions on references');
+		} elsif (
+			 /^#\s+Failed test 'POD test for [^']+'$/
+			) {
+		    $add_analysis_tag->('pod test');
+		} elsif (
+			 /^#\s+Failed test 'Pod coverage on [^']+'$/ ||
+			 /^#\s+Coverage for \S+ is [\d\.]+%, with \d+ naked subroutines?:$/
+			) {
+		    $add_analysis_tag->('pod coverage test');
+		} elsif (
+			 /^#\s+Failed test 'POD spelling for [^']+'$/
+			) {
+		    $add_analysis_tag->('pod spelling test');
+		} elsif (
+			 /^#\s+Failed test 'has_human_readable_license'/ ||
+			 /^#\s+Failed test 'has_license_in_source_file'/ ||
+			 /^#\s+Failed test 'metayml_is_parsable'/
+			) {
+		    $add_analysis_tag->('kwalitee test');
+		} elsif (
+			 /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
+			) {
+		    $add_analysis_tag->('prereq test');
+		} elsif ( # this should come before the generic 'prereq fail' test
+			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
+			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
+			) {
+		    $add_analysis_tag->('system perl used');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?Can't locate (\S+) in \@INC/
+			) {
+		    (my $prereq_fail = $1) =~ s{\.pm$}{};
+		    $prereq_fail =~ s{/}{::}g;
+		    $prereq_fails{$prereq_fail} = 1;
+		    $add_analysis_tag->('prereq fail');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?Base class package "(.*?)" is empty\.$/
+			) {
+		    $prereq_fails{$1} = 1;
+		    $add_analysis_tag->('prereq fail');
+		} elsif (
+			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array))\)/ ||
+			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/
+			) {
+		    $add_analysis_tag->('container func on ref');
+		} elsif (
+			 /This Perl not built to support threads/
+			) {
+		    $add_analysis_tag->('unthreaded perl');
+		} elsif (
+			 /error: .*?\.h: No such file or directory/ ||
+			 /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/ ||
+			 /^.*?$c_ext_qr:\d+:\d+:\s+fatal error:\s+'.*?\.h' file not found/
+			) {
+		    $add_analysis_tag->('missing c include');
+		} elsif (
+			 /gcc: not found/ ||
+			 /gcc: Kommando nicht gefunden/ ||
+			 /\Qmake: exec(gcc) failed (No such file or directory)/
+			) {
+		    $add_analysis_tag->('gcc not found');
+		} elsif (
+			 /^.*?$c_ext_qr:\d+:\s+error:\s+/ || # gcc
+			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ # gcc or clang
+			) {
+		    $add_analysis_tag->('c compile error');
+		} elsif (
+			 /^\s*#\s+Error:  Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/
+			) {
+		    $add_analysis_tag->('undefined symbol in shared lib');
+		} elsif (
+			 /^collect2: error: ld returned 1 exit status/ ||
+			 m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC}
+			) {
+		    $add_analysis_tag->('linker error');
+		} elsif (
+			 /Out of memory!/ ||
+			 /out of memory allocating \d+ bytes after a total of \d+ bytes/ # gcc
+			) {
+		    $add_analysis_tag->('out of memory');
+		} elsif (
+			 /^# Perl::Critic found these violations in .*:$/
+			) {
+		    $add_analysis_tag->('perl critic');
+		} elsif ( # note: these checks have to happen before the 'qw without parentheses' check
+			 /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			 /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
+			 m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
+			 m{\QError:  Scalar::Util version 1.24 required--this is only version 1.\E\d+\Q at } ||
+			 m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"} ||
+			 m{\QUndefined subroutine &Scalar::Util::set_prototype called at }
+			) {
+		    $add_analysis_tag->('possibly old bundled modules');
+		} elsif (
+			 /syntax error.*\bnear "\$\w+ qw\(/ ||
+			 /syntax error.*\bnear "\$\w+ qw\// ||
+			 /syntax error.*\bnear "->\w+ qw\(/ ||
+			 /\QUse of qw(...) as parentheses is deprecated\E $at_source_qr/
+			) {
+		    $add_analysis_tag->('qw without parentheses');
+		} elsif (
+			 m{Bareword found where operator expected $at_source_without_dot_qr, near "s/.*/r"$}
+			) {
+		    $add_analysis_tag->('r flag in s///');
+		} elsif (
+			 /==> MISMATCHED content between \S+ and distribution files! <==/
+			) {
+		    $add_analysis_tag->('signature mismatch');
+		} elsif (
+			 /^Attribute \(.+?\) does not pass the type constraint because: .* $at_source_without_dot_qr$/ || # Validation failed for '.+?' with value or ... is too long
+			 /^Attribute \(.+?\) is required $at_source_without_dot_qr$/
+			) {
+		    $add_analysis_tag->('type constraint violation');
+		} elsif (
+			 /^(?:# died: )?Insecure .+? while running with -T switch $at_source_qr$/
+			) {
+		    $add_analysis_tag->('taint');
+		} elsif (
+			 /\Q# Error: The META.yml file of this distribution could not be parsed by the version of CPAN::Meta::YAML.pm CPANTS is using./
+			) {
+		    $add_analysis_tag->('meta.yml spec');
+		} elsif (
+			 /^\s*#\s+Failed test '.*'$/ ||
+			 /^\s*#\s+Failed test at .* line \d+\.$/ ||
+			 /^\s*#\s+Failed test \(.*\)$/ ||
+			 /^\s*#\s+Failed test \d+ in .* at line \d+$/ ||
+			 /^# Looks like your test exited with \d+ just after / ||
+			 /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/
+			) {
+		    $add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
+		} elsif (
+			 /\S+ uses NEXT, which is deprecated. Please see the Class::C3::Adopt::NEXT documentation for details. NEXT used\s+$at_source_qr/
+			) {
+		    $add_analysis_tag->('deprecation (NEXT)');
+		} elsif (
+			 /Class::MOP::load_class is deprecated/
+			) {
+		    $add_analysis_tag->('deprecation (Class::MOP)');
+		} elsif (
+			 /Passing a list of values to enum is deprecated. Enum values should be wrapped in an arrayref. $at_source_qr/
+			) {
+		    $add_analysis_tag->('deprecation (Moose)');
+		} elsif (
+			 /DBD::SQLite::st execute failed: database is locked/ ||
+			 /DBD::SQLite::db do failed: database is locked \[for Statement "/
+			) {
+		    $add_analysis_tag->('locking issue (File::Temp?)');
+		} elsif (
+			 /Perl lib version \(.*?\) doesn't match executable '.*?' version (.*?) $at_source_qr/
+			) {
+		    $add_analysis_tag->('perl version mismatch (lib)');
+		} elsif (
+			 /Can't connect to \S+ \((Invalid argument|Bad hostname)\) $at_source_qr/
+			) {
+		    $add_analysis_tag->('remote connection problem');
+		} elsif (
+			 /^Files=\d+, Tests=\d+, (\d+) wallclock secs /
+			) {
+		    if ($1 >= 1800) {
+			$add_analysis_tag->('very long runtime (>= 30 min)');
+		    } elsif ($1 >= 900) {
+			$add_analysis_tag->('long runtime (>= 15 min)');
+		    }
+		} elsif (
+			 /Unrecognized character .* at \._\S+ line \d+\./
+			) {
+		    $add_analysis_tag->('hidden MacOSX file');
+		} elsif (
+			 m{^Unknown regexp modifier "/[^"]+" at }
+			) {
+		    $add_analysis_tag->('unknown regexp modifier');
+		} elsif (
+			 m{\QSequence (?^...) not recognized in regex;} ||
+			 m{\QSequence (?&...) not recognized in regex;} ||
+			 m{\QSequence (?<u...) not recognized in regex;}
+			) {
+		    $add_analysis_tag->('new regexp feature');
+		} elsif (
+			 m{\Q(Might be a runaway multi-line // string starting on line \E\d+} ||
+			 m{\QSearch pattern not terminated \E$at_source_qr}
+			) {
+		    $add_analysis_tag->('defined-or');
+		} elsif (
+			 m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
+			) {
+		    $add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
+		} elsif (
+			 m{^Execution of Build.PL aborted due to compilation errors\.$}
+			) {
+		    $add_analysis_tag->('compilation error in Build.PL');
+		} elsif (
+			 m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
+			) {
+		    $add_analysis_tag->('possibly missing use Carp');
+		} elsif (
+			 m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
+			) {
+		    $add_analysis_tag->('possible file temp locking issue');
+		} elsif (
+			 m{UNIVERSAL does not export anything}
+			) {
+		    $add_analysis_tag->('UNIVERSAL export');
+		} elsif (
+			 /^\QBailout called.  Further testing stopped:/
+			) {
+		    # rather unspecific, do as rather last check
+		    $add_analysis_tag->('bailout');
+		} else {
+		    # collect PROGRAM OUTPUT string (maybe)
+		    if (!$program_output->{skip_collector}) {
+			if (/^-*$/) {
+				# skip newlines and dashes
+			} elsif (/^Output\s+from\s+'.*(?:make|Build)\s+test':/) {
+				# skip
+			} elsif (defined $program_output->{content}) {
+				# collect just one line
+			    $program_output->{skip_collector} = 1;
+			} else {
+			    $program_output->{content} .= $_;
+			    $program_output->{line} = $. if !defined $program_output->{line};
+			}
+		    }
+		}
+	    } elsif ($section eq 'PREREQUISITES') {
+		if (my($perl_need, $perl_have) = $_ =~ /^\s*!\s*perl\s*(v?[\d\.]+)\s+(v?[\d\.]+)\s*$/) {
+		    require version;
+		    if (eval { version->new($perl_need) } > eval { version->new($perl_have) }) {
+			$add_analysis_tag->('low perl');
+		    }
+		}
+	    }
+	}
+    }
+
+    my %ret =
+	(
+	 error                    => undef,
+	 subject                  => $subject,
+	 x_test_reporter_perl     => $x_test_reporter_perl,
+	 x_test_reporter_distfile => $x_test_reporter_distfile,
+	 currfulldist             => $currfulldist,
+	 analysis_tags            => \%analysis_tags,
+	 prereq_fails             => \%prereq_fails,
+	);
+    lock_keys %ret;
+    return \%ret;
+}
+
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $currfile_st = $currfile_i + 1;
@@ -322,342 +664,35 @@ sub set_currfile {
     my $textw = $more->Subwidget("scrolled");
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
-    my $currfulldist;
-    my $x_test_reporter_distfile;
-    my %analysis_tags;
-    my %prereq_fails;
-    if (open my $fh, $currfile) {
-	# Parse header
-	my $subject;
-	my $x_test_reporter_perl;
-	while(<$fh>) {
-	    if (/^Subject:\s*(.*)/) {
-		$subject = $1;
-		if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
-		    $currfulldist = $1;
-		} else {
-		    warn "Cannot parse distribution out of '$subject'";
-		}
-	    } elsif (/^X-Test-Reporter-Perl:\s*(.*)/i) {
-		$x_test_reporter_perl = $1;
-	    } elsif (/^X-Test-Reporter-Distfile:\s*(.*)/i) {
-		$x_test_reporter_distfile = $1;
-	    } elsif (/^$/) {
-		last;
-	    }
-	}
 
-	# Parse body
-	{
-	    my $section = '';
-
-	    my $program_output = {}; # collects only one line in PROGRAM OUTPUT
-
-	    my $add_analysis_tag = sub {
-		my($tag, $line) = @_;
-		if (!defined $line) { $line = $. }
-		if (!exists $analysis_tags{$tag}) {
-		    $analysis_tags{$tag} = { line => $line };
-		}
-	    };
-
-	    while(<$fh>) {
-		if (/^PROGRAM OUTPUT$/) {
-		    $section = 'PROGRAM OUTPUT';
-		} elsif (/^PREREQUISITES$/) {
-		    if ($section eq 'PROGRAM OUTPUT' && defined $program_output->{content}) {
-			if (
-			    $program_output->{content} =~ /No tests defined for \S+ extension\.$/ || # EUMM version
-			    $program_output->{content} =~ /No tests defined\.$/                      # MB version
-			   ) {
-			    $add_analysis_tag->('notests', $program_output->{line});
-			}
-		    }
-		    $section = 'PREREQUISITES';
-		} elsif (/^ENVIRONMENT AND OTHER CONTEXT$/) {
-		    $section = 'ENVIRONMENT';
-		} elsif ($section eq 'PROGRAM OUTPUT') {
-		    if      (
-			     /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
-			     /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
-			     /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
-			     /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
-			     /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
-			    ) {
-			$add_analysis_tag->('low perl');
-		    } elsif (
-			     /^Result: NOTESTS$/
-			     ## Rely solely on the above regexp --- the below may happen because a sub-module has no tests
-			     ## but see $program_output logic before PREREQUISITES section
-			     # || /^No tests defined for \S+ extension\.$/
-			     # || /^No tests defined\.$/
-			    ) {
-			$add_analysis_tag->('notests');
-		    } elsif (
-			     /^OS unsupported$/ ||
-			     /^OS unsupported $at_source_qr$/ ||
-			     /^No support for OS at /
-			    ) {
-			$add_analysis_tag->('os unsupported');
-		    } elsif (
-			     /^(?:#\s+Error:\s+)?(?:Smartmatch|given|when) is experimental $at_source_qr$/
-			    ) {
-			$add_analysis_tag->('smartmatch');
-		    } elsif (
-			     /^(?:#\s+Error:\s+)?(?:push|pop|keys|shift|unshift|splice) on reference is experimental $at_source_qr$/
-			    ) {
-			$add_analysis_tag->('experimental functions on references');
-		    } elsif (
-			     /^#\s+Failed test 'POD test for [^']+'$/
-			    ) {
-			$add_analysis_tag->('pod test');
-		    } elsif (
-			     /^#\s+Failed test 'Pod coverage on [^']+'$/ ||
-			     /^#\s+Coverage for \S+ is [\d\.]+%, with \d+ naked subroutines?:$/
-			    ) {
-			$add_analysis_tag->('pod coverage test');
-		    } elsif (
-			     /^#\s+Failed test 'POD spelling for [^']+'$/
-			    ) {
-			$add_analysis_tag->('pod spelling test');
-		    } elsif (
-			     /^#\s+Failed test 'has_human_readable_license'/ ||
-			     /^#\s+Failed test 'has_license_in_source_file'/ ||
-			     /^#\s+Failed test 'metayml_is_parsable'/
-			    ) {
-			$add_analysis_tag->('kwalitee test');
-		    } elsif (
-			     /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
-			    ) {
-			$add_analysis_tag->('prereq test');
-		    } elsif ( # this should come before the generic 'prereq fail' test
-			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
-			     m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
-			    ) {
-			$add_analysis_tag->('system perl used');
-		    } elsif (
-			     /^(?:#\s+Error:\s+)?Can't locate (\S+) in \@INC/
-			    ) {
-			(my $prereq_fail = $1) =~ s{\.pm$}{};
-			$prereq_fail =~ s{/}{::}g;
-			$prereq_fails{$prereq_fail} = 1;
-			$add_analysis_tag->('prereq fail');
-		    } elsif (
-			     /^(?:#\s+Error:\s+)?Base class package "(.*?)" is empty\.$/
-			    ) {
-			$prereq_fails{$1} = 1;
-			$add_analysis_tag->('prereq fail');
-		    } elsif (
-			     /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array))\)/ ||
-			     /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/
-			    ) {
-			$add_analysis_tag->('container func on ref');
-		    } elsif (
-			     /This Perl not built to support threads/
-			    ) {
-			$add_analysis_tag->('unthreaded perl');
-		    } elsif (
-			     /error: .*?\.h: No such file or directory/ ||
-			     /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/ ||
-			     /^.*?$c_ext_qr:\d+:\d+:\s+fatal error:\s+'.*?\.h' file not found/
-			    ) {
-			$add_analysis_tag->('missing c include');
-		    } elsif (
-			     /gcc: not found/ ||
-			     /gcc: Kommando nicht gefunden/ ||
-			     /\Qmake: exec(gcc) failed (No such file or directory)/
-			    ) {
-			$add_analysis_tag->('gcc not found');
-		    } elsif (
-			     /^.*?$c_ext_qr:\d+:\s+error:\s+/ || # gcc
-			     /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ # gcc or clang
-			    ) {
-			$add_analysis_tag->('c compile error');
-		    } elsif (
-			     /^\s*#\s+Error:  Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/
-			    ) {
-			$add_analysis_tag->('undefined symbol in shared lib');
-		    } elsif (
-			     /^collect2: error: ld returned 1 exit status/ ||
-			     m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC}
-			    ) {
-			$add_analysis_tag->('linker error');
-		    } elsif (
-			     /Out of memory!/ ||
-			     /out of memory allocating \d+ bytes after a total of \d+ bytes/ # gcc
-			    ) {
-			$add_analysis_tag->('out of memory');
-		    } elsif (
-			     /^# Perl::Critic found these violations in .*:$/
-			    ) {
-			$add_analysis_tag->('perl critic');
-		    } elsif ( # note: these checks have to happen before the 'qw without parentheses' check
-			     /^Test::Builder::Module version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
-			     /^Test::Builder version [\d\.]+ required--this is only version [\d\.]+ $at_source_qr$/ ||
-			     m{^\Q# Error: This distribution uses an old version of Module::Install. Versions of Module::Install prior to 0.89 does not detect correcty that CPAN/CPANPLUS shell is used.\E$} ||
-			     m{\QError:  Scalar::Util version 1.24 required--this is only version 1.\E\d+\Q at } ||
-			     m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"} ||
-			     m{\QUndefined subroutine &Scalar::Util::set_prototype called at }
-			    ) {
-			$add_analysis_tag->('possibly old bundled modules');
-		    } elsif (
-			     /syntax error.*\bnear "\$\w+ qw\(/ ||
-			     /syntax error.*\bnear "\$\w+ qw\// ||
-			     /syntax error.*\bnear "->\w+ qw\(/ ||
-			     /\QUse of qw(...) as parentheses is deprecated\E $at_source_qr/
-			    ) {
-			$add_analysis_tag->('qw without parentheses');
-		    } elsif (
-			     m{Bareword found where operator expected $at_source_without_dot_qr, near "s/.*/r"$}
-			    ) {
-			$add_analysis_tag->('r flag in s///');
-		    } elsif (
-			     /==> MISMATCHED content between \S+ and distribution files! <==/
-			    ) {
-			$add_analysis_tag->('signature mismatch');
-		    } elsif (
-			     /^Attribute \(.+?\) does not pass the type constraint because: .* $at_source_without_dot_qr$/ || # Validation failed for '.+?' with value or ... is too long
-			     /^Attribute \(.+?\) is required $at_source_without_dot_qr$/
-			    ) {
-			$add_analysis_tag->('type constraint violation');
-		    } elsif (
-			     /^(?:# died: )?Insecure .+? while running with -T switch $at_source_qr$/
-			    ) {
-			$add_analysis_tag->('taint');
-		    } elsif (
-			     /\Q# Error: The META.yml file of this distribution could not be parsed by the version of CPAN::Meta::YAML.pm CPANTS is using./
-			    ) {
-			$add_analysis_tag->('meta.yml spec');
-		    } elsif (
-			     /^\s*#\s+Failed test '.*'$/ ||
-			     /^\s*#\s+Failed test at .* line \d+\.$/ ||
-			     /^\s*#\s+Failed test \(.*\)$/ ||
-			     /^\s*#\s+Failed test \d+ in .* at line \d+$/ ||
-			     /^# Looks like your test exited with \d+ just after / ||
-			     /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/
-			    ) {
-			$add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
-		    } elsif (
-			     /\S+ uses NEXT, which is deprecated. Please see the Class::C3::Adopt::NEXT documentation for details. NEXT used\s+$at_source_qr/
-			    ) {
-			$add_analysis_tag->('deprecation (NEXT)');
-		    } elsif (
-			     /Class::MOP::load_class is deprecated/
-			    ) {
-			$add_analysis_tag->('deprecation (Class::MOP)');
-		    } elsif (
-			     /Passing a list of values to enum is deprecated. Enum values should be wrapped in an arrayref. $at_source_qr/
-			    ) {
-			$add_analysis_tag->('deprecation (Moose)');
-		    } elsif (
-			     /DBD::SQLite::st execute failed: database is locked/ ||
-			     /DBD::SQLite::db do failed: database is locked \[for Statement "/
-			    ) {
-			$add_analysis_tag->('locking issue (File::Temp?)');
-		    } elsif (
-			     /Perl lib version \(.*?\) doesn't match executable '.*?' version (.*?) $at_source_qr/
-			    ) {
-			$add_analysis_tag->('perl version mismatch (lib)');
-		    } elsif (
-			     /Can't connect to \S+ \((Invalid argument|Bad hostname)\) $at_source_qr/
-			    ) {
-			$add_analysis_tag->('remote connection problem');
-		    } elsif (
-			     /^Files=\d+, Tests=\d+, (\d+) wallclock secs /
-			    ) {
-			if ($1 >= 1800) {
-			    $add_analysis_tag->('very long runtime (>= 30 min)');
-			} elsif ($1 >= 900) {
-			    $add_analysis_tag->('long runtime (>= 15 min)');
-			}
-		    } elsif (
-			     /Unrecognized character .* at \._\S+ line \d+\./
-			    ) {
-			$add_analysis_tag->('hidden MacOSX file');
-		    } elsif (
-			     m{^Unknown regexp modifier "/[^"]+" at }
-			    ) {
-			$add_analysis_tag->('unknown regexp modifier');
-		    } elsif (
-			     m{\QSequence (?^...) not recognized in regex;} ||
-			     m{\QSequence (?&...) not recognized in regex;} ||
-			     m{\QSequence (?<u...) not recognized in regex;}
-			    ) {
-			$add_analysis_tag->('new regexp feature');
-		    } elsif (
-			     m{\Q(Might be a runaway multi-line // string starting on line \E\d+} ||
-			     m{\QSearch pattern not terminated \E$at_source_qr}
-			    ) {
-			$add_analysis_tag->('defined-or');
-		    } elsif (
-			     m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
-			    ) {
-			$add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
-		    } elsif (
-			     m{^Execution of Build.PL aborted due to compilation errors\.$}
-			    ) {
-			$add_analysis_tag->('compilation error in Build.PL');
-		    } elsif (
-			     m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
-			    ) {
-			$add_analysis_tag->('possibly missing use Carp');
-		    } elsif (
-			     m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
-			    ) {
-			$add_analysis_tag->('possible file temp locking issue');
-		    } elsif (
-			     m{UNIVERSAL does not export anything}
-			    ) {
-			$add_analysis_tag->('UNIVERSAL export');
-		    } elsif (
-			     /^\QBailout called.  Further testing stopped:/
-			    ) {
-			# rather unspecific, do as rather last check
-			$add_analysis_tag->('bailout');
-		    } else {
-			# collect PROGRAM OUTPUT string (maybe)
-			if (!$program_output->{skip_collector}) {
-			    if (/^-*$/) {
-				# skip newlines and dashes
-			    } elsif (/^Output\s+from\s+'.*(?:make|Build)\s+test':/) {
-				# skip
-			    } elsif (defined $program_output->{content}) {
-				# collect just one line
-				$program_output->{skip_collector} = 1;
-			    } else {
-				$program_output->{content} .= $_;
-				$program_output->{line} = $. if !defined $program_output->{line};
-			    }
-			}
-		    }
-		} elsif ($section eq 'PREREQUISITES') {
-		    if (my($perl_need, $perl_have) = $_ =~ /^\s*!\s*perl\s*(v?[\d\.]+)\s+(v?[\d\.]+)\s*$/) {
-			require version;
-			if (eval { version->new($perl_need) } > eval { version->new($perl_have) }) {
-			    $add_analysis_tag->('low perl');
-			}
-		    }
-		}
-	    }
-	}
-
-	my $title = "ctr_good_or_invalid:";
-	if ($subject) {
-	    $title =  " " . $subject;
-	    if ($x_test_reporter_perl) {
-		$title .= " (perl " . $x_test_reporter_perl . ")";
-	    }
-	    my $mw = $more->toplevel;
-	} else {
-	    $title = " (subject not parseable)";
-	}
-	$mw->title($title);
-
-	$modtime = scalar localtime ((stat($currfile))[9]);
-    } else {
+    my $parsed_report = parse_test_report($currfile);
+    if ($parsed_report->{error}) {
+	$mw->messageBox(-icon => 'error', -message => "Can't open $currfile: $parsed_report->{error}");
 	warn "Can't open $currfile: $!";
 	$modtime = "N/A";
+	return;
     }
+
+    my $subject = $parsed_report->{subject};
+    my $currfulldist = $parsed_report->{currfulldist};
+    my $x_test_reporter_perl = $parsed_report->{x_test_reporter_perl};
+    my $x_test_reporter_distfile = $parsed_report->{x_test_reporter_distfile};
+    my %analysis_tags = %{ $parsed_report->{analysis_tags} };
+    my %prereq_fails = %{ $parsed_report->{prereq_fails} };
+
+    my $title = "ctr_good_or_invalid:";
+    if ($subject) {
+	$title =  " " . $subject;
+	if ($x_test_reporter_perl) {
+	    $title .= " (perl " . $x_test_reporter_perl . ")";
+	}
+	my $mw = $more->toplevel;
+    } else {
+	$title = " (subject not parseable)";
+    }
+    $mw->title($title);
+
+    $modtime = scalar localtime ((stat($currfile))[9]);
 
     {
 	# fill "$following_dists_text" label
