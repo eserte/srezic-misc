@@ -49,6 +49,7 @@ use YAML::Syck qw(Load);
 my($from, $to);
 my $url;
 my $v;
+my $warn_old;
 my $only_stable;
 my $only_dists;
 my $only_indexed;
@@ -60,8 +61,9 @@ GetOptions("from=s" => \$from,
 	   "onlydists!" => \$only_dists,
 	   "onlyindexed|indexed!" => \$only_indexed,
 	   "v+"     => \$v,
+	   "warnold" => \$warn_old,
 	  ) or die <<EOF;
-usage: $0 [-from epoch] [-to epoch] [-url ...] [-stable | -indexed] [-onlydists] [-v [-v ...]]
+usage: $0 [-from epoch] [-to epoch] [-url ...] [-stable | -indexed] [-onlydists] [-v [-v ...]] [-warnold]
 EOF
 
 my $now = time;
@@ -136,6 +138,27 @@ if (!$resp->is_success) {
     die "Error while fetching $recent: " . $resp->status_line;
 }
 my $recent_data = Load($resp->decoded_content);
+
+if ($warn_old) {
+    my $time = $recent_data->{meta}->{Producers}->{time};
+    my $error_message;
+    if (!$time) {
+	$error_message = 'Cannot get data path meta.Producers.time (zero or non-existent)';
+    } else {
+	my $age = time - $time;
+	my $accept_age = 3600*6; # assume every six hours an update
+	if ($age > $accept_age) {
+	    $error_message = sprintf "%s is too old: age is %.1f hour(s), but we accept only %.1f hour(s) or younger", $recent, $age/3600, $accept_age/3600;
+	}
+    }
+    if ($error_message) {
+	if (eval {
+	    standalone_message_box(-message => $error_message);
+	}) {
+	    warn $error_message;
+	}
+    }
+}
 
 my @aggregator = @{ $recent_data->{meta}->{aggregator} || [] };
 
@@ -222,3 +245,40 @@ GATHER_DATA: {
 	}
     }
 }
+
+# REPO BEGIN
+# REPO NAME standalone_message_box /home/e/eserte/src/srezic-repository 
+# REPO MD5 c4592f93ed4afa4f6a93d9ff38d2e905
+
+=head2 standalone_message_box
+
+=for category Tk
+
+A message box which can be invoked without Tk being loaded before. It
+uses the same arguments as messageBox from Tk, but is always invoked
+as a function. Return the messageBox answer.
+
+=cut
+
+sub standalone_message_box {
+    my %args = @_;
+    require Tk;
+    my $mw_created;
+    my(@mw) = Tk::MainWindow::Existing();
+    if (!@mw) {
+	push @mw, MainWindow->new();
+	$mw[0]->withdraw;
+	$mw_created++;
+    }
+    $args{-icon}  = 'error' unless exists $args{-icon};
+    $args{-title} = 'Error' unless exists $args{-error};
+    $args{-type}  = 'OK'    unless exists $args{-type};
+    my $answer = $mw[0]->messageBox(%args);
+    if ($mw_created) {
+	$mw[0]->destroy;
+    }
+    $answer;
+}
+
+# REPO END
+
