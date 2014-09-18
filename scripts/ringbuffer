@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use Getopt::Long;
+
+my $lines = 25;
+GetOptions("l|lines=i" => \$lines)
+    or die "usage: $0 [-l lines]\n";
+
+my @ringbuffer;
+my $ringbuffer_i = 0;
+
+$SIG{INT} = $SIG{TERM} = $SIG{HUP} = $SIG{PIPE} = \&output_ringbuffer;
+
+while(<>) {
+    $ringbuffer[$ringbuffer_i++] = $_;
+    if ($ringbuffer_i > $lines-1) {
+	$ringbuffer_i = 0;
+    }
+}
+
+output_ringbuffer();
+
+sub output_ringbuffer {
+    my @shift = splice @ringbuffer, $ringbuffer_i;
+    unshift @ringbuffer, @shift;
+    print join("", @ringbuffer);
+}
+
+__END__
