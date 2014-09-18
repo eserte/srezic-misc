@@ -380,6 +380,8 @@ sub parse_test_report {
 	    }
 	};
 
+	my $maybe_system_perl; # can be decided later
+
 	while(<$fh>) {
 	    if (/^PROGRAM OUTPUT$/) {
 		$section = 'PROGRAM OUTPUT';
@@ -453,7 +455,7 @@ sub parse_test_report {
 			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
 			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
 			) {
-		    $add_analysis_tag->('system perl used');
+		    $maybe_system_perl = 1; # decide later
 		} elsif (
 			 /^(?:#\s+Error:\s+)?Can't locate (\S+) in \@INC/
 			) {
@@ -656,7 +658,19 @@ sub parse_test_report {
 			$add_analysis_tag->('low perl');
 		    }
 		}
+	    } elsif ($section eq 'ENVIRONMENT') {
+		if ($maybe_system_perl) {
+		    if (   m{config_args=.*/BSDPAN}   # FreeBSD version
+			|| m{DEBPKG:debian/mod_paths} # Debian version
+		       ) {
+			$maybe_system_perl = 0;
+		    }
+		}
 	    }
+	}
+
+	if ($maybe_system_perl) { # now we're sure
+	    $add_analysis_tag->('system perl used');
 	}
     }
 
