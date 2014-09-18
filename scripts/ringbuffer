@@ -15,14 +15,27 @@
 use strict;
 use Getopt::Long;
 
+my $quiet;
 my $lines = 25;
-GetOptions("l|lines=i" => \$lines)
+GetOptions(
+	   "l|lines=i" => \$lines,
+	   "q|quiet" => \$quiet,
+	  )
     or die "usage: $0 [-l lines]\n";
 
 my @ringbuffer;
 my $ringbuffer_i = 0;
 
-$SIG{INT} = $SIG{TERM} = $SIG{HUP} = $SIG{PIPE} = \&output_ringbuffer;
+$SIG{INT} = $SIG{TERM} = $SIG{HUP} = $SIG{PIPE} = sub {
+    output_ringbuffer();
+    exit(1);
+};
+$SIG{USR1} = $SIG{INFO} = sub {
+    output_ringbuffer();
+};
+
+print STDERR "pid of ringbuffer process: $$\n"
+    unless $quiet;
 
 while(<>) {
     $ringbuffer[$ringbuffer_i++] = $_;
@@ -40,3 +53,50 @@ sub output_ringbuffer {
 }
 
 __END__
+
+=head1 NAME
+
+ringbuffer
+
+=head1 SYNOPSIS
+
+   some_command_producing_lots_of_output | ringbuffer --lines=10
+
+=head1 DESCRIPTION
+
+Display only the last lines of a command potentially producing lots of
+output.
+
+=head2 OPTIONS
+
+=over
+
+=item C<-l|--lines I<lines>>
+
+Limit the size of the buffer to the given number of lines. Default is
+25. This will be the last lines to be displayed after the watched
+command exits.
+
+=item C<-q|--quiet>
+
+Be quiet otherwise.
+
+=back
+
+=head2 SIGNALS
+
+On INT, TERM, HUP, or PIPE signals, the ringbuffer program exits, but
+shows the contents of the ringbuffer before.
+
+On USR1 and INFO (*BSD only) signals, the ringbuffer contents are
+shown.
+
+=head2 USAGE EXAMPLES
+
+    strace -p $pid 2>&1 | ringbuffer
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=cut
