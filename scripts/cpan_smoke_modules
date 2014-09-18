@@ -225,6 +225,11 @@ if ($truss && -e $truss) {
 if ($ktrace && -e $ktrace) {
     die "File specified with -ktrace '$ktrace' must not exist";
 }
+for ($strace, $truss, $ktrace) { # protect the user
+    if (defined $_ && m{^-}) {
+	die "The -strace/-truss/-ktrace option takes a filename, and '$_' looks like an option!\n";
+    }
+}
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
 }
