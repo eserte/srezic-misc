@@ -51,6 +51,7 @@ my $show_recent_states = 1;
 my $recent_months = 1;
 my $do_check_screensaver = 1;
 my $do_scenario_buttons;
+my $annotate_file;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -69,6 +70,7 @@ GetOptions("good" => \$only_good,
 	   "recent-months=i" => \$recent_months,
 	   "check-screensaver!" => \$do_check_screensaver,
 	   "scenario-buttons!" => \$do_scenario_buttons,
+	   "annotate-file=s" => \$annotate_file,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
@@ -77,6 +79,11 @@ usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
 EOF
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
+
+my $dist2annotation;
+if ($annotate_file) {
+    $dist2annotation = read_annotate_txt($annotate_file);
+}
 
 if ($auto_good) {
     # just to check if X11::Protocol etc. is available
@@ -873,6 +880,27 @@ sub set_currfile {
 	}
     }
 
+    if ($dist2annotation && $dist2annotation->{$currfulldist}) {
+	my $annotation = $dist2annotation->{$currfulldist};
+	my $url;
+	if ($annotation =~ m{^(\d+)}) {
+	    $url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
+	} elsif ($annotation =~ m{^(https?://\S+)}) {
+	    $url = $1;
+	}
+	my $w;
+	if ($url) {
+	    $w = $analysis_frame->Button(-text => 'Annotation',
+					 -command => sub {
+					     require Tk::Pod::WWWBrowser;
+					     Tk::Pod::WWWBrowser::start_browser($url);
+					 })->pack;
+	} else {
+	    $w = $analysis_frame->Label(-text => 'Annotation')->pack;
+	}
+	$balloon->attach($w, -msg => $annotation);
+    }
+
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 }
 
@@ -1010,6 +1038,19 @@ sub set_term_title {
     }
 }
 
+sub read_annotate_txt {
+    my($file) = @_;
+    my %dist2annotation;
+    open my $fh, "<", $file
+	or die "Can't open $file: $!";
+    while(<$fh>) {
+	chomp;
+	my($dist, $annotation) = split /\s+/, $_, 2;
+	$dist2annotation{$dist} = $annotation;
+    }
+    \%dist2annotation;	
+}
+
 __END__
 
 =head1 NAME
@@ -1050,6 +1091,13 @@ switch also NA and UNKNOWN reports are checked interactively. An
 exception are such reports where the analysis thinks that it's due to
 "notests" or "low perl"; these reports are also moved automatically
 for syncing.
+
+=item C<-annotate-file I<path>>
+
+Path to the C<annotate.txt> file from
+L<http://repo.or.cz/r/andk-cpan-tools.git>, or a compatible file. If
+defined, then show a link to the annotation (usually a RT or other
+ticket) if the tested distribution has one.
 
 =head2 RELATED SCRIPTS
 
