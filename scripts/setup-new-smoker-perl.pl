@@ -327,7 +327,17 @@ step "Install modules needed for CPAN::Reporter",
 	# and in this terminal the sudo_keeper is not active. Anyway,
 	# tests are run later again with -typescript turned on (or
 	# whatever the default is).
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", @toolchain_modules, "-perl", "$perldir/bin/perl";
+
+	# XXX Temporary (?) hack: use the stable
+	# RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
+	# the latter does not always pass tests. Note that this
+	# may actually create a downgrade of an already installed
+	# Expect (but this should probably be unlikely)
+	my @to_install = map {
+	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
+	} @toolchain_modules;
+
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", @to_install, "-perl", "$perldir/bin/perl";
     };
 
 step "Install and report Kwalify",
