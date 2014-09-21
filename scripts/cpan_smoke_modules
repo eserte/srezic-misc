@@ -136,6 +136,7 @@ GetOptions("n" => \$n,
 	   'mirrorurlfunet' => sub { $mirror_url = 'ftp://ftp.funet.fi/pub/CPAN' },
 	   'mirrorurlperl'  => sub { $mirror_url = 'http://www.perl.com/CPAN/' },
 	   'mirrorurldevelooper' => sub { $mirror_url = 'http://cpan.develooper.com/' },
+	   'mirrorurlmetacpan' => sub { $mirror_url = 'https://cpan.metacpan.org/' }, # contains also backpan
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
 	   'cpanconf=s@' => \@cpan_conf,
