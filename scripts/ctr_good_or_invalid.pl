@@ -638,6 +638,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('UNIVERSAL export');
 		} elsif (
+			 m{did you forget to declare "my } # since perl 5.21.4
+			) {
+		    $add_analysis_tag->('use strict error message');
+		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
 		    # rather unspecific, do as rather last check
