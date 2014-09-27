@@ -740,31 +740,57 @@ sub set_currfile {
     {
 	# fill "$following_dists_text" label
 
-	my $get_base = sub {
+	my $get_dist_os = sub {
 	    my $file = shift;
-	    (my $base = $file) =~ s{.*/}{};
-	    $base =~ s{-thread-multi}{}; # normalize threaded vs. non-threaded
-	    $base =~ s{(-freebsd\.[\d\.]+)-release(-p\d+)?}{$1}; # normalize freebsd patch levels
-	    $base =~ s{\.\d+\.\d+\.rpt$}{};
-	    $base;
+	    (my $dist_os = $file) =~ s{.*/}{};
+	    $dist_os =~ s{-thread-multi}{}; # normalize threaded vs. non-threaded
+	    $dist_os =~ s{(-freebsd\.[\d\.]+)-release(-p\d+)?}{$1}; # normalize freebsd patch levels
+	    $dist_os =~ s{\.\d+\.\d+\.rpt$}{};
+	    $dist_os;
 	};
 
-	my $curr_base = $get_base->($currfile);
+	my $curr_dist_os = $get_dist_os->($currfile);
+	# assume files are sorted
+	my $following_same_dist_os = 0;
+	for my $i ($currfile_i+1 .. $#files) {
+	    my $dist_os = $get_dist_os->($files[$i]);
+	    if ($dist_os eq $curr_dist_os) {
+		$following_same_dist_os++;
+	    } else {
+		last;
+	    }
+	}
+
+	my $get_dist = sub {
+	    my $file = shift;
+	    (my $dist_os = $file) =~ s{.*/}{};
+	    $dist_os =~ s{\.(x86_64|amd64|i[3456]86).*}{};
+	    $dist_os;
+	};
+
+	my $curr_dist = $get_dist->($currfile);
 	# assume files are sorted
 	my $following_same_dist = 0;
 	for my $i ($currfile_i+1 .. $#files) {
-	    my $base = $get_base->($files[$i]);
-	    if ($base eq $curr_base) {
+	    my $dist = $get_dist->($files[$i]);
+	    if ($dist eq $curr_dist) {
 		$following_same_dist++;
 	    } else {
 		last;
 	    }
 	}
 
-	if ($following_same_dist > 1) {
-	    $following_dists_text = "/ following $following_same_dist reports for same dist";
-	} elsif ($following_same_dist == 1) {
-	    $following_dists_text = "/ following a report for same dist";
+	if ($following_same_dist >= 1) {
+	    if ($following_same_dist > 1) {
+		$following_dists_text = "/ following $following_same_dist reports for same dist";
+	    } else {
+		$following_dists_text = "/ following a report for same dist";
+	    }
+	    if ($following_same_dist_os >= 1) {
+		$following_dists_text .= " ($following_same_dist_os for same OS)";
+	    } else {
+		$following_dists_text .= " (but different OS)";
+	    }
 	} else {
 	    $following_dists_text = '';
 	}
