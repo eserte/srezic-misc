@@ -382,9 +382,7 @@ sub parse_test_report {
 	my $add_analysis_tag = sub {
 	    my($tag, $line) = @_;
 	    if (!defined $line) { $line = $. }
-	    if (!exists $analysis_tags{$tag}) {
-		$analysis_tags{$tag} = { line => $line };
-	    }
+	    push @{ $analysis_tags{$tag}->{lines} }, $line;
 	};
 
 	my $maybe_system_perl; # can be decided later
@@ -813,13 +811,16 @@ sub set_currfile {
 	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
     }
     for my $analysis_tag (sort keys %analysis_tags) {
-	my $line = $analysis_tags{$analysis_tag}->{line};
+	my @lines = @{ $analysis_tags{$analysis_tag}->{lines} || [] };
 	my $bgcolor = $analysis_tags{$analysis_tag}->{__bgcolor__} || 'yellow';
+	my $lines_i = 0;
 	$analysis_frame->Button(-text => $analysis_tag,
 				@common_analysis_button_config,
 				-bg => $bgcolor,
 				-command => sub {
-				    $more->Subwidget('scrolled')->see("$line.0");
+				    $more->Subwidget('scrolled')->see("$lines[$lines_i].0");
+				    $lines_i++;
+				    if ($lines_i > $#lines) { $lines_i = 0 }
 				},
 			       )->pack;
     }
@@ -830,8 +831,9 @@ sub set_currfile {
 	my $textw = $more->Subwidget("scrolled");
 	$textw->tagConfigure('analysis_highlight', -background => '#eeeeee');
 	while(my($analysis_tag, $info) = each %analysis_tags) {
-	    my $line = $info->{line};
-	    $textw->tagAdd('analysis_highlight', "$line.0", "$line.end");
+	    for my $line (@{ $info->{lines} || [] }) {
+		$textw->tagAdd('analysis_highlight', "$line.0", "$line.end");
+	    }
 	}
     }
 
