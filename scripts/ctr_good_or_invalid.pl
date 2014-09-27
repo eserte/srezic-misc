@@ -471,6 +471,11 @@ sub parse_test_report {
 		    $prereq_fails{$prereq_fail} = 1;
 		    $add_analysis_tag->('prereq fail');
 		} elsif (
+			 /unable to load template engine '.*?' \(perhaps you need to install ([^?]+)\?\)/ # Dancer templates
+			) {
+		    $prereq_fails{$1} = 1;
+		    $add_analysis_tag->('prereq fail');
+		} elsif (
 			 /^(?:#\s+Error:\s+)?Base class package "(.*?)" is empty\.$/
 			) {
 		    $prereq_fails{$1} = 1;
