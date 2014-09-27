@@ -13,6 +13,7 @@
 #
 
 use strict;
+use File::Basename qw(basename);
 use File::Copy qw(move);
 use Hash::Util qw(lock_keys);
 use Tk;
@@ -94,13 +95,15 @@ if ($do_xterm_title) {
     check_term_title();
 }
 
+my $new_directory = "$reportdir/new";
+
 my @files = @ARGV;
 if (@files == 1 && -d $files[0]) {
     $reportdir = $files[0];
     @files = ();
 }
 if (!@files) {
-    @files = glob("$reportdir/new/*.rpt");
+    @files = glob("$new_directory/*.rpt");
 }
 if (!@files) {
     my $msg = "No files given or found";
@@ -839,13 +842,14 @@ sub set_currfile {
 
     # Create the tags with the recent states for this distribution.
     for my $recent_state (sort keys %recent_states) {
-	my $count = scalar @{ $recent_states{$recent_state} };
+	my $count_old = scalar @{ $recent_states{$recent_state}->{old} || [] };
+	my $count_new = scalar @{ $recent_states{$recent_state}->{new} || [] };
 	my $color = (
 		     $recent_state eq 'pass' ? 'green' :
 		     $recent_state eq 'fail' ? 'red'   : 'orange'
 		    );
-	my $sample_recent_file = $recent_states{$recent_state}->[0];
-	my $b = $analysis_frame->Button(-text => "$recent_state: $count",
+	my $sample_recent_file = $count_old ? $recent_states{$recent_state}->{old}->[0] : $recent_states{$recent_state}->{new}->[0];
+	my $b = $analysis_frame->Button(-text => "$recent_state: $count_old" . ($count_new ? " + $count_new new" : ''),
 					@common_analysis_button_config,
 					-bg => $color,
 					-command => sub {
@@ -859,7 +863,7 @@ sub set_currfile {
 					},
 				       )->pack;
 	my @balloon_msg;
-	for my $f (@{ $recent_states{$recent_state} }) {
+	for my $f (map { @$_ } values %{ $recent_states{$recent_state} }) {
 	    if (open my $fh, $f) {
 		my $subject;
 		my $x_test_reporter_perl;
@@ -963,27 +967,36 @@ sub set_currfile {
 sub get_recent_states {
     my %recent_states;
 
-    if (@recent_done_directories) {
-	my $res = parse_report_filename($currfile);
-	if (!$res) {
-	    warn "WARN: cannot parse $currfile";
-	} else {
-	    my $distv = $res->{distv};
-	    my @recent_reports;
-	    for my $recent_done_directory (@recent_done_directories) {
-		if (opendir(my $DIR, $recent_done_directory)) {
+    my @check_defs = (
+		      ['old', @recent_done_directories],
+		      ['new', $new_directory, $good_directory],
+		     );
+
+    my $res = parse_report_filename($currfile);
+    if (!$res) {
+	warn "WARN: cannot parse $currfile";
+    } else {
+	my $distv = $res->{distv};
+	my @recent_reports;
+	my $currfile_base = basename $currfile;
+	for my $check_def (@check_defs) {
+	    my($age, @directories) = @$check_def;
+	    for my $directory (@directories) {
+		if (opendir(my $DIR, $directory)) {
 		    while(defined(my $file = readdir $DIR)) {
-			if (index($file, $distv) >= 0) { # quick check
-			    if (my $recent_res = parse_report_filename($file)) {
-				if ($recent_res->{distv} eq $distv) {
-				    my $recent_state = $recent_res->{state};
-				    push @{ $recent_states{$recent_state} }, "$recent_done_directory/$file";
+			if ($file ne $currfile_base) { # don't show current report in NEW counts
+			    if (index($file, $distv) >= 0) { # quick check
+				if (my $recent_res = parse_report_filename($file)) {
+				    if ($recent_res->{distv} eq $distv) {
+					my $recent_state = $recent_res->{state};
+					push @{ $recent_states{$recent_state}->{$age} }, "$directory/$file";
+				    }
 				}
 			    }
 			}
 		    }
 		} else {
-		    warn "ERROR: cannot open $recent_done_directory: $!";
+		    warn "ERROR: cannot open $directory: $!";
 		}
 	    }
 	}
