@@ -316,7 +316,7 @@ step "Symlink in /usr/local/bin",
 # install both YAML::Syck and YAML, because it's not clear what's configured
 # for CPAN.pm (by default it's probably YAML, but on cvrsnica/biokovo it's
 # set to YAML::Syck)
-my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl CPAN::Reporter);
+my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl Devel::Hide CPAN::Reporter);
 
 step "Install modules needed for CPAN::Reporter",
     ensure => sub {
