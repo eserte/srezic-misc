@@ -1063,6 +1063,12 @@ EOF
 	    }
 	}
 
+	# XXX better solution!
+	if ($need_sudo_keeper && @hidemod) {
+	    warn "WARN: -hidemod conflicts with sudo_keeper.\n";
+	    $need_sudo_keeper = 0;
+	}
+
 	if ($need_sudo_keeper) {
 	    unshift @cmd, 'sudo_keeper';
 	}
