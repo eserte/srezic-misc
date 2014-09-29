@@ -37,6 +37,7 @@ my $use_patchperl;
 my $patchperl_path;
 my $jobs;
 my $download_url;
+my $use_pthread;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -47,6 +48,7 @@ GetOptions(
 	   "patchperlpath=s" => \$patchperl_path,
 	   "j|jobs=i" => \$jobs,
 	   "downloadurl=s" => \$download_url,
+	   "pthread!"  => \$use_pthread,
 	  )
     or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] -downloadurl ... | -perlver 5.X.Y\n";
 
@@ -81,6 +83,19 @@ if ($^O eq 'linux') {
 }
 if ($build_debug)   { $perldir .= "d" }
 if ($build_threads) { $perldir .= "t" }
+
+if ($use_pthread) {
+    if ($^O ne 'freebsd') {
+	die "The -pthread hack is only for freebsd.\n";
+    } else {
+	if ($build_threads) {
+	    die "The -pthread hack is not necessary if using threads, please use without.\n";
+	} else {
+	    # pthread hack is OK
+	    $perldir .= "p";
+	}
+    }
+}
 
 my $sudo_validator_pid;
 sudo 'echo', 'Initialized sudo password';
@@ -216,6 +231,33 @@ if (defined $patchperl_path) {
 	    chdir $perl_src_dir;
 	    system $patchperl_path;
 	    system "touch", ".patched";
+	};
+}
+
+if ($use_pthread) {
+    my $begin_marker = '# BEGIN --- PATCHED BY SETUP_NEW_SMOKER_PERL';
+    my $end_marker   = '# END --- PATCHED BY SETUP_NEW_SMOKER_PERL';
+    my $hints_file   = "$perl_src_dir/hints/freebsd.sh";
+    step 'Enable pthread',
+	ensure => sub {
+	    no autodie;
+	    system 'fgrep', '-sq', $end_marker, $hints_file;
+	    return ($? == 0 ? 1 : 0);
+	},
+	using => sub {
+	    chmod 0644, $hints_file;
+	    open my $ofh, ">>", $hints_file;
+	    print $ofh $begin_marker . "\n" . <<'EOF' . $end_marker . "\n";
+case "$ldflags" in
+    *-pthread*)
+        # do nothing
+        ;;
+    *)
+        ldflags="-pthread $ldflags"
+        ;;
+esac
+EOF
+	    close $ofh;
 	};
 }
 
