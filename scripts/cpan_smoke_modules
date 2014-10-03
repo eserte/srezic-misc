@@ -472,7 +472,7 @@ TRY_PARTIAL_RESOLVE: {
     my %partial_to_full;
     my %duplicates;
     for my $dist_or_mod (@dist_or_mods) {
-	if ($dist_or_mod !~ m{/} && $dist_or_mod =~ m{^(.*-\d.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}) {
+	if ($dist_or_mod !~ m{/} && $dist_or_mod =~ m{^(.*-v?\d.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}) {
 	    my $distvname = $1;
 	    # looks like a partial distribution name
 	    my $packages_file = $CPAN::Config->{keep_source_where} . "/modules/02packages.details.txt.gz";
