@@ -717,6 +717,7 @@ sub parse_test_report {
 
 sub set_currfile {
     $currfile = $files[$currfile_i];
+    $mw->title("Loading " . basename($currfile) . "...");
     $currfile_st = $currfile_i + 1;
     $_->destroy for $analysis_frame->children; # remove as early as possible
     $more->Load($currfile);
@@ -749,7 +750,6 @@ sub set_currfile {
     } else {
 	$title = " (subject not parseable)";
     }
-    $mw->title($title);
 
     $modtime = scalar localtime ((stat($currfile))[9]);
 
@@ -953,6 +953,8 @@ sub set_currfile {
     }
 
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+
+    $mw->title($title);
 }
 
 {
