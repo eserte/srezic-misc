@@ -290,6 +290,12 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . CGI->new({dist=>$currdist,# reports=>"1"
 												   })->query_string);
 	       })->pack(-side => "left");
+    $f->Button(-text => "MC",
+	       -command => sub {
+		   require CGI;
+		   require Tk::Pod::WWWBrowser;
+		   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
+	       })->pack(-side => "left");
     $f->Button(-text => "ctgetreports",
 	       -command => sub {
 		   require Tk::ExecuteCommand;
