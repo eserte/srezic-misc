@@ -619,6 +619,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('new regexp feature');
 		} elsif (
+			 m{\QUnescaped left brace in regex is deprecated}
+			) {
+		    $add_analysis_tag->('new regexp deprecation');
+		} elsif (
 			 m{\Q(Might be a runaway multi-line // string starting on line \E\d+} ||
 			 m{\QSearch pattern not terminated \E$at_source_qr}
 			) {
