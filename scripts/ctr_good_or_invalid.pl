@@ -960,9 +960,9 @@ sub set_currfile {
 	    $date_comment_added = 1;
 	}
 	if ($scenario eq 'generic') {
-	    print $ofh "cpan_smoke_modules $currfulldist\n";
+	    print $ofh "cpan_smoke_modules $currfulldist -skipsystemperl\n";
 	} else {
-	    print $ofh "~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -scenario $scenario $currfulldist\n";
+	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -scenario $scenario $currfulldist -cpansmokemodulesoptions="-skipsystemperl"\n};
 	}
 	close $ofh;
     }
