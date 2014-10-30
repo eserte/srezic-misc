@@ -122,6 +122,13 @@ L<Data::JavaScript::Anon> is also a serializer for perl data to
 javascript syntax, cannot handle circular references, but the output
 is more terse compared to Data::JavaScript.
 
+=head3 CBOR
+
+L<CBOR::XS>: CBOR (Concise Binary Object Representation) is a binary
+serialization which follows the JSON data model, and adds some
+additional capabilities, like serialization of perl objects. According
+to the manpage, it is faster than L<JSON::XS> and L<Storable>.
+
 =head3 XML
 
 L<XML::Dumper> is a serialisation module for dumping Perl objects
@@ -265,6 +272,11 @@ naming) und object-oriented interfaces. It's written in C, but the
 functionality is also available in the pure perl L<Date::Calc::PP>
 module (and historically there was another pure perl replacement
 L<Date::Pcalc>).
+
+L<Time::Moment> is a C based module which is faster than L<DateTime>.
+It has functionality for constructing a date object from epoch,
+parameters, and iso8601-like strings; and for arithmetic, comparisons
+and strftime-like formatting.
 
 The standard perl functions and modules: time, localtime, strftime and
 mktime in L<POSIX>, L<Time::Local>.
