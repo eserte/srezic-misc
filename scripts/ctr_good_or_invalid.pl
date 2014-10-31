@@ -134,6 +134,7 @@ if (-d $done_directory) {
     };
 
     my @l = localtime;
+    $l[3] = 1; # things don't work if today's day is the 31th
     my $this_month = strftime "%Y-%m", @l;
     $add_done_directory->($this_month);
 
