@@ -156,7 +156,11 @@ GetOptions("n" => \$n,
 	   'x11display=s' => \$x11_display,
 	   'reloadindex|reload-index' => \$reload_index,
 	   'ignorehistory' => \$ignore_history,
-	   'deterministichashes' => \$deterministic_hashes,
+	   'deterministichashes!' => \$deterministic_hashes,
+	   'randomhashes!' => sub {
+	       my $val = $_[1];
+	       $deterministic_hashes = !$val;
+	   },
 	  )
     or die <<EOF;
 usage: $0
