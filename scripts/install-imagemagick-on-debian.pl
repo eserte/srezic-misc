@@ -45,6 +45,17 @@ if (!$PerlMagick_dir || !-d $PerlMagick_dir) {
 chdir $PerlMagick_dir
     or mydie "Cannot chdir to $PerlMagick_dir: $!";
 
+if (!-e "typemap") {
+    warn "Create a dummy typemap...\n";
+    open my $ofh, ">", "typemap"
+	or die "Can't create typemap: $!";
+    print $ofh <<'EOF';
+Image::Magick T_PTROBJ
+EOF
+    close $ofh
+	or die "Error while writing typemap: $!";
+}
+
 system($^X, '-i.bak', '-pe', 's{-lperl}{}', 'Makefile.PL');
 $? == 0 or mydie "Patching Makefile.PL failed";
 
