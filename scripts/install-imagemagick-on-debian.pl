@@ -28,7 +28,15 @@ my $workdir = tempdir("imagemagick-install-XXXXXXXX", TMPDIR => 1, CLEANUP => 1)
 chdir $workdir or die $!;
 
 system('apt-get', 'source', 'perlmagick');
-$? == 0 or mydie "Fetching source failed";
+$? == 0 or mydie <<'EOF';
+Fetching source failed
+
+Maybe a fitting deb-src entry is missing in sources.list?
+Try to add something like the following on ubuntu/mint systems:
+
+    deb-src http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
+
+EOF
 
 my($PerlMagick_dir) = glob("imagemagick-*/PerlMagick");
 if (!$PerlMagick_dir || !-d $PerlMagick_dir) {
