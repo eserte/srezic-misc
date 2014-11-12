@@ -20,7 +20,7 @@ sub mydie ($);
 my $perl = shift
     or die "Please specify perl to use (full path)";
 
-if (!-x $perl) {
+if (!-x $perl || !-f $perl) {
     die "'$perl' is not a perl executable";
 }
 
