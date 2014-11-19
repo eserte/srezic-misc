@@ -375,6 +375,7 @@ step "Install modules needed for CPAN::Reporter",
 	# the latter does not always pass tests. Note that this
 	# may actually create a downgrade of an already installed
 	# Expect (but this should probably be unlikely)
+	# UPDATE: Expect 1.32 has also problematic tests.
 	my @to_install = map {
 	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
 	} @toolchain_modules;
