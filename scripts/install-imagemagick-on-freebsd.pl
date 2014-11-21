@@ -15,6 +15,7 @@
 use strict;
 
 use Getopt::Long;
+use POSIX qw(strftime);
 
 sub yn ();
 
@@ -287,7 +288,7 @@ sub checkout_matching_imagemagick_port {
     my $matching_svn_revision = find_matching_svn_revision();
 
     require File::Temp;
-    my $tempdir = File::Temp::tempdir('PerlMagick-XXXXXXXX', TMPDIR => 1); # don't cleanup for easier debugging
+    my $tempdir = File::Temp::tempdir('PerlMagick-' . strftime('%F', localtime) . '-XXXXXXXX', TMPDIR => 1); # don't cleanup for easier debugging
     print STDERR "Temporary directory: $tempdir\n";
     chdir $tempdir
 	or die "Can't chdir to $tempdir: $!";
