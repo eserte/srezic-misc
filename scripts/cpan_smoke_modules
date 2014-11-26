@@ -1129,6 +1129,7 @@ EOF
 	    $ENV{PERL_HASH_SEED} = "0";
 	    $ENV{PERL_PERTURB_KEYS} = "NO";
 	}
+	local $SIG{WINCH} = sub { warn "IGNORE SIGWINCH" };
 	system @cmd;
 	if ($? & 127) {
 	    die sprintf("Child died with signal %d, %s coredump\n",
