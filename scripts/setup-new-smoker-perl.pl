@@ -38,6 +38,7 @@ my $patchperl_path;
 my $jobs;
 my $download_url;
 my $use_pthread;
+my $extra_config_opts;
 GetOptions(
 	   "perlver=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -49,8 +50,9 @@ GetOptions(
 	   "j|jobs=i" => \$jobs,
 	   "downloadurl=s" => \$download_url,
 	   "pthread!"  => \$use_pthread,
+	   'extraconfigopts=s' => \$extra_config_opts,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] -downloadurl ... | -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
 if (!$perlver && $download_url) {
     if ($download_url =~ m{/perl-(5\.\d+\.\d+(?:-RC\d+)?)\.tar\.(?:gz|bz2)$}) {
@@ -279,6 +281,7 @@ step "Build perl",
 			     ($build_debug ? "-debug" : ()),
 			     ($build_threads ? "-threads" : ()),
 			     ($morebits ? "-morebits" : ()),
+			     ($extra_config_opts ? ('-addconfig', $extra_config_opts) : ()),
 			    );
 	    system @build_cmd;
 	} else {
@@ -291,7 +294,8 @@ step "Build perl",
 			     ($need_usedevel ? ' -Dusedevel -Dusemallocwrap=no' : '') .
 			     ($build_debug ? ' -DDEBUGGING' : '') .
 			     ($build_threads ? ' -Dusethreads' : '') .
-			     ($morebits ? die("No support for morebits") : ()) .
+			     ($morebits ? die("No support for morebits") : '') .
+			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
 			     ' && make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
 	    system @build_cmd;
