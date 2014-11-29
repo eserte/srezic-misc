@@ -88,7 +88,7 @@ my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
 my @hidemod;
 my $use_vncserver;
-my $x11_display = ':9'; # ssh begins at :10
+my $x11_display;
 my @touch_files;
 my $reload_index;
 my $hack_checksum_check_file = 1;
@@ -759,6 +759,9 @@ $PERL_CPAN_REPORTER_DIR = $ENV{PERL_CPAN_REPORTER_DIR} if $ENV{PERL_CPAN_REPORTE
 
 my $effective_x11_display;
 if ($use_vncserver) {
+    if (!$x11_display) {
+	$x11_display = find_free_x11_display();
+    }
     my @cmd = ('vncserver', $x11_display);
     warn "INFO: starting vncserver on display $x11_display...\n";
     system @cmd;
@@ -1189,6 +1192,56 @@ sub kill_x11_server {
 	    warn "WARN: killing vnc server with '@cmd' failed: $?";
 	}
     }
+}
+
+sub find_free_x11_display {
+    my %taken_displays;
+
+    # Parse::Netstat has a HUGE prereq chain
+    # XXX 2014-11-29: currently does not install, so it's untested...
+    # XXX and it does not parse FreeBSD's netstat output, see https://rt.cpan.org/Ticket/Display.html?id=100607
+    # XXX "netstat -p" is Linux-specific
+    if (eval { die "Not yet tested"; require Parse::Netstat; is_in_path('netstat') }) {
+	my $netstat = Parse::Netstat::parse_netstat(output => scalar `netstat -anp`, udp => 0, unix => 0);
+	for my $active_conn (@{ $netstat->[2]->{active_conns} }) {
+	    if (
+		$active_conn->{proto} eq 'tcp' &&
+		$active_conn->{state} eq 'LISTEN' && 
+		$active_conn->{local_port} >= 6000 && $active_conn->{local_port} < 6100
+	       ) {
+		$taken_displays{ $active_conn->{local_port}-6000 } = 1;
+	    }
+	}
+    }
+
+    for my $xlock (glob("/tmp/.X*-lock")) {
+	if ($xlock =~ m{\.X(\d+)-lock$}) {
+	    $taken_displays{$1} = 1;
+	}
+    }
+    for my $xsock (glob("/tmp/.X11-unix/X*")) {
+	if ($xsock =~ m{/X(\d+)$}) {
+	    $taken_displays{$1} = 1;
+	}
+    }
+    for my $vncpid (glob("$ENV{HOME}/.vnc/" . hostname . ":*.pid")) {
+	if ($vncpid =~ m{:(\d+)\.pid$}) {
+	    $taken_displays{$1} = 1;
+	}
+    }
+
+    for my $display_candidate (
+			       reverse(2..9),   # likely to be untaken, or taken by vnc
+			       20..99,          # likely to be not taken by ssh x11 forwardings
+			       1, 0,            # likely to be taken by real x11 servers
+			       reverse(10..19), # likely to be taken by ssh x11 forwardnings
+			      ) {
+	if (!$taken_displays{$display_candidate}) {
+	    return ':' . $display_candidate;
+	}
+    }
+
+    die "ERROR: Could not find a X11 display candidate. The list of taken displays: " . join(", ", sort { $a <=> $b } keys %taken_displays);
 }
 
 # from cpan_allpackages and changed (seek magic)
