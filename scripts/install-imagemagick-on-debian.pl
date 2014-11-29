@@ -14,14 +14,23 @@
 
 use strict;
 use File::Temp qw(tempdir);
+use Getopt::Long;
 
 sub mydie ($);
+
+my $keep;
+GetOptions("keep!" => \$keep)
+    or die "usage: $0 [--keep] /path/to/perl\n";
 
 my $perl = shift
     or die "Please specify perl to use (full path)";
 
 if (!-x $perl || !-f $perl) {
     die "'$perl' is not a perl executable";
+}
+
+if ($keep) {
+    $File::Temp::KEEP_ALL = 1;
 }
 
 my $workdir = tempdir("imagemagick-install-XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
