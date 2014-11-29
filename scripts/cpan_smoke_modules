@@ -29,6 +29,10 @@ $ENV{PATH} = $ENV{PATH} . $Config{path_sep} . $FindBin::RealBin; # e.g. for sudo
 
 my $start_time = time;
 
+if ($^O eq 'MSWin32' && !$ENV{HOME}) {
+    $ENV{HOME} = "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
+}
+
 my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
 my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
@@ -378,10 +382,23 @@ if (!@perls) {
 	    }
 	}
 
+	my @candidates;
+	if ($^O eq 'MSWin32') {
+	    @candidates = ('C:/strawberry/perl/bin/perl.exe', 'C:/Perl/bin/perl.exe');
+	} else {
+	    @candidates = glob("/usr/local/bin/perl5.*.*");
+	}
+
 	my %latest_blead; # type ("", "t") -> version --- make sure that all availables types (debug, threaded, normal) of the latest bleadperls are tested
 	my $max_stable_perl_ver;
-	for my $candidate (glob("/usr/local/bin/perl5.*.*")) {
+	for my $candidate (@candidates) {
 	    next if !-x $candidate;
+
+	    if ($^O eq 'MSWin32') { # special handling because of different naming rules
+		push @all_perl_defs, [$candidate, undef];
+		next;
+	    }
+
 	    my $candidate_id = do {
 		if (my @stat = stat $candidate) {
 		    join(",", @stat[0,1]);
@@ -671,7 +688,7 @@ open my $logfh, ">>", $cpan_smoke_log
 $logfh->autoflush(1);
 
 if ($save_reports) {
-    if (!$for_parallel_smoker) { # parallel smoker already have a correct cpanreporter config
+    if (!$for_parallel_smoker && $^O ne 'MSWin32') { # parallel smoker already have a correct cpanreporter config, and so have the windows' perls
 	my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
 	    or die "Can't create tempfile: $!";
 	my $config_ini_path = "$ENV{HOME}/.cpanreporter/config.ini";
@@ -784,6 +801,7 @@ for my $perl (@perls) {
     print STDERR "# $perl\n";
     my $cpan_ver = do {
 	my @cmd = ($perl, "-we", q{use CPAN; print CPAN->VERSION(0)});
+	@cmd = "@cmd" if $^O eq 'MSWin32'; # list form of pipe not implemented
 	open my $fh, "-|", @cmd
 	    or die "Command @cmd failed: $!";
 	local $/;
@@ -1103,6 +1121,16 @@ EOF
 	check_disk_free($perl);
 	touch_files();
 
+	my $tmp_cmd_file;
+	if ($^O eq 'MSWin32') {
+	    warn "INFO: hack for MSWin32 to overcome system LIST problems...\n";
+	    (my($tmp_fh), $tmp_cmd_file) = tempfile("cpansmokecmd-XXXX", SUFFIX => ".pl", UNLINK => 1);
+	    print $tmp_fh "use CPAN;\n";
+	    print $tmp_fh $cmd[-1], "\n";
+	    close $tmp_fh;
+	    @cmd = ($perl, $tmp_cmd_file);
+	}
+
 	print STDERR "# @cmd\n";
 	local %ENV = %ENV;
 	if ($batch) {
@@ -1327,6 +1355,8 @@ sub xterm_conf {
 }
 
 sub check_disk_free {
+    return if $^O eq 'MSWin32'; # XXX can't check yet
+
     my($perl) = @_;
     # File::HomeDir is needed because of http://rt.cpan.org/Ticket/Display.html?id=34066
     my @cmd = ($perl);
