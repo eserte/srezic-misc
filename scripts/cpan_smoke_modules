@@ -527,6 +527,7 @@ TRY_PARTIAL_RESOLVE: {
 	    if ($duplicates{$distvname}) {
 		warn "WARN: Found duplicate for $distvname, cannot resolve...";
 	    } elsif (exists $partial_to_full{$distvname}) {
+		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_to_full{$distvname}\n";
 		$dist_or_mod = $partial_to_full{$distvname};
 	    } else {
 		warn "WARN: Can't resolve the partial distribution name $distvname";
