@@ -1225,15 +1225,14 @@ sub kill_x11_server {
 sub find_free_x11_display {
     my %taken_displays;
 
-    # Parse::Netstat has a HUGE prereq chain
-    # XXX 2014-11-29: currently does not install, so it's untested...
-    # XXX and it does not parse FreeBSD's netstat output, see https://rt.cpan.org/Ticket/Display.html?id=100607
-    # XXX "netstat -p" is Linux-specific
-    if (eval { die "Not yet tested"; require Parse::Netstat; is_in_path('netstat') }) {
-	my $netstat = Parse::Netstat::parse_netstat(output => scalar `netstat -anp`, udp => 0, unix => 0);
+    # Parse::Netstat has a HUGE prereq chain, so it's optional
+    # 0.09 works on FreeBSD and Linux systems
+    if (eval { require Parse::Netstat; is_in_path('netstat') }) {
+	my $netstat = Parse::Netstat::parse_netstat(output => scalar `netstat -an`, udp => 0, unix => 0);
 	for my $active_conn (@{ $netstat->[2]->{active_conns} }) {
+	    no warnings 'uninitialized';
 	    if (
-		$active_conn->{proto} eq 'tcp' &&
+		($active_conn->{proto} eq 'tcp' || $active_conn->{proto} eq 'tcp4') &&
 		$active_conn->{state} eq 'LISTEN' && 
 		$active_conn->{local_port} >= 6000 && $active_conn->{local_port} < 6100
 	       ) {
@@ -1241,7 +1240,6 @@ sub find_free_x11_display {
 	    }
 	}
     }
-
     for my $xlock (glob("/tmp/.X*-lock")) {
 	if ($xlock =~ m{\.X(\d+)-lock$}) {
 	    $taken_displays{$1} = 1;
