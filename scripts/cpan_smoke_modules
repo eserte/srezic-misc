@@ -1227,8 +1227,8 @@ sub find_free_x11_display {
 
     # Parse::Netstat has a HUGE prereq chain, so it's optional
     # 0.09 works on FreeBSD and Linux systems
-    if (eval { require Parse::Netstat; is_in_path('netstat') }) {
-	my $netstat = Parse::Netstat::parse_netstat(output => scalar `netstat -an`, udp => 0, unix => 0);
+    if (eval { require Parse::Netstat; Parse::Netstat->VERSION(0.11); is_in_path('netstat') && $^O =~ m{^(freebsd|linux|solaris)$} }) {
+	my $netstat = Parse::Netstat::parse_netstat(output => scalar `netstat -an`, udp => 0, unix => 0, flavor => $^O);
 	for my $active_conn (@{ $netstat->[2]->{active_conns} }) {
 	    no warnings 'uninitialized';
 	    if (
