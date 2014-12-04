@@ -1048,7 +1048,8 @@ sub is_user_at_computer {
     if ($@) {
 	if ($do_check_screensaver) {
 	    if ($@ =~ m{(Can't connect to display|Connection refused)}) {
-		warn "Error: $@, assume script has to connection to display...\n";
+		(my $err = $@) =~ s{\n}{ }g;
+		warn "Error: $err, assume script has no connection to display...\n";
 		return 0;
 	    }
 	    die $@;
