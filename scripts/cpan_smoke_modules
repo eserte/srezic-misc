@@ -242,6 +242,9 @@ for ($strace, $truss, $ktrace) { # protect the user
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
 }
+
+xterm_conf('-title', 'Starting cpan_smoke_modules...');
+
 TRY_TYPESCRIPT: {
     if ($do_typescript || !defined $do_typescript) {
 	my $no_typescript_sub = sub {
