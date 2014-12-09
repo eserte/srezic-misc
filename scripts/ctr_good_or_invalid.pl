@@ -1113,6 +1113,7 @@ sub read_annotate_txt {
 	or die "Can't open $file: $!";
     while(<$fh>) {
 	chomp;
+	next if /^\s*$/;
 	my($dist, $annotation) = split /\s+/, $_, 2;
 	$dist2annotation{$dist} = $annotation;
     }
