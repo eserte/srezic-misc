@@ -40,7 +40,7 @@ my $download_url;
 my $use_pthread;
 my $extra_config_opts;
 GetOptions(
-	   "perlver=s" => \$perlver,
+	   "perlver|pv=s" => \$perlver,
 	   "debug"     => \$build_debug,
 	   "threads"   => \$build_threads,
 	   "morebits"  => \$morebits,
