@@ -82,6 +82,7 @@ my $strace;
 my $truss;
 my $ktrace;
 my $do_typescript; # undef means: maybe
+my $do_filemon;
 my $typescript_file;
 my $use_distroprefs = 1;
 my $use_limits = 1;
@@ -149,6 +150,7 @@ GetOptions("n" => \$n,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
 	   'typescript!' => \$do_typescript,
+	   'filemon!' => \$do_filemon,
 	   'distroprefs!' => \$use_distroprefs,
 	   'prefsdir=s' => \$prefs_dir,
 	   'limits!' => \$use_limits,
@@ -181,7 +183,7 @@ usage: $0
      [-pre dist/module [...]]
      [-cpanconf key=value [-cpanconf ...]]
      [-[no]destroyperl]
-     [-strace|-truss|-ktrace file] [-[no]typescript]
+     [-strace|-truss|-ktrace file] [-[no]typescript] [-filemon]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc] [-x11display :...]
@@ -296,6 +298,22 @@ TRY_TYPESCRIPT: {
 	$do_typescript = 1;
     }
 }
+if ($do_filemon) {
+    if (!$do_typescript) {
+	die '-filemon option useless without -typescript';
+    }
+    if (!-r "/dev/filemon") {
+	die <<EOF;
+/dev/filemon does not exist. On FreeBSD, you create the device
+with
+
+    sudo kldload filemon.ko
+
+Other OS are probably unsupported.
+EOF
+    }
+}
+
 my @dist_or_mods = @ARGV;
 if ($do_action eq 'shell' && !@dist_or_mods) {
     @dist_or_mods = "This_is_just_a_dummy";
@@ -1108,7 +1126,7 @@ EOF
 
 	if ($do_typescript) {
 	    if ($^O eq 'freebsd') {
-		unshift @cmd, 'script', '-a', $typescript_file;
+		unshift @cmd, 'script', ($do_filemon ? '-f' : ()), '-a', $typescript_file;
 	    } elsif ($^O eq 'linux') {
 		my($tmpfh,$tmpfile) = tempfile(UNLINK => 1, SUFFIX => '.typescript.sh') or die $!;
 		print $tmpfh "#!/bin/sh\n";
