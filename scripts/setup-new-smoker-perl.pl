@@ -28,6 +28,8 @@ sub sudo (@);
 sub check_term_title ();
 sub set_term_title ($);
 
+my $argv_fingerprint = join ' ', @ARGV;
+
 my $perlver;
 my $build_debug;
 my $build_threads;
@@ -221,6 +223,30 @@ step "Extract in $src_dir",
 	chdir $src_dir;
 	system "tar", "xf", $downloaded_perl;
 	system "touch", "$perl_src_dir/.extracted";
+    };
+
+step 'Valid source directory',
+    ensure => sub {
+	no autodie 'open';
+	if (open my $fh, "<", "$perl_src_dir/.valid_for") {
+	    chomp(my $srcdir_argv_fingerprint = <$fh>);
+	    if ($srcdir_argv_fingerprint eq $argv_fingerprint) {
+		1;
+	    } else {
+		die <<EOF;
+The source directory '$perl_src_dir' was probably configured with a different ARGV:
+    $srcdir_argv_fingerprint
+vs.
+    $argv_fingerprint
+EOF
+	    }
+	} else {
+	    0;
+	}	
+    },
+    using => sub {
+	open my $ofh, ">", "$perl_src_dir/.valid_for";
+	print $ofh $argv_fingerprint;
     };
 
 if (defined $patchperl_path) {
