@@ -924,11 +924,22 @@ sub set_currfile {
 	    if ($scenario eq 'prereq' && %prereq_fails) {
 		$scenario .= ',' . join ',', keys %prereq_fails;
 	    }
-	    $analysis_frame->Button(-text => "Again: $scenario",
-				    @common_analysis_button_config,
-				    -command => sub {
-					schedule_recheck($x_test_reporter_distfile, $scenario);
-				    })->pack;
+	    my $label;
+	    my $need_balloon;
+	    if (length($scenario) > 40) {
+		$label = 'Again: ' . substr($scenario,0,40).'...';
+		$need_balloon = 1;
+	    } else {
+		$label = $scenario;
+	    }
+	    my $b = $analysis_frame->Button(-text => $label,
+					    @common_analysis_button_config,
+					    -command => sub {
+						schedule_recheck($x_test_reporter_distfile, $scenario);
+					    })->pack;
+	    if ($need_balloon) {
+		$balloon->attach($b, -msg => $scenario);
+	    }
 	}
     }
 
