@@ -1026,7 +1026,11 @@ EOF
 	    if (!defined $key || !defined $val) {
 		die "Probably invalid cpan_conf value '$cpan_conf'";
 	    }
-	    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+	    if ($key eq 'urllist') { # special handling for array
+		$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
+	    } else {
+		$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+	    }
 	}
 
 	if ($hack_checksum_check_file) { # hack: try to suppress the "... the checksum has not yet been calculated" prompt
