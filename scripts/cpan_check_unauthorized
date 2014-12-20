@@ -13,7 +13,6 @@
 #
 
 use strict;
-use URI::Query qw();
 use Getopt::Long;
 use LWP::Simple qw(get);
 use HTML::TreeBuilder::XPath;
@@ -53,15 +52,6 @@ if ($dist =~ m{/}) {
     die "Please specify -dist with basename only";
 }
 
-if (!defined $password) {
-    print STDERR "Password for $user\@pause: ";
-    $password = get_password();
-    print STDERR "\n";
-}
-if (!defined $password || $password eq '') {
-    die "Please specify password";
-}
-
 my $disturl = "http://search.cpan.org/~$user/$dist/";
 if ($v) {
     warn "Try to get <$disturl>...\n";
@@ -82,30 +72,43 @@ for my $node ($p->findnodes('//td[.="UNAUTHORIZED"]/../td[position()=1]')) {
     push @unauthorized_modules, trim($node->getValue);
 }
 
-for my $module (@unauthorized_modules) {
-    my $pause_check_url = "https://pause.perl.org/pause/authenquery?" .
-	URI::Query->new({pause99_peek_perms_by=>"me",
-			 pause99_peek_perms_query=>$module,
-			 pause99_peek_perms_sub=>1,
-			 OF=>"YAML",
-			})->stringify;
-    if ($v) {
-	warn "Check on PAUSE: $pause_check_url\n";
+if (@unauthorized_modules) {
+    if (!defined $password) {
+	print STDERR "Password for $user\@pause: ";
+	$password = get_password();
+	print STDERR "\n";
     }
-    $pause_check_url =~ s{^(https://)}{$1$user:$password\@};
-    my $yaml = get($pause_check_url);
-    if (!$yaml) {
-	warn "Cannot get permission data for module <$module>...\n";
-    } else {
-	print "--\n";
-	my $perm = Load($yaml);
-	for my $p (@$perm) {
-	    print "Module: $p->{module}\n  Userid: $p->{userid}";
-	    if ($p->{userid} eq $p->{owner}) {
-		print " (Owner)";
+    if (!defined $password || $password eq '') {
+	die "Please specify password";
+    }
+
+    require URI::Query;
+
+    for my $module (@unauthorized_modules) {
+	my $pause_check_url = "https://pause.perl.org/pause/authenquery?" .
+	    URI::Query->new({pause99_peek_perms_by=>"me",
+			     pause99_peek_perms_query=>$module,
+			     pause99_peek_perms_sub=>1,
+			     OF=>"YAML",
+			    })->stringify;
+	if ($v) {
+	    warn "Check on PAUSE: $pause_check_url\n";
+	}
+	$pause_check_url =~ s{^(https://)}{$1$user:$password\@};
+	my $yaml = get($pause_check_url);
+	if (!$yaml) {
+	    warn "Cannot get permission data for module <$module>...\n";
+	} else {
+	    print "--\n";
+	    my $perm = Load($yaml);
+	    for my $p (@$perm) {
+		print "Module: $p->{module}\n  Userid: $p->{userid}";
+		if ($p->{userid} eq $p->{owner}) {
+		    print " (Owner)";
+		}
+		print "\n";
+		print "  Name: $p->{fullname}\n";
 	    }
-	    print "\n";
-	    print "  Name: $p->{fullname}\n";
 	}
     }
 }
