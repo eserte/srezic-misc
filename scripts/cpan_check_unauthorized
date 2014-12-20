@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: cpan_check_unauthorized,v 1.6 2009/11/10 21:51:30 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007,2014 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,7 +13,7 @@
 #
 
 use strict;
-use CGI qw();
+use URI::Query qw();
 use Getopt::Long;
 use LWP::Simple qw(get);
 use HTML::TreeBuilder::XPath;
@@ -87,11 +86,11 @@ for my $node ($p->findnodes('//td[.="UNAUTHORIZED"]/../td[position()=1]')) {
 
 for my $module (@unauthorized_modules) {
     my $pause_check_url = "https://pause.perl.org/pause/authenquery?" .
-	CGI->new({pause99_peek_perms_by=>"me",
-		  pause99_peek_perms_query=>$module,
-		  pause99_peek_perms_sub=>1,
-		  OF=>"YAML",
-		 })->query_string;
+	URI::Query->new({pause99_peek_perms_by=>"me",
+			 pause99_peek_perms_query=>$module,
+			 pause99_peek_perms_sub=>1,
+			 OF=>"YAML",
+			})->stringify;
     if ($v) {
 	warn "Check on PAUSE: $pause_check_url\n";
     }
