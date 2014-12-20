@@ -75,7 +75,7 @@ if (($image_magick_version) = $image_magick_version =~ m{Version: ImageMagick (\
     die "Cannot parse ImageMagick version from '$image_magick_version'";
 }
 
-my $port_version = `make -f /usr/ports/graphics/ImageMagick/Makefile -VDISTFILES`;
+my $port_version = `make -VDISTFILES`;
 if (($port_version) = $port_version =~ m{^ImageMagick-(.*)\.tar\.}) {
     # ok
 } else {
