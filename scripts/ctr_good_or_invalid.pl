@@ -280,20 +280,16 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 
     $f->Button(-text => "RT",
 	       -command => sub {
-		   require CGI;
 		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . CGI->new({Name=>$currdist})->query_string);
+		   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . make_query_string(Name=>$currdist));
 	       })->pack(-side => "left");
     $f->Button(-text => "Matrix",
 	       -command => sub {
-		   require CGI;
 		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . CGI->new({dist=>$currdist,# reports=>"1"
-												   })->query_string);
+		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
 	       })->pack(-side => "left");
     $f->Button(-text => "MC",
 	       -command => sub {
-		   require CGI;
 		   require Tk::Pod::WWWBrowser;
 		   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
 	       })->pack(-side => "left");
@@ -1129,6 +1125,17 @@ sub read_annotate_txt {
 	$dist2annotation{$dist} = $annotation;
     }
     \%dist2annotation;	
+}
+
+sub make_query_string {
+    my(%args) = @_;
+    if (eval { require URI::Query; 1 }) {
+	URI::Query->new(\%args)->stringify;
+    } elsif (eval { require CGI; 1 }) {
+	CGI->new(\%args)->query_string;
+    } else {
+	die "Please install URI::Query";
+    }
 }
 
 __END__
