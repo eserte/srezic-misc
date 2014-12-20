@@ -48,9 +48,7 @@ if (!$user) {
 my $dist = shift
     or die "usage: dist (an already uploaded version) is missing";
 
-if ($dist =~ m{\.tar\.gz$}) {
-    die "Please specify -dist without archive extension, i.e. without .tar.gz";
-}
+$dist =~ s{\.tar\.gz$}{};
 if ($dist =~ m{/}) {
     die "Please specify -dist with basename only";
 }
