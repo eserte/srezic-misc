@@ -26,9 +26,9 @@ my($user, $password, $v);
     my $dot_pause = "$ENV{HOME}/.pause";
     if (open my $fh, $dot_pause) {
 	while(<$fh>) {
-	    if (/^user\s*=\s*(\S+)/) {
+	    if (/^user\s*(?:=\s*)?(\S+)/) {
 		$user = $1;
-	    } elsif (/^password\s*=\s*(\S+)/) {
+	    } elsif (/^password\s*(?:=\s*)?(\S+)/) {
 		$password = $1;
 	    }
 	}
