@@ -1454,6 +1454,7 @@ sub _df {
 sub check_disk_free_directory {
     my($dir, $min_space_free_bytes, $min_inode_free_percent) = @_;
 
+    my $need_to_restore_xterm_title;
     while () {
 	my $dfres = _df($dir);
 	if (!$dfres) {
@@ -1477,7 +1478,7 @@ sub check_disk_free_directory {
 	    $space_ok = 0;
 	}
 
-	return 1 if $space_ok && $inode_ok;
+	last if $space_ok && $inode_ok;
 
 	if (!$space_ok) {
 	    print STDERR qq{Less than $min_space_free_bytes bytes on $dir available: $dfres->{bavail}.\n};
@@ -1485,6 +1486,8 @@ sub check_disk_free_directory {
 	if (!$inode_ok) {
 	    print STDERR qq{Less than $min_inode_free_percent% inodes available on $dir: $inode_avail_percent%.\n};
 	}
+	xterm_conf('-title', 'Please cleanup disk for cpan_smoke_modules...');
+	$need_to_restore_xterm_title = 1;
 	print STDERR qq{Please cleanup the directory and go on with <RETURN>: };
 	if (is_interactive()) {
 	    local $SIG{ALRM} = sub { die "Timeout" };
@@ -1502,6 +1505,11 @@ sub check_disk_free_directory {
 	    sleep 60;
 	}
     }
+
+    if ($need_to_restore_xterm_title) {
+	xterm_conf('-title', 'Continuing cpan_smoke_modules...');
+    }
+    return 1;
 }
 
 # A list of files, probably in temporary directory, which need regular touch
