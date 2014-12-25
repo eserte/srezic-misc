@@ -335,6 +335,12 @@ L<Mouse> is another Moose clone missing some features but is
 (according to the documentation) much faster than Moose. Other even
 tinier versions of Moose are L<Moo> and L<Mo>.
 
+=head3 Inside-out technique
+
+L<Class::InsideOut::Manual::About> explains how L<Class::InsideOut>
+works and has a list of other modules implementing the inside-out
+technique.
+
 =head2 Sorting
 
 L<Sort::Key> is (according to the author) the fastest way to sort an
