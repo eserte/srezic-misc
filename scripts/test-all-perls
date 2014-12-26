@@ -17,10 +17,17 @@ use version;
 use Getopt::Long;
 
 my $e;
-GetOptions('e=s' => \$e)
+my $as_shell;
+GetOptions(
+	   'e=s' => \$e,
+	   'as-shell!' => \$as_shell,
+	  )
     or die "usage?";
 my $file;
 if (!$e) {
+    if ($as_shell) {
+	die "--as-shell only work with -e";
+    }
     $file = shift;
 }
 if (!$e && !$file) {
@@ -31,31 +38,39 @@ my @perls = map { $_->[1] }
     sort { $a->[0] <=> $b->[0] }
     map {
 	my $executable = $_;
-	my($ver) = $executable =~ m{^/usr/local/bin/perl(.*)};
-	$ver =~ s{[^0-9.]}{}g;
-	$ver = eval { version->parse("v$ver") };
-	if ($ver) {
-	    [$ver, $executable];
-	} else {
-	    warn "Version parse error for $executable? Skipping...";
+	if (!-x $executable) {
+	    warn "WARN: skip unavailable perl executable '$executable'...\n";
 	    ();
+	} else {
+	    my($ver) = $executable =~ m{^/usr/local/bin/perl(.*)};
+	    $ver =~ s{[^0-9.]}{}g;
+	    $ver = eval { version->parse("v$ver") };
+	    if ($ver) {
+		[$ver, $executable];
+	    } else {
+		warn "WARN: Version parse error for $executable? Skipping...";
+		();
+	    }
 	}
     }
     glob("/usr/local/bin/perl5.*");
 
-STDOUT->autoflush(1);
-for my $perl (@perls) {
-    if (!-x $perl) {
-	warn "WARN: skip unavailable perl executable '$perl'...\n";
-	next;
+if ($as_shell) {
+    require String::ShellQuote;
+    import String::ShellQuote;
+    my $shell_code = 'for perl in ' . join(' ', map { shell_quote($_) } @perls) . '; do echo "*** $perl *** "; "$perl" -e ' . shell_quote($e) . '; done';
+    print $shell_code, "\n";
+} else {
+    STDOUT->autoflush(1);
+    for my $perl (@perls) {
+	print "*** $perl ***\n";
+	if ($e) {
+	    system $perl, '-e', $e, @ARGV;
+	} else {
+	    system $perl, $file, @ARGV;
+	}
+	warn "... failed with $?\n" if $? != 0;
     }
-    print "*** $perl ***\n";
-    if ($e) {
-	system $perl, '-e', $e, @ARGV;
-    } else {
-	system $perl, $file, @ARGV;
-    }
-    warn "... failed with $?\n" if $? != 0;
 }
 
 __END__
@@ -69,11 +84,22 @@ test-all-perls - test a script or oneliner against installed perls
     test-all-perls -e '... perl code ...'
     test-all-perls perlscript.pl
 
+    test-all-perls --as-shell -e '... perl code ...'
+
 =head1 DESCRIPTION
 
 Run the specified oneliner code or script against all installed perls.
 By convention, perls should be located in F</usr/local/bin> and named
 C<perl5.I<X>.I<Y>>, poterntially with additional characters (e.g. C<t>
 for threaded etc.).
+
+With C<--as-shell> only shell code is printed which may be used to
+execute the oneliner specified in C<-e> in a loop. This variant may be
+preferred for documentation reasons (e.g. for inclusion in bug reports
+or so), where the source code of C<test-all-perls> is unknown.
+
+=head1 AUTHOR
+
+Slaven Rezic
 
 =cut
