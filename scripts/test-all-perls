@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use version;
+use Getopt::Long;
+
+my $e;
+GetOptions('e=s' => \$e)
+    or die "usage?";
+my $file;
+if (!$e) {
+    $file = shift;
+}
+if (!$e && !$file) {
+    die "Please specify either a script file or provide a program to -e";
+}
+
+my @perls = map { $_->[1] }
+    sort { $a->[0] <=> $b->[0] }
+    map {
+	my $executable = $_;
+	my($ver) = $executable =~ m{^/usr/local/bin/perl(.*)};
+	$ver =~ s{[^0-9.]}{}g;
+	$ver = eval { version->parse("v$ver") };
+	if ($ver) {
+	    [$ver, $executable];
+	} else {
+	    warn "Version parse error for $executable? Skipping...";
+	    ();
+	}
+    }
+    glob("/usr/local/bin/perl5.*");
+
+STDOUT->autoflush(1);
+for my $perl (@perls) {
+    if (!-x $perl) {
+	warn "WARN: skip unavailable perl executable '$perl'...\n";
+	next;
+    }
+    print "*** $perl ***\n";
+    if ($e) {
+	system $perl, '-e', $e, @ARGV;
+    } else {
+	system $perl, $file, @ARGV;
+    }
+    warn "... failed with $?\n" if $? != 0;
+}
+
+__END__
+
+=head1 NAME
+
+test-all-perls - test a script or oneliner against installed perls
+
+=head1 SYNOPSIS
+
+    test-all-perls -e '... perl code ...'
+    test-all-perls perlscript.pl
+
+=head1 DESCRIPTION
+
+Run the specified oneliner code or script against all installed perls.
+By convention, perls should be located in F</usr/local/bin> and named
+C<perl5.I<X>.I<Y>>, poterntially with additional characters (e.g. C<t>
+for threaded etc.).
+
+=cut
