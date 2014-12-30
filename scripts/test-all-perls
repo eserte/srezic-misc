@@ -18,6 +18,7 @@ use Getopt::Long;
 
 my $e;
 my $as_shell;
+Getopt::Long::config('passthrough');
 GetOptions(
 	   'e=s' => \$e,
 	   'as-shell!' => \$as_shell,
@@ -32,6 +33,16 @@ if (!$e) {
 }
 if (!$e && !$file) {
     die "Please specify either a script file or provide a program to -e";
+}
+
+my @pre_args;
+my @post_args;
+for (@ARGV) {
+    if (/^-/) {
+	push @pre_args, $_;
+    } else {
+	push @post_args, $_;
+    }
 }
 
 my @perls = map { $_->[1] }
@@ -58,16 +69,22 @@ my @perls = map { $_->[1] }
 if ($as_shell) {
     require String::ShellQuote;
     import String::ShellQuote;
-    my $shell_code = 'for perl in ' . join(' ', map { shell_quote($_) } @perls) . '; do echo "*** $perl *** "; "$perl" -e ' . shell_quote($e) . '; done';
+    my $shell_code = 'for perl in ' .
+	join(' ', map { shell_quote($_) } @perls) .
+	'; do echo "*** $perl *** "; "$perl"' .
+	(@pre_args ? ' ' . join(' ', map { shell_quote($_) } @pre_args) : '') .
+	' -e ' . shell_quote($e) .
+	(@post_args ? ' ' . join(' ', map { shell_quote($_) } @post_args) : '') .
+	'; done';
     print $shell_code, "\n";
 } else {
     STDOUT->autoflush(1);
     for my $perl (@perls) {
 	print "*** $perl ***\n";
 	if ($e) {
-	    system $perl, '-e', $e, @ARGV;
+	    system $perl, @pre_args, '-e', $e, @post_args;
 	} else {
-	    system $perl, $file, @ARGV;
+	    system $perl, @pre_args, $file, @post_args;
 	}
 	warn "... failed with $?\n" if $? != 0;
     }
