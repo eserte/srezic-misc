@@ -190,7 +190,7 @@ sub scenario_locale {
 	# (no message catalog for libc)
 	my $non_en_locale = $^O eq 'freebsd' ? 'de_DE.ISO8859-1' : 'de_DE.UTF-8';
 	warn "env LC_ALL=$non_en_locale $basecmd ...\n";
-	local $ENV{LC_ALL} = $non_en_locale';
+	local $ENV{LC_ALL} = $non_en_locale;
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
