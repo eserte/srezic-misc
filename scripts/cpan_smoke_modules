@@ -1579,12 +1579,17 @@ BEGIN {
 sub save_pwd (&) {
     my $code = shift;
     require Cwd;
-    my $pwd = Cwd::cwd();
+    my $pwd = Cwd::getcwd();
+    if (!defined $pwd) {
+        warn "No known current working directory";
+    }
     eval {
 	$code->();
     };
     my $err = $@;
-    chdir $pwd or die "Can't chdir back to $pwd: $!";
+    if (defined $pwd) {
+        chdir $pwd or die "Can't chdir back to $pwd: $!";
+    }
     die $err if $err;
 }
 # REPO END
