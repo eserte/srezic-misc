@@ -30,6 +30,13 @@ sub set_term_title ($);
 
 my $argv_fingerprint = join ' ', @ARGV;
 
+# -notypescript, because -typescript uses another terminal,
+# and in this terminal the sudo_keeper is not active. Anyway,
+# tests are run later again with -typescript turned on (or
+# whatever the default is).
+my @cpan_smoke_modules_common_install_opts = ('-minbuilddiravail 0.5G', '-notypescript', '-install');
+my @cpan_smoke_modules_common_opts         = ('-minbuilddiravail 0.5G');
+
 my $perlver;
 my $build_debug;
 my $build_threads;
@@ -402,11 +409,6 @@ step "Install modules needed for CPAN::Reporter",
 	toolchain_modules_installed_check();
     }, 
     using => sub {
-	# -notypescript, because -typescript uses another terminal,
-	# and in this terminal the sudo_keeper is not active. Anyway,
-	# tests are run later again with -typescript turned on (or
-	# whatever the default is).
-
 	# XXX Temporary (?) hack: use the stable
 	# RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
 	# the latter does not always pass tests. Note that this
@@ -417,7 +419,7 @@ step "Install modules needed for CPAN::Reporter",
 	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
 	} @toolchain_modules;
 
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", @to_install, "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", @to_install, "-perl", "$perldir/bin/perl";
     };
 
 step "Install and report Kwalify",
@@ -425,7 +427,7 @@ step "Install and report Kwalify",
 	-f "$state_dir/.reported_kwalify"
     },
     using => sub {
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", "-install", qw(Kwalify), "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_kwalify";
     };
@@ -436,7 +438,7 @@ step "Report toolchain modules",
     },
     using => sub {
 	# note: as this is the last step (currently), explicitely use -signalend
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-signalend", @toolchain_modules, "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_toolchain";
     };
@@ -446,7 +448,7 @@ step "Force a fail report",
 	-f "$state_dir/.reported_fail"
     },
     using => sub {
-	eval { system $^X, "$srezic_misc/scripts/cpan_smoke_modules", "-notypescript", "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
+	eval { system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_fail";
     };
