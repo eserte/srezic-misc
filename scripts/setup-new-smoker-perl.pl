@@ -34,8 +34,8 @@ my $argv_fingerprint = join ' ', @ARGV;
 # and in this terminal the sudo_keeper is not active. Anyway,
 # tests are run later again with -typescript turned on (or
 # whatever the default is).
-my @cpan_smoke_modules_common_install_opts = ('-minbuilddiravail 0.5G', '-notypescript', '-install');
-my @cpan_smoke_modules_common_opts         = ('-minbuilddiravail 0.5G');
+my @cpan_smoke_modules_common_install_opts = ('-minbuilddiravail', '0.5G', '-notypescript', '-install');
+my @cpan_smoke_modules_common_opts         = ('-minbuilddiravail', '0.5G');
 
 my $perlver;
 my $build_debug;
