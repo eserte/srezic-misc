@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -34,6 +34,7 @@ my $perlver;
 my $build_debug;
 my $build_threads;
 my $morebits;
+my $use_longdouble;
 my $for_cpansand;
 my $use_patchperl;
 my $patchperl_path;
@@ -46,6 +47,7 @@ GetOptions(
 	   "debug"     => \$build_debug,
 	   "threads"   => \$build_threads,
 	   "morebits"  => \$morebits,
+	   "longdouble" => \$use_longdouble,
 	   "cpansand"  => \$for_cpansand,
 	   "patchperl" => \$use_patchperl,
 	   "patchperlpath=s" => \$patchperl_path,
@@ -54,7 +56,7 @@ GetOptions(
 	   "pthread!"  => \$use_pthread,
 	   'extraconfigopts=s' => \$extra_config_opts,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
 if (!$perlver && $download_url) {
     if ($download_url =~ m{/perl-(5\.\d+\.\d+(?:-RC\d+)?)\.tar\.(?:gz|bz2)$}) {
@@ -85,8 +87,11 @@ my $perldir = "/usr/perl$perlver";
 if ($^O eq 'linux') {
     $perldir = "/opt/perl-$perlver";
 }
-if ($build_debug)   { $perldir .= "d" }
-if ($build_threads) { $perldir .= "t" }
+my $perldir_suffix = '';
+if ($build_debug)    { $perldir_suffix .= "d" }
+if ($build_threads)  { $perldir_suffix .= "t" }
+if ($use_longdouble) { $perldir_suffix .= 'D' }
+$perldir .= $perldir_suffix;
 
 if ($use_pthread) {
     if ($^O ne 'freebsd') {
@@ -289,7 +294,7 @@ EOF
 	};
 }
 
-my $built_file = "$perl_src_dir/.built" . ($build_debug || $build_threads ? "_" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "") : "");
+my $built_file = "$perl_src_dir/.built" . (length $perldir_suffix ? '_' . $perldir_suffix : '');
 step "Build perl",
     ensure => sub {
 	-x "$perl_src_dir/perl" && -f $built_file;
@@ -307,6 +312,7 @@ step "Build perl",
 			     ($build_debug ? "-debug" : ()),
 			     ($build_threads ? "-threads" : ()),
 			     ($morebits ? "-morebits" : ()),
+			     ($use_longdouble ? "-longdouble" : ()),
 			     ($extra_config_opts ? ('-addconfig', $extra_config_opts) : ()),
 			    );
 	    system @build_cmd;
@@ -321,6 +327,7 @@ step "Build perl",
 			     ($build_debug ? ' -DDEBUGGING' : '') .
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : '') .
+			     ($use_longdouble ? ' -Duselongdouble' : '') .
 			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
 			     ' && make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
@@ -372,7 +379,7 @@ step "Symlink perl for devel perls",
     };
 
 
-my $symlink_src = "/usr/local/bin/perl$perlver" . ($build_debug ? "d" : "") . ($build_threads ? "t" : "");
+my $symlink_src = "/usr/local/bin/perl$perlver" . $perldir_suffix;
 step "Symlink in /usr/local/bin",
     ensure => sub {
 	-l $symlink_src
