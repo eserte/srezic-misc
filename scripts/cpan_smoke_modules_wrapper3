@@ -188,9 +188,12 @@ sub scenario_locale {
 	# See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=196286
 	# the utf-8 locales in FreeBSD up to 10.1 are incomplete
 	# (no message catalog for libc)
+	#
+	# LANGUAGE has even precedence over LC_ALL, it seems, so unset it.
 	my $non_en_locale = $^O eq 'freebsd' ? 'de_DE.ISO8859-1' : 'de_DE.UTF-8';
-	warn "env LC_ALL=$non_en_locale $basecmd ...\n";
+	warn "env LC_ALL=$non_en_locale LANGUAGE= $basecmd ...\n";
 	local $ENV{LC_ALL} = $non_en_locale;
+	local $ENV{LANGUAGE};
 	system $basecmd;
 	die "SIGINT" if ($? == 2);
     }
