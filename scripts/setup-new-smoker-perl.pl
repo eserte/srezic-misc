@@ -453,6 +453,24 @@ step "Force a fail report",
 	system "touch", "$state_dir/.reported_fail";
     };
 
+step "Post stuff",
+    ensure => sub {
+	-f "$state_dir/.post_stuff_done"
+    },
+    using => sub {
+	if ($perlver =~ m{^5\.10\.}) {
+	    print STDERR <<EOF;
+######################################################################
+# NOTE: This is Perl $perlver. Please consider to upgrade either     #
+# CPAN.pm or (preferred) Archive::Tar, because of possible           #
+# "Out of memory" errors when extracting large tarballs.             #
+# (Maybe the upgrade should happen automatically one day...)         #
+######################################################################
+EOF
+	}
+	system "touch", "$state_dir/.post_stuff_done";
+    };
+
 if ($for_cpansand) {
     step "chown for cpansand",
 	ensure => sub {
