@@ -453,22 +453,15 @@ step "Force a fail report",
 	system "touch", "$state_dir/.reported_fail";
     };
 
-step "Post stuff",
+step "Maybe upgrade CPAN.pm",
     ensure => sub {
-	-f "$state_dir/.post_stuff_done"
+	-f "$state_dir/.cpan_pm_upgrade_done"
     },
     using => sub {
-	if ($perlver =~ m{^5\.10\.}) {
-	    print STDERR <<EOF;
-######################################################################
-# NOTE: This is Perl $perlver. Please consider to upgrade either     #
-# CPAN.pm or (preferred) Archive::Tar, because of possible           #
-# "Out of memory" errors when extracting large tarballs.             #
-# (Maybe the upgrade should happen automatically one day...)         #
-######################################################################
-EOF
+	if (!eval { system $^X, '-MCPAN 1.9463', '-e1'; 1 }) { # the CPAN version with new config option prefer_external_tar
+	    system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
 	}
-	system "touch", "$state_dir/.post_stuff_done";
+	system "touch", "$state_dir/.cpan_pm_upgrade_done";
     };
 
 if ($for_cpansand) {
