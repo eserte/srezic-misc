@@ -78,6 +78,7 @@ my $debug;
 my $destroy_perl_in_path = 0; # $^O ne 'MSWin32';
 my @pre_dist_or_mods;
 my @cpan_conf;
+my @cpan_conf_unchecked;
 my $strace;
 my $truss;
 my $ktrace;
@@ -145,6 +146,7 @@ GetOptions("n" => \$n,
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
 	   'cpanconf=s@' => \@cpan_conf,
+	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
 	   'destroyperl!' => \$destroy_perl_in_path,
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
@@ -1021,15 +1023,24 @@ EOF
 	    $cpan_shell_init .= q{CPAN::Index->force_reload(); };
 	}
 
-	for my $cpan_conf (@cpan_conf) {
-	    my($key,$val) = split /=/, $cpan_conf, 2;
-	    if (!defined $key || !defined $val) {
-		die "Probably invalid cpan_conf value '$cpan_conf'";
-	    }
-	    if ($key eq 'urllist') { # special handling for array
-		$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
-	    } else {
-		$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+	for my $def (
+		     [\@cpan_conf,           1],
+		     [\@cpan_conf_unchecked, 0],
+		    ) {
+	    my($cpan_conf_ref, $checked) = @$def;
+	    for my $cpan_conf (@$cpan_conf_ref) {
+		my($key,$val) = split /=/, $cpan_conf, 2;
+		if (!defined $key || !defined $val) {
+		    die "Probably invalid cpan_conf value '$cpan_conf'";
+		}
+		if ($checked && !exists $CPAN::Config->{$key}) {
+		    die "cpanconf key '$key' is probably invalid --- or use --cpanconf-unchecked instead\n";
+		}
+		if ($key eq 'urllist') { # special handling for array
+		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
+		} else {
+		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
+		}
 	    }
 	}
 
