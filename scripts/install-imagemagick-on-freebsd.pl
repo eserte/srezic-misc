@@ -4,13 +4,29 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
 # Mail: slaven@rezic.de
 # WWW:  http://www.rezic.de/eserte/
 #
+
+# XXX 2015-01-10: currently broken.
+#
+# On FreeBSD 10.1, compilation with a non-threaded perl is successful,
+# but almost all tests fail, most with an error messages like
+#
+#    Readimage (input.jpg): Exception 455: unable to load module `/usr/local/lib/ImageMagick-6.9.0//modules-Q16/coders/jpeg.la': file not found @ error/module.c/OpenModule/1282 at t/subroutines.pl line 690.
+#
+# On FreeBSD 9.2, already the non-perl part fails:
+#
+#    magick/distribute-cache.c: In function 'DestroyDistributeCacheInfo':
+#    magick/distribute-cache.c:389: warning: implicit declaration of function 'CLOSE_SOCKET'
+#    magick/distribute-cache.c: At top level:
+#    magick/distribute-cache.c:751: error: expected '=', ',', ';', 'asm' or '__attribute__' before 'DistributePixelCacheClient'
+#    Makefile:8461: recipe for target 'magick/magick_libMagickCore_6_Q16_la-distribute-cache.lo' failed
+#    gmake[1]: *** [magick/magick_libMagickCore_6_Q16_la-distribute-cache.lo] Error 1
 
 use strict;
 
