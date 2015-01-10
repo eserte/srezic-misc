@@ -244,7 +244,7 @@ sub get_current_imagemagick_pkg_version {
 	or die $!;
     chomp(my $pkg_version = <$fh>);
     close $fh
-	or die "Error running @cmd: $!";
+	or die "Error running @cmd: $!\nMaybe ImageMagick is not installed at all?";
     if (!$pkg_version) {
 	die "Cannot get version for ImageMagick --- maybe it's not installed?";
     }
