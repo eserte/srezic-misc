@@ -43,6 +43,7 @@ my $dists;
 my $reports_sent_seek_pos;
 my @pv;
 my $do_action = "test"; # and report
+my @post_actions;
 my $warntimeout = 60;
 my $n;
 my $r;
@@ -108,6 +109,7 @@ GetOptions("n" => \$n,
 	   "a|allperls!" => \$all_perls,
 	   "skipsystemperl|skip-system-perl" => \$skip_system_perl,
 	   "i|install" => sub { $do_action = "install" },
+	   'reinstall' => sub { $do_action = 'reinstall' },
 	   "shell" => sub {
 	       $do_action = "shell";
 	       $signal_end = 0; # we are interactive anyway...
@@ -196,6 +198,7 @@ usage: $0
      [dist ...]
 
 -i: test and install
+-reinstall: test and reinstall
 -shell: just start the CPAN shell with the special smoker settings
 
 -a: use all installed perls (otherwise some perls will not be used)
@@ -316,6 +319,14 @@ with
 Other OS are probably unsupported.
 EOF
     }
+}
+
+if ($do_action !~ m{^(test|report|install|reinstall|shell)$}) {
+    die "Invalid action '$do_action'";
+}
+if ($do_action eq 'reinstall') {
+    $do_action = 'test';
+    push @post_actions, 'install_tested';
 }
 
 my @dist_or_mods = @ARGV;
@@ -443,7 +454,7 @@ if (!@perls) {
 			    last HANDLE_SYSTEM_PERL;
 			}
 		    }
-		    if ($do_action eq 'install') {
+		    if (_is_install_like_action()) {
 			warn "Skip system perl '$candidate' for '$do_action' action...\n";
 			next CANDIDATE;
 		    }
@@ -1004,13 +1015,13 @@ EOF
 
 	# perl belongs to this user -> no sudo necessary
 	my $need_sudo_keeper;
-	if ($do_action eq 'install' || $do_action eq 'shell') {
+	if (_is_install_like_action() || $do_action eq 'shell') {
 	    my $perl_fullpath = is_in_path($perl);
 	    my $perl_uid = (stat($perl_fullpath))[4];
 	    if ($perl_uid == $<) {
 		$cpan_shell_init .= q#$CPAN::Config->{make_install_make_command}=q{make}; $CPAN::Config->{mbuild_install_build_command}=q{./Build}; #;
 	    }
-	    if ($perl_uid != $< && $do_action eq 'install') {
+	    if ($perl_uid != $< && _is_install_like_action()) {
 		if (is_in_path('sudo_keeper')) {
 		    $need_sudo_keeper = 1;
 		} else {
@@ -1088,6 +1099,9 @@ EOF
 		my $dist_or_mods_line = join(", ", map { qq{qq{$_}} } @pre_dist_or_mods, @work_set);
 		push @cmd, $cpan_shell_init . $do_action.qq{($dist_or_mods_line)};
 	    }
+	}
+	for my $post_action (@post_actions) {
+	    $cmd[-1] .= qq{$post_action; };
 	}
 
 	if ($strace) {
@@ -1550,6 +1564,10 @@ sub touch_files {
     }
 }
 
+sub _is_install_like_action {
+    $do_action eq 'install' || grep { $_ eq 'install_tested' } @post_actions;
+}
+
 # REPO BEGIN
 # REPO NAME is_in_path /home/e/eserte/work/srezic-repository 
 # REPO MD5 81c0124cc2f424c6acc9713c27b9a484
@@ -1692,6 +1710,10 @@ This includes for instance threaded perls.
 =item -install
 
 Do not only test, but also install.
+
+=item -reinstall
+
+Test and reinstall, if test was successful.
 
 =item -continue
 
