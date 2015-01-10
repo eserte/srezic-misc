@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -50,15 +50,21 @@ for my $mod (
 }
 
 if (%broken_module) {
+    my $cpan_smoke_modules_cmd = has_cpan_smoke_modules_cmd();
     my $broken_list = join(" ", sort keys %broken_module);
-    print STDERR <<EOF;
-Try now:
-
+    print STDERR "Try now:\n\n";
+    if ($cpan_smoke_modules_cmd) {
+	print STDERR <<EOF;
+    $cpan_smoke_modules_cmd -noreport -perl $^X -reinstall $broken_list
+EOF
+    } else {
+	print STDERR <<EOF;
     $^X -MCPAN -eshell
     test $broken_list
     install_tested
-
 EOF
+    }
+    print STDERR "\n";
 } else {
     print STDERR "No broken .so files found in @search_libs\n";
 }
@@ -81,5 +87,69 @@ sub wanted {
     }
 }
 
+sub has_cpan_smoke_modules_cmd {
+    my $cpan_smoke_modules_cmd;
+    if (is_in_path('cpan_smoke_modules')) {
+	$cpan_smoke_modules_cmd = 'cpan_smoke_modules';
+    } else {
+	my $candidate = "$ENV{HOME}/src/srezic-misc/scripts/cpan_smoke_modules";
+	if (-x $candidate) {
+	    $cpan_smoke_modules_cmd = $candidate;
+	}
+    }
+    if ($cpan_smoke_modules_cmd) {
+	$cpan_smoke_modules_cmd;
+    } else {
+	undef;
+    }
+}
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/e/eserte/src/srezic-repository 
+# REPO MD5 e18e6687a056e4a3cbcea4496aaaa1db
+
+=head2 is_in_path($prog)
+
+=for category File
+
+Return the pathname of $prog, if the program is in the PATH, or undef
+otherwise.
+
+DEPENDENCY: file_name_is_absolute
+
+=cut
+
+sub is_in_path {
+    my($prog) = @_;
+    require File::Spec;
+    if (File::Spec->file_name_is_absolute($prog)) {
+	if ($^O eq 'MSWin32') {
+	    return $prog       if (-f $prog && -x $prog);
+	    return "$prog.bat" if (-f "$prog.bat" && -x "$prog.bat");
+	    return "$prog.com" if (-f "$prog.com" && -x "$prog.com");
+	    return "$prog.exe" if (-f "$prog.exe" && -x "$prog.exe");
+	    return "$prog.cmd" if (-f "$prog.cmd" && -x "$prog.cmd");
+	} else {
+	    return $prog if -f $prog and -x $prog;
+	}
+    }
+    require Config;
+    %Config::Config = %Config::Config if 0; # cease -w
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"     if (-f "$_\\$prog" && -x "$_\\$prog");
+	    return "$_\\$prog.bat" if (-f "$_\\$prog.bat" && -x "$_\\$prog.bat");
+	    return "$_\\$prog.com" if (-f "$_\\$prog.com" && -x "$_\\$prog.com");
+	    return "$_\\$prog.exe" if (-f "$_\\$prog.exe" && -x "$_\\$prog.exe");
+	    return "$_\\$prog.cmd" if (-f "$_\\$prog.cmd" && -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
 
 __END__
