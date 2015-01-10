@@ -176,7 +176,7 @@ usage: $0
      [-a|-allperls] [-perl /path/to/perl [-perl ...]] [-pv x.y.z,x.y.z,....]
      [-fl|-filelist file] [-c|-cont|-continue] [-recent] [-recenturl url]
      [-r|-reverse] [-rr] [-splitdists number]
-     [-[no]skiptested] [-nofailreport]
+     [-[no]skiptested]
      [-mirrorurl ...]
      [-warntimeout secs] [-[no]sqllite]
      [-[no]interactive] [-[no]wait] [-[no]batch]
@@ -211,7 +211,6 @@ usage: $0
 -rr: reverse just a smaller working set (to be used with -splitdists)
 -splitdists number: test at most number distribution within one iteration (default $split_dists)
 -skiptested: skip already tested distributions (use ~/.cpanreporter/reports-sent.db list)
--nofailreport: send only PASS/NA/UNKNOWN reports, no FAIL reports
 
 -warntimeout secs: warn after inactivity (needs idletermchecker program, default $warntimeout)
 -[no]sqllite: (do not) use CPAN::SQLite
