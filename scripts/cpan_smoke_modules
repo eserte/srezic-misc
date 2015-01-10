@@ -100,6 +100,7 @@ my $reload_index;
 my $hack_checksum_check_file = 1;
 my $ignore_history;
 my $deterministic_hashes;
+my $do_report = 1;
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -135,6 +136,7 @@ GetOptions("n" => \$n,
 	       $skip_tested_pass = $skip_tested = 1;
 	   },
 	   'testunpatched' => \$test_unpatched,
+	   'report!' => \$do_report,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
 	   'mirrorurl=s' => \$mirror_url,
@@ -176,7 +178,7 @@ usage: $0
      [-a|-allperls] [-perl /path/to/perl [-perl ...]] [-pv x.y.z,x.y.z,....]
      [-fl|-filelist file] [-c|-cont|-continue] [-recent] [-recenturl url]
      [-r|-reverse] [-rr] [-splitdists number]
-     [-[no]skiptested]
+     [-[no]skiptested] [-[no]report]
      [-mirrorurl ...]
      [-warntimeout secs] [-[no]sqllite]
      [-[no]interactive] [-[no]wait] [-[no]batch]
@@ -211,6 +213,7 @@ usage: $0
 -rr: reverse just a smaller working set (to be used with -splitdists)
 -splitdists number: test at most number distribution within one iteration (default $split_dists)
 -skiptested: skip already tested distributions (use ~/.cpanreporter/reports-sent.db list)
+-noreport: don't use CPAN::Reporter
 
 -warntimeout secs: warn after inactivity (needs idletermchecker program, default $warntimeout)
 -[no]sqllite: (do not) use CPAN::SQLite
@@ -974,7 +977,11 @@ EOF
 	if ($^O ne 'MSWin32') { # somehow does not work under Windows
 	    $cpan_shell_init .= q{$CPAN::VERSION >= 1.9205 or warn(("*"x70)."\n*** Old CPAN version $CPAN::VERSION\n".("*"x70)."\n"); };
 	}
-	$cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
+	if ($do_report) {
+	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=1; };
+	} else {
+	    $cpan_shell_init .= q{$CPAN::Config->{test_report}=0; };
+	}
 	$cpan_shell_init .= q{$CPAN::Config->{urllist}=[qw(} . $mirror_url . q{)]; };
 	$cpan_shell_init .= q{$CPAN::FTP::connect_to_internet_ok=1; };
 	# The new feature seems to be problematic:
