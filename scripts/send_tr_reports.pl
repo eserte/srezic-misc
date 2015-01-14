@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -155,7 +155,26 @@ set_term_title "Report sender finished";
 
 __END__
 
-=head1 WORKFLOW
+=head1 NAME
+
+send_tr_reports.pl - send filed Test::Reporter reports to metabase
+
+=head1 STANDALONE USAGE
+
+Create a directory F<var/cpansmoker/sync> in your C<$HOME> directory
+and move the test reports to this directory. Run the script (of course
+replace with your cpan user id):
+
+    send_tr_reports.pl --cpan-uid=srezic
+
+Reports are first moved to the F<process> subdirectory, then processed
+and moved further to the F<done> subdirectory. In case sending to
+metabase fails, the report will still be in F<process> and has to be
+moved manually to F<sync>.
+
+=head1 SAMPLE COMPLETE WORKFLOW
+
+I<(Warning: this section is probably not useful!)>
 
 See CPAN/CPAN::Reporter configuration below:
 
@@ -174,7 +193,7 @@ On the unix machine
 Now review the fail reports on the windows machine. Invalid ones move
 to the invalid/ subdirectory.
 
-=head1 CPAN::REPORTER CONFIGURATION
+=head2 CPAN::REPORTER CONFIGURATION
 
 In /cygdrive/c/Users/eserte/Documents/.cpanreporter/config.ini:
 
@@ -191,5 +210,13 @@ transport directory.
     email_from=srezic@cpan.org
     send_report=default:yes
     transport=File /cygdrive/c/Users/eserte/ctr
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=head1 SEE ALSO
+
+L<Test::Reporter>.
 
 =cut
