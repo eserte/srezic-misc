@@ -1196,6 +1196,7 @@ EOF
 	    @cmd = ($perl, $tmp_cmd_file);
 	}
 
+	print STDERR "# PATH=$ENV{PATH}\n";
 	print STDERR "# @cmd\n";
 	local %ENV = %ENV;
 	if ($batch) {
