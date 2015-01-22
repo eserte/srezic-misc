@@ -485,7 +485,7 @@ sub parse_test_report {
 		    $prereq_fails{$1} = 1;
 		    $add_analysis_tag->('prereq fail');
 		} elsif (
-			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array))\)/ ||
+			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array)|subroutine entry)\)/ ||
 			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/
 			) {
 		    $add_analysis_tag->('container func on ref');
