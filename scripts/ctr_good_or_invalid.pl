@@ -462,9 +462,10 @@ sub parse_test_report {
 			 /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
 			) {
 		    $add_analysis_tag->('prereq test');
-		} elsif ( # this should come before the generic 'prereq fail' test
-			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} || # Debian version
-			 m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version
+		} elsif (   # this should come before the generic 'prereq fail' test
+			    m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /etc/perl} # Debian version
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version, old
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC \(\@INC contains.* /usr/local/lib/perl5/site_perl/mach/} # FreeBSD version, new
 			) {
 		    $maybe_system_perl = 1; # decide later
 		} elsif (
@@ -684,7 +685,8 @@ sub parse_test_report {
 		}
 	    } elsif ($section eq 'ENVIRONMENT') {
 		if ($maybe_system_perl) {
-		    if (   m{config_args=.*/BSDPAN}   # FreeBSD version
+		    if (   m{config_args=.*/BSDPAN}   # FreeBSD version, old, with BSDPAN
+			|| m{config_args=.*-Dsitearch=/usr/local/lib/perl5/site_perl/mach} # FreeBSD version, new, "mach"
 			|| m{DEBPKG:debian/mod_paths} # Debian version
 		       ) {
 			$maybe_system_perl = 0;
