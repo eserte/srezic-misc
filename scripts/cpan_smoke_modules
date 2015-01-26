@@ -102,6 +102,7 @@ my $hack_checksum_check_file = 1;
 my $ignore_history;
 my $deterministic_hashes;
 my $do_report = 1;
+my $use_sudo_keeper = 1; # if available
 Getopt::Long::Configure('noauto_abbrev');
 GetOptions("n" => \$n,
 	   "r|reverse" => \$r,
@@ -114,6 +115,7 @@ GetOptions("n" => \$n,
 	       $do_action = "shell";
 	       $signal_end = 0; # we are interactive anyway...
 	   },
+	   "sudokeeper!" => \$use_sudo_keeper,
 	   "warntimeout=i" => \$warntimeout,
 	   'perl=s@' => \@perls,
 	   'pv=s@' => \@pv,
@@ -1021,7 +1023,7 @@ EOF
 	    if ($perl_uid == $<) {
 		$cpan_shell_init .= q#$CPAN::Config->{make_install_make_command}=q{make}; $CPAN::Config->{mbuild_install_build_command}=q{./Build}; #;
 	    }
-	    if ($perl_uid != $< && _is_install_like_action()) {
+	    if ($perl_uid != $< && _is_install_like_action() && $use_sudo_keeper) {
 		if (is_in_path('sudo_keeper')) {
 		    $need_sudo_keeper = 1;
 		} else {
