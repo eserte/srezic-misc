@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -355,6 +355,7 @@ sub parse_test_report {
     my $currfulldist;
     my %analysis_tags;
     my %prereq_fails;
+    my %prereq_versions;
 
     my $fh;
     if (!open($fh, $file)) {
@@ -550,7 +551,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('r flag in s///');
 		} elsif (
-			 /==> MISMATCHED content between \S+ and distribution files! <==/
+			    m{==> MISMATCHED content between \S+ and distribution files! <==}
+			 || m{==> BAD/TAMPERED signature detected! <==}
 			) {
 		    $add_analysis_tag->('signature mismatch');
 		} elsif (
@@ -656,6 +658,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('use strict error message');
 		} elsif (
+			 m{Can't locate object method "builder" via package "Test::Simple" at }
+			) {
+		    $add_analysis_tag->('Test-Simple problem'); # probably a problem with beta Test-Simple
+		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
 		    # rather unspecific, do as rather last check
@@ -691,6 +697,8 @@ sub parse_test_report {
 		       ) {
 			$maybe_system_perl = 0;
 		    }
+		} elsif (m{^\s*(Test::More)\s+([\d._]+)}) {
+		    $prereq_versions{$1} = $2;
 		}
 	    }
 	}
@@ -709,6 +717,7 @@ sub parse_test_report {
 	 currfulldist             => $currfulldist,
 	 analysis_tags            => \%analysis_tags,
 	 prereq_fails             => \%prereq_fails,
+	 prereq_versions          => \%prereq_versions,
 	);
     lock_keys %ret;
     return \%ret;
@@ -738,6 +747,7 @@ sub set_currfile {
     my $x_test_reporter_distfile = $parsed_report->{x_test_reporter_distfile};
     my %analysis_tags = %{ $parsed_report->{analysis_tags} };
     my %prereq_fails = %{ $parsed_report->{prereq_fails} };
+    my $test_more_version = $parsed_report->{prereq_versions}->{'Test::More'};
 
     my $title = "ctr_good_or_invalid:";
     if ($subject) {
@@ -914,6 +924,7 @@ sub set_currfile {
 			       'kwalitee test' => 'testkwalitee',
 			       'system perl used' => 'systemperl',
 			       'out of memory' => 'nolimits',
+			       'Test-Simple problem' => 'testsimple',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
@@ -921,6 +932,8 @@ sub set_currfile {
 	    my $scenario = $_scenario;
 	    if ($scenario eq 'prereq' && %prereq_fails) {
 		$scenario .= ',' . join ',', keys %prereq_fails;
+	    } elsif ($scenario eq 'testsimple' && $test_more_version) {
+		$scenario = 'prereq,EXODIST/Test-Simple-'.$test_more_version.'.tar.gz';
 	    }
 	    my $label;
 	    my $need_balloon;
