@@ -71,6 +71,7 @@ my $skip_tested_fail;
 my $skip_tested_pass;
 my $test_unpatched;
 my $save_reports = 1;
+my $do_create_report_directories = 1;
 my $reports_workflow_dir;
 my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
@@ -167,6 +168,7 @@ GetOptions("n" => \$n,
 	   'report!' => \$do_report,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
+	   'createreportdirectories!' => \$do_create_report_directories,
 	   'mirrorurl=s' => \$mirror_url,
 	   'mirrorurlct'    => sub { $mirror_url = 'http://cpan.cpantesters.org/' },
 	   'mirrorurlfunet' => sub { $mirror_url = 'ftp://ftp.funet.fi/pub/CPAN' },
@@ -223,6 +225,7 @@ usage: $0
      [-[no]limits] [-vnc] [-x11display :...]
      [-minbuilddiravail bytes|...k|...M|...G]
      [-reloadindex]
+     [-[no]savereports] [-[no]createreportdirectories]
      [dist ...]
 
 -i: test and install
@@ -721,52 +724,6 @@ if ((   $n                    # no idletermchecker in no exec mode:
     $warntimeout = undef;
 }
 
-(my $short_hostname = hostname) =~ s{\..*}{};
-chomp(my $tty = `tty`);
-(my $short_tty = $tty) =~ s{^.*/}{};
-
-my $idletermchecker_pid;
-my @idletermchecker_cmd;
-if ($warntimeout) {
-    if (is_in_path("idletermchecker")) {
-	if ($tty) {
-	    if (is_in_path('pistachio-perl')) {
-		# If pistachio-perl exists then use it, because it has
-		# Tk available, this is not necessarily the case for
-		# the system perl
-		@idletermchecker_cmd = ('pistachio-perl', '-S', 'idletermchecker');
-	    } else {
-		@idletermchecker_cmd = ('idletermchecker');
-	    }
-	    $idletermchecker_pid = fork;
-	    if ($idletermchecker_pid == 0) {
-		exec @idletermchecker_cmd, "-tk", "-with-hostname", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
-		die $!;
-	    }
-	} else {
-	    print STDERR "NOTE: cannot get tty, idletermchecker will not run.\n";
-	}
-    } else {
-	print STDERR "NOTE: idletermchecker is not available.\n";
-    }
-}
-
-# neither "nice" on Windows, nor setpriority or so:
-if (!$unkind && $^O eq 'MSWin32') {
-    eval {
-	require Win32::Process;
-	Win32::Process::Open(my $proc, $$, 0)
-		or die($^E);
-	$proc->SetPriorityClass(Win32::Process::IDLE_PRIORITY_CLASS())
-	    or die($^E);
-    };
-    warn $@ if $@;
-}
-
-open my $logfh, ">>", $cpan_smoke_log
-    or warn "WARNING: Cannot write to logfile $cpan_smoke_log: $!";
-$logfh->autoflush(1);
-
 if ($save_reports) {
     if (!$for_parallel_smoker && $^O ne 'MSWin32') { # parallel smoker already have a correct cpanreporter config, and so have the windows' perls
 	my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
@@ -817,12 +774,75 @@ if ($save_reports) {
 		     "$reports_workflow_dir/done",
 		     "$reports_workflow_dir/undecided",
 		    ) {
-	    mkdir $dir if !-d $dir;
+	    if (!-d $dir) {
+		if ($do_create_report_directories) {
+		    mkdir $dir
+			or do {
+			    my $err = $!;
+			    if (!-d $dir) {
+				die "Can't create directory $dir: $err";
+			    }
+			};
+		} else {
+		    die <<EOF;
+ERROR: directory '$dir' is missing and
+--nocreatereportdirectories is specified.
+Please fix the situation manually, e.g. by
+mounting or manually creating the required directories.
+EOF
+		}
+	    }
 	}
 	$ENV{PERL_CPAN_REPORTER_CONFIG} = $tmpfile;
 	push @touch_files, $tmpfile;
     }
 }
+
+(my $short_hostname = hostname) =~ s{\..*}{};
+chomp(my $tty = `tty`);
+(my $short_tty = $tty) =~ s{^.*/}{};
+
+my $idletermchecker_pid;
+my @idletermchecker_cmd;
+if ($warntimeout) {
+    if (is_in_path("idletermchecker")) {
+	if ($tty) {
+	    if (is_in_path('pistachio-perl')) {
+		# If pistachio-perl exists then use it, because it has
+		# Tk available, this is not necessarily the case for
+		# the system perl
+		@idletermchecker_cmd = ('pistachio-perl', '-S', 'idletermchecker');
+	    } else {
+		@idletermchecker_cmd = ('idletermchecker');
+	    }
+	    $idletermchecker_pid = fork;
+	    if ($idletermchecker_pid == 0) {
+		exec @idletermchecker_cmd, "-tk", "-with-hostname", "-s", "-timeout", $warntimeout, "-timeout2", $warntimeout+60, "-q", $tty;
+		die $!;
+	    }
+	} else {
+	    print STDERR "NOTE: cannot get tty, idletermchecker will not run.\n";
+	}
+    } else {
+	print STDERR "NOTE: idletermchecker is not available.\n";
+    }
+}
+
+# neither "nice" on Windows, nor setpriority or so:
+if (!$unkind && $^O eq 'MSWin32') {
+    eval {
+	require Win32::Process;
+	Win32::Process::Open(my $proc, $$, 0)
+		or die($^E);
+	$proc->SetPriorityClass(Win32::Process::IDLE_PRIORITY_CLASS())
+	    or die($^E);
+    };
+    warn $@ if $@;
+}
+
+open my $logfh, ">>", $cpan_smoke_log
+    or warn "WARNING: Cannot write to logfile $cpan_smoke_log: $!";
+$logfh->autoflush(1);
 
 if ($ignore_history) {
     my $empty_config_dir = tempdir("CPAN_Reporter_config_XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
