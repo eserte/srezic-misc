@@ -336,13 +336,13 @@ step "Build perl",
 			     ($morebits ? die("No support for morebits") : '') .
 			     ($use_longdouble ? ' -Duselongdouble' : '') .
 			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
-			     ' && make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
+			     ' && nice make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
 	    system @build_cmd;
 	    if (!eval {
 		local $ENV{TEST_JOBS};
 		$ENV{TEST_JOBS} = $jobs if $jobs > 1;
-		system 'make', 'test';
+		system 'nice', 'make', 'test';
 		1;
 	    }) {
 		while () {
