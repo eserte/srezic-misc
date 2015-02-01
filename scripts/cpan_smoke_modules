@@ -658,14 +658,21 @@ if ($r) {
 }
 
 {
-    for my $another_tmp (qw(/var/tmp /tmp)) {
+    for my $another_tmp_def (# Directory      User-owned
+			     (defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1] : ()),
+			     ['/var/tmp',     0],
+			     ['/tmp',         0],
+			    ) {
+	my($another_tmp, $user_owned) = @$another_tmp_def;
 	if (-d $another_tmp && -w $another_tmp) {
-	    my $_another_tmp = $another_tmp . "/cpansmoker-$<";
+	    my $_another_tmp = $another_tmp . '/cpansmoker' . (!$user_owned ? "-$<" : '');
 	    if (!-d $_another_tmp) {
 		mkdir $_another_tmp
 		    or die "Cannot create $_another_tmp: $!";
-		chmod 01777, $_another_tmp
-		    or die "Cannot set sticky bit: $!";
+		if (!$user_owned) {
+		    chmod 01777, $_another_tmp
+			or die "Cannot set sticky bit: $!";
+		}
 	    }
 	    $ENV{TMPDIR} = $_another_tmp;
 	    last;
