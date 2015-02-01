@@ -1095,7 +1095,7 @@ EOF
 		    if ($total_dists > 1) {
 			$pc = int($dist_i*100/$total_dists)."%";
 		    }
-		    $dist_or_mods_line .= qq{system(q{xterm-conf -force -title "$std_title $dist $pc"}); \$0 = "\$^X (CPAN.pm $do_action $dist)"; $do_action(qq{$dist}); };
+		    $dist_or_mods_line .= qq{system(q{env PERL5OPT= xterm-conf -force -title "$std_title $dist $pc"}); \$0 = "\$^X (CPAN.pm $do_action $dist)"; $do_action(qq{$dist}); };
 		    $last_xterm_title = "$std_title $dist";
 		    $dist_i++;
 		}
