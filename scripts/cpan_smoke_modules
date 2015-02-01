@@ -94,6 +94,7 @@ my $module_printused;
 my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
 my @hidemod;
+my $time_fake;
 my $use_vncserver;
 my $x11_display;
 my @touch_files;
@@ -166,6 +167,7 @@ GetOptions("n" => \$n,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
 	   'hidemod=s@' => \@hidemod,
+	   'timefake=s' => \$time_fake,
 	   'vnc!'  => \$use_vncserver,
 	   'x11display=s' => \$x11_display,
 	   'reloadindex|reload-index' => \$reload_index,
@@ -193,6 +195,7 @@ usage: $0
      [-[no]destroyperl]
      [-strace|-truss|-ktrace file] [-[no]typescript] [-filemon]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
+     [-timefake options]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc] [-x11display :...]
      [-minbuilddiravail bytes|...k|...M|...G]
@@ -1221,6 +1224,9 @@ EOF
 	    $ENV{PERL5OPT} .= " -MDevel::Hide";
 	    $ENV{DEVEL_HIDE_VERBOSE} = 0;
 	    $ENV{DEVEL_HIDE_PM} = "@hidemod";
+	}
+	if ($time_fake) {
+	    $ENV{PERL5OPT} .= " -MTime::Fake=$time_fake";
 	}
 	if ($effective_x11_display) {
 	    $ENV{DISPLAY} = $effective_x11_display;
