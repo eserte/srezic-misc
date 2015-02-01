@@ -392,7 +392,7 @@ sub parse_test_report {
 	    push @{ $analysis_tags{$tag}->{lines} }, $line;
 	};
 
-	my $maybe_system_perl; # can be decided later
+	my $maybe_system_perl; # can be decided later; contains failed line or zero
 
 	while(<$fh>) {
 	    if (/^PROGRAM OUTPUT$/) {
@@ -468,7 +468,9 @@ sub parse_test_report {
 			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version, old
 			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/site_perl/mach/} # FreeBSD version, new
 			) {
-		    $maybe_system_perl = 1; # decide later
+		    if (!defined $maybe_system_perl) {
+			$maybe_system_perl = $.; # decide later, remember line number
+		    }
 		} elsif (
 			 /^(?:#\s+Error:\s+)?Can't locate (\S+) in \@INC/
 			) {
@@ -704,7 +706,8 @@ sub parse_test_report {
 	}
 
 	if ($maybe_system_perl) { # now we're sure
-	    $add_analysis_tag->('system perl used');
+	    my $line_number = $maybe_system_perl;
+	    $add_analysis_tag->('system perl used', $line_number);
 	}
     }
 
