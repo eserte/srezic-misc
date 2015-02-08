@@ -49,6 +49,7 @@ my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title = 1;
 my $show_recent_states = 1;
+my $use_recent_states_cache = 0;
 my $recent_months = 1;
 my $do_check_screensaver = 1;
 my $do_scenario_buttons;
@@ -68,6 +69,7 @@ GetOptions("good" => \$only_good,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
 	   "recent-states!" => \$show_recent_states,
+	   "recent-states-cache!" => \$use_recent_states_cache,
 	   "recent-months=i" => \$recent_months,
 	   "check-screensaver!" => \$do_check_screensaver,
 	   "scenario-buttons!" => \$do_scenario_buttons,
@@ -124,7 +126,7 @@ if (!-d $undecided_directory) {
     mkdir $undecided_directory or die "While creating $undecided_directory: $!";
 }
 my $done_directory = "$reportdir/done";
-my @recent_done_directories;
+my @recent_done_directories; # sorted newest to oldest
 if (-d $done_directory) {
     my $add_done_directory = sub {
 	my $month = shift;
@@ -1020,27 +1022,80 @@ sub get_recent_states {
 	for my $check_def (@check_defs) {
 	    my($age, @directories) = @$check_def;
 	    for my $directory (@directories) {
-		if (opendir(my $DIR, $directory)) {
-		    while(defined(my $file = readdir $DIR)) {
-			if ($file ne $currfile_base) { # don't show current report in NEW counts
-			    if (index($file, $distv) >= 0) { # quick check
-				if (my $recent_res = parse_report_filename($file)) {
-				    if ($recent_res->{distv} eq $distv) {
-					my $recent_state = $recent_res->{state};
-					push @{ $recent_states{$recent_state}->{$age} }, "$directory/$file";
+		if ($use_recent_states_cache && $age eq 'old' && $directory ne $recent_done_directories[0]) {
+		    my @recent_res = get_recent_reports_from_cache($distv, $directory);
+		    for my $recent_res (@recent_res) {
+			my $recent_state = $recent_res->{state};
+			push @{ $recent_states{$recent_state}->{$age} }, "$directory/" . $recent_res->{file};
+		    }
+		} else {
+		    if (opendir(my $DIR, $directory)) {
+			while(defined(my $file = readdir $DIR)) {
+			    if ($file ne $currfile_base) { # don't show current report in NEW counts
+				if (index($file, $distv) >= 0) { # quick check
+				    if (my $recent_res = parse_report_filename($file)) {
+					if ($recent_res->{distv} eq $distv) {
+					    my $recent_state = $recent_res->{state};
+					    push @{ $recent_states{$recent_state}->{$age} }, "$directory/$file";
+					}
 				    }
 				}
 			    }
 			}
+		    } else {
+			warn "ERROR: cannot open $directory: $!";
 		    }
-		} else {
-		    warn "ERROR: cannot open $directory: $!";
 		}
 	    }
 	}
     }
 
     %recent_states;
+}
+
+sub get_recent_reports_from_cache {
+    my($distv, $directory) = @_;
+    require MLDBM;
+    require Fcntl;
+    no warnings 'once';
+    local $MLDBM::UseDB = 'DB_File';
+    local $MLDBM::Serializer = 'Storable';
+    my $cache_file = "$directory/.reports_cache";
+    if (!-s $cache_file) {
+	warn "INFO: build cache file $cache_file...\n";
+	my %local_db;
+	if (opendir(my $DIR, $directory)) {
+	    my $scan_msg = "INFO: scanning directory $directory... ";
+	    print STDERR $scan_msg;
+	    my $i = 0;
+	    while(defined(my $file = readdir $DIR)) {
+		my $recent_res = parse_report_filename($file);
+		if ($recent_res) {
+		    my $this_distv = $recent_res->{distv};
+		    if ($this_distv) {
+			$recent_res->{file} = $file;
+			push @{ $local_db{$this_distv} }, $recent_res;
+		    }
+		}
+		if ($i++ % 1000 == 0) {
+		    print STDERR "\r$scan_msg $i files ";
+		}
+	    }
+	    print STDERR "\nINFO: Dumping to cache file...\n";
+	    tie my %db, 'MLDBM', $cache_file, &Fcntl::O_CREAT|&Fcntl::O_RDWR, 0644
+		or die "Can't create cache file $cache_file: $!";
+	    while(my($k,$v) = each %local_db) {
+		$db{$k} = $v;
+	    }
+	    print STDERR "INFO: Dumping finished.\n";
+	} else {
+	    die "ERROR: cannot open $directory: $!";
+	}		
+    }
+    tie my %db, 'MLDBM', $cache_file, &Fcntl::O_RDONLY, 0644
+	or die "Can't tie cache file $cache_file: $!";
+    my $recent_reports = $db{$distv};
+    $recent_reports ? @$recent_reports : ();
 }
 
 sub nextfile {
