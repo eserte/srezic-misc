@@ -531,7 +531,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('out of memory');
 		} elsif (
-			 /^# Perl::Critic found these violations in .*:$/
+			 /^# Perl::Critic found these violations in .*:$/ ||
+			 /^#\s+Failed test 'Test::Perl::Critic for [^']+'$/
 			) {
 		    $add_analysis_tag->('perl critic');
 		} elsif ( # note: these checks have to happen before the 'qw without parentheses' check
