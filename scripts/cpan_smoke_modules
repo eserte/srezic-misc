@@ -942,6 +942,15 @@ EOF
 	}
     }
 
+    # check if reports-sent.db may be written to
+    {
+	my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
+	my $reports_sent_db_file = "$cpan_reporter_dir/reports-sent.db";
+	if (-e $reports_sent_db_file && !-w $reports_sent_db_file) {
+	    die "Cannot write to $reports_sent_db_file";
+	}
+    }
+
     if ($skip_tested) {
 	# next two lines taken from cpan_allpackages:
 	my $thisperl = "perl-".`$perl -MConfig -e 'print \$Config{version}'`;
@@ -1205,7 +1214,10 @@ EOF
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
 	    } else {
-		warn "*** WARNING: Neither limits(1) nor BSD::Resource available, resource limits cannot be set.\n";
+		warn <<EOF;
+*** WARNING: Neither limits(1) nor BSD::Resource available, resource limits
+             cannot be set.
+EOF
 	    }
 	}
 
