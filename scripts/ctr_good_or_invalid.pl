@@ -469,6 +469,7 @@ sub parse_test_report {
 			    m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /etc/perl} # Debian version
 			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version, old
 			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/site_perl/mach/} # FreeBSD version, new
+			 || m{Undefined symbol ".*" at /usr/local/lib/perl5/5.\d+/mach/}, # wrong linking, FreeBSD version, new
 			) {
 		    if (!defined $maybe_system_perl) {
 			$maybe_system_perl = $.; # decide later, remember line number
