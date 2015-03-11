@@ -366,6 +366,7 @@ sub parse_test_report {
 
     # Parse header
     while(<$fh>) {
+	s/\r//; # for windows reports
 	if (/^Subject:\s*(.*)/) {
 	    $subject = $1;
 	    if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
@@ -895,6 +896,7 @@ sub set_currfile {
 		my $x_test_reporter_perl;
 		while(<$fh>) {
 		    chomp;
+		    s/\r//; # for windows reports
 		    if (m{^X-Test-Reporter-Perl: (.*)}) {
 			$x_test_reporter_perl = $1;
 		    } elsif (m{^Subject: (.*)}) {
