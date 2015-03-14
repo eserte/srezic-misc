@@ -964,12 +964,16 @@ sub set_currfile {
     }
 
     if ($dist2annotation && $dist2annotation->{$currfulldist}) {
-	my $annotation = $dist2annotation->{$currfulldist};
+	my $annotation_text = $dist2annotation->{$currfulldist};
+	my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
 	my $url;
-	if ($annotation =~ m{^(\d+)}) {
-	    $url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
-	} elsif ($annotation =~ m{^(https?://\S+)}) {
-	    $url = $1;
+	for my $annotation (@annotations) {
+	    if ($annotation =~ m{^(\d+)}) { # ... of rt.cpan.org ticket ids
+		$url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
+	    } elsif ($annotation =~ m{^(https?://\S+)}) { # ... or URLs
+		$url = $1;
+	    } # ... or something else
+	    last if defined $url;
 	}
 	my $w;
 	if ($url) {
@@ -981,7 +985,7 @@ sub set_currfile {
 	} else {
 	    $w = $analysis_frame->Label(-text => 'Annotation')->pack;
 	}
-	$balloon->attach($w, -msg => $annotation);
+	$balloon->attach($w, -msg => $annotation_text);
     }
 
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
