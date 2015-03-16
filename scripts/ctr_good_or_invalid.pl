@@ -905,8 +905,17 @@ sub set_currfile {
 					    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
 					    $more->Load($sample_recent_file);
 					    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
-					    my $modtime = scalar localtime ((stat($sample_recent_file))[9]);
-					    $t->Label(-text => "Report created: $modtime", -anchor => 'w')->pack(qw(-fill x -expand 1));
+					    my $modtime_epoch = (stat($sample_recent_file))[9];
+					    my $modtime = scalar localtime $modtime_epoch;
+					    my $plus_duration = '';
+					    if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
+						$plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
+						    (
+						     DateTime->from_epoch(epoch => $modtime_epoch),
+						     DateTime->now
+						    ) . ')';
+					    }
+					    $t->Label(-text => "Report created: $modtime$plus_duration", -anchor => 'w')->pack(qw(-fill x -expand 1));
 					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 					},
 				       )->pack;
