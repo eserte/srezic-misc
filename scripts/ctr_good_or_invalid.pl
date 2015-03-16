@@ -216,6 +216,7 @@ if ($reversed) {
 
 set_term_title("report sender: interactive mode");
 
+my %images;
 my $mw = tkinit;
 $mw->geometry($geometry) if $geometry;
 my $balloon = $mw->Balloon;
@@ -242,6 +243,8 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 }
 my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
 {
+    _create_images();
+
     my $f = $mw->Frame->pack(-fill => "x");
     $prev_b = $f->Button(-text => "Prev (F4)",
 	       -command => sub {
@@ -280,21 +283,39 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 
     $f->Label(-width => 2)->pack(-side => "left"); # Spacer
 
-    $f->Button(-text => "RT",
-	       -command => sub {
-		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . make_query_string(Name=>$currdist));
-	       })->pack(-side => "left");
-    $f->Button(-text => "Matrix",
-	       -command => sub {
-		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
-	       })->pack(-side => "left");
-    $f->Button(-text => "MC",
-	       -command => sub {
-		   require Tk::Pod::WWWBrowser;
-		   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
-	       })->pack(-side => "left");
+    {
+	my $rt_b =
+	    $f->Button(-text => 'RT',
+		       -image => $images{rt},
+		       -width => 24,
+		       -command => sub {
+			   require Tk::Pod::WWWBrowser;
+			   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . make_query_string(Name=>$currdist));
+		       })->pack(-side => 'left', -fill => 'y');
+	$balloon->attach($rt_b, -msg => 'RT @ CPAN');
+    }
+    {
+	my $matrix_b =
+	    $f->Button(-text => 'Matrix',
+		       -image => $images{matrix},
+		       -width => 24,
+		       -command => sub {
+			   require Tk::Pod::WWWBrowser;
+			   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
+		       })->pack(-side => 'left', -fill => 'y');
+	$balloon->attach($matrix_b, -msg => 'Matrix');
+    }
+    {
+	my $mc_b =
+	    $f->Button(-text => 'MetaCPAN',
+		       -image => $images{metacpan},
+		       -width => 24,
+		       -command => sub {
+			   require Tk::Pod::WWWBrowser;
+			   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
+		       })->pack(-side => 'left', -fill => 'y');
+	$balloon->attach($mc_b, -msg => 'MetaCPAN');
+    }
     $f->Button(-text => "ctgetreports",
 	       -command => sub {
 		   require Tk::ExecuteCommand;
@@ -1216,6 +1237,70 @@ sub make_query_string {
 	CGI->new(\%args)->query_string;
     } else {
 	die "Please install URI::Query";
+    }
+}
+
+sub _create_images {
+    require Tk::PNG;
+
+    if (!defined $images{metacpan}) {
+	# Fetched from https://metacpan.org/static/icons/metacpan-icon.png
+	# Converted with:
+	#   cat /tmp/metacpan-icon.png |perl -MMIME::Base64 -e 'print encode_base64(join("",<>))'
+	$images{metacpan} = $mw->Photo
+	    (-format => 'png',
+	     -data => <<'EOF');
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAA51BMVEUAAAB/AADHITKqAAD/AADH
+IDD/AADIITLHITHHHzDHITHHITEAAADBHi7HIDDGHC/DHy/FHzHFHC7GHi/HITLGHS3HIDO2JCTH
+ITHGIDDHITHHIjDGIDHGHzHHIjDIIDHHITLFHy/FHDDIITHGITG/FSrHITHEHS3HIDPHHzLGITDF
+IDLGITLGHTDHIDG5Fy7HHzHIIDLGITDHITLIITLHITLGITHFITHIITHIITLSJDXRJDXLIjTVJDfY
+JTjVJTfWJTfOIzTZJTjUJDfPJDXIIjPNIzTPJDTMIjTJIjPTJDXTJDfKIjTwwdEHAAAAOnRSTlMA
+AvkDAcYC/vaYvvUBIX0bQGEsO/df1w77f/wln0h4Z/hQNfvfDL09r9inR6hehguBymP2/fy/9vr3
+ooCy8wAAANFJREFUeF41zmVSxDAAgNEvqcq6u7svTtJ23YD7nwf+MPMO8BAki00QJmSyORLw9NDK
+KoM50fqaguTjRxZiD1rHjnRUnqKWl1pYEoxulYtUVZqqUPs8W7BQzy9B1AYrDs/fXejddbgfDKHs
+lawuwmDsT2dpEP9sMEBgAmCADYAJojVa9LBt6g1/tQYmx9vXfQx1NzrEW4OM7lRc7UMjCvrubkn2
+L/YaTg3eDn1Hqg25qyOD/QxW8bv8OM0hpVQ0SMN6u1MnDxLkq+0hwsRYbubwCyM7GWpr29cFAAAA
+AElFTkSuQmCC
+EOF
+    }
+
+    if (!defined $images{rt}) {
+	# Fetched and converted:
+	#   wget https://rt.perl.org/NoAuth/images/favicon.png
+	#   convert -scale 16 favicon.png favicon50.png
+	#   cat favicon50.png | perl -MMIME::Base64 -e 'print encode_base64(join("",<>))'
+	$images{rt} = $mw->Photo
+	    (-format => 'png',
+	     -data => <<'EOF');
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
+AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAXVBMVEUAAACgoKDAwMCgYGD/
+AACAVVUAAACAgICAgIDgYGD/AACggIDAICDfAADQUFAAAACAAADfICD////AwMCgIEDAAACAAADv
+7+9gAADvsLCQcDDAQECgICCwsLDg4OAAEzx8AAAACnRSTlMAf0B/v7+/QH9/S5qSvgAAAAFiS0dE
+AIgFHUgAAAAHdElNRQffAxAUCQmLNCFUAAAAYUlEQVQY062MRxKAIBAEMWAYCbKomP//TBOlcLdP
+2101y1hIgibyVMgsCjl45BzKX4W+aGHKW6tE04k18nHW9YMjcgajH9QCZqIZSr/fBokFwn1BW4HV
+UhDIbTuFwcN+4gDbHAUK+DJLIQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAxNS0wMy0xNlQyMDowOTow
+OSswMTowMHbOQdAAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMTUtMDMtMTZUMjA6MDk6MDkrMDE6MDAH
+k/lsAAAAAElFTkSuQmCC
+EOF
+    }
+
+    if (!defined $images{matrix}) {
+	# Converted:
+	#   convert ~/src/CPAN/CPAN-Testers-Matrix/images/cpantesters_favicon.ico /tmp/cpantesters_favicon.png
+	#   cat /tmp/cpantesters_favicon.png  | perl -MMIME::Base64 -e 'print encode_base64(join("",<>))'
+	$images{matrix} = $mw->Photo
+	    (-format => 'png',
+	     -data => <<'EOF');
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
+AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAP1BMVEUAAAD/AAAAgQDMzMxm
+ZplmZmaQGzesNzfHUlLjbm4zM2asN1KZmZn///+Zmcw3clIbVjdSjVJuqW6KxYo3cjeuaZfnAAAA
+A3RSTlMAdXWIUczeAAAAAWJLR0QN9rRh9QAAAAd0SU1FB9wHDBQXEFLFigIAAACNSURBVBjTLY6B
+EoQgCERJwDrCJOv/v/UWDZ2R92ZFiVAsWut+/DZUsphZzTqWSF6inikmW92/DPFk289lthkQUWGZ
+UadkN9fWxBU9hLJd6q01y+sQ7ugYwi+ZAscSF8YI9eh3jBhPJhRDRwB7vyHUzZhKj7djPS3fdaJS
+3gjs8PwApUAm6+MUZaRS5+Q/AzAIn3BWLJgAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTItMDctMTJU
+MjA6MjM6MTYrMDI6MDBJV8hkAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDEyLTA3LTEyVDIwOjIzOjE2
+KzAyOjAwOApw2AAAAABJRU5ErkJggg==
+EOF
     }
 }
 
