@@ -419,6 +419,7 @@ sub parse_test_report {
 	my $maybe_system_perl; # can be decided later; contains failed line or zero
 
 	while(<$fh>) {
+	    s{\r$}{}; # for Windows reports
 	    if (/^PROGRAM OUTPUT$/) {
 		$section = 'PROGRAM OUTPUT';
 	    } elsif (/^PREREQUISITES$/) {
