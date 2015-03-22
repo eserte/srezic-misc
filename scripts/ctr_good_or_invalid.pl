@@ -695,6 +695,10 @@ sub parse_test_report {
 			) {
 		    # rather unspecific, do as rather last check
 		    $add_analysis_tag->('bailout');
+		} elsif (
+			 /Fatal error: .*: No space left on device/ # from gcc
+			) {
+		    $add_analysis_tag->('!!!no space left on device!!!');
 		} else {
 		    # collect PROGRAM OUTPUT string (maybe)
 		    if (!$program_output->{skip_collector}) {
