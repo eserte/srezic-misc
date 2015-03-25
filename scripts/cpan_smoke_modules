@@ -1014,7 +1014,7 @@ EOF
 	if ($logfh) {
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble BEGIN\n";
 	}
-	my $std_title = POSIX::strftime("%H:%M", localtime) . " ";
+	my $std_title = POSIX::strftime("%H:%M", gmtime) . " ";
 	$std_title .= "smoke($short_hostname:$short_tty): $perl";
 	xterm_conf('-title', $std_title);
 
