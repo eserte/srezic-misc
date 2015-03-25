@@ -21,6 +21,7 @@ use CPAN::DistnameInfo 0.10; # .tar.bz2 support, TRIAL support
 use IO::Handle;
 use File::Temp qw(tempfile tempdir);
 use File::Path qw(mkpath);
+use POSIX ();
 use Sys::Hostname qw(hostname);
 
 sub save_pwd (&);
@@ -321,7 +322,6 @@ TRY_TYPESCRIPT: {
 	    mkdir $cpan_smoke_typescripts_dir
 		or die "Can't create $cpan_smoke_typescripts_dir: $!";
 	}
-	require POSIX;
 	my $now = time;
 	my $typescript_day_dir = "$cpan_smoke_typescripts_dir/" . POSIX::strftime("%Y%m%d", localtime $now);
 	if (!-d $typescript_day_dir) {
@@ -1014,7 +1014,8 @@ EOF
 	if ($logfh) {
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble BEGIN\n";
 	}
-	my $std_title = "smoke($short_hostname:$short_tty): $perl";
+	my $std_title = POSIX::strftime("%H:%M", localtime) . " ";
+	$std_title .= "smoke($short_hostname:$short_tty): $perl";
 	xterm_conf('-title', $std_title);
 
 	if ($use_distroprefs && $prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
