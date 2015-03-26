@@ -536,8 +536,9 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('gcc not found');
 		} elsif (
-			 /^.*?$c_ext_qr:\d+:\s+error:\s+/ || # gcc
-			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ # gcc or clang
+			 /^.*?$c_ext_qr:\d+:\s+error:\s+/     || # gcc
+			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ || # gcc or clang
+			 /^cc: acomp failed for .*\.c/           # solaris cc
 			) {
 		    $add_analysis_tag->('c compile error');
 		} elsif (
