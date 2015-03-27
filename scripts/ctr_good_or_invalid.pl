@@ -538,9 +538,18 @@ sub parse_test_report {
 		} elsif (
 			 /^.*?$c_ext_qr:\d+:\s+error:\s+/     || # gcc
 			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ || # gcc or clang
-			 /^cc: acomp failed for .*\.c/           # solaris cc
+			 /^cc: acomp failed for .*\.c/           # solaris cc, unspecific
 			) {
 		    $add_analysis_tag->('c compile error');
+		} elsif (
+			 /^".*?$c_ext_qr", line \d+: (.*)/ # solaris cc, specific line
+			) {
+		    my $rest = $1;
+		    if ($rest =~ m{^warning:}) {
+			# ignore warnings
+		    } else {
+			$add_analysis_tag->('c compile error');
+		    }
 		} elsif (
 			 /^\s*#\s+Error:  Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/
 			) {
