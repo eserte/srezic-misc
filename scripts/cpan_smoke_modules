@@ -559,9 +559,11 @@ if ($prefs_dir) {
     $prefs_dir = $CPAN::Config->{prefs_dir};
 }
 
-# to make it easy to copy'n'paste download URLs from a CPAN http mirror:
 for (@dist_or_mods, @pre_dist_or_mods) {
+    # to make it easy to copy'n'paste download URLs from a CPAN http mirror:
     s{^https?://.*/authors/id/./../}{};
+    # resolve partial matrix URLs like Module-Runtime+0.014
+    s{^(.*)\+(v?\d.*)}{$1-$2};
 }
 
 # And allow also partial distribution names without author name
