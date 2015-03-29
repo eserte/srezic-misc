@@ -527,7 +527,7 @@ sub parse_test_report {
 			 /error: .*?\.h: No such file or directory/ ||
 			 /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/ ||
 			 /^.*?$c_ext_qr:\d+:\d+:\s+fatal error:\s+'.*?\.h' file not found/ ||
-			 /^".*?$c_ext_qr", line \d+: cannot find include file: ".*\.h"/ # solaris cc
+			 /^".*?$c_ext_qr", line \d+: cannot find include file: [<"].*\.h[">]/ # solaris cc
 			) {
 		    $add_analysis_tag->('missing c include');
 		} elsif (
