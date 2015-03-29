@@ -49,6 +49,10 @@ my $jobs;
 my $download_url;
 my $use_pthread;
 my $extra_config_opts;
+my $cf_email;
+if ($ENV{USER} =~ m{eserte|slaven}) {
+    $cf_email = 'srezic@cpan.org'; # XXX make configurable?
+}
 GetOptions(
 	   "perlver|pv=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -312,18 +316,7 @@ step "Build perl",
 	    unlink $looks_like_built;
 	}
 	chdir $perl_src_dir;
-	if (-e "$ENV{HOME}/FreeBSD/perl/build") {
-	    my @build_cmd = (
-			     'nice', "$ENV{HOME}/FreeBSD/perl/build",
-			     '-prefix' => $perldir,
-			     ($build_debug ? "-debug" : ()),
-			     ($build_threads ? "-threads" : ()),
-			     ($morebits ? "-morebits" : ()),
-			     ($use_longdouble ? "-longdouble" : ()),
-			     ($extra_config_opts ? ('-addconfig', $extra_config_opts) : ()),
-			    );
-	    system @build_cmd;
-	} else {
+	{
 	    my $need_usedevel;
 	    if ($perlver =~ m{^5\.(\d+)} && $1 >= 7 && $1%2 == 1) {
 		$need_usedevel = 1;
@@ -335,6 +328,7 @@ step "Build perl",
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : '') .
 			     ($use_longdouble ? ' -Duselongdouble' : '') .
+			     ($cf_email ? " -Dcf_email=$cf_email" : '') .
 			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
 			     ' && nice make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
