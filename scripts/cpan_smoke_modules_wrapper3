@@ -21,6 +21,7 @@ if (!-e "$scripts_dir/cpan_smoke_modules" && !-e "$scripts_dir/cpan_recent_uploa
 my $cpan_smoke_modules_options;
 my $scenario;
 my @scenario_modules;
+my $minimize_work;
 
 sub usage () {
     die <<EOF;
@@ -36,6 +37,7 @@ GetOptions(
 	   'pv=s@' => \@pv,
 	   "cpansmokemodulesoptions=s" => \$cpan_smoke_modules_options,
 	   "scenario=s" => \$scenario,
+	   'minimize-work!' => \$minimize_work,
 	  )
     or usage;
 if ($scenario) {
@@ -179,9 +181,11 @@ sub run_smoker ($$$) {
 sub scenario_locale {
     my $basecmd = _scenario_basecmd();
     {
-	warn "env LC_ALL=C $basecmd ...\n";
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_pass(\$cmd);
+	warn "env LC_ALL=C $cmd ...\n";
 	local $ENV{LC_ALL} = 'C';
-	system $basecmd;
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
@@ -191,10 +195,12 @@ sub scenario_locale {
 	#
 	# LANGUAGE has even precedence over LC_ALL, it seems, so unset it.
 	my $non_en_locale = $^O eq 'freebsd' ? 'de_DE.ISO8859-1' : 'de_DE.UTF-8';
-	warn "env LC_ALL=$non_en_locale LANGUAGE= $basecmd ...\n";
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_fail(\$cmd);
+	warn "env LC_ALL=$non_en_locale LANGUAGE= $cmd ...\n";
 	local $ENV{LC_ALL} = $non_en_locale;
 	local $ENV{LANGUAGE};
-	system $basecmd;
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
 }
@@ -202,15 +208,19 @@ sub scenario_locale {
 sub scenario_hashrandomization {
     my $basecmd = _scenario_basecmd();
     {
-	warn "(deterministic hashes) $basecmd ...\n";
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_pass(\$cmd);
+	warn "(deterministic hashes) $cmd ...\n";
 	local $ENV{PERL_HASH_SEED} = "0";
 	local $ENV{PERL_PERTURB_KEYS} = "NO";
-	system $basecmd;
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
-	warn "(random hashes) $basecmd ...\n";
-	system $basecmd;
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_fail(\$cmd);
+	warn "(random hashes) $cmd ...\n";
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
 }
@@ -240,13 +250,16 @@ sub scenario_prereq {
     my $basecmd = _scenario_basecmd();
     {
 	my $cmd = $basecmd . ' ' . join(' ', map { "-pre $_" } @prereqs);
+	_scenario_cmd_expect_pass(\$cmd);
 	warn "(with prereqs) $cmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
-	warn "(without prereqs) $basecmd ...\n";
-	system $basecmd;
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_fail(\$cmd);
+	warn "(without prereqs) $cmd ...\n";
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
 }
@@ -292,13 +305,16 @@ sub _scenario_hidemod {
     my $basecmd = _scenario_basecmd();
     {
 	my $cmd = $basecmd . ' -hidemod ' . $hidemod;
+	_scenario_cmd_expect_pass(\$cmd);
 	warn "(with hidden $hidemod) $cmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
-	warn "(without hidden $hidemod) $basecmd ...\n";
-	system $basecmd;
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_fail(\$cmd);
+	warn "(without hidden $hidemod) $cmd ...\n";
+	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
 }
@@ -308,12 +324,14 @@ sub _scenario_hidemod_and_prereq {
     my $basecmd = _scenario_basecmd();
     {
 	my $cmd = $basecmd . ' -hidemod ' . $hidemod;
+	_scenario_cmd_expect_fail(\$cmd);
 	warn "(with hidden $hidemod) $cmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
 	my $cmd = $basecmd . ' -pre ' . $hidemod;
+	_scenario_cmd_expect_pass(\$cmd);
 	warn "(with installed $hidemod) $basecmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
@@ -328,6 +346,20 @@ sub _scenario_basecmd {
     $basecmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $basecmd .= q{ } . join(' ', @scenario_modules);
     $basecmd;
+}
+
+sub _scenario_cmd_expect_pass {
+    my($cmdref) = @_;
+    if ($minimize_work) {
+	$$cmdref .= ' -skiptestedpass';
+    }
+}
+
+sub _scenario_cmd_expect_fail {
+    my($cmdref) = @_;
+    if ($minimize_work) {
+	$$cmdref .= ' -skiptestedfail';
+    }
 }
 
 sub spec_usage (;$) {
