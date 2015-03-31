@@ -42,6 +42,7 @@ if (%so_not_found) {
 # Remove some exceptions
 for my $mod (
 	     'Text::BibTeX', # libbtparse is installed under perl/lib
+	     'HTML::Gumbo', # missing .so is in share/dist/Alien-LibGumbo/lib/libgumbo.so.1, LD_LIBRARY_PATH tricks?
 	    ) {
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n";
