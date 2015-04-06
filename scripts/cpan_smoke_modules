@@ -235,7 +235,7 @@ usage: $0
 
 -a: use all installed perls (otherwise some perls will not be used)
 -perl path: use the named perl
--pv x.y.z: use the perl named by version number
+-pv x.y.z: use the perl named by version number (or use conditions <, >, <=, >=)
 -thisperl: use the current perl in PATH (useful for perlbrew)
 
 -pre dist/module: module or distribution which should be tested before all others
@@ -420,8 +420,23 @@ if (!@dist_or_mods) {
     die "dist or mod?";
 }
 
+my @pv_conditions;
 if (@pv) {
-    push @perls, map { "perl$_" } map { split /,/ } @pv;
+    my @remaining_pvs;
+    for my $pv (@pv) {
+	if ($pv =~ m{^([<>]=?)(.*)}) {
+	    require version;
+	    push @pv_conditions, [$1, version->new($2)];
+	} else {
+	    push @remaining_pvs, $pv;
+	}
+    }
+    if (@remaining_pvs) {
+	if (@pv_conditions) {
+	    die "Mixing conditional perl versions and fixed versions is not supported";
+	}
+	push @perls, map { "perl$_" } map { split /,/ } @remaining_pvs;
+    }
 }
 
 if ($do_this_perl) {
@@ -498,6 +513,17 @@ if (!@perls) {
 	    if (my($ver, $minor, $type) = $candidate =~ m{/perl(5\.(\d+)\.\d+)(.*)}) {
 		$type ||= "";
 		my $safe_ver = safe_version($ver);
+		if (@pv_conditions) {
+		    for my $pv_condition (@pv_conditions) {
+			my($cmp, $other_version) = @$pv_condition;
+			my $code = '$safe_ver ' . $cmp . ' $other_version';
+			my $cond_ret = eval $code;
+			if ($@) {
+			    die "'$code' failed: $@";
+			}
+			next CANDIDATE unless $cond_ret;
+		    }
+		}
 		my $is_devel = $minor % 2 == 1;
 		if (!$is_devel) {
 		    push @all_perl_defs, [$candidate, $safe_ver];
