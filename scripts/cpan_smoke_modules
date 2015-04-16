@@ -83,6 +83,7 @@ my $destroy_perl_in_path = 0; # $^O ne 'MSWin32';
 my @pre_dist_or_mods;
 my @cpan_conf;
 my @cpan_conf_unchecked;
+my $as_root;
 my $strace;
 my $truss;
 my $ktrace;
@@ -181,6 +182,7 @@ GetOptions("n" => \$n,
 	   'cpanconf=s@' => \@cpan_conf,
 	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
 	   'destroyperl!' => \$destroy_perl_in_path,
+	   'as-root' => \$as_root,
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
@@ -1197,6 +1199,10 @@ EOF
 	    $cmd[-1] .= qq{$post_action; };
 	}
 
+	if ($as_root) {
+	    unshift @cmd, 'sudo', '-E';
+	}
+
 	if ($strace) {
 	    unshift @cmd, 'strace', '-tt', '-f', '-o', $strace;
 	}
@@ -1852,6 +1858,10 @@ set the build_dir_reuse flag of CPAN.pm. Not well tested.
 =item -warntimeout I<seconds>
 
 Seconds to wait before showing the warn dialog. Default is 60 seconds.
+
+=item -as-root
+
+Run build and test as root, using L<sudo(1)>.
 
 =back
 
