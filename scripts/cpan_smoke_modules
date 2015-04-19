@@ -1806,12 +1806,18 @@ Specify which perl to use. Can be specified multiple times.
 =item -pv I<version>,I<version>,...
 
 This is the short version of the B<-perl> option. Use the perl
-versions, separated by commas.
+versions, separated by commas. This assumes that the perl executables
+are installed or symlinked as F</usr/local/bin/perlX.Y.Z>.
 
 =item -allperls
 
-Use more perls than the standard four (5.00505, 5.6.2, 5.8.8, 5.10.0).
-This includes for instance threaded perls.
+Use all installed perls. This is the default unless a specific perl
+version via the C<-perl> or C<-pv> option is requested.
+
+=item -skipsystemperl
+
+Skip a perl in F</usr/local/bin> which is symlinked to the system perl
+(F</usr/bin/perl>).
 
 =item -install
 
@@ -1821,16 +1827,17 @@ Do not only test, but also install.
 
 Test and reinstall, if test was successful.
 
+=item -recent
+
+Fetch the RECENT distributions list from a CPAN site and smoke them
+all. But see also L<cpan_smoke_modules_wrapper3> for a better
+mechanism.
+
 =item -continue
 
 Fetch the RECENT distributions list from a CPAN site and continue from
 an earlier smoke. This uses the last distribution listed in F<<
 ~/.cpan_smoke_modules_<$archname>.last >> as an anchor point.
-
-=item -recent
-
-Fetch the RECENT distributions list from a CPAN site and smoke them
-all.
 
 =item -interactive
 
@@ -1844,8 +1851,9 @@ with B<-continue> or B<-recent>.
 
 =item -[no]sqlite
 
-Use/do not use L<CPAN::SQLite>. On by default. If CPAN::SQLite is not
-available, then the normal non-sqlite internal storage will be used.
+Use/do not use L<C<CPAN::SQLite>>. On by default. If C<CPAN::SQLite> is
+not available, then the normal non-sqlite internal storage will be
+used.
 
 =item -fl I<file>
 
@@ -1863,6 +1871,33 @@ Seconds to wait before showing the warn dialog. Default is 60 seconds.
 
 Run build and test as root, using L<sudo(1)>.
 
+=item -vnc
+
+Make a VNC server during the smoke run. It is killed after first run.
+Note that some (all?) VNC implementations ask for a password when
+called first time.
+
+=item -[no]limits
+
+Run the smoker with resource limits. Limits are currently set to 1GB
+data size, 1h CPU runtime, and 2048 open file descriptors.
+
+Requires that either L<limits(1)> (BSD systems) or L<BSD::Resource> is
+installed. This option is on by default.
+
+=item -[no]typescript
+
+Create a typescript of the smoke run. The output is written to
+F<~/.cpan_smoke_modules_typescripts> in date-specific subdirectories.
+
+Requires L<script(1)> to be available, and works only for FreeBSD and
+Linux. This option is on by default.
+
+L<script(1)> is usually implemented by creating a pseudo-terminal, so
+a password in a L<sudo> session is not shared across multiple smoker
+runs. If this is annoying (i.e. when using the C<-install> option),
+then set C<-notypescript>.
+
 =back
 
 =head1 NOTES
@@ -1870,7 +1905,6 @@ Run build and test as root, using L<sudo(1)>.
 Assumption is that distributions are sorted in reverse order, that is
 newest first. Any later distribution version on the command line will
 be removed from the list.
-
     
 =head1 TODO
 
