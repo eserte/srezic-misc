@@ -1905,7 +1905,13 @@ then set C<-notypescript>.
 Assumption is that distributions are sorted in reverse order, that is
 newest first. Any later distribution version on the command line will
 be removed from the list.
-    
+
+L<cpan_smoke_modules> creates a private temporary directory
+F<cpansmoker-$USERID>. This directory is created either in the
+user-specific runtime directory (as specified by the
+C<XDG_RUNTIME_DIR> environment variable, usually something like
+F</run/user/$USERID>), or F</var/tmp>, or F</tmp>.
+
 =head1 TODO
 
     * neuen recent-Mechanismus anwenden
