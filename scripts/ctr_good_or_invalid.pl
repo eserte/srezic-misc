@@ -557,7 +557,8 @@ sub parse_test_report {
 		    $add_analysis_tag->('undefined symbol in shared lib');
 		} elsif (
 			 /^collect2: error: ld returned 1 exit status/ ||
-			 m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC}
+			 m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC} ||
+			 /^.*\.a\(.*\.o\):.*: undefined reference to `.*'/ # g++/windows/strawberry perl
 			) {
 		    $add_analysis_tag->('linker error');
 		} elsif (
