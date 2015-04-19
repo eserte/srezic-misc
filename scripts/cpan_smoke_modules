@@ -713,6 +713,7 @@ if ($r) {
     @dist_or_mods = reverse @dist_or_mods;
 }
 
+my $has_private_tmpdir;
 {
     for my $another_tmp_def (# Directory      User-owned
 			     (defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1] : ()),
@@ -731,6 +732,7 @@ if ($r) {
 		}
 	    }
 	    $ENV{TMPDIR} = $_another_tmp;
+	    $has_private_tmpdir = 1;
 	    last;
 	}
     }
@@ -756,8 +758,11 @@ if ((   $n                    # no idletermchecker in no exec mode:
 
 if ($save_reports) {
     if (!$for_parallel_smoker && $^O ne 'MSWin32') { # parallel smoker already have a correct cpanreporter config, and so have the windows' perls
-	my($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
-	    or die "Can't create tempfile: $!";
+	my($tmpfh,$tmpfile) = predictable_tempfile();
+	if (!defined $tmpfh) {
+	    ($tmpfh,$tmpfile) = tempfile(SUFFIX => "_config.ini", UNLINK => 1)
+		or die "Can't create tempfile: $!";
+	}
 	my $config_ini_path = "$ENV{HOME}/.cpanreporter/config.ini";
 	open my $ifh, "<", $config_ini_path
 	    or die "Can't open $config_ini_path: $!";
@@ -1672,6 +1677,21 @@ sub touch_files {
 
 sub _is_install_like_action {
     $do_action eq 'install' || grep { $_ eq 'install_tested' } @post_actions;
+}
+
+sub predictable_tempfile {
+    $has_private_tmpdir or return;
+    eval { require Fcntl; 1 } or return;
+    defined &File::Temp::_deferred_unlink or return;
+    if (defined &Fcntl::O_EXCL) {
+	for my $counter (0..99) {
+	    my $filename = sprintf "$ENV{TMPDIR}/cpanreporter_%03d_config.ini", $counter;
+	    if (sysopen my $fh, $filename, &Fcntl::O_RDWR|&Fcntl::O_CREAT|&Fcntl::O_EXCL) {
+		File::Temp::_deferred_unlink($fh, $filename, 0); # XXX shouldn't use private function
+		return ($fh, $filename);
+	    }
+	}
+    }
 }
 
 # REPO BEGIN
