@@ -552,6 +552,10 @@ sub parse_test_report {
 			$add_analysis_tag->('c compile error');
 		    }
 		} elsif (
+			 /cc1: error: unrecognized command line option /
+			) {
+		    $add_analysis_tag->('other c compiler error');
+		} elsif (
 			 /^\s*#\s+Error:  Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/
 			) {
 		    $add_analysis_tag->('undefined symbol in shared lib');
