@@ -1061,7 +1061,7 @@ sub set_currfile {
 	if ($scenario eq 'generic') {
 	    print $ofh "cpan_smoke_modules -skipsystemperl $currfulldist\n";
 	} else {
-	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -cpansmokemodulesoptions="-skipsystemperl" -scenario $scenario $currfulldist\n};
+	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="-skipsystemperl" -scenario $scenario $currfulldist\n};
 	}
 	close $ofh;
     }
