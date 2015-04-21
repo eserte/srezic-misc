@@ -656,6 +656,10 @@ sub parse_test_report {
 			$add_analysis_tag->('long runtime (>= 15 min)');
 		    }
 		} elsif (
+			 /Cannot detect source of '.*?'! $at_source_qr/
+			) {
+		    $add_analysis_tag->('very long runtime (.t removed)');
+		} elsif (
 			 /Unrecognized character .* at \._\S+ line \d+\./
 			) {
 		    $add_analysis_tag->('hidden MacOSX file');
