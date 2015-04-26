@@ -571,6 +571,11 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('out of memory');
 		} elsif (
+			 m{^ERROR: Can't create '.*/Alien} ||
+			 m{^/bin/mkdir: kann Verzeichnis .*/auto/share/dist/Alien.* nicht anlegen: Keine Berechtigung}
+			) {
+		    $add_analysis_tag->('premature alien install');
+		} elsif (
 			 /^# Perl::Critic found these violations in .*:$/ ||
 			 /^#\s+Failed test 'Test::Perl::Critic for [^']+'$/
 			) {
