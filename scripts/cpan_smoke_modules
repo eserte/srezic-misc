@@ -108,6 +108,7 @@ my $ignore_history;
 my $deterministic_hashes;
 my $do_report = 1;
 my $use_sudo_keeper = 1; # if available
+my $my_tmpdir;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -205,6 +206,7 @@ GetOptions("n" => \$n,
 	       my $val = $_[1];
 	       $deterministic_hashes = !$val;
 	   },
+	   'mytmpdir=s' => \$my_tmpdir,
 	  )
     or die <<EOF;
 usage: $0
@@ -715,11 +717,21 @@ if ($r) {
 
 my $has_private_tmpdir;
 {
-    for my $another_tmp_def (# Directory      User-owned
-			     (defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1] : ()),
-			     ['/var/tmp',     0],
-			     ['/tmp',         0],
-			    ) {
+    my @tmpdir_defs;
+    if ($my_tmpdir) {
+	if (!-d $my_tmpdir) {
+	    die "The defined temporary directory '$my_tmpdir' does not exist";
+	}
+        @tmpdir_defs = ([$my_tmpdir, 0]);
+    } else {
+	@tmpdir_defs = (
+			# Directory      User-owned
+			(defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1] : ()),
+			['/var/tmp',     0],
+			['/tmp',         0],
+		       );
+    }
+    for my $another_tmp_def (@tmpdir_defs) {
 	my($another_tmp, $user_owned) = @$another_tmp_def;
 	if (-d $another_tmp && -w $another_tmp) {
 	    my $_another_tmp = $another_tmp . '/cpansmoker' . (!$user_owned ? "-$<" : '');
