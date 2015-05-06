@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2009,2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2009,2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -18,6 +18,7 @@ use 5.008; # scalar open
 use Getopt::Long;
 use Time::Local qw(timelocal);
 use Tk qw(tkinit Ev MainLoop);
+use Tk::PNG;
 
 {
     package Emacs::Org::Daemon::Date;
@@ -95,6 +96,43 @@ my @lb_contents;
 
 my $mw = tkinit;
 $mw->iconify if !$debug;
+
+# Taken from http://orgmode.org/org-mode-unicorn-logo.png, scaled down
+# to 32x32 and encoded using "mmencode -b"
+my $org_logo = $mw->Photo
+    (-format => 'png',
+     -data => <<EOF);
+iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTAAAA
+CXBIWXMAAA9hAAAPYQGoP6dpAAAAB3RJTUUH3wUGBTUoU3h8UQAAAB1pVFh0Q29tbWVudAAA
+AAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAFK0lEQVRYw92XW2xURRjHfzPn7G5Lu9sutBRa
+CmWpBYqRm1wSExEVSkTDxYSEaAwJIUII8GAgpvhkQiERMTFR8AVIfEQIDyghEWsikEIUY+VS
+uZRLK70Xena7dPecmfGhy1KktHLVOMl5OXPmfP/v8v/+3whjjOFfXPJZGuvP12cGQCmFEOLZ
+AzDGoLXGsiwaGhpwHOfZA2hra2P//v3Ytk0oFLpn3x7o4J2QJWJRok03UJ5LIDtETvFo7gSz
+o6uLYaEQpL7te66+vp6amhri8TgrV65ECHHPPoDolwXGgBBoz+PU7l1cqzmG09yEcpP4Q7nk
+FxYxbcFC2krK2P39UT7fsJ5YMklnZyejR4wAoKqqCsdxWLx4MbNnz04X4N/rQDyIhrG2Vg5t
+XEfL+TMgQAiJEQJLKS6Hh9NQOAYnmIPp7mZjtuTosFHMeX0+/u4YlZWVrFq1ihUrVuDz+QZM
+0X0AjNYk43G+Wf0ebRfqsP3+3rBhSFg+qktf4FZmVjp3GkNWLErAZ9PS3kng5k1279lDJBLB
+8zxs2/7nfUB7HkJKftxRRfOZWnwZmenQSW34ufi5XuNao43BAFppJrw4gz+lHy93KFt37iQS
+ieC67qDG7wVgDNK2aa07x9mD+8gMh9HK6w0Thrg/QDSQiQC0EIhUwRUXFPDZunWsX7qYwqIi
+1n6ynU7HQUrr4TqhMRqA41/uwDckC+26d7EhsLTG1gqTfgdSSKLxbgDemD4drlzCAg4dP4Fl
+SVzPGxRAOkZCWiSiDm1/1CGlRCuV8h4SlkUw0UPu7W7as+7yWBuN0x1n7rr1zJg4gdziMXRF
+o3x9+DCRokJmlpc/nBa01J1Fucl03rUQ2Mrj+NhJAIxvbcTWCtGHUlJKpBAc+62Wi11daCCp
+FGu3f8qqrduoPn2aKzea+PXChX614J4q6em6lfactP+CaCCDn8ZO4qWr55nWcIlTJePxG4j2
+9OB6Hj7bBgRZGQGklHhKEQ6FuNjYSOWur8gPh5lUUsLUsrKBAfiHZCGkxGidLj5PSsrabvDL
+qFJagmEKnQ4yXJfOpMv7ixZRXDCcq83NCODIyVM0dXQwJBBA94mSE4vx8pQpA9cAQH7ZRCzb
+h1GKhGUjMNjGMK6jmUt5I7ntC3A5byRKKSaXjmPZa68SDgbT59csWcKRmpN8ceAAN6NRno9E
+yMvNwWjDnKlTB2GB1mTl5ZM/fiJCKVpCQ6nLH4Vfe2S4SWZdv9AnKTCzvJxwMIjWGpV6XM+j
+YvYsDlRtYc3SJQzLyUEKwdY1q/H77EE6Yar/O0032PvWXJwRxVQXjaOoq4PS9iaGxR2u5+Zz
+cswEPGNYPm8ea99eOqCIpWcBrbGkHCQFQmC0JjSykAVbdnBw03pyC4q5nDeSxtw8pNbpJqSV
+orG1tX+P+hk6HmT8PhoKKTHGUFaxkDc3f0xxcwMimUQJiWfZJK1evNKy+L2+nouNDU9+Jryj
+2eXL3mHDpg+ZPKqQ20mXpNYIq7e9SiFo6uhg77eH0SldeNT1QDk2WiOkJBqLceLsOfZ+9x11
+164RDgbxlEJKya1olAPbtlJSUICQEvEkp2KRylswO5uKWTPZs7mSD5YvJ+G6WJaFSGnB8dpa
+ZJ/e8dTGctuyeLdiPvurtlBSUIDWGp/P5mJDY0oXzNMHoLRmeDjMno82s/SVOQggFo8/VhHa
+D/NxXzptWLYM27Jpam9/7LH5kZfW2uz7odoYY4yn1CP9Qzzu3fB2IkFmIPDkafi/vJz+JwH8
+BUIoz9dd4ccZAAAAAElFTkSuQmCC
+EOF
+$mw->Icon(-image => $org_logo); 
+
 my $lb = $mw->Scrolled("Listbox",
 		       -width => 60,
 		       -height => 6,
