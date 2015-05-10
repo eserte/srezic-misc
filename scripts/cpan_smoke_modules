@@ -725,15 +725,24 @@ my $has_private_tmpdir;
         @tmpdir_defs = ([$my_tmpdir, 0]);
     } else {
 	@tmpdir_defs = (
-			# Directory      User-owned
-			(defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1] : ()),
-			['/var/tmp',     0],
-			['/tmp',         0],
+			# Directory      User-owned	Do a noexec check?
+			(defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1, 1] : ()),
+			['/var/tmp',     0,             0],
+			['/tmp',         0,             0],
 		       );
     }
     for my $another_tmp_def (@tmpdir_defs) {
-	my($another_tmp, $user_owned) = @$another_tmp_def;
+	my($another_tmp, $user_owned, $do_noexec_check) = @$another_tmp_def;
 	if (-d $another_tmp && -w $another_tmp) {
+	    if ($do_noexec_check) {
+		next if $^O ne 'linux';
+		next if !eval q{ require Filesys::Statvfs; 1 };
+		my $ST_NOEXEC = 8; # XXX where to get this flag?
+		my @flags = Filesys::Statvfs::statvfs($another_tmp);
+		next if !defined $flags[8]; # something failed
+		next if $flags[8] & $ST_NOEXEC;
+		# may use it...
+	    }
 	    my $_another_tmp = $another_tmp . '/cpansmoker' . (!$user_owned ? "-$<" : '');
 	    if (!-d $_another_tmp) {
 		mkdir $_another_tmp
