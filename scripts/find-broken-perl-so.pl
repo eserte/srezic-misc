@@ -28,7 +28,11 @@ my %broken_module;
 my %so_not_found;
 
 for my $search_lib (@search_libs) {
-    File::Find::find({wanted => \&wanted}, $search_lib);
+    if (!-d $search_lib) {
+	print STDERR "INFO: skipping non-existent search lib path '$search_lib'\n";
+    } else {
+	File::Find::find({wanted => \&wanted}, $search_lib);
+    }
 }
 
 if (%so_not_found) {
@@ -44,6 +48,7 @@ for my $mod (
 	     'Text::BibTeX', # libbtparse is installed under perl/lib
 	     'HTML::Gumbo', # missing .so is in share/dist/Alien-LibGumbo/lib/libgumbo.so.1, LD_LIBRARY_PATH tricks?
 	     'Judy', # libJudy is in .../Alien/Judy/libJudy.so.1, LD_LIBRARY_PATH tricks?
+	     qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
 	    ) {
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n";
