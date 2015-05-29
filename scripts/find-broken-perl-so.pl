@@ -18,8 +18,16 @@ use File::Find;
 use Getopt::Long;
 
 my $v;
-GetOptions("v+" => \$v)
-    or die "usage: $0 [-v]";
+my $doit;
+GetOptions(
+	   "v+" => \$v,
+	   "doit" => \$doit,
+	  )
+    or die "usage: $0 [-v] [-doit]";
+
+if ($doit && !has_cpan_smoke_modules_cmd()) {
+    die "Sorry, -doit is only possible if cpan_smoke_modules is available";
+}
 
 my @search_libs = $Config{'sitearch'};
 
@@ -58,16 +66,23 @@ for my $mod (
 
 if (%broken_module) {
     my $cpan_smoke_modules_cmd = has_cpan_smoke_modules_cmd();
-    my $broken_list = join(" ", sort keys %broken_module);
+    my @broken_list = sort keys %broken_module;
     print STDERR "Try now:\n\n";
     if ($cpan_smoke_modules_cmd) {
+	my @cmd = ($cpan_smoke_modules_cmd, '-noreport', '-perl', $^X, '-reinstall', @broken_list);
 	print STDERR <<EOF;
-    $cpan_smoke_modules_cmd -noreport -perl $^X -reinstall $broken_list
+    @cmd
 EOF
+	if ($doit) {
+	    system @cmd;
+	    if ($? != 0) {
+		warn "Something failed while re-installing the modules...\n";
+	    }
+	}
     } else {
 	print STDERR <<EOF;
     $^X -MCPAN -eshell
-    test $broken_list
+    test @broken_list
     install_tested
 EOF
     }
@@ -163,8 +178,8 @@ __END__
 
 =head1 EXAMPLES
 
-    for perl in /usr/perl5.*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl; done
+    for perl in /usr/perl5.*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl -doit; done
 
-    for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl; done
+    for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl -doit; done
 
 =cut
