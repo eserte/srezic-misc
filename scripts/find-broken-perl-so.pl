@@ -160,3 +160,11 @@ sub is_in_path {
 # REPO END
 
 __END__
+
+=head1 EXAMPLES
+
+    for perl in /usr/perl5.*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl; done
+
+    for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl; done
+
+=cut
