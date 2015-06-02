@@ -1391,6 +1391,8 @@ L<http://repo.or.cz/r/andk-cpan-tools.git>, or a compatible file. If
 defined, then show a link to the annotation (usually a RT or other
 ticket) if the tested distribution has one.
 
+=back
+
 =head2 RELATED SCRIPTS
 
 The other scripts in the workflow system are:
@@ -1441,7 +1443,7 @@ problems the report will be left here
 
 =item * C<done> - after successfully sending to metabase the reports
 will be archived into this directory; this directory is organized in
-monthly subdirectories I<YYYY-MM>. =back
+monthly subdirectories I<YYYY-MM>.
 
 =back
 
