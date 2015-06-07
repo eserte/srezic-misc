@@ -116,7 +116,7 @@ if (-r $rc_file) {
     if (grep { m{^--?skiprcfile$} } @ARGV) {
 	@ARGV = grep { !m{^--?skiprcfile$} } @ARGV;
     } else {
-	print STDERR "Reading extra options from $rc_file... ";
+	print STDERR "INFO: Reading extra options from $rc_file... ";
 	open my $rcfh, $rc_file
 	    or die "$rc_file exists and is readable, but cannot be opened?! Error: $!";
 	my @file_ARGV;
@@ -554,7 +554,7 @@ if (!@perls) {
 	# Newest first
 	my @all_perls = map { $_->[0] } sort { $b->[1] <=> $a->[1] } @all_perl_defs;
 
-	print STDERR "Found perls: @all_perls\n";
+	print STDERR "INFO: Found perls: @all_perls\n";
 
 	push @perls, @all_perls;
     }
