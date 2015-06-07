@@ -1327,6 +1327,9 @@ EOF
 	print STDERR "# PATH=$ENV{PATH}\n";
 	print STDERR "# @cmd\n";
 	local %ENV = %ENV;
+	# See http://schplog.schmorp.de/2015-06-06-stableperl-faq.html
+	# XXX decide whether this should stay here or be moved to distroprefs files
+	$ENV{PERL_CANARY_STABILITY_NOPROMPT} = 1;
 	if ($batch) {
 	    #$ENV{PERL_MM_USE_DEFAULT} = 1; --- currently bad idea ... turns CPAN::Reporter questions off
 	    $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps};
