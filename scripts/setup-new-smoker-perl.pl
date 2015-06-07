@@ -117,6 +117,8 @@ if ($use_pthread) {
     }
 }
 
+my $main_pid = $$;
+
 my $sudo_validator_pid;
 sudo 'echo', 'Initialized sudo password';
 
@@ -512,15 +514,17 @@ if ($for_cpansand) {
 #	  as "pistacchio-perl".
 
 END {
-    if ($sudo_validator_pid) {
-	kill $sudo_validator_pid;
-	undef $sudo_validator_pid;
-    }
+    if ($main_pid == $$) {
+	if ($sudo_validator_pid) {
+	    kill $sudo_validator_pid;
+	    undef $sudo_validator_pid;
+	}
 
-    if ($? == 0) {
-	set_term_title "Setup new smoker perl $perlver finished";
-    } else {
-	set_term_title "Setup new smoker perl $perlver aborted";
+	if ($? == 0) {
+	    set_term_title "Setup new smoker perl $perlver finished";
+	} else {
+	    set_term_title "Setup new smoker perl $perlver aborted";
+	}
     }
 }
 
