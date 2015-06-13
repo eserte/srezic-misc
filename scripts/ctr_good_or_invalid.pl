@@ -175,6 +175,12 @@ for my $file (@files) {
 	   ) {
 	    $is_good = 1;
 	}
+    } elsif ( # List of distributions which are OK to be accepted without review
+	      # Never include fail.Devel-Fail-MakeTest here --- this is a proxy (just for SREZIC) to signal that a new smoker perl is ready
+	        $file =~ m{\Q/fail.CPAN-Test-Dummy-Perl5-Build-Fails-\E\d} # just testing the new functionality
+	     || $file =~ m{\Q/fail.Bio-Roary-3.} # frequent releases, never passes - https://rt.cpan.org/Ticket/Display.html?id=104843
+	    ) {
+	$is_good = 1;
     }
 
     if ($is_good) {
@@ -1398,6 +1404,12 @@ defined, then show a link to the annotation (usually a RT or other
 ticket) if the tested distribution has one.
 
 =back
+
+=head2 FURTHER NOTES
+
+The script includes a hard-coded list of report filename regexps which
+are OK to be accepted without further review. These usually handle
+distributions which are known to always fail.
 
 =head2 RELATED SCRIPTS
 
