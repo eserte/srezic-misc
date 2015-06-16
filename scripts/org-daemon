@@ -613,7 +613,7 @@ org-daemon - watch for appointments in org-mode files
 
 =head1 SYNOPSIS
 
-    org-daemon [--debug] [--early-warning=seconds] [--recheck-interval=seconds] orgfile ... &
+    org-daemon [--debug] [--early-warning=seconds] [--recheck-interval=seconds] [--no-emacsclient-eval] orgfile ... &
 
 =head1 DESCRIPTION
 
@@ -641,6 +641,12 @@ changes. By default, B<org-daemon> checks every 60 seconds.
 Turn on debugging mode. Currently this means: do not iconify
 appointment list by default, and check every 3 seconds instead every
 60 seconds.
+
+=item --no-emacsclient-eval
+
+If there are problems with the usage of C<emacsclient --eval>, then
+this option may be used for simple non-eval emacsclient usage. If this
+is used, then a referenced org entry is not opened automatically.
 
 =back
 
