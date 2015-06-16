@@ -61,13 +61,15 @@ my $small_font = 'sans 8';
 my $default_early_warning = 30*60;
 my $recheck_interval;
 my $debug;
+my $use_emacsclient_eval = 1;
 GetOptions(
 	   "d|debug!" => \$debug,
 	   "recheck-interval=i" => \$recheck_interval,
 	   "early-warning=i" => \$default_early_warning,
 	   "small-font=s" => \$small_font,
+	   'emacsclient-eval!' => \$use_emacsclient_eval,
 	  )
-    or die "$0 [--debug] [--early-warning=seconds] [--recheck-interval=seconds] orgfile ...";
+    or die "$0 [--debug] [--early-warning=seconds] [--recheck-interval=seconds] [--no-emacsclient-eval] orgfile ...";
 
 if (!$recheck_interval) {
     if ($debug) {
@@ -193,10 +195,21 @@ sub show_date_in_emacs {
     my $date = shift;
     my $file = $date->{file};
     die "No file associated with given date" if !defined $file;
-    my @cmd = ('emacsclient', '-n',
+    my @cmd;
+    if ($use_emacsclient_eval) {
+	# XXX escape $file?
+	my $eval = qq{(progn (find-file "$file")};
+	if ($date->{line}) {
+	    $eval .= " (goto-line $date->{line}) (org-show-entry)";
+        }
+	$eval .= qq{ "Positioning in file $file at line $date->{line}" )};
+	@cmd = ('emacsclient', '--eval', $eval);
+    } else {
+	@cmd = ('emacsclient', '-n',
 	       (defined $date->{line} ? '+'.$date->{line} : ()),
 	       $file,
 	      );
+    }
     system @cmd;
 }
 
