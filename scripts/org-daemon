@@ -202,7 +202,7 @@ sub show_date_in_emacs {
 	if ($date->{line}) {
 	    $eval .= " (goto-line $date->{line}) (org-show-entry)";
         }
-	$eval .= qq{ "Positioning in file $file at line $date->{line}" )};
+	$eval .= qq{ (select-frame-set-input-focus (window-frame)) "Positioning in file $file at line $date->{line}" )};
 	@cmd = ('emacsclient', '--eval', $eval);
     } else {
 	@cmd = ('emacsclient', '-n',
