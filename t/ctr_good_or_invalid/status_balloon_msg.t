@@ -56,7 +56,6 @@ EOF
 }
 
 {
-    local $TODO = "RC comparison not yet implemented";
     my %recent_states =
 	(
 	 'PASS' => {

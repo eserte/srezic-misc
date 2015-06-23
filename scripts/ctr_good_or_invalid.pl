@@ -1067,6 +1067,20 @@ sub _get_status_balloon_msg {
     }
     if (eval { require Sort::Naturally; 1 }) {
 	@balloon_msg = Sort::Naturally::nsort(@balloon_msg);
+	@balloon_msg = map { $_->[0] }
+	    sort {
+		return 0 if !defined $a->[2] && !defined $b->[2];
+		return 0 if  defined $a->[2] &&  defined $b->[2];
+		if ($a->[1] eq $b->[1]) {
+		    return -1 if defined $a->[2];
+		    return +1 if defined $b->[2];
+		} else {
+		    return Sort::Naturally::ncmp($a->[1], $b->[1]);
+		}
+	    } map {
+		my($perlver, $rc) = $_ =~ m{^perl (\S+) (RC\d+)?};
+		[$_, $perlver, $rc];
+	    } @balloon_msg;
     } else {
 	@balloon_msg = sort @balloon_msg;
     }
