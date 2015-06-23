@@ -69,7 +69,14 @@ permissions:
 	cd scripts && chmod ugo+rx *
 	chmod ugo+rx scripts
 
-test:
+# XXX does not work --- tty is missing within slaymake, but is needed for password input
+# XXX maybe these should go into pistachio-perl-manager.pl?
+install-prereqs:
+	cpan_smoke_modules -install -perl pistachio-perl VCS Date::ICal Text::vCard PerlIO::gzip Email::MIME
+
+test:	test-t test-compile
+
+test-compile:
 	{
 	    require Test::More;
 	    import Test::More;
@@ -84,3 +91,6 @@ test:
 		is($?, 0, "$script compiled OK");
 	    }
 	}
+
+test-t:
+	prove -r t
