@@ -83,6 +83,8 @@ EOF
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
+return 1 if caller(); # for modulino-style testing
+
 my $dist2annotation;
 if ($annotate_file) {
     $dist2annotation = read_annotate_txt($annotate_file);
