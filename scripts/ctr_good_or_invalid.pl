@@ -961,37 +961,7 @@ sub set_currfile {
 					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 					},
 				       )->pack;
-	my @balloon_msg;
-	for my $f (map { @$_ } values %{ $recent_states{$recent_state} }) {
-	    if (open my $fh, $f) {
-		my $subject;
-		my $x_test_reporter_perl;
-		while(<$fh>) {
-		    chomp;
-		    s/\r//; # for windows reports
-		    if (m{^X-Test-Reporter-Perl: (.*)}) {
-			$x_test_reporter_perl = $1;
-		    } elsif (m{^Subject: (.*)}) {
-			$subject = $1;
-		    } elsif (m{^$}) {
-			warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
-			last;
-		    }
-		    if ($x_test_reporter_perl && $subject) {
-			push @balloon_msg, "perl $x_test_reporter_perl $subject";
-			last;
-		    }
-		}
-	    } else {
-		warn "WARN: cannot open $f: $!";
-	    }
-	}
-	if (eval { require Sort::Naturally; 1 }) {
-	    @balloon_msg = Sort::Naturally::nsort(@balloon_msg);
-	} else {
-	    @balloon_msg = sort @balloon_msg;
-	}
-	$balloon->attach($b, -msg => join("\n", @balloon_msg));
+	$balloon->attach($b, -msg => _get_status_balloon_msg($recent_states{$recent_state}));
     }
 
     if ($do_scenario_buttons) {
@@ -1063,6 +1033,43 @@ sub set_currfile {
     ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
 
     $mw->title($title);
+}
+
+sub _get_status_balloon_msg {
+    my $recent_state_ref = shift;
+
+    my @balloon_msg;
+    for my $f (map { @$_ } values %$recent_state_ref) {
+	if (open my $fh, $f) {
+	    my $subject;
+	    my $x_test_reporter_perl;
+	    while(<$fh>) {
+		chomp;
+		s/\r//; # for windows reports
+		if (m{^X-Test-Reporter-Perl: (.*)}) {
+		    $x_test_reporter_perl = $1;
+		} elsif (m{^Subject: (.*)}) {
+		    $subject = $1;
+		} elsif (m{^$}) {
+		    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
+		    last;
+		}
+		if ($x_test_reporter_perl && $subject) {
+		    push @balloon_msg, "perl $x_test_reporter_perl $subject";
+		    last;
+		}
+	    }
+	} else {
+	    warn "WARN: cannot open $f: $!";
+	}
+    }
+    if (eval { require Sort::Naturally; 1 }) {
+	@balloon_msg = Sort::Naturally::nsort(@balloon_msg);
+    } else {
+	@balloon_msg = sort @balloon_msg;
+    }
+
+    join("\n", @balloon_msg);
 }
 
 {
