@@ -1943,8 +1943,8 @@ Linux. This option is on by default.
 
 L<script(1)> is usually implemented by creating a pseudo-terminal, so
 a password in a L<sudo> session is not shared across multiple smoker
-runs. If this is annoying (i.e. when using the C<-install> option),
-then set C<-notypescript>.
+runs. If this is annoying (i.e. when using the C<-install> or
+C<-as-root> option), then set C<-notypescript>.
 
 =back
 
