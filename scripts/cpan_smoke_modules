@@ -1915,6 +1915,10 @@ Seconds to wait before showing the warn dialog. Default is 60 seconds.
 
 Run build and test as root, using L<sudo(1)>.
 
+Note that this does not work if the reports directory is specially
+mounted (e.g. via sshfs or nfs) and root does not have permissions to
+write to this directory.
+
 =item -vnc
 
 Make a VNC server during the smoke run. It is killed after first run.
