@@ -1067,6 +1067,7 @@ sub _get_status_balloon_msg {
     }
     if (eval { require Sort::Naturally; 1 }) {
 	@balloon_msg = Sort::Naturally::nsort(@balloon_msg);
+	no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
 	@balloon_msg = map { $_->[0] }
 	    sort {
 		return 0 if !defined $a->[2] && !defined $b->[2];
