@@ -1726,7 +1726,12 @@ sub predictable_tempfile {
 		return ($fh, $filename);
 	    }
 	}
+	warn <<EOF;
+WARN: Cannot create a predictable tempfile for cpanreporter_config.ini.
+      Please cleanup files in $ENV{TMPDIR} manually.
+EOF
     }
+    return;
 }
 
 # REPO BEGIN
