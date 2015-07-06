@@ -109,6 +109,7 @@ my $deterministic_hashes;
 my $do_report = 1;
 my $use_sudo_keeper = 1; # if available
 my $my_tmpdir;
+my $stop_signal;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -287,6 +288,11 @@ for ($strace, $truss, $ktrace) { # protect the user
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
 }
+
+$SIG{HUP} = sub {
+    warn "HUP signal caught, will cleanly stop as fast as possible...\n";
+    $stop_signal = 1;
+};
 
 xterm_conf('-title', 'Starting cpan_smoke_modules...');
 
@@ -952,7 +958,7 @@ if ($use_vncserver) {
 }
 
 my $last_xterm_title;
-for my $perl (@perls) {
+LOOP_PERLS: for my $perl (@perls) {
     print STDERR "#"x70,"\n";
     print STDERR "# $perl\n";
     my $cpan_ver = do {
@@ -1372,6 +1378,11 @@ EOF
 	}
 	if ($logfh) {
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble DONE\n";
+	}
+
+	if ($stop_signal) {
+	    warn "Last iteration done, will exit now because of signal...\n";
+	    last LOOP_PERLS;
 	}
     }
 }
