@@ -39,6 +39,7 @@ my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
 my $cpan_smoke_typescripts_dir = "$ENV{HOME}/.cpan_smoke_modules_typescripts";
 my $rc_file = "$ENV{HOME}/.cpansmokemodulesrc";
+my $pause_file = "$ENV{HOME}/.cpansmokemodulespause";
 
 my @perls;
 my $dists;
@@ -957,6 +958,8 @@ if ($use_vncserver) {
     $effective_x11_display = $x11_display;
 }
 
+maybe_pause();
+
 my $last_xterm_title;
 LOOP_PERLS: for my $perl (@perls) {
     print STDERR "#"x70,"\n";
@@ -1384,6 +1387,8 @@ EOF
 	    warn "Last iteration done, will exit now because of signal...\n";
 	    last LOOP_PERLS;
 	}
+
+	maybe_pause();
     }
 }
 
@@ -1421,6 +1426,17 @@ END {
     }
 
     xterm_conf(-title => ($last_xterm_title||"") . " FINISHED");
+}
+
+sub maybe_pause {
+    if (-e $pause_file) {
+	my $begin_pause = time;
+	do {
+	    print STDERR "\rNOTE: 'Pause' file $pause_file detected, delay next iteration (since " . int((time-$begin_pause)/60) . " minute(s))...";
+	    sleep 60;
+	} while(-e $pause_file);
+	print STDERR "\nNOTE: Continuing...\n";
+    }
 }
 
 sub kill_x11_server {
