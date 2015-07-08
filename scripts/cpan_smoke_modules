@@ -1994,6 +1994,12 @@ user-specific runtime directory (as specified by the
 C<XDG_RUNTIME_DIR> environment variable, usually something like
 F</run/user/$USERID>), or F</var/tmp>, or F</tmp>.
 
+A running C<cpan_smoke_modules> process may be cleanly terminated with
+a C<HUP> signal. The execution of the script is paused if a file
+F<~/.cpansmokemodulespause> exists. In both cases, termination and
+pause will not happen immediately, only after a set of modules is
+tested.
+
 =head1 TODO
 
     * neuen recent-Mechanismus anwenden
