@@ -1430,12 +1430,14 @@ END {
 
 sub maybe_pause {
     if (-e $pause_file) {
+	xterm_conf('-title', POSIX::strftime('%H:%M', gmtime) . ' Smoker pause');
 	my $begin_pause = time;
 	do {
 	    print STDERR "\rNOTE: 'Pause' file $pause_file detected, delay next iteration (since " . int((time-$begin_pause)/60) . " minute(s))...";
 	    sleep 60;
 	} while(-e $pause_file);
 	print STDERR "\nNOTE: Continuing...\n";
+	xterm_conf('-title', 'Smoker continues');
     }
 }
 
