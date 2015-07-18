@@ -702,6 +702,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('defined-or');
 		} elsif (
+			 m<\Qsyntax error \E$at_source_without_dot_qr\Q, near "package \E.*\{>
+			) {
+		    $add_analysis_tag->('modern package declaration');
+		} elsif (
 			 m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
 			) {
 		    $add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
