@@ -66,7 +66,7 @@ my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
-my $per_day_build_dir; # currently it's really a build dir for every six hours
+my $per_day_build_dir; # currently it's really a build dir for every 3 hours
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
@@ -1741,7 +1741,7 @@ sub check_disk_free_directory {
 		$entry =~ $date_rx;
 		my $hour = $4 || 0;
 		my $epoch = Time::Local::timelocal(0,0,$hour,$3,$2-1,$1);
-		if (time - $epoch > 6*3600) { # older than six hours
+		if (time - $epoch >= (3+3)*3600) { # older than 3 plus 3 hours
 		    $oldest_directory = "$parent_dir/$entry";
 		}
 	    }
@@ -1828,7 +1828,7 @@ sub per_day_directory_name {
     my $time = time;
     my $today = POSIX::strftime('%Y%m%d', localtime $time);
     my $hour = POSIX::strftime('%H', localtime $time);
-    $hour = sprintf '%02d', int($hour / 6) * 6;
+    $hour = sprintf '%02d', int($hour / 3) * 3;
     $today . $hour;
 }
 
