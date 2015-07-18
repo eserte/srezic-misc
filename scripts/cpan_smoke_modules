@@ -1635,9 +1635,6 @@ Usually this can be fixed by running a dummy build once, e.g.
 
 EOF
     }
-    if ($per_day_build_dir) {
-	$build_dir .= '/' . per_day_directory_name();
-    }
 
     if ($min_build_dir_avail) {
 	$min_build_dir_avail =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
@@ -1646,7 +1643,11 @@ EOF
 	}
     }
     if (_can_df()) {
-	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1);
+	# Note: addperday=>1 is necessary only for the build_dir,
+	# because the per-day directory might not exist yet, so we
+	# have to operate on the parent. In the tmpdir case the
+	# per-day directory is already created.
+	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1, addperday => 1);
 	require File::Spec;
 	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent, autoclean => 1);
     } else {
@@ -1682,9 +1683,12 @@ sub _df {
 sub check_disk_free_directory {
     my($dir, $min_space_free_bytes, $min_inode_free_percent, %opts) = @_;
     my $autoclean = delete $opts{autoclean};
+    my $addperday = delete $opts{addperday};
     die 'Unhandled options: ' . join(' ', %opts) if %opts;
 
     my $need_to_restore_xterm_title;
+    my $last_remove_candidate;
+    my %warned;
     while () {
 	my $dfres = _df($dir);
 	if (!$dfres) {
@@ -1718,10 +1722,9 @@ sub check_disk_free_directory {
 	}
 
 	if ($autoclean && $per_day_build_dir) {
-	    require File::Basename;
 	    require Time::Local;
 	    my $oldest_directory;
-	    my $parent_dir = File::Basename::dirname($dir);
+	    my $parent_dir = $dir;
 	    my $date_rx = qr{^(20\d{2})([012]\d)([0123]\d)([012]\d)?$};
 	    my @clean_candidates;
 	    opendir my $dirfh, $parent_dir
@@ -1743,11 +1746,19 @@ sub check_disk_free_directory {
 		}
 	    }
 	    if (!$oldest_directory) {
-		warn "No candidate for cleanup of old build directories found.\n";
+		warn "NOTE: No candidate for cleanup of old build directories found.\n";
 	    } else {
-		warn "Remove now oldest build directory: $oldest_directory\n";
-		rmtree($oldest_directory, 1, 1);
-		next; # retry
+		if (defined $last_remove_candidate && $last_remove_candidate eq $oldest_directory) {
+		    if (!$warned{$last_remove_candidate}) {
+			warn "*** WARNING: The last removal attempt for '$last_remove_candidate' was not successful, please remove manually!\n";
+			$warned{$last_remove_candidate} = 1;
+		    }
+		} else {
+		    warn "INFO: Remove now oldest build directory: $oldest_directory\n";
+		    rmtree($oldest_directory, 0, 0);
+		    $last_remove_candidate = $oldest_directory;
+		    next; # retry
+		}
 	    }
 	}
 
