@@ -66,6 +66,7 @@ my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
+my $per_day_build_dir;
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
@@ -161,6 +162,7 @@ GetOptions("n" => \$n,
 	   'batch!' => \$batch,
 	   'forparallelsmoker!' => \$for_parallel_smoker,
 	   'builddirreuse!' => \$build_dir_reuse,
+	   'perdaybuilddir!' => \$per_day_build_dir,
 	   'splitdists=i' => \$split_dists,
 	   'skiptested!' => \$skip_tested,
 	   'skiptestedfail' => sub {
@@ -288,6 +290,10 @@ for ($strace, $truss, $ktrace) { # protect the user
 }
 if ($use_vncserver && !is_in_path('vncserver')) {
     die '-vnc specified, but vncserver is not in path';
+}
+
+if ($build_dir_reuse && $per_day_build_dir) {
+    die "Cannot use -builddirreuse and -perdaybuilddir options together\n";
 }
 
 $SIG{HUP} = sub {
@@ -759,6 +765,16 @@ my $has_private_tmpdir;
 			or die "Cannot set sticky bit: $!";
 		}
 	    }
+
+	    if ($per_day_build_dir) {
+		my $today = POSIX::strftime("%Y%m%d", localtime time);
+		$_another_tmp .= '/' . $today;
+		if (!-d $_another_tmp) {
+		    mkdir $_another_tmp
+			or die "Cannot create $_another_tmp: $!";
+		}
+	    }
+
 	    $ENV{TMPDIR} = $_another_tmp;
 	    $has_private_tmpdir = 1;
 	    last;
@@ -1169,6 +1185,11 @@ EOF
 	    $cpan_shell_init .= q{$CPAN::Config->{build_dir_reuse} = 1; $CPAN::Config->{build_dir} = "}.$build_reuse_dir.q{"; };
 	} else {
 	    $cpan_shell_init .= q{$CPAN::Config->{build_dir_reuse} = 0; };
+	}
+
+	if ($per_day_build_dir) {
+	    my $today = POSIX::strftime("%Y%m%d", localtime time);
+	    $cpan_shell_init .= q{$CPAN::Config->{build_dir} .= "/} . $today . q{"; mkdir $CPAN::Config->{build_dir}; }; # let CPAN fail if mkdir was not successful
 	}
 
 	if ($debug) {
@@ -1622,9 +1643,9 @@ EOF
 	}
     }
     if (_can_df()) {
-	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent);
+	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1);
 	require File::Spec;
-	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent);
+	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent, autoclean => 1);
     } else {
 	warn <<EOF;
 ***************************************************************************
@@ -1656,7 +1677,9 @@ sub _df {
 }
 
 sub check_disk_free_directory {
-    my($dir, $min_space_free_bytes, $min_inode_free_percent) = @_;
+    my($dir, $min_space_free_bytes, $min_inode_free_percent, %opts) = @_;
+    my $autoclean = delete $opts{autoclean};
+    die 'Unhandled options: ' . join(' ', %opts) if %opts;
 
     my $need_to_restore_xterm_title;
     while () {
@@ -1690,6 +1713,30 @@ sub check_disk_free_directory {
 	if (!$inode_ok) {
 	    print STDERR qq{Less than $min_inode_free_percent% inodes available on $dir: $inode_avail_percent%.\n};
 	}
+
+	if ($autoclean && $per_day_build_dir) {
+	    require File::Basename;
+	    require Time::Local;
+	    my $parent_dir = File::Basename::dirname($dir);
+	    my @clean_candidates;
+	    opendir my $dirfh, $parent_dir
+		or die "UNEXPECTED ERROR: can't open $parent_dir: $!";
+	    while(defined(my $entry = readdir($dirfh))) {
+		if ($entry =~ m{^(20\d{2})([012]\d)([0123]\d)$}) {
+		    my $epoch = Time::Local::timelocal(0,0,0,$3,$2-1,$1);
+		    if (time - $epoch > 86400) {
+			# older than a day
+			push @clean_candidates, "$parent_dir/$entry";
+		    }
+		}
+	    }
+	    if (!@clean_candidates) {
+		warn "No candidates for cleanup of old directories found.\n";
+	    } else {
+		warn "NYI cleanup of candidates: @clean_candidates\n";
+	    }
+	}
+
 	xterm_conf('-title', 'Please cleanup disk for cpan_smoke_modules...');
 	$need_to_restore_xterm_title = 1;
 	print STDERR qq{Please cleanup the directory and go on with <RETURN>: };
