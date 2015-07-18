@@ -20,7 +20,7 @@ use CPAN;
 use CPAN::DistnameInfo 0.10; # .tar.bz2 support, TRIAL support
 use IO::Handle;
 use File::Temp qw(tempfile tempdir);
-use File::Path qw(mkpath);
+use File::Path qw(mkpath rmtree);
 use POSIX ();
 use Sys::Hostname qw(hostname);
 
@@ -66,7 +66,7 @@ my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
-my $per_day_build_dir;
+my $per_day_build_dir; # currently it's really a build dir for every six hours
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
@@ -767,8 +767,7 @@ my $has_private_tmpdir;
 	    }
 
 	    if ($per_day_build_dir) {
-		my $today = POSIX::strftime("%Y%m%d", localtime time);
-		$_another_tmp .= '/' . $today;
+		$_another_tmp .= '/' . per_day_directory_name();
 		if (!-d $_another_tmp) {
 		    mkdir $_another_tmp
 			or die "Cannot create $_another_tmp: $!";
@@ -1188,7 +1187,7 @@ EOF
 	}
 
 	if ($per_day_build_dir) {
-	    my $today = POSIX::strftime("%Y%m%d", localtime time);
+	    my $today = per_day_directory_name();
 	    $cpan_shell_init .= q{$CPAN::Config->{build_dir} .= "/} . $today . q{"; mkdir $CPAN::Config->{build_dir}; }; # let CPAN fail if mkdir was not successful
 	}
 
@@ -1636,6 +1635,10 @@ Usually this can be fixed by running a dummy build once, e.g.
 
 EOF
     }
+    if ($per_day_build_dir) {
+	$build_dir .= '/' . per_day_directory_name();
+    }
+
     if ($min_build_dir_avail) {
 	$min_build_dir_avail =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
 	if ($min_build_dir_avail !~ m{^[\d\.]+$}) {
@@ -1717,23 +1720,34 @@ sub check_disk_free_directory {
 	if ($autoclean && $per_day_build_dir) {
 	    require File::Basename;
 	    require Time::Local;
+	    my $oldest_directory;
 	    my $parent_dir = File::Basename::dirname($dir);
+	    my $date_rx = qr{^(20\d{2})([012]\d)([0123]\d)([012]\d)?$};
 	    my @clean_candidates;
 	    opendir my $dirfh, $parent_dir
 		or die "UNEXPECTED ERROR: can't open $parent_dir: $!";
 	    while(defined(my $entry = readdir($dirfh))) {
-		if ($entry =~ m{^(20\d{2})([012]\d)([0123]\d)$}) {
-		    my $epoch = Time::Local::timelocal(0,0,0,$3,$2-1,$1);
-		    if (time - $epoch > 86400) {
-			# older than a day
-			push @clean_candidates, "$parent_dir/$entry";
-		    }
+		if ($entry =~ $date_rx) {
+		    push @clean_candidates, $entry;
 		}
 	    }
-	    if (!@clean_candidates) {
-		warn "No candidates for cleanup of old directories found.\n";
+
+	    if (@clean_candidates) {
+		# pick oldest one
+		my($entry) = sort @clean_candidates;
+		$entry =~ $date_rx;
+		my $hour = $4 || 0;
+		my $epoch = Time::Local::timelocal(0,0,$hour,$3,$2-1,$1);
+		if (time - $epoch > 6*3600) { # older than six hours
+		    $oldest_directory = "$parent_dir/$entry";
+		}
+	    }
+	    if (!$oldest_directory) {
+		warn "No candidate for cleanup of old build directories found.\n";
 	    } else {
-		warn "NYI cleanup of candidates: @clean_candidates\n";
+		warn "Remove now oldest build directory: $oldest_directory\n";
+		rmtree($oldest_directory, 1, 1);
+		next; # retry
 	    }
 	}
 
@@ -1797,6 +1811,14 @@ WARN: Cannot create a predictable tempfile for cpanreporter_config.ini.
 EOF
     }
     return;
+}
+
+sub per_day_directory_name {
+    my $time = time;
+    my $today = POSIX::strftime('%Y%m%d', localtime $time);
+    my $hour = POSIX::strftime('%H', localtime $time);
+    $hour = sprintf '%02d', int($hour / 6) * 6;
+    $today . $hour;
 }
 
 # REPO BEGIN
