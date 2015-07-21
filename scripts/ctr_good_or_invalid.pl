@@ -710,6 +710,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('defined hash');
 		} elsif (
+			 m{\QCan't use 'defined(@\E\S+\Q)' (Maybe you should just omit the defined()?) \E$at_source_qr}
+			) {
+		    $add_analysis_tag->('defined array');
+		} elsif (
 			 m<\Qsyntax error \E$at_source_without_dot_qr\Q, near "package \E.*\{>
 			) {
 		    $add_analysis_tag->('modern package declaration');
