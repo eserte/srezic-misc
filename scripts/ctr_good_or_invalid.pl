@@ -480,6 +480,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('experimental functions on references');
 		} elsif (
+			 /^(?:#\s+Error:\s+)?Experimental (?:keys|values) on scalar is now forbidden $at_source_qr$/
+			) {
+		    $add_analysis_tag->('experimental functions on references are forbidden');
+		} elsif (
 			 /^#\s+Failed test 'POD test for [^']+'$/
 			) {
 		    $add_analysis_tag->('pod test');
