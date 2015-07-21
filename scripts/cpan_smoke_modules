@@ -66,7 +66,7 @@ my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
-my $per_day_build_dir; # currently it's really a build dir for every 3 hours
+my $per_day_build_dir = 1; # currently it's really a build dir for every 3 hours, not a daily one
 my $split_dists = $^O eq 'MSWin32' ? 5 : 50;
 my $has_xterm_conf;
 my $skip_tested;
