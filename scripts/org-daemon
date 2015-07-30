@@ -177,6 +177,10 @@ $mw->protocol('WM_DELETE_WINDOW', sub {
 		  $mw->destroy;
 	      });
 
+# emacsclient does not start if a directory is missing,
+# so make sure we change into a non-removable directory.
+chdir '/';
+
 #$mw->WidgetDump;
 MainLoop;
 
