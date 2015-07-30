@@ -480,7 +480,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('experimental functions on references');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?Experimental (?:keys|values) on scalar is now forbidden $at_source_qr$/
+			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
 		} elsif (
