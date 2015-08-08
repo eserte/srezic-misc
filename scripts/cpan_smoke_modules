@@ -1644,9 +1644,9 @@ EOF
 		) {
 	my($varref, $name) = @$def;
 	if ($$varref) {
-	    $$varref =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
-	    if ($$varref !~ m{^[\d\.]+$}) {
-		die "(expanded) $name value '$$varref' does not look like a number";
+	    $$varref =~ s{([\d\.]+)([kMG])}{int($1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die))}e;
+	    if ($$varref !~ m{^\d+$}) {
+		die "(expanded) $name value '$$varref' does not look like an integer number";
 	    }
 	}
     }
