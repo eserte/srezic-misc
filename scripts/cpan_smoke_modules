@@ -78,6 +78,7 @@ my $do_create_report_directories = 1;
 my $reports_workflow_dir;
 my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
+my $min_build_dir_cleanup; # when to start cleanup
 my $min_tmp_dir_avail   = 50_000_000; # 50M
 my $min_dir_inodes_percent = 5;
 my $debug;
@@ -199,6 +200,7 @@ GetOptions("n" => \$n,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
+	   'minbuilddircleanup=s' => \$min_build_dir_cleanup,
 	   'hidemod=s@' => \@hidemod,
 	   'timefake=s' => \$time_fake,
 	   'vnc!'  => \$use_vncserver,
@@ -1636,10 +1638,16 @@ Usually this can be fixed by running a dummy build once, e.g.
 EOF
     }
 
-    if ($min_build_dir_avail) {
-	$min_build_dir_avail =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
-	if ($min_build_dir_avail !~ m{^[\d\.]+$}) {
-	    die "(expanded) -minbuilddiravail value '$min_build_dir_avail' does not look like a number";
+    for my $def (
+		 [\$min_build_dir_avail,   '-minbuilddiravail'],
+		 [\$min_build_dir_cleanup, '-minbuilddircleanup'],
+		) {
+	my($varref, $name) = @$def;
+	if ($$varref) {
+	    $$varref =~ s{([\d\.]+)([kMG])}{$1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die)}e;
+	    if ($$varref !~ m{^[\d\.]+$}) {
+		die "(expanded) $name value '$$varref' does not look like a number";
+	    }
 	}
     }
     if (_can_df()) {
@@ -1647,7 +1655,7 @@ EOF
 	# because the per-day directory might not exist yet, so we
 	# have to operate on the parent. In the tmpdir case the
 	# per-day directory is already created.
-	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1, addperday => 1);
+	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1, addperday => 1, minbuilddircleanup => $min_build_dir_cleanup);
 	require File::Spec;
 	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent, autoclean => 1);
     } else {
@@ -1684,7 +1692,13 @@ sub check_disk_free_directory {
     my($dir, $min_space_free_bytes, $min_inode_free_percent, %opts) = @_;
     my $autoclean = delete $opts{autoclean};
     my $addperday = delete $opts{addperday};
+    my $min_build_dir_cleanup_bytes = delete $opts{minbuilddircleanup};
     die 'Unhandled options: ' . join(' ', %opts) if %opts;
+
+    # In the first pass check for -minbuilddircleanup value
+    # If cleaning up to this value fails, then lower the limit
+    # for $min_space_free_bytes
+    my $check_free_bytes = $autoclean && $min_build_dir_cleanup_bytes ? $min_build_dir_cleanup_bytes : $min_space_free_bytes;
 
     my $need_to_restore_xterm_title;
     my $last_remove_candidate;
@@ -1708,14 +1722,14 @@ sub check_disk_free_directory {
 	    }
 	}
 
-	if ($dfres->{bavail} < $min_space_free_bytes) {
+	if ($dfres->{bavail} < $check_free_bytes) {
 	    $space_ok = 0;
 	}
 
 	last if $space_ok && $inode_ok;
 
 	if (!$space_ok) {
-	    print STDERR qq{Less than $min_space_free_bytes bytes on $dir available: $dfres->{bavail}.\n};
+	    print STDERR qq{Less than $check_free_bytes bytes on $dir available: $dfres->{bavail}.\n};
 	}
 	if (!$inode_ok) {
 	    print STDERR qq{Less than $min_inode_free_percent% inodes available on $dir: $inode_avail_percent%.\n};
@@ -1746,7 +1760,13 @@ sub check_disk_free_directory {
 		}
 	    }
 	    if (!$oldest_directory) {
-		warn "NOTE: No candidate for cleanup of old build directories found.\n";
+		if ($min_space_free_bytes < $check_free_bytes) {
+		    warn "INFO: cannot cleanup under -minbuilddircleanup limit, switch to -minbuilddiravail now...\n";
+		    $check_free_bytes = $min_space_free_bytes;
+		    next;
+		} else {
+		    warn "NOTE: No candidate for cleanup of old build directories found.\n";
+		}
 	    } else {
 		if (defined $last_remove_candidate && $last_remove_candidate eq $oldest_directory) {
 		    if (!$warned{$last_remove_candidate}) {
