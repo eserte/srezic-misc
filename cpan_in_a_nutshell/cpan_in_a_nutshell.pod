@@ -1556,6 +1556,13 @@ L<Text::LevenshteinXS> calculates the Levenshtein edit distance (which
 is used in String::Approx, for example) between two strings.
 L<Text::Levenshtein> is a pure perl implementation.
 
+More CPAN modules: L<Text::Brew>, L<Text::Fuzzy>, L<Text::Compare>,
+L<Text::Dice>, L<Text::Levenshtein::XS>,
+L<Text::Levenshtein::Damerau::PP>, L<Text::Levenshtein::Damerau::XS>,
+L<Text::WagnerFischer>. See also
+L<https://metacpan.org/pod/distribution/Text-Dice/ex/benchmark.pl> for
+benchmark results.
+
 Just for completeness: there's also the command line agrep, see
 L<http://en.wikipedia.org/wiki/Agrep>.
 
