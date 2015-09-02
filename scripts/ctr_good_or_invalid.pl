@@ -719,7 +719,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('modern package declaration');
 		} elsif (
-			 m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$}
+			    m{^make: \*\*\* No targets specified and no makefile found\.  Stop\.$} # GNU makefile
+		         || m{^make: \*\*\* Keine Targets angegeben und keine .*?make.*?-Steuerdatei gefunden\.  Schluss\.$} # GNU makefile, German
 			) {
 		    $add_analysis_tag->('makefile missing'); # probably due to Makefile.PL and Build.PL missing before
 		} elsif (
