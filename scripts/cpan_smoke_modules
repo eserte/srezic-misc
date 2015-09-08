@@ -1372,7 +1372,7 @@ EOF
 	if ($for_parallel_smoker) {
 	    $ENV{PERL_PARALLEL_SMOKER} = 'yes'; # private extension, used in distroprefs files
 	}
-	$ENV{DBIC_NO_WARN_BAD_PERL} = 1; # with the warning messages test output gets so long being unusable
+	#$ENV{DBIC_NO_WARN_BAD_PERL} = 1; # with the warning messages test output gets so long being unusable
 	my $save_perl5opt = $ENV{PERL5OPT};
 	if ($module_printused) {
 	    $ENV{PERL5OPT} .= " -MModule::PrintUsed";
