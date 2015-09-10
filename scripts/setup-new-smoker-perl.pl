@@ -92,7 +92,8 @@ if (defined $patchperl_path && !-x $patchperl_path) {
 }
 
 check_term_title;
-set_term_title "Setup new smoker perl $perlver";
+my $term_title_prefix = "Setup new smoker perl $perlver";
+set_term_title $term_title_prefix;
 
 my $perldir = "/usr/perl$perlver";
 if ($^O eq 'linux') {
@@ -335,6 +336,8 @@ step "Build perl",
 			     ' && nice make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
 	    system @build_cmd;
+
+	    set_term_title "$term_title_prefix: Test perl";
 	    if (!eval {
 		local $ENV{TEST_JOBS};
 		$ENV{TEST_JOBS} = $jobs if $jobs > 1;
@@ -342,6 +345,7 @@ step "Build perl",
 		1;
 	    }) {
 		while () {
+		    set_term_title "$term_title_prefix: Test perl FAILED";
 		    print STDERR "make test failed. Continue nevertheless? (y/n) ";
 		    chomp(my $yn = <STDIN>);
 		    if ($yn eq 'y') {
@@ -520,10 +524,12 @@ END {
 	    undef $sudo_validator_pid;
 	}
 
-	if ($? == 0) {
-	    set_term_title "Setup new smoker perl $perlver finished";
-	} else {
-	    set_term_title "Setup new smoker perl $perlver aborted";
+	if (defined $term_title_prefix) { # if undefined, then the term title was never set
+	    if ($? == 0) {
+		set_term_title "$term_title_prefix finished";
+	    } else {
+		set_term_title "$term_title_prefix aborted";
+	    }
 	}
     }
 }
@@ -571,7 +577,7 @@ sub step ($%) {
     my $ensure = $doings{ensure} || die "ensure => sub { ... } missing";
     my $using  = $doings{using}  || die "using => sub { ... } missing";
     return if $ensure->();
-    set_term_title "Setup new smoker perl $perlver: $step_name";
+    set_term_title "$term_title_prefix: $step_name";
     $using->();
     die "Step '$step_name' failed" if !$ensure->();
 }
