@@ -213,6 +213,48 @@ __END__
 
 dsh-diff - make a diff over multiple hosts
 
+=head1 SYNOPSIS
+
+    dsh-diff -g dshgroup file
+    dsh-diff -m host1 -m host2 ... file
+
+=head1 DESCRIPTION
+
+C<dsh-diff> can do a diff of the same file located on multiple hosts.
+
+Use L<dsh(1)> group files or the C<dsh -m> syntax to specify the host
+list.
+
+L<diff(1)> is called between the given file on the first host and all
+other hosts. diff's options are hardcoded to C<-u> (unified diff).
+
+It's possible to work with concurrency with the C<-c> option. This
+requires L<Parallel::ForkManager>. The maximum number of parallel jobs
+may be set with the C<-j> and defaults to 20.
+
+A number of predefined normalizers is available and may be set with
+one or more C<-normalizer> options:
+
+=over
+
+=item sort
+
+Sort lines before doing the diff.
+
+=item removecomments
+
+Ignore comments (lines starting with C<#>) for the diff.
+
+=item removeemptylines
+
+Ignore empty lines for the diff.
+
+=item rcskeywords
+
+Ignore RCS/subversion keywords like C<HeadURL> for the diff.
+
+=back
+
 =head1 AUTHOR
 
 Slaven Rezic <srezic@cpan.org>
