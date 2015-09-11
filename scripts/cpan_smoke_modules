@@ -1214,7 +1214,7 @@ EOF
 		if ($checked && !exists $CPAN::Config->{$key}) {
 		    die "cpanconf key '$key' is probably invalid --- or use --cpanconf-unchecked instead\n";
 		}
-		if ($key eq 'urllist') { # special handling for array
+		if ($key eq 'urllist' || $key eq 'plugin_list') { # special handling for array
 		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
 		} else {
 		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
