@@ -755,6 +755,7 @@ sub parse_test_report {
 		    $add_analysis_tag->('bailout');
 		} elsif (
 			 /Fatal error: .*: No space left on device/ # from gcc
+			 || /ERROR: .*: No space left on device/ # from EUMM
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} else {
