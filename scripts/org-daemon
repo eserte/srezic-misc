@@ -214,7 +214,15 @@ sub show_date_in_emacs {
 	       $file,
 	      );
     }
-    system @cmd;
+    if (eval { require IPC::Run; 1 }) {
+	IPC::Run::run(\@cmd, '>', \my $ignore)
+	    or warn "Failed to run '@cmd'";
+    } else {
+	system @cmd;
+	if ($? != 0) {
+	    warn "Failed to run '@cmd'";
+	}
+    }
 }
 
 sub tk_do_one_iteration {
