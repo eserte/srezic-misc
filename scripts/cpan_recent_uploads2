@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2013,2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2013,2014,2015 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -173,9 +173,7 @@ if ($v && $v >= 2) {
 my %deleted_dist;
 
 if ($only_indexed) {
-    cpan_handleconfig();
-    unshift @{ $CPAN::Config->{urllist} }, $url;
-    CPAN::Index->force_reload();
+    maybe_refresh_packages_index();
 }
  
 GATHER_DATA: {
@@ -243,6 +241,48 @@ GATHER_DATA: {
 	    CPAN::HandleConfig->load;
 	    $CPAN_HandleConfig_loaded = 1;
 	}
+    }
+}
+
+# Side effects:
+# - loads CPAN config
+# - adjust urllist (by adding $url)
+# - may set index_expire to a high value (to disable forced reloads)
+# - may refresh the CPAN package index
+sub maybe_refresh_packages_index {
+    cpan_handleconfig();
+    unshift @{ $CPAN::Config->{urllist} }, $url;
+
+    # Check whether we have to call force_reload(), or
+    # if the 02packages.details.txt.gz file is already
+    # fresh enough.
+    my $packages_file = $CPAN::Config->{keep_source_where} . '/modules/02packages.details.txt.gz';
+    my $need_forced_reload = 1;
+    my(@s) = stat($packages_file);
+    if (@s) {
+	my $ua = LWP::UserAgent->new; # don't use ::WithCache ua here
+	my $packages_url = $url . '/modules/02packages.details.txt.gz';
+	my $res = $ua->head($packages_url);
+	if ($res->code == 200) {
+	    if ($res->last_modified <= $s[9]) {
+		warn "INFO: $packages_url was not modified\n" if $v;
+		$need_forced_reload = 0;
+	    } else {
+		warn "INFO: $packages_url was modified" if $v;
+	    }
+	} else {
+	    warn "ERROR: HEAD $packages_url did not return 200 OK, but: " . $res->status_line. "\n";
+	}
+    } else {
+	warn "INFO: packages file $packages_file does not exist (first-time fetch?)\n" if $v;
+    }
+
+    if ($need_forced_reload) {
+	debug("do forced reload of CPAN indexes");
+	CPAN::Index->force_reload();
+    } else {
+	$CPAN::Config->{index_expire} = 99999;
+	debug("no forced reload of CPAN indexes necessary");
     }
 }
 
