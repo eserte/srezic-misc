@@ -48,6 +48,7 @@ my $patchperl_path;
 my $jobs;
 my $download_url;
 my $use_pthread;
+my $use_shared;
 my $extra_config_opts;
 my $cf_email;
 if ($ENV{USER} =~ m{eserte|slaven}) {
@@ -65,9 +66,10 @@ GetOptions(
 	   "j|jobs=i" => \$jobs,
 	   "downloadurl=s" => \$download_url,
 	   "pthread!"  => \$use_pthread,
+	   'shared!'   => \$use_shared,
 	   'extraconfigopts=s' => \$extra_config_opts,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
 if (!$perlver && $download_url) {
     if ($download_url =~ m{/perl-(5\.\d+\.\d+(?:-RC\d+)?)\.tar\.(?:gz|bz2)$}) {
@@ -103,6 +105,7 @@ my $perldir_suffix = '';
 if ($build_debug)    { $perldir_suffix .= "d" }
 if ($build_threads)  { $perldir_suffix .= "t" }
 if ($use_longdouble) { $perldir_suffix .= 'D' }
+if ($use_shared)     { $perldir_suffix .= 's' }
 $perldir .= $perldir_suffix;
 
 if ($use_pthread) {
@@ -331,6 +334,7 @@ step "Build perl",
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : '') .
 			     ($use_longdouble ? ' -Duselongdouble' : '') .
+			     ($use_shared ? ' -Duseshrplib' : '') .
 			     ($cf_email ? " -Dcf_email=$cf_email" : '') .
 			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
 			     ' && nice make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
