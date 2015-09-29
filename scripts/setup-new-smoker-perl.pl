@@ -105,7 +105,7 @@ my $perldir_suffix = '';
 if ($build_debug)    { $perldir_suffix .= "d" }
 if ($build_threads)  { $perldir_suffix .= "t" }
 if ($use_longdouble) { $perldir_suffix .= 'D' }
-if ($use_shared)     { $perldir_suffix .= 's' }
+if ($use_shared)     { $perldir_suffix .= 's' } # XXX suffix is also set to /usr/local/bin symlink (perl5.X.Ys) --- could be surprising!
 $perldir .= $perldir_suffix;
 
 if ($use_pthread) {
