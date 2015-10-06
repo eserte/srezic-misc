@@ -571,7 +571,8 @@ sub parse_test_report {
 			$add_analysis_tag->('c compile error');
 		    }
 		} elsif (
-			 /cc1: error: unrecognized command line option /
+			 /cc1: error: unrecognized command line option / || # gcc
+			 /cc: error: unknown argument: / # clang
 			) {
 		    $add_analysis_tag->('other c compiler error');
 		} elsif (
@@ -748,6 +749,10 @@ sub parse_test_report {
 			 m{Can't locate object method "builder" via package "Test::Simple" at }
 			) {
 		    $add_analysis_tag->('Test-Simple problem'); # probably a problem with beta Test-Simple
+		} elsif (
+			 m{/usr/bin/install: cannot create regular file `/opt/perl-.*': Permission denied} # ofter seen in Alien modules
+			) {
+		    $add_analysis_tag->('invalid install');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
