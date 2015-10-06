@@ -268,7 +268,7 @@ sub maybe_refresh_packages_index {
 		warn "INFO: $packages_url was not modified\n" if $v;
 		$need_forced_reload = 0;
 	    } else {
-		warn "INFO: $packages_url was modified" if $v;
+		warn "INFO: $packages_url was modified\n" if $v;
 	    }
 	} else {
 	    warn "ERROR: HEAD $packages_url did not return 200 OK, but: " . $res->status_line. "\n";
