@@ -451,7 +451,7 @@ sub parse_test_report {
 	    } elsif ($section eq 'PROGRAM OUTPUT') {
 		if (
 		    /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
-		    /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\.]+$/ ||
+		    /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\._]+$/ ||
 		    /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
 		    /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
 		    /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
