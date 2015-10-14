@@ -2058,6 +2058,12 @@ Note that this does not work if the reports directory is specially
 mounted (e.g. via sshfs or nfs) and root does not have permissions to
 write to this directory.
 
+Note also that files and directories created while running
+C<cpan_smoke_modules> as root will belong to root, and might need to
+be handled specially afterwards. Most notably this is the build
+directory and the downloaded tarball, including all possbily missing
+parent directories.
+
 =item -vnc
 
 Make a VNC server during the smoke run. It is killed after first run.
