@@ -815,14 +815,21 @@ if ($save_reports) {
 	    or die "Can't open $config_ini_path: $!";
 
 	if (!$reports_workflow_dir) {
+	    # use default
 	    $reports_workflow_dir = $reports_workflow_default_dir;
-	    if (!-d $reports_workflow_dir) {
+	    if (!-d $reports_workflow_dir && !-l $reports_workflow_dir) {
 		mkpath $reports_workflow_dir;
+	    }
+	    if (!-d $reports_workflow_dir) {
+		# automounted? force mounting?
+		opendir my($dir), $reports_workflow_dir;
 	    }
 	    if (!-d $reports_workflow_dir) {
 		die "Cannot create $reports_workflow_dir";
 	    }
 	} else {
+	    # use supplied directory --- it's assumed that it already
+	    # exists and won't be created here
 	    if (!-d $reports_workflow_dir) {
 		die "The directory $reports_workflow_dir does not exist";
 	    } # the subdirs may be missing and will be created
