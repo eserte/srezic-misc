@@ -754,6 +754,15 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('invalid install');
 		} elsif (
+			 m{\Qpanic: av_extend_guts() negative count} ||
+			 m{\Qpanic: stack_grow() negative count}
+			) {
+		    $add_analysis_tag->('panic extend/stack_grow');
+		} elsif (
+			 m{\QCan't use global \E\$_\Q in "my" }
+			) {
+		    $add_analysis_tag->('lexical $_');
+		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
 		    # rather unspecific, do as rather last check
