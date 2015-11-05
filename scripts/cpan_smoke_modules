@@ -724,26 +724,6 @@ TRY_PARTIAL_RESOLVE: {
     @dist_or_mods = @new_dist_or_mods;
 }
 
-if ($original_do_action eq 'reinstall') {
-    # reinstall is only supported for already installed modules.
-    # Modules not installed will be filtered out. It's also not
-    # possible to specify distributions.
-    my @new_dist_or_mods;
-    for my $dist_or_mod (@dist_or_mods) {
-	my $mo = CPAN::Shell->expand('Module', $dist_or_mod);
-	if ($mo) {
-	    if ($mo->inst_file) {
-		push @new_dist_or_mods, $dist_or_mod;
-	    } else {
-		warn "INFO: Remove uninstalled module $dist_or_mod\n";
-	    }
-	} else {
-	    warn "INFO: Remove non-module $dist_or_mod\n";
-	}
-    }
-    @dist_or_mods = @new_dist_or_mods;
-}
-
 if (!@dist_or_mods) {
     warn "No distributions to $original_do_action.\n";
     exit 0;
@@ -1097,11 +1077,35 @@ EOF
 	    }
 	}
 	@dist_or_mods = @new_dist_or_mods;
+
 	if (!@dist_or_mods) {
 	    warn "All dists already tested, skipping this perl...\n";
 	}
     }
-#die "@dist_or_mods";
+
+    if ($original_do_action eq 'reinstall') {
+	# reinstall is only supported for already installed modules.
+	# Modules not installed will be filtered out. It's also not
+	# possible to specify distributions.
+	open my $fh, '-|', $perl, '-MCPAN', '-e', <<'EOF', @dist_or_mods or die $!;
+use strict;
+for my $mod (@ARGV) {
+    my $inst_file = eval { CPAN::Shell->expand("Module", $mod)->inst_file };
+    if ($inst_file) {
+	print $mod, "\n";
+    }
+}
+EOF
+	my %mod_installed;
+	while(<$fh>) {
+	    chomp;
+	    $mod_installed{$_} = 1;
+	}
+	@dist_or_mods = grep { $mod_installed{$_} } @dist_or_mods;
+	if (!@dist_or_mods) {
+	    warn "No modules to reinstall, skipping this perl...\n";
+	}
+    }
 
     my $total_dists = scalar(@dist_or_mods) + scalar(@pre_dist_or_mods);
     my $dist_i = 0;
