@@ -523,7 +523,7 @@ if (!@perls) {
 			}
 		    }
 		    if (_is_install_like_action()) {
-			warn "Skip system perl '$candidate' for '$do_action' action...\n";
+			warn "Skip system perl '$candidate' for '$original_do_action' action...\n";
 			next CANDIDATE;
 		    }
 		    if ($skip_system_perl) {
