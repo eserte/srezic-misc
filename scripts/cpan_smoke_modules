@@ -376,6 +376,7 @@ EOF
 if ($do_action !~ m{^(test|report|install|reinstall|shell)$}) {
     die "Invalid action '$do_action'";
 }
+my $original_do_action = $do_action;
 if ($do_action eq 'reinstall') {
     $do_action = 'test';
     push @post_actions, 'install_tested';
@@ -723,8 +724,28 @@ TRY_PARTIAL_RESOLVE: {
     @dist_or_mods = @new_dist_or_mods;
 }
 
+if ($original_do_action eq 'reinstall') {
+    # reinstall is only supported for already installed modules.
+    # Modules not installed will be filtered out. It's also not
+    # possible to specify distributions.
+    my @new_dist_or_mods;
+    for my $dist_or_mod (@dist_or_mods) {
+	my $mo = CPAN::Shell->expand('Module', $dist_or_mod);
+	if ($mo) {
+	    if ($mo->inst_file) {
+		push @new_dist_or_mods, $dist_or_mod;
+	    } else {
+		warn "INFO: Remove uninstalled module $dist_or_mod\n";
+	    }
+	} else {
+	    warn "INFO: Remove non-module $dist_or_mod\n";
+	}
+    }
+    @dist_or_mods = @new_dist_or_mods;
+}
+
 if (!@dist_or_mods) {
-    warn "No distributions to test.\n";
+    warn "No distributions to $original_do_action.\n";
     exit 0;
 }
 
@@ -2015,7 +2036,9 @@ Do not only test, but also install.
 
 =item -reinstall
 
-Test and reinstall, if test was successful.
+Test and reinstall, if test was successful. Note that reinstall really
+means _re_install --- the module won't be reinstalled if it isn't
+already installed.
 
 =item -recent
 
