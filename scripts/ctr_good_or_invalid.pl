@@ -468,6 +468,7 @@ sub parse_test_report {
 		} elsif (
 			 /^OS unsupported$/ ||
 			 /^OS unsupported $at_source_qr$/ ||
+			 /^No support for OS$/ ||
 			 /^No support for OS at /
 			) {
 		    $add_analysis_tag->('os unsupported');
@@ -762,6 +763,10 @@ sub parse_test_report {
 			 m{\QCan't use global \E\$_\Q in "my" }
 			) {
 		    $add_analysis_tag->('lexical $_');
+		} elsif (
+			 m{needs to be recompiled against the newly installed PDL at}
+			) {
+		    $add_analysis_tag->('!!!recompile PDL module!!!');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
