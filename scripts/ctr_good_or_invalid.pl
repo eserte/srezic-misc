@@ -540,7 +540,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('container func on ref');
 		} elsif (
-			 /This Perl not built to support threads/
+			 /(?<!skipped: )This Perl not built to support threads/
 			) {
 		    $add_analysis_tag->('unthreaded perl');
 		} elsif (
