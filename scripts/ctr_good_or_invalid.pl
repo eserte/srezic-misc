@@ -484,6 +484,11 @@ sub parse_test_report {
 			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
+		} elsif ( # should be before pod coverage and maybe pod tests
+			 /Unrecognized character .* at \._\S+ line \d+\./ ||
+			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
+			) {
+		    $add_analysis_tag->('hidden MacOSX file');
 		} elsif (
 			 /^#\s+Failed test 'POD test for [^']+'$/
 			) {
@@ -687,10 +692,6 @@ sub parse_test_report {
 			 /Cannot detect source of '.*?'! $at_source_qr/
 			) {
 		    $add_analysis_tag->('very long runtime (.t removed)');
-		} elsif (
-			 /Unrecognized character .* at \._\S+ line \d+\./
-			) {
-		    $add_analysis_tag->('hidden MacOSX file');
 		} elsif (
 			 m{^Unknown regexp modifier "/[^"]+" at }
 			) {
