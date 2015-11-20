@@ -45,6 +45,7 @@ my @perls;
 my $dists;
 my $reports_sent_seek_pos;
 my @pv;
+my $perlr;
 my $do_action = "test"; # and report
 my @post_actions;
 my $warntimeout = 60;
@@ -152,6 +153,7 @@ GetOptions("n" => \$n,
 	   "warntimeout=i" => \$warntimeout,
 	   'perl=s@' => \@perls,
 	   'pv=s@' => \@pv,
+	   'perlr!' => \$perlr,
 	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
 	   'fl|filelist=s' => \$fl,
@@ -597,6 +599,9 @@ if (!@perls) {
     if (!@perls) {
 	die "*** ERROR: Could not find any requested perl.\n";
     }
+}
+if ($perlr) {
+    @perls = reverse @perls;
 }
 
 CPAN::HandleConfig->load;
