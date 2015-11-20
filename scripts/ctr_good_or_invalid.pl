@@ -1339,6 +1339,7 @@ sub read_annotate_txt {
     while(<$fh>) {
 	chomp;
 	next if /^\s*$/;
+	next if /^#/;
 	my($dist, $annotation) = split /\s+/, $_, 2;
 	$dist2annotation{$dist} = $annotation;
     }
