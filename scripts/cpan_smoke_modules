@@ -153,7 +153,7 @@ GetOptions("n" => \$n,
 	   "warntimeout=i" => \$warntimeout,
 	   'perl=s@' => \@perls,
 	   'pv=s@' => \@pv,
-	   'perlr!' => \$perlr,
+	   'perlr|perl-reverse!' => \$perlr, # reverse list of perl versions
 	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
 	   'fl|filelist=s' => \$fl,
