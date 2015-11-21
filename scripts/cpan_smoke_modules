@@ -996,26 +996,23 @@ my $last_xterm_title;
 LOOP_PERLS: for my $perl (@perls) {
     print STDERR "#"x70,"\n";
     print STDERR "# $perl\n";
-    my $cpan_ver = do {
-	my @cmd = ($perl, "-we", q{use CPAN; print CPAN->VERSION(0)});
-	@cmd = "@cmd" if $^O eq 'MSWin32'; # list form of pipe not implemented
-	open my $fh, "-|", @cmd
-	    or die "Command @cmd failed: $!";
-	local $/;
-	<$fh>;
-    };
 
-    my $split_dists = $split_dists;
-    if ($do_action eq 'shell') {
-	$split_dists = 0;
-    }
-    if ($cpan_ver == 1.9258) {
-	warn <<EOF;
+    if (0) {
+	# not active anymore --- currently there are no broken
+	# CPAN.pm's around
+	if (is_CPAN_pm_broken($perl)) {
+	    warn <<EOF;
 **********************************************************************
 * Broken CPAN::PERL5LIB causing endless loops --- skipping $perl!
 **********************************************************************
 EOF
-	next;
+	    next;
+	}
+    }
+	    
+    my $split_dists = $split_dists;
+    if ($do_action eq 'shell') {
+	$split_dists = 0;
     }
 
     my @dist_or_mods = @dist_or_mods;
@@ -1049,13 +1046,19 @@ EOF
     }
 
     if ($skip_tested) {
-	# next two lines taken from cpan_allpackages:
-	my $thisperl = "perl-".`$perl -MConfig -e 'print \$Config{version}'`;
-	my $thispatch = `$perl -MConfig -e 'print \$Config{perl_patchlevel}'`;
-	if ($thispatch) {
-	    $thisperl .= " patch $thispatch";
+	my($thisperl, $thispatch, $thisarch);
+	{
+	    my $perl_info_line;
+	    open my $fh, '-|', $perl, '-MConfig', '-e',
+		'print join("\t", $Config{version}, $Config{perl_patchlevel}, $Config{archname}." ".$Config{osvers})'
+		or die "Can't run $perl -MConfig ...: $!";
+	    $perl_info_line = <$fh>;
+	    ($thisperl, $thispatch, $thisarch) = split /\t/, $perl_info_line;
+	    $thisperl = "perl-$thisperl";
+	    if ($thispatch) {
+		$thisperl .= " patch $thispatch";
+	    }
 	}
-	my $thisarch = `$perl -MConfig -e 'print \$Config{archname}." ".\$Config{osvers}'`;
 
 	warn "About to parse sent reports...\n";
 	my %stdopts = (skiptestedfail => $skip_tested_fail, skiptestedpass => $skip_tested_pass);
@@ -1071,7 +1074,7 @@ EOF
 	    my $d = CPAN::DistnameInfo->new($dist);
 	    my($author, $distname) = $dist =~ m{(.*)/(.*)}; # XXX should use distnameinfo
 	    no warnings 'uninitialized'; # undefs may happen in $author and $distname if it's a mod, not a dist
-	    if (my $old_d = $dists->{$d->maturity}->{$d->dist}->{$thisperl}->{$thisarch}) {
+	    if (my $old_d = $dists->{$d->dist}->{$thisperl}->{$thisarch}) {
 		if (safe_version($d->version) > safe_version($old_d->{dist}->version)) {
 		    push @new_dist_or_mods, $dist;
 		} elsif ($debug) {
@@ -1602,15 +1605,14 @@ sub parse_reports_sent { # takes ~3 seconds
 	    next if $skip_tested_fail && $action ne 'FAIL';
 	    next if $skip_tested_pass && $action ne 'PASS';
 	    my $d = CPAN::DistnameInfo->new($dist.".tar.gz");
-	    my $maturity = $d->maturity;
-	    if (my $old_d = $dists->{$maturity}->{$d->dist}->{$perl}->{$arch}) {
+	    if (my $old_d = $dists->{$d->dist}->{$perl}->{$arch}) {
 		if (safe_version($d->version) <= safe_version($old_d->{dist}->version)) {
 		    next;
 		}
 	    }
-	    $dists->{$maturity}->{$d->dist}->{$perl}->{$arch} = {dist => $d,
-								 phase => $phase,
-								 action => $action};
+	    $dists->{$d->dist}->{$perl}->{$arch} = {dist => $d,
+						    phase => $phase,
+						    action => $action};
 	} else {
 	    warn "Cannot parse line $_";
 	}
@@ -1892,6 +1894,21 @@ sub per_day_directory_name {
     my $hour = POSIX::strftime('%H', localtime $time);
     $hour = sprintf '%02d', int($hour / 3) * 3;
     $today . $hour;
+}
+
+# Rather slow, has to load CPAN.pm to get version.
+sub is_CPAN_pm_broken {
+    my $perl = shift;
+
+    my $cpan_ver = do {
+	my @cmd = ($perl, "-we", q{use CPAN; print CPAN->VERSION(0)});
+	@cmd = "@cmd" if $^O eq 'MSWin32'; # list form of pipe not implemented
+	open my $fh, "-|", @cmd
+	    or die "Command @cmd failed: $!";
+	local $/;
+	<$fh>;
+    };
+    return ($cpan_ver == 1.9258);
 }
 
 # REPO BEGIN
