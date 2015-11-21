@@ -614,7 +614,8 @@ sub parse_test_report {
 			 m{\QError:  Scalar::Util version 1.24 required--this is only version 1.\E\d+\Q at } ||
 			 m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"} ||
 			 m{\Qsyntax error at inc/Module/Install/XSUtil.pm line \E\d+\Q, near "\E.\Qchecklib qw(inc::Devel::CheckLib Devel::CheckLib)"} ||
-			 m{\QUndefined subroutine &Scalar::Util::set_prototype called at }
+			 m{\QUndefined subroutine &Scalar::Util::set_prototype called at } ||
+			 m{\QCan't locate YAML/Base.pm in @INC (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+}
 			) {
 		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (
