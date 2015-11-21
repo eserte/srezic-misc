@@ -53,7 +53,7 @@ my $use_recent_states_cache = 0;
 my $recent_months = 1;
 my $do_check_screensaver = 1;
 my $do_scenario_buttons;
-my $annotate_file;
+my @annotate_files;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -73,7 +73,7 @@ GetOptions("good" => \$only_good,
 	   "recent-months=s" => \$recent_months,
 	   "check-screensaver!" => \$do_check_screensaver,
 	   "scenario-buttons!" => \$do_scenario_buttons,
-	   "annotate-file=s" => \$annotate_file,
+	   'annotate-file=s@' => \@annotate_files,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
@@ -86,8 +86,8 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 return 1 if caller(); # for modulino-style testing
 
 my $dist2annotation;
-if ($annotate_file) {
-    $dist2annotation = read_annotate_txt($annotate_file);
+if (@annotate_files) {
+    $dist2annotation = read_annotate_txt(@annotate_files);
 }
 
 if ($auto_good) {
@@ -1332,16 +1332,33 @@ sub set_term_title {
 }
 
 sub read_annotate_txt {
-    my($file) = @_;
+    my($mandatory_file, @optional_files) = @_;
     my %dist2annotation;
-    open my $fh, "<", $file
-	or die "Can't open $file: $!";
-    while(<$fh>) {
-	chomp;
-	next if /^\s*$/;
-	next if /^#/;
-	my($dist, $annotation) = split /\s+/, $_, 2;
-	$dist2annotation{$dist} = $annotation;
+    for my $def (
+		 [$mandatory_file, 1],
+		 (map {[$_, 0]} @optional_files),
+		) {
+	my($file, $mandatory) = @$def;
+	my $fh;
+	if (!open $fh, "<", $file) {
+	    if ($mandatory) {
+		die "ERROR: Can't open $file: $!";
+	    } else {
+		warn "INFO: Can't open optional annotation file $file: $!, skipping...\n";
+		next;
+	    }
+	}
+	while(<$fh>) {
+	    chomp;
+	    next if /^\s*$/;
+	    next if /^#/;
+	    my($dist, $annotation) = split /\s+/, $_, 2;
+	    if (exists $dist2annotation{$dist}) {
+		$dist2annotation{$dist} .= ',' . $annotation;
+	    } else {
+		$dist2annotation{$dist} = $annotation;
+	    }
+	}
     }
     \%dist2annotation;	
 }
