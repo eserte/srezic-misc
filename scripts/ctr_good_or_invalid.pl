@@ -1144,7 +1144,7 @@ sub _get_status_balloon_msg {
 	    $date_comment_added = 1;
 	}
 	if ($scenario eq 'generic') {
-	    print $ofh "cpan_smoke_modules -skipsystemperl $currfulldist\n";
+	    print $ofh "cpan_smoke_modules -perlr -skipsystemperl $currfulldist\n";
 	} else {
 	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="-skipsystemperl" -scenario $scenario $currfulldist\n};
 	}
