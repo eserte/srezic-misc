@@ -219,6 +219,7 @@ sub scenario_hashrandomization {
     {
 	my $cmd = $basecmd;
 	_scenario_cmd_expect_fail(\$cmd);
+	$cmd .= qq{ -pv '>=5.17.6'};
 	warn "(random hashes) $cmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
