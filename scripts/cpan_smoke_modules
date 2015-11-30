@@ -1590,9 +1590,9 @@ sub parse_reports_sent { # takes ~3 seconds
     while(<$fh>) {
 	next if /^#/;
 	chomp;
-	if (my($phase, $action, $dist, $perl, $arch) =
+	if (my($action, $dist, $perl, $arch) =
 		$_ =~ m{^
-			(\S+)\s+
+			\S+\s+ # phase, ignore
 			(\S+)\s+
 			(\S+)\s+
 			\(([^\)]+)\)\s+
@@ -1611,7 +1611,6 @@ sub parse_reports_sent { # takes ~3 seconds
 		}
 	    }
 	    $dists->{$d->dist}->{$perl}->{$arch} = {dist => $d,
-						    phase => $phase,
 						    action => $action};
 	} else {
 	    warn "Cannot parse line $_";
