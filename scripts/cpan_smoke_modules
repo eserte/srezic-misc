@@ -620,16 +620,19 @@ for (@dist_or_mods, @pre_dist_or_mods) {
 }
 
 # And allow also partial distribution names without author name
+# and even without version
 TRY_PARTIAL_RESOLVE: {
-    my %partial_to_full;
-    my %duplicates;
+    my %partial_v_to_full; # partial with version: Foo-Bar-1.23 -> AUTHOR/Foo-Bar-1.23.tar.gz
+    my %partial_to_full;   # partial w/o version:  Foo-Bar      -> AUTHOR/Foo-Bar-1.23.tar.gz
+    my %duplicates_v; # duplicates for partial with version
+    my %duplicates;   # duplicates for partial w/o version
     for my $dist_or_mod (@dist_or_mods) {
-	if ($dist_or_mod !~ m{/} && $dist_or_mod =~ m{^(.*-v?\d.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}) {
-	    my $distvname = $1;
+	if ($dist_or_mod !~ m{/} && $dist_or_mod =~ m{^(.*-.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}) {
 	    # looks like a partial distribution name
-	    my $packages_file = $CPAN::Config->{keep_source_where} . "/modules/02packages.details.txt.gz";
-	    if (!keys %partial_to_full) {
+	    my $distvname = $1; # actually may be a dist name without version, too
+	    if (!keys %partial_v_to_full) {
 		if (!eval {
+		    my $packages_file = $CPAN::Config->{keep_source_where} . "/modules/02packages.details.txt.gz";
 		    require CPAN::DistnameInfo;
 		    my $FH;
 		    if (!eval {
@@ -652,13 +655,23 @@ TRY_PARTIAL_RESOLVE: {
 			    my(undef,undef, $dist) = split;
 			    my $d = CPAN::DistnameInfo->new($dist);
 			    my $filename = $d->filename;
-			    my $this_distvname = $d->distvname;
-			    if (defined $filename && defined $this_distvname) {
+			    if (defined $filename) {
+				my $this_distvname = $d->distvname;
+				my $this_dist = $d->dist;
 				my $full_distname = $d->cpanid . "/" . $filename;
-				if (exists $partial_to_full{$this_distvname} && $partial_to_full{$this_distvname} ne $full_distname) {
-				    $duplicates{$this_distvname}++;
-				} else {
-				    $partial_to_full{$this_distvname} = $full_distname;
+				if (defined $this_distvname) {
+				    if (exists $partial_v_to_full{$this_distvname} && $partial_v_to_full{$this_distvname} ne $full_distname) {
+					$duplicates_v{$this_distvname}++;
+				    } else {
+					$partial_v_to_full{$this_distvname} = $full_distname;
+				    }
+				}
+				if (defined $this_dist) {
+				    if (exists $partial_to_full{$this_dist} && $partial_to_full{$this_dist} ne $full_distname) {
+					$duplicates{$this_dist}++;
+				    } else {
+					$partial_to_full{$this_dist} = $full_distname;
+				    }
 				}
 			    }
 			}
@@ -668,11 +681,16 @@ TRY_PARTIAL_RESOLVE: {
 		    warn $@;
 		}
             }
-	    if (!keys %partial_to_full) {
+	    if (!keys %partial_v_to_full) {
 		warn "WARN: Can't resolve any partial distribution names.";
 		last TRY_PARTIAL_RESOLVE;
 	    }
-	    if ($duplicates{$distvname}) {
+	    if ($duplicates_v{$distvname}) {
+		warn "WARN: Found duplicate for $distvname, cannot resolve...";
+	    } elsif (exists $partial_v_to_full{$distvname}) {
+		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_v_to_full{$distvname}\n";
+		$dist_or_mod = $partial_v_to_full{$distvname};
+	    } elsif ($duplicates{$distvname}) {
 		warn "WARN: Found duplicate for $distvname, cannot resolve...";
 	    } elsif (exists $partial_to_full{$distvname}) {
 		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_to_full{$distvname}\n";
