@@ -337,8 +337,10 @@ step "Build perl",
 			     ($use_shared ? ' -Duseshrplib' : '') .
 			     ($cf_email ? " -Dcf_email=$cf_email" : '') .
 			     ($extra_config_opts ? ' ' . $extra_config_opts . ' ' : '') .
-			     ' && nice make' . ($jobs>1 ? " -j$jobs" : '') . ' all'
+			     ($^O eq 'freebsd' ? ' -Doptimize="-O2 -pipe"' : '') .
+			     ' && nice make' . ($jobs&&$jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
+	    print STDERR "+ @build_cmd\n";
 	    system @build_cmd;
 
 	    set_term_title "$term_title_prefix: Test perl";
