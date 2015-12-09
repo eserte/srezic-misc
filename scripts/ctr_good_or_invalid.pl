@@ -1156,8 +1156,8 @@ sub get_recent_states {
     my %recent_states;
 
     my @check_defs = (
-		      ['old', @recent_done_directories],
-		      ['new', $new_directory, $good_directory],
+		      ['old', @recent_done_directories, $good_directory],
+		      ['new', $new_directory],
 		     );
 
     my $res = parse_report_filename($currfile);
