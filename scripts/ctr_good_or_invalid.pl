@@ -1081,56 +1081,66 @@ sub set_currfile {
     $mw->title($title);
 }
 
-sub _get_status_balloon_msg {
-    my $recent_state_ref = shift;
+{
+    my %report_file_info; # cache
 
-    my @balloon_msg;
-    for my $f (map { @$_ } values %$recent_state_ref) {
-	if (open my $fh, $f) {
-	    my $subject;
-	    my $x_test_reporter_perl;
-	    while(<$fh>) {
-		chomp;
-		s/\r//; # for windows reports
-		if (m{^X-Test-Reporter-Perl: (.*)}) {
-		    $x_test_reporter_perl = $1;
-		} elsif (m{^Subject: (.*)}) {
-		    $subject = $1;
-		} elsif (m{^$}) {
-		    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
-		    last;
-		}
-		if ($x_test_reporter_perl && $subject) {
-		    push @balloon_msg, "perl $x_test_reporter_perl $subject";
-		    last;
+    sub _get_status_balloon_msg {
+	my $recent_state_ref = shift;
+
+	my @balloon_msg;
+	for my $f (map { @$_ } values %$recent_state_ref) {
+	    if (!exists $report_file_info{$f}) {
+		if (open my $fh, $f) {
+		    my($subject, $x_test_reporter_perl);
+		    while(<$fh>) {
+			chomp;
+			s/\r//; # for windows reports
+			if (m{^X-Test-Reporter-Perl: (.*)}) {
+			    $x_test_reporter_perl = $1;
+			} elsif (m{^Subject: (.*)}) {
+			    $subject = $1;
+			} elsif (m{^$}) {
+			    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
+			    last;
+			}
+			if ($x_test_reporter_perl && $subject) {
+			    $report_file_info{$f} = [$subject, $x_test_reporter_perl];
+			    last;
+			}
+		    }
+		} else {
+		    warn "WARN: cannot open $f: $!";
 		}
 	    }
-	} else {
-	    warn "WARN: cannot open $f: $!";
+	    if (exists $report_file_info{$f}) {
+		my($subject, $x_test_reporter_perl) = @{ $report_file_info{$f} };
+		push @balloon_msg, "perl $x_test_reporter_perl $subject";
+	    }
 	}
-    }
-    if (eval { require Sort::Naturally; 1 }) {
-	@balloon_msg = Sort::Naturally::nsort(@balloon_msg);
-	no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
-	@balloon_msg = map { $_->[0] }
-	    sort {
-		return 0 if !defined $a->[2] && !defined $b->[2];
-		return 0 if  defined $a->[2] &&  defined $b->[2];
-		if ($a->[1] eq $b->[1]) {
-		    return -1 if defined $a->[2];
-		    return +1 if defined $b->[2];
-		} else {
-		    return Sort::Naturally::ncmp($a->[1], $b->[1]);
-		}
-	    } map {
-		my($perlver, $rc) = $_ =~ m{^perl (\S+) (RC\d+)?};
-		[$_, $perlver, $rc];
-	    } @balloon_msg;
-    } else {
-	@balloon_msg = sort @balloon_msg;
-    }
 
-    join("\n", @balloon_msg);
+	if (eval { require Sort::Naturally; 1 }) {
+	    @balloon_msg = Sort::Naturally::nsort(@balloon_msg);
+	    no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
+	    @balloon_msg = map { $_->[0] }
+		sort {
+		    return 0 if !defined $a->[2] && !defined $b->[2];
+		    return 0 if  defined $a->[2] &&  defined $b->[2];
+		    if ($a->[1] eq $b->[1]) {
+			return -1 if defined $a->[2];
+			return +1 if defined $b->[2];
+		    } else {
+			return Sort::Naturally::ncmp($a->[1], $b->[1]);
+		    }
+		} map {
+		    my($perlver, $rc) = $_ =~ m{^perl (\S+) (RC\d+)?};
+		    [$_, $perlver, $rc];
+		} @balloon_msg;
+	} else {
+	    @balloon_msg = sort @balloon_msg;
+	}
+
+	join("\n", @balloon_msg);
+    }
 }
 
 {
