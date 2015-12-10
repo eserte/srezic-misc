@@ -1170,7 +1170,7 @@ sub get_recent_states {
 	for my $check_def (@check_defs) {
 	    my($age, @directories) = @$check_def;
 	    for my $directory (@directories) {
-		if ($use_recent_states_cache && $age eq 'old' && $directory ne $recent_done_directories[0]) {
+		if ($use_recent_states_cache && $age eq 'old' && $directory ne $recent_done_directories[0] && $directory ne $good_directory) {
 		    my @recent_res = get_recent_reports_from_cache($distv, $directory);
 		    for my $recent_res (@recent_res) {
 			my $recent_state = $recent_res->{state};
