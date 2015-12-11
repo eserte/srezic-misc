@@ -765,6 +765,11 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('panic extend/stack_grow');
 		} elsif (
+			 m{^"Makefile", line \d+: Need an operator$} || # FreeBSD 9
+			 m{^make: ".*Makefile" line \d+: Need an operator$} # FreeBSD 10
+			) {
+		    $add_analysis_tag->('GNU make required');
+		} elsif (
 			 m{\QCan't use global \E\$_\Q in "my" }
 			) {
 		    $add_analysis_tag->('lexical $_');
