@@ -115,6 +115,8 @@ my $do_report = 1;
 my $use_sudo_keeper = 1; # if available
 my $my_tmpdir;
 my $stop_signal;
+my $action_count = 0;
+my $fail_if_nothing_done;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -217,6 +219,7 @@ GetOptions("n" => \$n,
 	       $deterministic_hashes = !$val;
 	   },
 	   'mytmpdir=s' => \$my_tmpdir,
+	   'failifnothingdone|fail-if-nothing-done!' => \$fail_if_nothing_done,
 	  )
     or die <<EOF;
 usage: $0
@@ -1468,6 +1471,8 @@ EOF
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble DONE\n";
 	}
 
+	$action_count += @work_set;
+
 	if ($stop_signal) {
 	    warn "Last iteration done, will exit now because of signal...\n";
 	    last LOOP_PERLS;
@@ -1511,6 +1516,11 @@ END {
     }
 
     xterm_conf(-title => ($last_xterm_title||"") . " FINISHED");
+
+    # Should be last; may set exit code
+    if ($fail_if_nothing_done && !$action_count) {
+	$? = 1;
+    }
 }
 
 sub maybe_pause {
@@ -2163,6 +2173,14 @@ L<script(1)> is usually implemented by creating a pseudo-terminal, so
 a password in a L<sudo> session is not shared across multiple smoker
 runs. If this is annoying (i.e. when using the C<-install> or
 C<-as-root> option), then set C<-notypescript>.
+
+=item -[no]failifnothingdone
+
+Exit with a false value (1) if no distribution is tested. This usually
+may happen in conjunction with a -skiptested* option. Use case: test a
+randomly failing distribution until it really fails:
+
+    while cpan_smoke_modules -pv 5.22.1 -skiptestedfail Foo-Bar-1.23 -failifnothingdone; do sleep 1; done
 
 =back
 
