@@ -431,6 +431,7 @@ sub parse_test_report {
 	};
 
 	my $maybe_system_perl; # can be decided later; contains failed line or zero
+	my $maybe_pod_coverage_test; # will be decided later; contains failed line or zero
 
 	while(<$fh>) {
 	    s{\r$}{}; # for Windows reports
@@ -494,10 +495,22 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('pod test');
 		} elsif (
-			 /^#\s+Failed test 'Pod coverage on [^']+'$/ ||
 			 /^#\s+Coverage for \S+ is [\d\.]+%, with \d+ naked subroutines?:$/
 			) {
 		    $add_analysis_tag->('pod coverage test');
+		} elsif (
+			 /^#\s+Failed test 'Pod coverage on [^']+'$/
+			) {
+		    # Remember for later, maybe the module does not
+		    # compile at all
+		    $maybe_pod_coverage_test = $.;
+		} elsif (
+			 /^#\s+(.*?):\s+requiring\s+'\1' failed/
+			) {
+		    if ($maybe_pod_coverage_test) {
+			undef $maybe_pod_coverage_test;
+		    }
+		    $add_analysis_tag->('module compilation fails');
 		} elsif (
 			 /^#\s+Failed test 'POD spelling for [^']+'$/
 			) {
@@ -827,6 +840,10 @@ sub parse_test_report {
 	if ($maybe_system_perl) { # now we're sure
 	    my $line_number = $maybe_system_perl;
 	    $add_analysis_tag->('system perl used', $line_number);
+	}
+	if ($maybe_pod_coverage_test) {
+	    my $line_number = $maybe_pod_coverage_test;
+	    $add_analysis_tag->('pod coverage test', $line_number);
 	}
     }
 
