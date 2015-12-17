@@ -51,10 +51,6 @@ if ($scenario) {
 
 my $recent_url = $mirror_url;
 
-if (!$do_maintperl && !@specs && !$scenario) {
-    die "Please specify either -maintperl or -spec or -scenario";
-}
-
 if ($scenario) {
     my $scenario_args;
     if ($scenario =~ m{^(.*?),(.*)}) {
@@ -123,6 +119,8 @@ if ($scenario) {
     run_smoker '5.8.9', 'devel', '-3d';
 
     maybe_xterm_conf "FINISHED maintperl";
+} else {
+    die "Please specify either -maintperl or -spec or -scenario";
 }
 
 sub run_smoker ($$$) {
