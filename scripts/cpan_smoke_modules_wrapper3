@@ -8,7 +8,6 @@ sub run_smoker ($$$);
 sub spec_usage (;$);
 sub maybe_xterm_conf ($);
 
-my $do_maintperl;
 my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
 my $min_build_dir_avail;
@@ -25,12 +24,11 @@ my $minimize_work;
 
 sub usage () {
     die <<EOF;
-usage: $0 [-mirrorurl ...] [-maintperl | -spec perlver,stableness,daterange]
+usage: $0 [-mirrorurl ...] [-spec perlver,stableness,daterange | -scenario ...]
 EOF
 }
 
 GetOptions(
-	   "maintperl" => \$do_maintperl,
 	   "mirrorurl=s" => \$mirror_url,
 	   'spec=s@'     => \@specs,
 	   "minbuilddiravail=s" => \$min_build_dir_avail,
@@ -93,34 +91,8 @@ if ($scenario) {
 	run_smoker $perlver, $stableness, $range;
 	maybe_xterm_conf "FINISHED cpan_smoke_modules wrapper";
     }
-} elsif ($do_maintperl) {
-    # installs everything stable and tests also developer versions
-    maybe_xterm_conf "INIT maintperl";
-
-    (getpwuid($<))[0] eq 'cpansand'
-    	or die "Works only for cpansand!";
-
-    run_smoker '5.20.0', 'stable', '-14d';
-    run_smoker '5.20.0', 'devel', '-3d';
-
-    run_smoker '5.18.2', 'stable', '-14d';
-    run_smoker '5.18.2', 'devel', '-3d';
-
-    run_smoker '5.16.3t', 'stable', '-14d';
-    run_smoker '5.16.3t', 'devel', '-3d';
-
-    run_smoker '5.14.4', 'stable', '-14d';
-    run_smoker '5.14.4', 'devel', '-3d';
-
-    run_smoker '5.10.1', 'stable', '-14d';
-    run_smoker '5.10.1', 'devel', '-3d';
-
-    run_smoker '5.8.9', 'stable', '-14d';
-    run_smoker '5.8.9', 'devel', '-3d';
-
-    maybe_xterm_conf "FINISHED maintperl";
 } else {
-    die "Please specify either -maintperl or -spec or -scenario";
+    die "Please specify either -spec or -scenario";
 }
 
 sub run_smoker ($$$) {
