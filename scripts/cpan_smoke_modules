@@ -2183,11 +2183,32 @@ a password in a L<sudo> session is not shared across multiple smoker
 runs. If this is annoying (i.e. when using the C<-install> or
 C<-as-root> option), then set C<-notypescript>.
 
+=item -skiptested
+
+Skip all given distribution names (not module names!) if they were
+already tested for this perl. Tested distributions are determined by
+reading F<~/.cpanreporter/reports-sent.db>.
+
+Distribution names should be given including author, version and
+suffix, e.g. C<SREZIC/Kwalify-1.22.tar.gz>. Some heuristics are used
+if either author, version or suffix are missing to resolve to the full
+name, but this may fail.
+
+=item -skiptestedpass
+
+Skip all given distribution names if they were already tested with a
+PASS for this perl.
+
+=item -skiptestedfail
+
+Skip all given distribution names if they were already tested with a
+FAIL for this perl.
+
 =item -[no]failifnothingdone
 
 Exit with a false value (1) if no distribution is tested. This usually
-may happen in conjunction with a -skiptested* option. Use case: test a
-randomly failing distribution until it really fails:
+may happen in conjunction with a C<-skiptested*> option. Use case:
+test a randomly failing distribution until it really fails:
 
     while cpan_smoke_modules -pv 5.22.1 -skiptestedfail Foo-Bar-1.23 -failifnothingdone; do sleep 1; done
 
