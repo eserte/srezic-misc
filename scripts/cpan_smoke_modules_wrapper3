@@ -21,10 +21,11 @@ my $cpan_smoke_modules_options;
 my $scenario;
 my @scenario_modules;
 my $minimize_work;
+my $maybe_install = 1;
 
 sub usage () {
     die <<EOF;
-usage: $0 [-mirrorurl ...] [-spec perlver,stableness,daterange | -scenario ...]
+usage: $0 [-mirrorurl ...] [-noinstall] [-spec perlver,stableness,daterange | -scenario ...]
 EOF
 }
 
@@ -36,6 +37,7 @@ GetOptions(
 	   "cpansmokemodulesoptions=s" => \$cpan_smoke_modules_options,
 	   "scenario=s" => \$scenario,
 	   'minimize-work!' => \$minimize_work,
+	   'install!' => \$maybe_install,
 	  )
     or usage;
 if ($scenario) {
@@ -122,8 +124,7 @@ sub run_smoker ($$$) {
     if (!$perl_exe) {
 	die "Cannot find a perl $perl_version, tried in /usr/perlXXX, /opt/perl-XXX and $perl_exe";
     }
-    my $install_arg = ($stability eq 'stable' ? '-install' : '');
-    #my $install_arg = ''; # never install, currently running as non-cpansand with sudo configured
+    my $install_arg = ($stability eq 'stable' && $maybe_install ? '-install' : '');
     my $cmd = q{env PERL_BATCH=yes } . $scripts_dir . q{/cpan_smoke_modules};
     $cmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $cmd .= q{ -savereports -typescript -nosignalend -skiptested -r };
@@ -459,8 +460,9 @@ or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>
 =back
 
 For stableness=C<stable> only "stable" distributions (non-TRIAL and
-non-underscore) are tested _and_ installed. For stableness=C<devel>
-all distributions are tested but not installed.
+non-underscore) are tested _and_ installed (unless the option
+C<-noinstall> was specified). For stableness=C<devel> all
+distributions are tested but not installed.
 
 More options can be passed to L<cpan_smoke_modules> using the
 C<-cpansmokemodulesoptions> switch.
