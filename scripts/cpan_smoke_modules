@@ -35,7 +35,6 @@ if ($^O eq 'MSWin32' && !$ENV{HOME}) {
 }
 
 my $addarch = $Config{myarchname} ? "_$Config{myarchname}" : "";
-my $cpan_smoke_last = "$ENV{HOME}/.cpan_smoke_modules$addarch.last";
 my $cpan_smoke_log  = "$ENV{HOME}/.cpan_smoke_modules$addarch.log";
 my $cpan_smoke_typescripts_dir = "$ENV{HOME}/.cpan_smoke_modules_typescripts";
 my $rc_file = "$ENV{HOME}/.cpansmokemodulesrc";
@@ -54,12 +53,6 @@ my $r;
 my $rr; # reverse a working set (-splitdists) only
 my $use_sqlite = 0; # not default anymore --- sometimes there are locking problems
 my $fl;
-my $do_continue;
-my $do_recent;
-#my $recent_url = 'ftp://ftp.funet.fi/pub/CPAN/authors/id/RECENT-2d.yaml'; # XXX should match the first entry in urllist!
-#my $recent_url = 'ftp://ftp.funet.fi/pub/CPAN/authors/TESTPLEASEIGNORE-1W.yaml'; # XXX
-my $recent_url = 'ftp://ftp.funet.fi/pub/CPAN/authors/RECENT-6h.yaml'; # XXX should match the first entry in urllist!
-my $interactive;
 my $wait;
 my $batch = 1;
 my $for_parallel_smoker = 0;
@@ -159,10 +152,6 @@ GetOptions("n" => \$n,
 	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
 	   'fl|filelist=s' => \$fl,
-	   'c|cont|continue' => \$do_continue,
-	   'recent' => \$do_recent,
-	   'recenturl=s' => \$recent_url,
-	   'interactive!' => \$interactive,
 	   'unkind' => \$unkind,
 	   'wait!' => \$wait,
 	   'batch!' => \$batch,
@@ -225,12 +214,12 @@ GetOptions("n" => \$n,
 usage: $0
      [-i|-install] [-shell]
      [-a|-allperls] [-perl /path/to/perl [-perl ...]] [-pv x.y.z,x.y.z,....]
-     [-fl|-filelist file] [-c|-cont|-continue] [-recent] [-recenturl url]
+     [-fl|-filelist file]
      [-r|-reverse] [-rr] [-splitdists number]
      [-[no]skiptested] [-[no]report]
      [-mirrorurl ...]
      [-warntimeout secs] [-[no]sqllite]
-     [-[no]interactive] [-[no]wait] [-[no]batch]
+     [-[no]wait] [-[no]batch]
      [-[no]builddirreuse]
      [-n] [-[no]debug]
      [-pre dist/module [...]]
@@ -257,9 +246,6 @@ usage: $0
 
 -pre dist/module: module or distribution which should be tested before all others
 -fl file: file with distributions to test
--c: ???
--recent: test recent distributions
--recenturl url: URL to get list of recent distributions
 
 -r:  reverse the list of tested distribution
 -rr: reverse just a smaller working set (to be used with -splitdists)
@@ -269,7 +255,6 @@ usage: $0
 
 -warntimeout secs: warn after inactivity (needs idletermchecker program, default $warntimeout)
 -[no]sqllite: (do not) use CPAN::SQLite
--interactive: show first all distributions to test and wait for confirmation
 -wait: wait at the end of the smoke run
 -batch: avoid interactivity by using some defaults (default: $batch)
 -forparallelsmoker: runs for a parallel smoker
@@ -397,50 +382,6 @@ if ($fl) {
     while(<$fh>) {
 	chomp;
 	push @dist_or_mods, split / /;
-    }
-}
-if ($do_continue || $do_recent) {
-    require LWP::UserAgent;
-    require YAML;
-
-    my $last_run_path;
-
-    if ($do_continue) {
-	require File::ReadBackwards;
-	if (my $lastfh = File::ReadBackwards->new($cpan_smoke_last)) {
-	    while (!$lastfh->eof) {
-		my $line = $lastfh->readline;
-		next if $line =~ m{^\s*(#|$)};
-		chomp($last_run_path = $line);
-		last;
-	    }
-	    $lastfh->close;
-	}
-    }
-	
-    local $ENV{FTP_PASSIVE} = 1;
-    my $ua = LWP::UserAgent->new;
-    my $resp = $ua->get($recent_url);
-    if (!$resp->is_success) {
-	die "Cannot get successful request from $recent_url: " . $resp->status_line;
-    }
-    my $recent = YAML::Load($resp->decoded_content);
-    if (!$recent) {
-	die "Cannot get YAML content";
-    }
-    if (ref $recent eq 'HASH') { # protocol >= 1 
-	$recent = $recent->{recent};
-    }
-    for my $item (@$recent) {
-	next if $item->{path} =~ m{(\.patch\.gz|CHECKSUMS|\.readme|\.meta)$};
-	next if $item->{path} =~ m{/?00whois.(html|xml)$};
-	last if $last_run_path && $item->{path} eq $last_run_path;
-	(my $path = $item->{path}) =~ s{^id/}{}; # must be removed in protocol 1, not existent in protocol 0
-	push @dist_or_mods, $path;
-    }
-    if (!@dist_or_mods) {
-	warn "No new distributions to test.\n";
-	exit 0;
     }
 }
 if (!@dist_or_mods) {
@@ -820,17 +761,6 @@ my $has_private_tmpdir;
 	}
     }
 }
-
-if ($interactive) {
-    print STDERR "Continue tests with the following perl versions
-    @perls
-and CPAN distributions or modules
-    @pre_dist_or_mods @dist_or_mods
- (Y/n) ";
-    my $yn = <STDIN>;
-    exit 0 if $yn =~ m{^n}i;
-}
-
 
 if ((   $n                    # no idletermchecker in no exec mode:
      || !$ENV{DISPLAY}        # no idletermchecker if there's no DISPLAY
@@ -1491,16 +1421,6 @@ EOF
     }
 }
 
-if ($do_continue && @dist_or_mods) {
-    open my $ofh, ">>", $cpan_smoke_last
-	or die "Cannot write to $cpan_smoke_last: $!";
-    my $last_dist = $r ? $dist_or_mods[-1] : $dist_or_mods[0];
-    print $ofh $last_dist, "\n"
-	or die $!;
-    close $ofh
-	or die $!;
-}
-
 END {
     kill_x11_server();
 
@@ -2102,27 +2022,9 @@ Test and reinstall, if test was successful. Note that reinstall really
 means _re_install --- the module won't be reinstalled if it isn't
 already installed.
 
-=item -recent
-
-Fetch the RECENT distributions list from a CPAN site and smoke them
-all. But see also L<cpan_smoke_modules_wrapper3> for a better
-mechanism.
-
-=item -continue
-
-Fetch the RECENT distributions list from a CPAN site and continue from
-an earlier smoke. This uses the last distribution listed in F<<
-~/.cpan_smoke_modules_<$archname>.last >> as an anchor point.
-
-=item -interactive
-
-Together with B<-continue> or B<-recent>: ask first before starting
-the smoke.
-
 =item -reverse
 
-Reverse the list of modules/distributions to test, used in conjunction
-with B<-continue> or B<-recent>.
+Reverse the list of modules/distributions to test.
 
 =item -[no]sqlite
 
@@ -2231,15 +2133,6 @@ a C<HUP> signal. The execution of the script is paused if a file
 F<~/.cpansmokemodulespause> exists. In both cases, termination and
 pause will not happen immediately, only after a set of modules is
 tested.
-
-=head1 TODO
-
-    * neuen recent-Mechanismus anwenden
-
-    * evtl. auch das zuletzt getestete Modul merken und/oder
-      ~/.cpanreporter/reports-sent.db verwenden, um zu sehen, welche
-      Dists getestet werden müssen (leider sind dort die disabled=1
-      markierten Dists nicht enthalten)
 
 =head1 AUTHOR
 
