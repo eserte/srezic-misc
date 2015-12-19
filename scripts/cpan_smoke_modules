@@ -623,16 +623,25 @@ for (@dist_or_mods, @pre_dist_or_mods) {
 }
 
 # And allow also partial distribution names without author name
-# and even without version
+# and even without version.
+#
+# Also resolve all module names into distributions if -skiptested* is
+# used.
 TRY_PARTIAL_RESOLVE: {
     my %partial_v_to_full; # partial with version: Foo-Bar-1.23 -> AUTHOR/Foo-Bar-1.23.tar.gz
     my %partial_to_full;   # partial w/o version:  Foo-Bar      -> AUTHOR/Foo-Bar-1.23.tar.gz
     my %duplicates_v; # duplicates for partial with version
     my %duplicates;   # duplicates for partial w/o version
     for my $dist_or_mod (@dist_or_mods) {
-	if ($dist_or_mod !~ m{/} && $dist_or_mod =~ m{^(.*-.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}) {
-	    # looks like a partial distribution name
-	    my $distvname = $1; # actually may be a dist name without version, too
+	next if $dist_or_mod =~ m{/}; # already an appropriate distname
+	my($distvname) = $dist_or_mod =~ m{^(.*-.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}; # looks like a partial distribution name
+	if (!defined $distvname && $skip_tested) {
+	    # otherwise: a distname without a dash; should be translated in -skiptested* module
+	    $distvname = $dist_or_mod;
+	}
+	if (defined $distvname) {
+	    # note that $distvname may be a dist name without version,
+	    # too, so it's somewhat of a misnomer
 	    if (!keys %partial_v_to_full) {
 		if (!eval {
 		    my $packages_file = $CPAN::Config->{keep_source_where} . "/modules/02packages.details.txt.gz";
