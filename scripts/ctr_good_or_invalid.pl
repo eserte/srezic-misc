@@ -787,6 +787,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('lexical $_');
 		} elsif (
+			 /^(?:#\s+Error:\s+)?Can't redeclare "my" in "my" $at_source_without_dot_qr(?:\.$|, near|, at end of line)/
+			) {
+		    $add_analysis_tag->('my in my redeclaration');
+		} elsif (
 			 m{needs to be recompiled against the newly installed PDL at}
 			) {
 		    $add_analysis_tag->('!!!recompile PDL module!!!');
