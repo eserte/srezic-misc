@@ -621,7 +621,10 @@ TRY_PARTIAL_RESOLVE: {
 				}
 				if (defined $this_dist) {
 				    if (exists $partial_to_full{$this_dist} && $partial_to_full{$this_dist} ne $full_distname) {
-					$duplicates{$this_dist}++;
+					if (!$duplicates{$this_dist}) {
+					    $duplicates{$this_dist} = [ $partial_to_full{$this_dist} ]; # initialize with old finding
+					}
+					push @{ $duplicates{$this_dist} }, $full_distname;
 				    } else {
 					$partial_to_full{$this_dist} = $full_distname;
 				    }
@@ -643,8 +646,17 @@ TRY_PARTIAL_RESOLVE: {
 	    } elsif (exists $partial_v_to_full{$distvname}) {
 		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_v_to_full{$distvname}\n";
 		$dist_or_mod = $partial_v_to_full{$distvname};
-	    } elsif ($duplicates{$distvname}) {
-		warn "WARN: Found duplicate for $distvname, cannot resolve...";
+	    } elsif (@{ $duplicates{$distvname} || [] }) {
+		warn "INFO: Found multiples for $distvname (@{ $duplicates{$distvname} })\n";
+		$dist_or_mod =
+		    (map { $_->[1] }
+		     sort { $b->[0] <=> $a->[0] }
+		     map {
+			 my $fulldist = $_;
+			 my $d = CPAN::DistnameInfo->new($fulldist);
+			[safe_version($d->version), $fulldist];
+		     } @{ $duplicates{$distvname} })[0];
+		warn "INFO: choosing latest: $dist_or_mod\n";
 	    } elsif (exists $partial_to_full{$distvname}) {
 		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_to_full{$distvname}\n";
 		$dist_or_mod = $partial_to_full{$distvname};
