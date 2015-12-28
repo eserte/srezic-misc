@@ -136,10 +136,10 @@ sub run_smoker ($$$) {
     $cmd .= q{ -- `};
     if (0) { # just looking at the distribution name to decide whether
              # it's stable or not
-	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -warnold -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'};
+	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'};
     } else { # checking the CPAN index to decide whether it's stable
              # or not (but the index is sometimes somewhat slow)
-	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-indexed' : '');
+	$cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } . ($stability eq 'stable' ? '-indexed' : '');
     }
     $cmd .= q{`};
     warn "$cmd ...\n";

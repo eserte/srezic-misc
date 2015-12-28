@@ -53,6 +53,7 @@ my $warn_old;
 my $only_stable;
 my $only_dists;
 my $only_indexed;
+my $skip_perl6;
 
 GetOptions("from=s" => \$from,
 	   "to=s"   => \$to,
@@ -60,10 +61,11 @@ GetOptions("from=s" => \$from,
 	   "onlystable|stable!" => \$only_stable,
 	   "onlydists!" => \$only_dists,
 	   "onlyindexed|indexed!" => \$only_indexed,
+	   "skipperl6!" => \$skip_perl6,
 	   "v+"     => \$v,
 	   "warnold" => \$warn_old,
 	  ) or die <<EOF;
-usage: $0 [-from epoch] [-to epoch] [-url ...] [-stable | -indexed] [-onlydists] [-v [-v ...]] [-warnold]
+usage: $0 [-from epoch] [-to epoch] [-url ...] [-stable | -indexed] [-skipperl6] [-onlydists] [-v [-v ...]] [-warnold]
 EOF
 
 my $now = time;
@@ -209,6 +211,9 @@ GATHER_DATA: {
 	    } else {
 		debug("ignore (not a dist)"), next if $path =~ m{(\.patch|\.patch\.gz|CHECKSUMS|\.readme|\.meta)$};
 		debug("ignore (not a dist)"), next if $path =~ m{/?00whois.(html|xml)$};
+	    }
+	    if ($skip_perl6) {
+		debug("ignore (perl6 dist)"), next if $path =~ m{/Perl6/};
 	    }
 	    if ($only_stable) {
 		require CPAN::DistnameInfo;
