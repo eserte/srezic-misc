@@ -492,6 +492,102 @@ distributions are tested but not installed.
 More options can be passed to L<cpan_smoke_modules> using the
 C<-cpansmokemodulesoptions> switch.
 
+=head2 TEST SCENARIOS
+
+A test scenario is a series of test runs with some knowledge used to
+force both fail and pass reports. Such scenarios typically run only
+for one or more specified CPAN distributions, and run for all perls
+detected on the system (using L<cpan_smoke_modules>'s C<--allperls>
+switch).
+
+Scenarios are set with the option C<-scenario>. Scenarios may be
+argument-less or can have a number of comma-separated arguments.
+
+Example usages:
+
+    cpan_smoke_modules_wrapper3 -scenario testpod Problematic::Module
+
+    cpan_smoke_modules_wrapper3 -scenario hashrandomization,good,3,bad,1 Problematic::Module
+
+The following test scenarios exist:
+
+=over
+
+=item * C<locale>
+
+Run tests with locale set to C<C> and to a German locale
+(C<de_DE.ISO8859-1> on freebsd systems, C<de_DE.UTF-8> on other
+systems). The environment variables C<LC_ALL> and C<LANGUAGE> are set.
+
+=item * C<hashrandomization>
+
+Run tests with an attempt to trigger hash randomization errors for
+perl versions >= 5.17.6. The environment variables C<PERL_HASH_SEED>
+and C<PERL_PERTURB_KEYS> are set. If the good/bad hash seeds are
+known, then these may be set as scenario arguments like this:
+C<hashrandomization,good,I<goodseed>,bad,I<badseed>>
+
+=item * C<systemperl>
+
+Run tests with the system perl (C</usr/bin/perl>) for the good case
+and try to make the system perl completely unusable (see
+C<-destroyperl> option of L<cpan_smoker_modules>) for the bad case.
+
+=item * C<prereq>
+
+Run tests with additional prerequisites specified for the good case.
+Run the tests unaltered for the bad case (which might not be
+sufficient to force fail reports, maybe in this case L<Devel::Hide>
+should be used, but this may cause unwanted collateral damage).
+
+Specify the additional prerequisites as scenario arguments like this:
+C<prereq,Foo::Bar,Blah::Blubber>
+
+=item * C<testpod>
+
+Run tests with L<Test::Pod> hidden for the good case and unaltered for
+the bad case (assuming that L<Test::Pod> is already installed).
+
+=item * C<testpodcoverage>
+
+Run tests with L<Test::Pod::Coverage> hidden for the good case and
+unaltered for the bad case (assuming that L<Test::Pod::Coverage> is
+already installed).
+
+=item * C<testperlcritic>
+
+Run tests with L<Test::Perl::Critic> hidden for the good case and
+unaltered for the bad case (assuming that L<Test::Perl::Critic> is
+already installed).
+
+=item * C<testsignature>
+
+Run tests with L<Test::Signature> hidden for the good case and
+unaltered for the bad case (assuming that L<Test::Signature> is
+already installed).
+
+=item * C<testprereq>
+
+Run tests with L<Test::Prereq> hidden for the good case and
+unaltered for the bad case (assuming that L<Test::Prereq> is
+already installed).
+
+=item * C<testkwalitee>
+
+Run tests with L<Test::Kwalitee> hidden for the good case and
+unaltered for the bad case (assuming that L<Test::Kwalitee> is
+already installed).
+
+=item * C<nolimits>
+
+For the good case, run tests with C<--nolimits> specified in the
+L<cpan_smoke_modules> call, so no resource limits like maximum CPU
+time, maximum memory usage etc. is set. For the bad case, run the
+tests unaltered, with L<cpan_smoke_modules>' default set of resource
+limits.
+
+=back
+
 =head1 BUGS
 
 The module list is passed via command line parameters and is subject
