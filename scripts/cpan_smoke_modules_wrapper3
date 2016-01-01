@@ -177,12 +177,30 @@ sub scenario_locale {
 }
 
 sub scenario_hashrandomization {
+    my $scenario_args = shift;
+
+    my $good_seed = 0;
+    my $bad_seed = undef;
+
+    if (defined $scenario_args) {
+	my %scenario_args = split /,/, $scenario_args;
+	if (exists $scenario_args{good}) {
+	    $good_seed = delete $scenario_args{good};
+	}
+	if (exists $scenario_args{bad}) {
+	    $bad_seed = delete $scenario_args{bad};
+	}
+	if (keys %scenario_args) {
+	    die 'Unhandled scenario arguments: ' . join(' ', %scenario_args);
+	}
+    }
+
     my $basecmd = _scenario_basecmd();
     {
 	my $cmd = $basecmd;
 	_scenario_cmd_expect_pass(\$cmd);
 	warn "(deterministic hashes) $cmd ...\n";
-	local $ENV{PERL_HASH_SEED} = "0";
+	local $ENV{PERL_HASH_SEED} = $good_seed;
 	local $ENV{PERL_PERTURB_KEYS} = "NO";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
@@ -191,8 +209,15 @@ sub scenario_hashrandomization {
 	my $cmd = $basecmd;
 	_scenario_cmd_expect_fail(\$cmd);
 	$cmd .= qq{ -pv '>=5.17.6'};
-	warn "(random hashes) $cmd ...\n";
-	system $cmd;
+	if (defined $bad_seed) {
+	    warn "(hash seed set to $bad_seed) $cmd ...\n";
+	    local $ENV{PERL_HASH_SEED} = $bad_seed;
+	    local $ENV{PERL_PERTURB_KEYS} = "NO";
+	    system $cmd;
+	} else {
+	    warn "(random hashes) $cmd ...\n";
+	    system $cmd;
+	}
 	die "SIGINT" if ($? == 2);
     }
 }
