@@ -588,6 +588,11 @@ limits.
 
 =back
 
+The option C<-minimize-work> may be given to minimize the number of
+test runs based on the cpanreporter history. As a side-effect, if the
+scenario assumption is true, then a 2nd run of the test scenario
+should skip all perls.
+
 =head1 BUGS
 
 The module list is passed via command line parameters and is subject
