@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -12,7 +12,15 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
-# XXX 2015-01-10: currently broken.
+# Status as of 2016-01-03: may or may not work.
+#
+# It works on a FreeBSD 9.2 system with ImageMagick-6.8.9.10_1,1
+# installed.
+#
+# It may or may not work for newer ImageMagick versions. 6.9.0 did not
+# (see below), newer versions not yet tested.
+#
+# Status as of 2015-01-10: currently broken.
 #
 # On FreeBSD 10.1, compilation with a non-threaded perl is successful,
 # but almost all tests fail, most with an error messages like
