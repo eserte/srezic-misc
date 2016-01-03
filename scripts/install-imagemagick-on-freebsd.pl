@@ -323,6 +323,7 @@ sub checkout_matching_imagemagick_port {
     require File::Temp;
     my $tempdir = File::Temp::tempdir('PerlMagick-' . strftime('%F', localtime) . '-XXXXXXXX', TMPDIR => 1); # don't cleanup for easier debugging
     print STDERR "Temporary directory: $tempdir\n";
+    chmod 0755, $tempdir; # so the "sudo make install" for a non-root user may work
     chdir $tempdir
 	or die "Can't chdir to $tempdir: $!";
     system 'svn', 'co', '-r', $matching_svn_revision, $svn_imagemagick_url;
