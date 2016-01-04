@@ -1180,10 +1180,11 @@ sub set_currfile {
 	    print $ofh "# added " . scalar(localtime) . "\n";
 	    $date_comment_added = 1;
 	}
+	my $cpan_smoke_modules_options = '-perlr -skipsystemperl';
 	if ($scenario eq 'generic') {
-	    print $ofh "cpan_smoke_modules -perlr -skipsystemperl $currfulldist\n";
+	    print $ofh "cpan_smoke_modules $cpan_smoke_modules_options $currfulldist\n";
 	} else {
-	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="-skipsystemperl" -scenario $scenario $currfulldist\n};
+	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="$cpan_smoke_modules_options" -scenario $scenario $currfulldist\n};
 	}
 	close $ofh;
     }
