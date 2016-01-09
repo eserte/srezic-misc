@@ -1103,7 +1103,12 @@ sub set_currfile {
 	$balloon->attach($w, -msg => $annotation_text);
     }
 
-    ($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+    # XXX maybe use CPAN::DistnameInfo instead?
+    if ($currfulldist =~ m{-TRIAL}) {
+	($currdist, $currversion) = $currfulldist =~ m{^(.*)-([^-]+-TRIAL.*)$};
+    } else {
+	($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+    }
 
     $mw->title($title);
 }
