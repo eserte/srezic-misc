@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -20,6 +20,7 @@ use Tk;
 use Tk::Balloon;
 use Tk::More;
 use Tk::ErrorDialog;
+use CPAN::Version ();
 use Getopt::Long;
 use POSIX qw(strftime);
 
@@ -85,9 +86,9 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
 return 1 if caller(); # for modulino-style testing
 
-my $dist2annotation;
+my($distvname2annotation, $distname2annotation);
 if (@annotate_files) {
-    $dist2annotation = read_annotate_txt(@annotate_files);
+    ($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
 }
 
 if ($auto_good) {
@@ -1078,36 +1079,40 @@ sub set_currfile {
 	}
     }
 
-    if ($dist2annotation && $dist2annotation->{$currfulldist}) {
-	my $annotation_text = $dist2annotation->{$currfulldist};
-	my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
-	my $url;
-	for my $annotation (@annotations) {
-	    if ($annotation =~ m{^(\d+)}) { # ... of rt.cpan.org ticket ids
-		$url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
-	    } elsif ($annotation =~ m{^(https?://\S+)}) { # ... or URLs
-		$url = $1;
-	    } # ... or something else
-	    last if defined $url;
-	}
-	my $w;
-	if ($url) {
-	    $w = $analysis_frame->Button(-text => 'Annotation',
-					 -command => sub {
-					     require Tk::Pod::WWWBrowser;
-					     Tk::Pod::WWWBrowser::start_browser($url);
-					 })->pack;
-	} else {
-	    $w = $analysis_frame->Label(-text => 'Annotation')->pack;
-	}
-	$balloon->attach($w, -msg => $annotation_text);
-    }
+    ($currdist, $currversion) = parse_distvname($currfulldist);
 
-    # XXX maybe use CPAN::DistnameInfo instead?
-    if ($currfulldist =~ m{-TRIAL}) {
-	($currdist, $currversion) = $currfulldist =~ m{^(.*)-([^-]+-TRIAL.*)$};
-    } else {
-	($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+    { # requires up-to-date $currdist!
+	my($annotation_text, $annotation_label);
+	if ($distvname2annotation && $distvname2annotation->{$currfulldist}) {
+	    $annotation_text = $distvname2annotation->{$currfulldist};
+	    $annotation_label = 'Annotation';
+	} elsif ($distname2annotation && $distname2annotation->{$currdist}) {
+	    $annotation_text = $distname2annotation->{$currdist}->{annotation} . ' (version ' . $distname2annotation->{$currdist}->{version} . ')';
+	    $annotation_label = 'Old Annotation';
+	}
+	if (defined $annotation_text) {
+	    my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
+	    my $url;
+	    for my $annotation (@annotations) {
+		if ($annotation =~ m{^(\d+)}) { # ... of rt.cpan.org ticket ids
+		    $url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
+		} elsif ($annotation =~ m{^(https?://\S+)}) { # ... or URLs
+		    $url = $1;
+		} # ... or something else
+		last if defined $url;
+	    }
+	    my $w;
+	    if ($url) {
+		$w = $analysis_frame->Button(-text => $annotation_label,
+					     -command => sub {
+						 require Tk::Pod::WWWBrowser;
+						 Tk::Pod::WWWBrowser::start_browser($url);
+					     })->pack;
+	    } else {
+		$w = $analysis_frame->Label(-text => $annotation_label)->pack;
+	    }
+	    $balloon->attach($w, -msg => $annotation_text);
+	}
     }
 
     $mw->title($title);
@@ -1377,9 +1382,22 @@ sub set_term_title {
     }
 }
 
+# "Foo-Bar-1.00" -> ("Foo-Bar", "1.00")
+sub parse_distvname {
+    my($currfulldist) = @_;
+    my($currdist, $currversion);
+    # XXX maybe use CPAN::DistnameInfo instead?
+    if ($currfulldist =~ m{-TRIAL}) {
+	($currdist, $currversion) = $currfulldist =~ m{^(.*)-([^-]+-TRIAL.*)$};
+    } else {
+	($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
+    }
+    ($currdist, $currversion);
+}
+
 sub read_annotate_txt {
     my($mandatory_file, @optional_files) = @_;
-    my %dist2annotation;
+    my(%distvname2annotation, %distname2annotation);
     for my $def (
 		 [$mandatory_file, 1],
 		 (map {[$_, 0]} @optional_files),
@@ -1398,15 +1416,29 @@ sub read_annotate_txt {
 	    chomp;
 	    next if /^\s*$/;
 	    next if /^#/;
-	    my($dist, $annotation) = split /\s+/, $_, 2;
-	    if (exists $dist2annotation{$dist}) {
-		$dist2annotation{$dist} .= ',' . $annotation;
+	    my($distvname, $annotation) = split /\s+/, $_, 2;
+	    my($distname, $distversion) = parse_distvname($distvname);
+
+	    if (exists $distvname2annotation{$distvname}) {
+		$distvname2annotation{$distvname} .= ',' . $annotation;
 	    } else {
-		$dist2annotation{$dist} = $annotation;
+		$distvname2annotation{$distvname} = $annotation;
 	    }
+	    if (exists $distname2annotation{$distname}) {
+		my $cmp = cmp_version($distname2annotation{$distname}->{version}, $distversion);
+		if ($cmp < 0) { # existing is older
+		    $distname2annotation{$distname} = { version => $distversion, annotation => $annotation };
+		} elsif ($cmp == 0) {
+		    $distname2annotation{$distname}->{annotation} .= ',' . $annotation;
+		} else {
+		    # ignore
+		}
+	    } else {
+		$distname2annotation{$distname} = { version => $distversion, annotation => $annotation };
+	    }		
 	}
     }
-    \%dist2annotation;	
+    (\%distvname2annotation, \%distname2annotation);
 }
 
 sub make_query_string {
@@ -1418,6 +1450,12 @@ sub make_query_string {
     } else {
 	die "Please install URI::Query";
     }
+}
+
+sub cmp_version {
+    my($left, $right) = @_;
+    for ($left, $right) { $_ =~ s/-TRIAL// }
+    CPAN::Version->vcmp($left, $right);
 }
 
 sub _create_images {
