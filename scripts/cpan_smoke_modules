@@ -79,7 +79,7 @@ my $min_build_dir_cleanup; # when to start cleanup
 my $min_tmp_dir_avail   = 50_000_000; # 50M
 my $min_dir_inodes_percent = 5;
 my $debug;
-my $destroy_perl_in_path = 0; # $^O ne 'MSWin32';
+my $destroy_perl_in_path = 0;
 my @pre_dist_or_mods;
 my @cpan_conf;
 my @cpan_conf_unchecked;
@@ -933,7 +933,11 @@ if ($ignore_history) {
     $ENV{PERL_CPAN_REPORTER_DIR} = $empty_config_dir;
 }
 
+my $path_with_destroy_perl;
 if ($destroy_perl_in_path) {
+    if ($^O eq 'MSWin32') {
+	die "-destroyperl is not supported with Windows";
+    }
     require File::Temp;
     my($tempdir) = File::Temp::tempdir(TMPDIR => 1, CLEANUP => 1);
     my $perlbin = "$tempdir/perl";
@@ -952,7 +956,7 @@ EOF
 	or die $!;
     chmod 0755, $perlbin
 	or die $!;
-    $ENV{PATH} = "$tempdir:$ENV{PATH}"; # it's not MSDOS, so can use ":"
+    $path_with_destroy_perl = $tempdir;
 }
 
 my $PERL_CPAN_REPORTER_DIR;
@@ -1427,6 +1431,12 @@ EOF
 	    $ENV{PERL_PERTURB_KEYS} = "NO";
 	}
 	local $SIG{WINCH} = sub { warn "IGNORE SIGWINCH" };
+
+	local $ENV{PATH} = $ENV{PATH};
+	if ($path_with_destroy_perl) {
+	    $ENV{PATH} = "$path_with_destroy_perl:$ENV{PATH}"; # it's not MSDOS, so can use ":"
+	}
+
 	system @cmd;
 	if ($? & 127) {
 	    die sprintf("Child died with signal %d, %s coredump\n",
