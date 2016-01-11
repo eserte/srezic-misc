@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -69,6 +69,9 @@ my $skip_tested_pass;
 my $test_unpatched;
 my $save_reports = 1;
 my $do_create_report_directories = 1;
+my $auto_mount;
+my $auto_umount;
+my $need_auto_umount = 0;
 my $reports_workflow_dir;
 my $reports_workflow_default_dir = "$ENV{HOME}/var/cpansmoker";
 my $min_build_dir_avail = 2_000_000_000; # 2G
@@ -171,6 +174,8 @@ GetOptions("n" => \$n,
 	   'savereports!' => \$save_reports,
 	   'reportsworkflowdir=s' => \$reports_workflow_dir,
 	   'createreportdirectories!' => \$do_create_report_directories,
+	   'automount=s' => \$auto_mount,
+	   'autoumount=s' => \$auto_umount,
 	   'mirrorurl=s' => \$mirror_url,
 	   'mirrorurlct'    => sub { $mirror_url = 'http://cpan.cpantesters.org/' },
 	   'mirrorurlfunet' => sub { $mirror_url = 'ftp://ftp.funet.fi/pub/CPAN' },
@@ -813,6 +818,16 @@ if ($save_reports) {
 	    } # the subdirs may be missing and will be created
 	}
 	my $new_reports_dir = "$reports_workflow_dir/new";
+
+	if (!-d $new_reports_dir && defined $auto_mount) {
+	    warn "INFO: Run '$auto_mount'...\n";
+	    system $auto_mount;
+	    if ($? != 0) {
+		die "ERROR: Running '$auto_mount' failed";
+	    }
+	    $need_auto_umount = 1;
+	}
+
 	my $changed_transport = 0;
 	my $new_transport_setting = "transport=File $new_reports_dir\n";
 	while(<$ifh>) {
@@ -835,6 +850,7 @@ if ($save_reports) {
 	}
 	close $tmpfh
 	    or die "Error while closing: $!";
+
 	for my $dir ($new_reports_dir,
 		     "$reports_workflow_dir/sync",
 		     "$reports_workflow_dir/process",
@@ -1457,6 +1473,16 @@ END {
     }
 
     xterm_conf(-title => ($last_xterm_title||"") . " FINISHED");
+
+    # Be rather last: maybe the umount command could hang or so, so
+    # run the other cleanup stuff earlier.
+    if ($need_auto_umount && defined $auto_umount) {
+	warn "INFO: Run '$auto_umount'...\n";
+	system $auto_umount;
+	if ($? != 0) {
+	    warn "WARNING: running '$auto_umount' failed.\n";
+	}
+    }
 
     # Should be last; may set exit code
     if ($fail_if_nothing_done && !$action_count) {
@@ -2125,6 +2151,22 @@ may happen in conjunction with a C<-skiptested*> option. Use case:
 test a randomly failing distribution until it really fails:
 
     while cpan_smoke_modules -pv 5.22.1 -skiptestedfail Foo-Bar-1.23 -failifnothingdone; do sleep 1; done
+
+=item -automount 'cmd ...'
+
+=item -autoumount 'cmd ...'
+
+Specify commands for automatically mounting and unmounting of the
+F<~/var/cpansmoker/new> directory (or whatever directory was specified
+with C<-reportsworkflowdir>).
+
+The automount command is executed before the smoking starts, and only
+if the F<.../new> directory does not exist. The program exits if the
+automount command was not successful.
+
+The autoumount command is executed after finishing all smoking, and
+only if the automount command was executed in this session. This means
+an already mounted directory stays mounted.
 
 =back
 
