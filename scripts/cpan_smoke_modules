@@ -120,6 +120,7 @@ if (-r $rc_file) {
     if (grep { m{^--?skiprcfile$} } @ARGV) {
 	@ARGV = grep { !m{^--?skiprcfile$} } @ARGV;
     } else {
+	require Text::ParseWords;
 	print STDERR "INFO: Reading extra options from $rc_file... ";
 	open my $rcfh, $rc_file
 	    or die "$rc_file exists and is readable, but cannot be opened?! Error: $!";
@@ -128,7 +129,7 @@ if (-r $rc_file) {
 	    chomp;
 	    next if /^\s*#/;
 	    next if /^\s*$/;
-	    push @file_ARGV, split /\s+/;
+	    push @file_ARGV, Text::ParseWords::shellwords($_);
 	}
 	print STDERR "extra options: " . (@file_ARGV ? "@file_ARGV" : '<none>') . "\n";
 	unshift @ARGV, @file_ARGV;
@@ -2169,6 +2170,15 @@ only if the automount command was executed in this session. This means
 an already mounted directory stays mounted.
 
 =back
+
+=head1 DEFAULT CONFIGURATION
+
+All command line options may be specified as defaults in
+F<~/.cpansmokemodulesrc>. Parsing of the file is done with
+L<Text::ParseWords/shellwords>. Multiple lines are possible. Lines
+starting with a C<#> are treated as comments and are ignored.
+
+Parsing of this file is skipped if the option C<-skiprcfile> is given.
 
 =head1 NOTES
 
