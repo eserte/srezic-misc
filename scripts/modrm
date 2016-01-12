@@ -39,3 +39,25 @@ if (!@modules) {
 	}
     }
 }
+
+__END__
+
+=head1 NAME
+
+modrm - remove a module
+
+=head1 SYNOPSIS
+
+First check:
+
+    modrm Acme::BadExample
+
+Then do it:
+
+    modrm Acme::BadExample | sudo sh -
+
+Or for another perl:
+
+    perl5.X.Y -S modrm Ache::BadExample
+
+=cut
