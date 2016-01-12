@@ -77,7 +77,7 @@ First check:
 
 Then do it:
 
-    modrm Acme::BadExample | sudo sh -
+    modrm Acme::BadExample | sudo sh -x -e -
 
 Or for another perl:
 
