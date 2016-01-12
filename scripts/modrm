@@ -13,11 +13,33 @@ sub emptydir($) {
     return(@count == 2 ? 1 : 0);
 }
 
+sub find_packlist_file {
+    my($module) = @_;
+    (my $path = $module) =~ s{::}{/}g;
+    $path .= "/.packlist";
+    for my $incdir (@INC) {
+	my $trypath = "$incdir/auto/$path";
+	return $trypath if -e $trypath;
+    }
+    undef;
+}
+
+# ExtUtils::Installed + Packlist is slow, see https://rt.perl.org/Public/Bug/Display.html?id=121829
+# So hack a reduced EUI object which only contains information for a single module.
+sub make_reduced_EUI {
+    my($module) = @_;
+    my $packlist_file = find_packlist_file($module);
+    die "Can't find packlist for $module" if !$packlist_file;
+    my $eui = bless {}, 'ExtUtils::Installed';
+    $eui->_make_entry($module, $packlist_file); # don't care about versions etc., so don't supply $modfile
+    $eui;
+}
+
 my @modules = @ARGV;
-my $installed = ExtUtils::Installed->new();
 
 if (!@modules) {
     # Find all the installed packages
+    my $installed = ExtUtils::Installed->new();
     print STDERR ("Finding all installed modules...\n");
     foreach my $module (grep(!/^Perl$/, $installed->modules())) {
 	my $version = $installed->version($module) || "???";
@@ -25,6 +47,7 @@ if (!@modules) {
     }
 } else {
     for my $module (@modules) {
+	my $installed = make_reduced_EUI($module);
 	print STDERR ("Removal list for $module\n");
 	# Remove all the files
 	foreach my $file (sort($installed->files($module))) {
