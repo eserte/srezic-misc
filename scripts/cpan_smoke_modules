@@ -107,6 +107,8 @@ my $hack_checksum_check_file = 1;
 my $hack_skip_distropref_validation = 1;
 my $ignore_history;
 my $deterministic_hashes;
+my $perl_hash_seed;
+my $perl_perturb_keys;
 my $do_report = 1;
 my $use_sudo_keeper = 1; # if available
 my $my_tmpdir;
@@ -213,6 +215,21 @@ GetOptions("n" => \$n,
 	       my $val = $_[1];
 	       $deterministic_hashes = !$val;
 	   },
+	   'hashseed|hash-seed=s' => sub {
+	       my $val = $_[1];
+	       if ($val =~ m{^(\d+)(?::(n|no|y|ye|yes))?$}i) {
+		   $perl_hash_seed = $1;
+		   if (defined $2) {
+		       if ($2 =~ m{^n}) {
+			   $perl_perturb_keys = 'NO';
+		       }
+		   } else {
+		       $perl_perturb_keys = 'NO';
+		   }
+	       } else {
+		   die "--hashseed value is either an 'hashseed' or 'hashseed:no' or 'hashseed:yes' (hashseed being an integer)";
+	       }
+	   },
 	   'mytmpdir=s' => \$my_tmpdir,
 	   'failifnothingdone|fail-if-nothing-done!' => \$fail_if_nothing_done,
 	  )
@@ -294,6 +311,13 @@ if ($use_vncserver && !is_in_path('vncserver')) {
 
 if ($build_dir_reuse && $per_day_build_dir) {
     die "Cannot use -builddirreuse and -perdaybuilddir options together\n";
+}
+
+if ($deterministic_hashes && defined $perl_hash_seed) {
+    die "Can't use --deterministichashes together with --hashseed";
+}
+if ($deterministic_hashes) {
+    $perl_hash_seed = 0;
 }
 
 $SIG{HUP} = sub {
@@ -1426,9 +1450,11 @@ EOF
 	if ($effective_x11_display) {
 	    $ENV{DISPLAY} = $effective_x11_display;
 	}
-	if ($deterministic_hashes) {
-	    $ENV{PERL_HASH_SEED} = "0";
-	    $ENV{PERL_PERTURB_KEYS} = "NO";
+	if (defined $perl_hash_seed) {
+	    $ENV{PERL_HASH_SEED} = "$perl_hash_seed";
+	    if (defined $perl_perturb_keys) {
+		$ENV{PERL_PERTURB_KEYS} = $perl_perturb_keys;
+	    }
 	}
 	local $SIG{WINCH} = sub { warn "IGNORE SIGWINCH" };
 
@@ -2154,6 +2180,25 @@ PASS for this perl.
 
 Skip all given distribution names if they were already tested with a
 FAIL for this perl.
+
+=item -randomhashes
+
+Don't set any environment variables affecting hash randomization (only
+for perls >= 5.17.6), in other words, hashes have random order.
+
+=item -deterministichashes
+
+Use deterministic hashes by setting C<PERL_HASH_SEED> to 0 and
+C<PERL_PERTURB_KEYS> to C<NO>.
+
+=item -hashseed I<seed>
+
+=item -hashseed I<seed>:yes
+
+Set a specific seed value for C<PERL_HASH_SEED> and optionally a value
+for C<PERL_PERTURB_KEYS> (defaults to C<NO> if this option is used).
+Note that technically there's no C<PERL_PERTURB_KEYS=YES> in perl;
+it's just the absence of this environment variable.
 
 =item -[no]failifnothingdone
 
