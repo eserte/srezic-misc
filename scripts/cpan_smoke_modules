@@ -422,9 +422,9 @@ my @pv_conditions;
 if (@pv) {
     my @remaining_pvs;
     for my $pv (@pv) {
-	if ($pv =~ m{^([<>]=?)(.*)}) {
+	if (my($expr, $value) = $pv =~ m{^([<>]=?)(.*)}) {
 	    require version;
-	    push @pv_conditions, [$1, version->new($2)];
+	    push @pv_conditions, [$expr, version->new($value)];
 	} else {
 	    push @remaining_pvs, $pv;
 	}
