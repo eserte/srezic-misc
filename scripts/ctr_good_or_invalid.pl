@@ -24,6 +24,8 @@ use CPAN::Version ();
 use Getopt::Long;
 use POSIX qw(strftime);
 
+my @current_beforemaintrelease_pairs = ('5.22.1:5.23.7');
+
 # Patterns for report analysis
 my $v_version_qr = qr{v[\d\.]+};
 my $at_source_without_dot_qr = qr{at (?:\(eval \d+\)|\S+) line \d+(?:, <[^>]+> line \d+)?};
@@ -893,6 +895,8 @@ sub set_currfile {
     my %analysis_tags = %{ $parsed_report->{analysis_tags} };
     my %prereq_fails = %{ $parsed_report->{prereq_fails} };
     my $test_more_version = $parsed_report->{prereq_versions}->{'Test::More'};
+    my $curr_state;
+    (my $curr_short_version = $x_test_reporter_perl) =~ s{^v}{}; # e.g. 5.10.0, without a leading "v"
 
     my $title = "ctr_good_or_invalid:";
     if ($subject) {
@@ -901,6 +905,8 @@ sub set_currfile {
 	    $title .= " (perl " . $x_test_reporter_perl . ")";
 	}
 	my $mw = $more->toplevel;
+	($curr_state) = $subject =~ m{^(\S+)};
+	$curr_state = lc $curr_state if defined $curr_state; # "fail", "pass" ...
     } else {
 	$title = " (subject not parseable)";
     }
@@ -1005,7 +1011,7 @@ sub set_currfile {
     }
 
     # Create the tags with the recent states for this distribution.
-    my %recent_states_with_pv = get_recent_states_with_pv_and_archname(\%recent_states);
+    my %recent_states_with_pv_and_archname = get_recent_states_with_pv_and_archname(\%recent_states);
     for my $recent_state (sort keys %recent_states) {
 	my $count_old = scalar @{ $recent_states{$recent_state}->{old} || [] };
 	my $count_new = scalar @{ $recent_states{$recent_state}->{new} || [] };
@@ -1036,7 +1042,37 @@ sub set_currfile {
 					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 					},
 				       )->pack;
-	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv{$recent_state} }));
+	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv_and_archname{$recent_state} }));
+    }
+
+    # Possible regression on the beforemaintrelease page?
+    for my $beforemaintrelease_pair (@current_beforemaintrelease_pairs) {
+	my %check_v; @check_v{qw(old new)} = split /:/, $beforemaintrelease_pair;
+	my %count;
+	for my $age (qw(old new)) {
+	    for my $state (qw(fail pass)) {
+		$count{$state}->{$age} = 0;
+		for my $report (@{ $recent_states_with_pv_and_archname{$state} || [] }) {
+		    if ($report->{version} eq $check_v{$age}) {
+			$count{$state}->{$age}++;
+		    }
+		}
+	    }
+	    if ($curr_short_version eq $check_v{$age} && $curr_state =~ m{^(fail|pass)$}) {
+		$count{$curr_state}->{$age}++;
+	    }
+	}
+	if ($count{fail}->{new}) {
+	    if (!$count{fail}->{old} ||
+		(!$count{pass}->{old} && $count{pass}->{new})
+	       ) {
+		$analysis_frame->Label(
+				       -text => "$beforemaintrelease_pair: $count{pass}{old}/$count{fail}{old} $count{pass}{new}/$count{fail}{new}",
+				       @common_analysis_button_config,
+				       -bg => 'lightblue',
+				      )->pack;
+	    }
+	}
     }
 
     if ($do_scenario_buttons) {
