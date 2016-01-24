@@ -1005,6 +1005,7 @@ sub set_currfile {
     }
 
     # Create the tags with the recent states for this distribution.
+    my %recent_states_with_pv = get_recent_states_with_pv_and_archname(\%recent_states);
     for my $recent_state (sort keys %recent_states) {
 	my $count_old = scalar @{ $recent_states{$recent_state}->{old} || [] };
 	my $count_new = scalar @{ $recent_states{$recent_state}->{new} || [] };
@@ -1035,7 +1036,7 @@ sub set_currfile {
 					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
 					},
 				       )->pack;
-	$balloon->attach($b, -msg => _get_status_balloon_msg($recent_states{$recent_state}));
+	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv{$recent_state} }));
     }
 
     if ($do_scenario_buttons) {
@@ -1119,68 +1120,6 @@ sub set_currfile {
 }
 
 {
-    my %report_file_info; # cache
-
-    sub _get_status_balloon_msg {
-	my $recent_state_ref = shift;
-
-	my @balloon_msg;
-	for my $f (map { @$_ } values %$recent_state_ref) {
-	    if (!exists $report_file_info{$f}) {
-		if (open my $fh, $f) {
-		    my($subject, $x_test_reporter_perl);
-		    while(<$fh>) {
-			chomp;
-			s/\r//; # for windows reports
-			if (m{^X-Test-Reporter-Perl: (.*)}) {
-			    $x_test_reporter_perl = $1;
-			} elsif (m{^Subject: (.*)}) {
-			    $subject = $1;
-			} elsif (m{^$}) {
-			    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
-			    last;
-			}
-			if ($x_test_reporter_perl && $subject) {
-			    $report_file_info{$f} = [$subject, $x_test_reporter_perl];
-			    last;
-			}
-		    }
-		} else {
-		    warn "WARN: cannot open $f: $!";
-		}
-	    }
-	    if (exists $report_file_info{$f}) {
-		my($subject, $x_test_reporter_perl) = @{ $report_file_info{$f} };
-		push @balloon_msg, "perl $x_test_reporter_perl $subject";
-	    }
-	}
-
-	if (eval { require Sort::Naturally; 1 }) {
-	    @balloon_msg = Sort::Naturally::nsort(@balloon_msg);
-	    no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
-	    @balloon_msg = map { $_->[0] }
-		sort {
-		    return 0 if !defined $a->[2] && !defined $b->[2];
-		    return 0 if  defined $a->[2] &&  defined $b->[2];
-		    if ($a->[1] eq $b->[1]) {
-			return -1 if defined $a->[2];
-			return +1 if defined $b->[2];
-		    } else {
-			return Sort::Naturally::ncmp($a->[1], $b->[1]);
-		    }
-		} map {
-		    my($perlver, $rc) = $_ =~ m{^perl (\S+) (RC\d+)?};
-		    [$_, $perlver, $rc];
-		} @balloon_msg;
-	} else {
-	    @balloon_msg = sort @balloon_msg;
-	}
-
-	join("\n", @balloon_msg);
-    }
-}
-
-{
     my $date_comment_added;
     sub schedule_recheck {
 	my($currfulldist, $scenario) = @_;
@@ -1200,6 +1139,13 @@ sub set_currfile {
     }
 }
 
+# Return value:
+# (
+#   'fail' => { 'old' => ["$dir/$file1", "$dir/$file2" ... ],
+#               'new' => [ ... ],
+#             },
+#   'pass' => { ... }, 
+# )
 sub get_recent_states {
     my %recent_states;
 
@@ -1247,6 +1193,76 @@ sub get_recent_states {
     }
 
     %recent_states;
+}
+
+{
+    # Parameter: the return value from get_recent_states
+    #
+    # Return value:
+    # (
+    #     'fail' => [{ version => '5.10.1', archname => 'amd64-freebsd'}, { version => '5.12.1 RC1' ... }, ...  ],
+    #     'pass' => [ ... ],
+    # )
+    #
+    # Perl versions are already naturally sorted
+
+    my %report_file_info; # cache
+
+    sub get_recent_states_with_pv_and_archname {
+	my $recent_states_ref = shift;
+
+	my %recent_states_with_pv;
+	while(my($state, $hash) = each %$recent_states_ref) { # we mix 'old' and 'new'
+	    for my $f (map { @$_ } values %$hash) {
+		if (!exists $report_file_info{$f}) {
+		    if (open my $fh, $f) {
+			my($x_test_reporter_perl, $archname);
+			while(<$fh>) {
+			    chomp;
+			    s/\r//; # for windows reports
+			    if (m{^X-Test-Reporter-Perl: v(.*)}) {
+				$x_test_reporter_perl = $1;
+			    } elsif (m{^Subject: \S+ \S+ (.*)}) {
+				$archname = $1;
+			    } elsif (m{^$}) {
+				if (!defined $x_test_reporter_perl) {
+				    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
+				} elsif (!defined $archname) {
+				    warn "WARN: cannot find Subjech header with archname in $f";
+				} else {
+				    $report_file_info{$f} = { version => $x_test_reporter_perl, archname => $archname };
+				}
+				last;
+			    }
+			}
+		    } else {
+			warn "WARN: cannot open $f: $!";
+		    }
+		}
+		if (exists $report_file_info{$f}) {
+		    push @{ $recent_states_with_pv{$state} }, $report_file_info{$f};
+		}
+	    }
+
+	    {
+		#no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
+		@{ $recent_states_with_pv{$state} } =
+		    map { $_->[0] }
+		    sort {
+			$a->[1] cmp $b->[1]
+		    } map {
+			if (my(@v_comp) = $_->{version} =~ m{^(\d+)\.(\d+)\.(\d+)(?: RC(\d+))?}) {
+			    if (!defined $v_comp[3]) { $v_comp[3] = 9999 } # assume we have never more than 9999 RCs...
+			    [$_, join('', map { chr $_ } @v_comp)];
+			} else {
+			    warn "WARN: ignore unparsable version '$_'";
+			}
+		    } @{ $recent_states_with_pv{$state} };
+	    }
+	}
+
+	%recent_states_with_pv;
+    }
 }
 
 sub get_recent_reports_from_cache {
