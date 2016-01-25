@@ -1063,8 +1063,9 @@ sub set_currfile {
 	    }
 	}
 	if ($count{fail}->{new}) {
-	    if (!$count{fail}->{old} ||
-		(!$count{pass}->{old} && $count{pass}->{new})
+	    if (!$count{fail}->{old}                          || # * 0 * 1
+		(!$count{pass}->{old} && $count{pass}->{new}) || # 0 1 1 1
+		(!$count{pass}->{new} && $count{pass}->{old})    # 1 1 0 1
 	       ) {
 		$analysis_frame->Label(
 				       -text => "$beforemaintrelease_pair: $count{pass}{old}/$count{fail}{old} $count{pass}{new}/$count{fail}{new}",
