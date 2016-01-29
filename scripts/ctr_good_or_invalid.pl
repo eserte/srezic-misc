@@ -57,6 +57,7 @@ my $recent_months = 1;
 my $do_check_screensaver = 1;
 my $do_scenario_buttons;
 my @annotate_files;
+my $show_only;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -77,11 +78,12 @@ GetOptions("good" => \$only_good,
 	   "check-screensaver!" => \$do_check_screensaver,
 	   "scenario-buttons!" => \$do_scenario_buttons,
 	   'annotate-file=s@' => \@annotate_files,
+	   'show-only' => \$show_only,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
           [-noquit-at-end] [-[no]xterm-title]
-          [-[no]recent-states] [-[no]check-screesaver] [directory [file ...]]
+          [-[no]recent-states] [-[no]check-screesaver] [-show-only] [directory [file ...]]
 EOF
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
@@ -272,27 +274,29 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		       die "No files before!";
 		   }
 	       })->pack(-side => "left");
-    $good_b = $f->Button(-text => "GOOD (C-g)",
-	       -command => sub {
-		   move $currfile, $good_directory
-		       or die "Cannot move $currfile to $good_directory: $!";
-		   nextfile();
-	       }
-	      )->pack(-side => "left");
-    $f->Button(-text => "INVALID",
-	       -command => sub {
-		   move $currfile, $invalid_directory
-		       or die "Cannot move $currfile to $invalid_directory: $!";
-		   nextfile();
-	       }
-	      )->pack(-side => "left");
-    $f->Button(-text => "UNDECIDED",
-	       -command => sub {
-		   move $currfile, $undecided_directory
-		       or die "Cannot move $currfile to $undecided_directory: $!";
-		   nextfile();
-	       }
-	      )->pack(-side => "left");
+    if (!$show_only) {
+	$good_b = $f->Button(-text => "GOOD (C-g)",
+			     -command => sub {
+				 move $currfile, $good_directory
+				     or die "Cannot move $currfile to $good_directory: $!";
+				 nextfile();
+			     }
+			    )->pack(-side => "left");
+	$f->Button(-text => "INVALID",
+		   -command => sub {
+		       move $currfile, $invalid_directory
+			   or die "Cannot move $currfile to $invalid_directory: $!";
+		       nextfile();
+		   }
+		  )->pack(-side => "left");
+	$f->Button(-text => "UNDECIDED",
+		   -command => sub {
+		       move $currfile, $undecided_directory
+			   or die "Cannot move $currfile to $undecided_directory: $!";
+		       nextfile();
+		   }
+		  )->pack(-side => "left");
+    }
        
     $next_b = $f->Button(-text => "Next (F5)",
 	       -command => sub { nextfile() },
@@ -367,7 +371,7 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 set_currfile();
 
 $mw->bind("<Control-q>" => sub { $mw->destroy });
-$mw->bind("<Control-g>" => sub { $good_b->invoke });
+$mw->bind("<Control-g>" => sub { $good_b->invoke }) if $good_b;
 $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $next_b->invoke });
 
