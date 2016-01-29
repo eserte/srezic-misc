@@ -752,21 +752,20 @@ if ($r) {
 }
 
 my $has_private_tmpdir;
-{
-    my @tmpdir_defs;
-    if ($my_tmpdir) {
-	if (!-d $my_tmpdir) {
-	    die "The defined temporary directory '$my_tmpdir' does not exist";
-	}
-        @tmpdir_defs = ([$my_tmpdir, 0]);
+if ($my_tmpdir) {
+    if (!-d $my_tmpdir) {
+	die "The defined temporary directory '$my_tmpdir' does not exist";
     } else {
-	@tmpdir_defs = (
-			# Directory      User-owned	Do a noexec check?
-			(defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1, 1] : ()),
-			['/var/tmp',     0,             0],
-			['/tmp',         0,             0],
-		       );
+	$ENV{TMPDIR} = $my_tmpdir;
+	# don't set $has_private_tmpdir here
     }
+} else {
+    my @tmpdir_defs = (
+		       # Directory      User-owned	Do a noexec check?
+		       (defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1, 1] : ()),
+		       ['/var/tmp',     0,             0],
+		       ['/tmp',         0,             0],
+		      );
     for my $another_tmp_def (@tmpdir_defs) {
 	my($another_tmp, $user_owned, $do_noexec_check) = @$another_tmp_def;
 	if (-d $another_tmp && -w $another_tmp) {
