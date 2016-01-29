@@ -397,6 +397,7 @@ sub parse_test_report {
     my $x_test_reporter_perl;
     my $x_test_reporter_distfile;
     my $currfulldist;
+    my $currarchname;
     my %analysis_tags;
     my %prereq_fails;
     my %prereq_versions;
@@ -411,8 +412,9 @@ sub parse_test_report {
 	s/\r//; # for windows reports
 	if (/^Subject:\s*(.*)/) {
 	    $subject = $1;
-	    if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+)/) {
+	    if (/^Subject:\s*(?:FAIL|PASS|UNKNOWN|NA) (\S+) (\S+)/) {
 		$currfulldist = $1;
+		$currarchname = $2;
 	    } else {
 		warn "Cannot parse distribution out of '$subject'";
 	    }
@@ -880,18 +882,22 @@ sub parse_test_report {
 	}
 	if (%signalled) {
 	    while(my($testfile, $signal) = each %signalled) {
-		# XXX Should check the OS, different OS have probably
-		# different signal numbers. At least the following are
-		# the same on freebsd & linux:
-		if    ($signal == 11) { $signal = 'SEGV' }
-		elsif ($signal == 6)  { $signal = 'ABRT' }
-		elsif ($signal == 9)  { $signal = 'KILL' }
-		elsif ($signal == 14) { $signal = 'ALRM' }
-		my $line_number = $testfile_to_linenumber{$testfile};
-		if (!$line_number) {
-		    warn "Cannot find output of '$testfile' in 'PROGRAM OUTPUT' section...\n";
+		if ($currarchname =~ m{(linux|freebsd)}) { # don't know for other OS
+		    if    ($signal == 11) { $signal = 'SEGV' }
+		    elsif ($signal == 6)  { $signal = 'ABRT' }
+		    elsif ($signal == 9)  { $signal = 'KILL' }
+		    elsif ($signal == 14) { $signal = 'ALRM' }
+		    elsif ($signal == 13) { $signal = 'PIPE' }
+		    elsif (($signal == 30 && $currarchname =~ m{freebsd}) ||
+			   ($signal == 10 && $currarchname =~ m{linux})) { $signal = 'USR1' }
+		    elsif ($signal == 4)  { $signal = 'ILL' }
+
+		    my $line_number = $testfile_to_linenumber{$testfile};
+		    if (!$line_number) {
+			warn "Cannot find output of '$testfile' in 'PROGRAM OUTPUT' section...\n";
+		    }
+		    $add_analysis_tag->("signal $signal", $line_number);
 		}
-		$add_analysis_tag->("signal $signal", $line_number);
 	    }
 	}
     }
