@@ -424,6 +424,7 @@ sub parse_test_report {
     # Parse body
     {
 	my $section = '';
+	my $subsection = '';
 
 	my $program_output = {}; # collects only one line in PROGRAM OUTPUT
 
@@ -435,11 +436,14 @@ sub parse_test_report {
 
 	my $maybe_system_perl; # can be decided later; contains failed line or zero
 	my $maybe_pod_coverage_test; # will be decided later; contains failed line or zero
+	my %signalled; # test script -> signal
+	my %testfile_to_linenumber;
 
 	while(<$fh>) {
 	    s{\r$}{}; # for Windows reports
 	    if (/^PROGRAM OUTPUT$/) {
 		$section = 'PROGRAM OUTPUT';
+		$subsection = '';
 	    } elsif (/^PREREQUISITES$/) {
 		if ($section eq 'PROGRAM OUTPUT' && defined $program_output->{content}) {
 		    if (
@@ -450,16 +454,20 @@ sub parse_test_report {
 		    }
 		}
 		$section = 'PREREQUISITES';
+		$subsection = '';
 	    } elsif (/^ENVIRONMENT AND OTHER CONTEXT$/) {
 		$section = 'ENVIRONMENT';
+		$subsection = '';
 	    } elsif ($section eq 'PROGRAM OUTPUT') {
-		if (
-		    /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
-		    /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\._]+$/ ||
-		    /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
-		    /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
-		    /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
-		   ) {
+		if (/^Test Summary Report$/) {
+		    $subsection = 'Test Summary Report';
+		} elsif (
+			 /^Warning: Perl version \S+ or higher required\. We run \S+\.$/ ||
+			 /^\s*!\s*perl \([\d\.]+\) is installed, but we need version >= v?[\d\._]+$/ ||
+			 /^ERROR: perl: Version [\d\.]+ is installed, but we need version >= [\d\.]+ $at_source_qr$/ ||
+			 /^(?:\s*#\s+Error:\s+)?Perl $v_version_qr required--this is only $v_version_qr, stopped $at_source_qr$/ ||
+			 /Installing \S+ requires Perl >= [\d\.]+ $at_source_qr/ # seen in TOBYINK dists
+			) {
 		    $add_analysis_tag->('low perl');
 		} elsif (
 			 /^Result: NOTESTS$/
@@ -808,6 +816,14 @@ sub parse_test_report {
 			 || /ERROR: .*: No space left on device/ # from EUMM
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
+		} elsif (
+			 $subsection eq 'Test Summary Report' &&
+			 (my($testfile, $wstat) = $_ =~ m{^(t/\S+)\s+\(Wstat: (\d+)})
+			) {
+		    my $signal = $wstat & 0x7f;
+		    if ($signal != 0) {
+			$signalled{$testfile} = $signal;
+		    }
 		} else {
 		    # collect PROGRAM OUTPUT string (maybe)
 		    if (!$program_output->{skip_collector}) {
@@ -822,6 +838,11 @@ sub parse_test_report {
 			    $program_output->{content} .= $_;
 			    $program_output->{line} = $. if !defined $program_output->{line};
 			}
+		    }
+		}
+		if (my($testfile) = $_ =~ m{^(t/\S+)}) {
+		    if (!exists $testfile_to_linenumber{$testfile}) {
+			$testfile_to_linenumber{$testfile} = $.;
 		    }
 		}
 	    } elsif ($section eq 'PREREQUISITES') {
@@ -852,6 +873,22 @@ sub parse_test_report {
 	if ($maybe_pod_coverage_test) {
 	    my $line_number = $maybe_pod_coverage_test;
 	    $add_analysis_tag->('pod coverage test', $line_number);
+	}
+	if (%signalled) {
+	    while(my($testfile, $signal) = each %signalled) {
+		# XXX Should check the OS, different OS have probably
+		# different signal numbers. At least the following are
+		# the same on freebsd & linux:
+		if    ($signal == 11) { $signal = 'SEGV' }
+		elsif ($signal == 6)  { $signal = 'ABRT' }
+		elsif ($signal == 9)  { $signal = 'KILL' }
+		elsif ($signal == 14) { $signal = 'ALRM' }
+		my $line_number = $testfile_to_linenumber{$testfile};
+		if (!$line_number) {
+		    warn "Cannot find output of '$testfile' in 'PROGRAM OUTPUT' section...\n";
+		}
+		$add_analysis_tag->("signal $signal", $line_number);
+	    }
 	}
     }
 
