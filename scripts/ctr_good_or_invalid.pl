@@ -731,7 +731,7 @@ sub parse_test_report {
 		} elsif (
 			 m{\QSequence (?^...) not recognized in regex;} ||
 			 m{\QSequence (?&...) not recognized in regex;} ||
-			 m{\QSequence (?<u...) not recognized in regex;}
+			 m{\QSequence (?<\E[a-zA-Z]\Q...) not recognized in regex;} # capture groups
 			) {
 		    $add_analysis_tag->('new regexp feature');
 		} elsif (
