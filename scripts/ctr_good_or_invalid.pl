@@ -890,6 +890,8 @@ sub parse_test_report {
 		    elsif ($signal == 13) { $signal = 'PIPE' }
 		    elsif (($signal == 30 && $currarchname =~ m{freebsd}) ||
 			   ($signal == 10 && $currarchname =~ m{linux})) { $signal = 'USR1' }
+		    elsif (($signal == 10 && $currarchname =~ m{freebsd}) ||
+			   ($signal ==  7 && $currarchname =~ m{linux})) { $signal = 'BUS' }
 		    elsif ($signal == 4)  { $signal = 'ILL' }
 
 		    my $line_number = $testfile_to_linenumber{$testfile};
