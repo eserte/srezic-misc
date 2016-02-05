@@ -823,6 +823,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
+			 m{Could not execute .* open3: exec of .* failed: Argument list too long at .*TAP/Parser/Iterator/Process.pm}
+			) {
+		    $add_analysis_tag->('!!!cmdline limits exceeded!!!');
+		} elsif (
 			 $subsection eq 'Test Summary Report' &&
 			 (my($testfile, $wstat) = $_ =~ m{^(t/\S+)\s+\(Wstat: (\d+)})
 			) {
