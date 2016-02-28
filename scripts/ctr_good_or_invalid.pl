@@ -174,13 +174,14 @@ for my $file (@files) {
 	$is_good = 1;
     } elsif (defined $maybe_good_rx && $file =~ $maybe_good_rx) {
 	my $ret = parse_test_report($file);
-	if (!$ret->{error} &&
-	    (
-	     $ret->{analysis_tags}{'notests'} ||
-	     $ret->{analysis_tags}{'low perl'}
-	    )
-	   ) {
-	    $is_good = 1;
+	if (!$ret->{error}) {
+	    if (
+		   $ret->{analysis_tags}{'notests'}
+		|| $ret->{analysis_tags}{'low perl'}
+		# || $ret->{analysis_tags}{'os unsupported (incompatible os)'}) { # XXX only prepared
+	       ) {
+		$is_good = 1;
+	    }
 	}
     } elsif ( # List of distributions which are OK to be accepted without review
 	      # Never include fail.Devel-Fail-MakeTest here --- this is a proxy (just for SREZIC) to signal that a new smoker perl is ready
@@ -489,7 +490,15 @@ sub parse_test_report {
 			 /^No support for OS$/ ||
 			 /^No support for OS at /
 			) {
-		    $add_analysis_tag->('os unsupported');
+		    if (
+			($currfulldist =~ m{win32}i && $currarchname !~ m{mswin32}i) ||
+			($currfulldist =~ m{linux}i && $currarchname !~ m{linux}i) ||
+			($currfulldist =~ m{\bmac}i && $currfulldist !~ m{(darwin|macos)}i)
+		       ) {
+			$add_analysis_tag->('os unsupported (incompatible os)');
+		    } else {
+			$add_analysis_tag->('os unsupported');
+		    }
 		} elsif (
 			 /^(?:#\s+Error:\s+)?(?:Smartmatch|given|when) is experimental $at_source_qr$/
 			) {
