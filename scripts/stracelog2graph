@@ -10,7 +10,7 @@ our $VERSION = '2.00';
 use Getopt::Long;
 use Hash::Util qw(lock_keys);
 
-my @all_auto = qw(httpclient httpserver open stderr wwwcache xmlparser mogilefs dns);
+my @all_auto = qw(httpclient httpserver open stderr wwwcache xmlparser mogilefs dns custom facter-facts);
 my %auto = map{($_,0)} @all_auto;
 
 my $wwwcache_mapfile;
@@ -36,6 +36,8 @@ my %http_per_pid;
 
 my $normalize_time;
 
+my $custom_rx;
+
 my $font;
 
 GetOptions(
@@ -50,6 +52,11 @@ GetOptions(
            "xmlparser"          => \$auto{xmlparser},
            "memory"             => \$auto{memory},
            "dns"		=> \$auto{dns},
+           "facter-facts"       => \$auto{'facter-facts'},
+           "custom=s"           => sub {
+               $auto{custom} = 1;
+               $custom_rx = qr{$_[1]};
+           },
 
            "fromtime=s"         => \$from_time,
            "totime=s"           => \$to_time,
@@ -249,6 +256,11 @@ while(<>) {
             my($fd) = ($1);
             push @markers, ['dns request END', $prev_time-$start_time];
             delete $pending_dns_request{"$pid $fd"};
+        } elsif ($auto{'facter-facts'} && $syscall =~ m{^(?:open|execve)\(\"/etc/facter/facts\.d/([^"]+)}) {
+            push @markers, ["facter fact $1 BEGIN", $prev_time-$start_time];
+        } elsif ($auto{custom} && $syscall =~ $custom_rx) {
+            (my $label = $syscall) =~ s{\s+<[\d\.]+>$}{};
+            push @markers, [$label, $prev_time-$start_time];
         }
 
         if ($org) {
