@@ -193,7 +193,7 @@ GetOptions("n" => \$n,
 	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
 	   'destroyperl!' => \$destroy_perl_in_path,
 	   'as-root' => \$as_root,
-	   'efence' => \$efence,
+	   'efence' => \$efence, # XXX very slow --- it's better to create a distroprefs file where efence operation is enabled only in the tests, and only if CPAN_SMOKE_MODULES_FORCE_FAIL=yes is set
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
