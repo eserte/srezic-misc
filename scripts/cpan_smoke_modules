@@ -84,6 +84,7 @@ my @pre_dist_or_mods;
 my @cpan_conf;
 my @cpan_conf_unchecked;
 my $as_root;
+my $efence;
 my $strace;
 my $truss;
 my $ktrace;
@@ -192,6 +193,7 @@ GetOptions("n" => \$n,
 	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
 	   'destroyperl!' => \$destroy_perl_in_path,
 	   'as-root' => \$as_root,
+	   'efence' => \$efence,
 	   'strace=s' => \$strace,
 	   'truss=s' => \$truss,
 	   'ktrace=s' => \$ktrace,
@@ -1315,6 +1317,12 @@ EOF
 	}
 	for my $post_action (@post_actions) {
 	    $cmd[-1] .= qq{$post_action; };
+	}
+
+	# Electric Fence is expensive, so run it directly before the
+	# CPAN command
+	if ($efence) {
+	    unshift @cmd, 'ef.sh';
 	}
 
 	if ($as_root) {
