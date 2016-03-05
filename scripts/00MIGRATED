@@ -1,0 +1,20 @@
+MIGRATED FILES
+--------------
+
+org-daemon
+
+    Now available as a proper CPAN module: App::orgdaemon. Install it
+    with one of the following methods:
+
+        cpan App::orgdaemon
+        cpanp App::orgdaemon
+        cpanm App::orgdaemon
+
+    The repository is available on github:
+    https://github.com/eserte/org-daemon
+
+    It's also possible to just clone the repository and use the
+    script uninstalled (provided Tk for Perl is already installed):
+
+        git clone https://github.com/eserte/org-daemon.git
+        ./org-daemon/bin/org-daemon /path/to/TODO.org &
