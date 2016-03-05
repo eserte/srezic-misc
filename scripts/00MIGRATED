@@ -7,8 +7,8 @@ org-daemon
     with one of the following methods:
 
         cpan App::orgdaemon
-        cpanp App::orgdaemon
         cpanm App::orgdaemon
+        cpanp App::orgdaemon
 
     The repository is available on github:
     https://github.com/eserte/org-daemon
@@ -18,3 +18,15 @@ org-daemon
 
         git clone https://github.com/eserte/org-daemon.git
         ./org-daemon/bin/org-daemon /path/to/TODO.org &
+
+xterm-config
+
+    Available as a CPAN module: XTerm::Conf. Install it with
+    one of the following methods:
+
+        cpan XTerm::Conf
+        cpanm XTerm::Conf
+        cpanp XTerm::Conf
+
+    Note that the script was renamed in the CPAN module: it's now
+    xterm-conf, previously xterm-config.
