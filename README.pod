@@ -12,4 +12,6 @@ Miscellaneous scaffolding and other scripts.
 
 =back
 
+See also L<https://github.com/eserte/srezic-misc/blob/master/scripts/00MIGRATED> for migrated scripts.
+
 =cut
