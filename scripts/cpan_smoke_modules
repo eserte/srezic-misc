@@ -80,6 +80,7 @@ my $min_tmp_dir_avail   = 50_000_000; # 50M
 my $min_dir_inodes_percent = 5;
 my $debug;
 my $destroy_perl_in_path = 0;
+my $add_this_perl_path;
 my @pre_dist_or_mods;
 my @cpan_conf;
 my @cpan_conf_unchecked;
@@ -192,6 +193,7 @@ GetOptions("n" => \$n,
 	   'cpanconf=s@' => \@cpan_conf,
 	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
 	   'destroyperl!' => \$destroy_perl_in_path,
+	   'addthisperlpath!' => \$add_this_perl_path,
 	   'as-root' => \$as_root,
 	   'efence' => \$efence, # XXX very slow --- it's better to create a distroprefs file where efence operation is enabled only in the tests, and only if CPAN_SMOKE_MODULES_FORCE_FAIL=yes is set
 	   'strace=s' => \$strace,
@@ -1469,6 +1471,18 @@ EOF
 	if ($path_with_destroy_perl) {
 	    $ENV{PATH} = "$path_with_destroy_perl:$ENV{PATH}"; # it's not MSDOS, so can use ":"
 	}
+	if ($add_this_perl_path) {
+	    my $bin;
+	    open my $fh, '-|', $perl, '-MConfig', '-e', 'print $Config{bin}, "\n"'
+		or die "Can't run $perl -MConfig ...: $!";
+	    chomp($bin = <$fh>);
+	    if ($bin) {
+		$ENV{PATH} = "$bin:$ENV{PATH}";
+		print STDERR "# PATH=$ENV{PATH}\n";
+	    } else {
+		warn "*** WARNING: cannot find directory for perl binary '$perl'...\n";
+	    }
+	}
 
 	system @cmd;
 	if ($? & 127) {
@@ -2230,6 +2244,13 @@ automount command was not successful.
 The autoumount command is executed after finishing all smoking, and
 only if the automount command was executed in this session. This means
 an already mounted directory stays mounted.
+
+=item -addthisperlpath
+
+Make sure that the path containing the currently used perl is first in
+the active C<PATH>. This may workaround errors when tests are not
+using C<$^X>, but the first perl in C<PATH> which may be the system
+perl.
 
 =back
 
