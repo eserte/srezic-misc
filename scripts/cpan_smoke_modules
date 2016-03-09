@@ -681,7 +681,8 @@ TRY_PARTIAL_RESOLVE: {
 		warn "INFO: Resolve partial distname $dist_or_mod -> $partial_v_to_full{$distvname}\n";
 		$dist_or_mod = $partial_v_to_full{$distvname};
 	    } elsif (@{ $duplicates{$distvname} || [] }) {
-		warn "INFO: Found multiples for $distvname (@{ $duplicates{$distvname} })\n";
+		my %unique_duplicates = map {($_,1)} @{ $duplicates{$distvname} };
+		warn "INFO: Found multiples for $distvname (" . join(" ", sort keys %unique_duplicates) . ")\n";
 		$dist_or_mod =
 		    (map { $_->[1] }
 		     sort { $b->[0] <=> $a->[0] }
