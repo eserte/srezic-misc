@@ -23,26 +23,55 @@ pm-to-deb - return debian package names for perl modules
 You can also use the C<-fast> switch, but in this case there's no
 report for missing packages. And it needs L<Regexp::Assemble>.
 
+In a CPAN distribution directory it's possible to get the requirements
+from the F<META.yml> file:
+
+    $ pm-to-deb --from-meta
+
+Or more accurate, after a C<perl Makefile.PL> or C<perl Build.PL> a
+F<MYMETA.yml> file is usually available which also has I<dynamic>
+prereqs listed:
+
+    $ pm-to-deb --from-mymeta
+
 =cut
 
 use strict;
 use warnings;
-our $VERSION = '2.00';
+our $VERSION = '2.01';
 
 use Getopt::Long;
 my $sources_list;
 my $fast;
 my $v;
 my $all;
+my $from_mymeta;
+my $from_meta;
 GetOptions("fast!" => \$fast,
            "sources-list|s=s" => \$sources_list,
            "v" => \$v,
            "all" => \$all,
+           'from-mymeta' => \$from_mymeta,
+           'from-meta' => \$from_meta,
           )
     or die "usage: $0 [--sources-list ...] [-fast] [-all] [-v] ...";
 
-my @modules = @ARGV;
-@modules or die "Modulename?";
+my @modules;
+if ($from_mymeta) {
+    push @modules, load_requires('MYMETA.yml');
+}
+if ($from_meta) {
+    warn "WARNING: you specified --from-mymeta AND --from-meta, which is not very useful. Still continuing...\n";
+    push @modules, load_requires('META.yml');
+}
+
+push @modules, @ARGV;
+@modules
+    or die <<EOF;
+Please specify one or more module names, or
+use the --from-mymeta or --from-meta switches
+if in a CPAN distribution directory.
+EOF
 
 my $locator;
 my @cmd;
@@ -178,6 +207,13 @@ sub module_to_file {
     (my $module_file = $module) =~ s{::}{/}g;
     $module_file .= ".pm";
     $module_file;
+}
+
+sub load_requires {
+    my $file = shift;
+    require YAML;
+    my $d = YAML::LoadFile($file);
+    sort keys %{ $d->{requires} || {} };
 }
 
 =head1 BUGS
