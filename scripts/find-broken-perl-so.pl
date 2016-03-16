@@ -56,7 +56,7 @@ for my $mod (
 	     'Text::BibTeX', # libbtparse is installed under perl/lib
 	     'HTML::Gumbo', # missing .so is in share/dist/Alien-LibGumbo/lib/libgumbo.so.1, LD_LIBRARY_PATH tricks?
 	     'Judy', # libJudy is in .../Alien/Judy/libJudy.so.1, LD_LIBRARY_PATH tricks?
-	     qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
+	     # XXX scheinen doch "echte" Fehler zu sein --- qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
 	    ) {
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n";
