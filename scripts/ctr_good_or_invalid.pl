@@ -491,9 +491,10 @@ sub parse_test_report {
 			 /^No support for OS at /
 			) {
 		    if (
-			($currfulldist =~ m{win32}i && $currarchname !~ m{mswin32}i) ||
-			($currfulldist =~ m{linux}i && $currarchname !~ m{linux}i) ||
-			($currfulldist =~ m{\bmac}i && $currfulldist !~ m{(darwin|macos)}i)
+			($currfulldist =~ m{win32}i   && $currarchname !~ m{mswin32}i       ) ||
+			($currfulldist =~ m{linux}i   && $currarchname !~ m{linux}i         ) ||
+			($currfulldist =~ m{\bmac}i   && $currarchname !~ m{(darwin|macos)}i) ||
+			($currfulldist =~ m{freebsd}i && $currarchname !~ m{freebsd}i       )
 		       ) {
 			$add_analysis_tag->('os unsupported (incompatible os)');
 		    } else {
