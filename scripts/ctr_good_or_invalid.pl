@@ -493,7 +493,7 @@ sub parse_test_report {
 		    if (
 			($currfulldist =~ m{win32}i   && $currarchname !~ m{mswin32}i       ) ||
 			($currfulldist =~ m{linux}i   && $currarchname !~ m{linux}i         ) ||
-			($currfulldist =~ m{\bmac}i   && $currarchname !~ m{(darwin|macos)}i) ||
+			($currfulldist =~ m{(\bmac|cocoa)}i && $currarchname !~ m{(darwin|macos)}i) ||
 			($currfulldist =~ m{freebsd}i && $currarchname !~ m{freebsd}i       )
 		       ) {
 			$add_analysis_tag->('os unsupported (incompatible os)');
@@ -824,6 +824,10 @@ sub parse_test_report {
 			 m{needs to be recompiled against the newly installed PDL at}
 			) {
 		    $add_analysis_tag->('!!!recompile PDL module!!!');
+		} elsif (
+			 m{Error processing template: .*, message: file error - INCLUDE_PATH exceeds \d+ directories}
+			) {
+		    $add_analysis_tag->('@INC too big for TT2');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
