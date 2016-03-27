@@ -1093,7 +1093,7 @@ EOF
 		# --- theoretically other cpan_smoke_modules may cause changes here
 		# but for the usual case (we check only for one or few specific
 		# dists) this should not matter.
-		my @cmd = ('reports-sent-cache.pl', '--reports-sent', $reports_sent_db_file);
+		my @cmd = ($^X, 'reports-sent-cache.pl', '--reports-sent', $reports_sent_db_file);
 		system @cmd;
 		if ($? != 0) {
 		    die "Running @cmd failed";
