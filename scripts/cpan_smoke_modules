@@ -66,6 +66,8 @@ my $has_xterm_conf;
 my $skip_tested;
 my $skip_tested_fail;
 my $skip_tested_pass;
+my $use_reports_sent_cache_file;
+my $reports_sent_cache_pl_called;
 my $test_unpatched;
 my $save_reports = 1;
 my $do_create_report_directories = 1;
@@ -174,6 +176,7 @@ GetOptions("n" => \$n,
 	   'skiptestedpass' => sub {
 	       $skip_tested_pass = $skip_tested = 1;
 	   },
+	   'usereportssentcache' => \$use_reports_sent_cache_file,
 	   'testunpatched' => \$test_unpatched,
 	   'report!' => \$do_report,
 	   'savereports!' => \$save_reports,
@@ -1058,50 +1061,105 @@ EOF
     }
 
     # check if reports-sent.db may be written to
+    my $reports_sent_db_file;
     {
 	my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
-	my $reports_sent_db_file = "$cpan_reporter_dir/reports-sent.db";
+	$reports_sent_db_file = "$cpan_reporter_dir/reports-sent.db";
 	if (-e $reports_sent_db_file && !-w $reports_sent_db_file) {
 	    die "Cannot write to $reports_sent_db_file";
 	}
     }
 
     if ($skip_tested) {
-	my($thisperl, $thispatch, $thisarch);
+	my($thisperl, $thisperlver, $thispatch, $thisarchname, $thisosvers, $thisarch);
 	{
 	    my $perl_info_line;
 	    open my $fh, '-|', $perl, '-MConfig', '-e',
-		'print join("\t", $Config{version}, $Config{perl_patchlevel}, $Config{archname}." ".$Config{osvers})'
+		'print join("\t", $Config{version}, $Config{perl_patchlevel}, $Config{archname}, $Config{osvers})'
 		or die "Can't run $perl -MConfig ...: $!";
 	    $perl_info_line = <$fh>;
-	    ($thisperl, $thispatch, $thisarch) = split /\t/, $perl_info_line;
-	    $thisperl = "perl-$thisperl";
+	    ($thisperlver, $thispatch, $thisarchname, $thisosvers) = split /\t/, $perl_info_line;
+	    $thisperl = "perl-$thisperlver";
 	    if ($thispatch) {
 		$thisperl .= " patch $thispatch";
 	    }
-	}
-
-	warn "About to parse sent reports...\n";
-	my %stdopts = (skiptestedfail => $skip_tested_fail, skiptestedpass => $skip_tested_pass);
-	if (@perls == 1) {
-	    # optimization: just parse results for this perl only
-	    parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch, %stdopts);
-	} else {
-	    parse_reports_sent(%stdopts);
+	    $thisarch = $thisarchname . ' ' . $thisosvers;
 	}
 
 	my @new_dist_or_mods;
-	for my $dist (@dist_or_mods) {
-	    my $d = CPAN::DistnameInfo->new($dist);
-	    no warnings 'uninitialized'; # undefs may happen in $author and $distname if it's a mod, not a dist
-	    if (my $old_d = $dists->{$d->dist}->{$thisperl}->{$thisarch}) {
-		if (safe_version($d->version) > safe_version($old_d->{dist}->version)) {
-		    push @new_dist_or_mods, $dist;
-		} elsif ($debug) {
-		    warn "Skipping already tested $dist\n";
+	if ($use_reports_sent_cache_file) {
+	    if (!$reports_sent_cache_pl_called++) {
+		# Calling this once per cpan_smoke_modules run should be sufficient
+		# --- theoretically other cpan_smoke_modules may cause changes here
+		# but for the usual case (we check only for one or few specific
+		# dists) this should not matter.
+		my @cmd = ('reports-sent-cache.pl', '--reports-sent', $reports_sent_db_file);
+		system @cmd;
+		if ($? != 0) {
+		    die "Running @cmd failed";
 		}
-	    } else {
+	    }
+	    my $reports_sent_cache_file = $reports_sent_db_file . '.cache';
+	    require MLDBM;
+	    require DB_File;
+	    require Storable;
+	    require Fcntl;
+	    no warnings 'once';
+	    local $MLDBM::UseDB = 'DB_File';
+	    local $MLDBM::Serializer = 'Storable';
+	    warn "INFO: About to lock $reports_sent_cache_file...\n";
+	    open my $lockfh, '<', $reports_sent_cache_file
+		or die $!;
+	    flock $lockfh, &Fcntl::LOCK_SH
+		or die "Can't lock $reports_sent_cache_file: $!";
+	    warn "INFO: About to tie $reports_sent_cache_file...\n";
+	    tie my %cache, 'MLDBM', $reports_sent_cache_file, &Fcntl::O_RDONLY, 0
+		or die "Can't tie $reports_sent_cache_file: $!";
+	    for my $dist (@dist_or_mods) {
+		my $d = CPAN::DistnameInfo->new($dist);
+		my $has_entries = eval { $cache{$d->distvname}->{$thisperlver}->{$thisarchname} };
+		if ($has_entries) {
+		    if (!$skip_tested_fail && !$skip_tested_pass) {
+			warn "Skipping already tested $dist\n" if $debug;
+			next;
+		    } elsif ($skip_tested_fail && $skip_tested_pass) {
+			# only skip if neither fail nor pass happened
+			if ($has_entries->{PASS} && $has_entries->{FAIL}) {
+			    warn "Skipping already tested $dist (both FAIL and PASS seen)\n" if $debug;
+			    next;
+			}
+		    } elsif ($skip_tested_fail && $has_entries->{FAIL}) {
+			warn "Skipping already tested $dist (FAIL seen)\n" if $debug;
+			next;
+		    } elsif ($skip_tested_pass && $has_entries->{PASS}) {
+			warn "Skipping already tested $dist (PASS seen)\n" if $debug;
+			next;
+		    }
+		}
 		push @new_dist_or_mods, $dist;
+	    }
+	} else {
+	    warn "About to parse sent reports...\n";
+	    my %stdopts = (skiptestedfail => $skip_tested_fail, skiptestedpass => $skip_tested_pass);
+	    if (@perls == 1) {
+		# optimization: just parse results for this perl only
+		parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch, %stdopts);
+	    } else {
+		parse_reports_sent(%stdopts);
+	    }
+
+	    for my $dist (@dist_or_mods) {
+		my $d = CPAN::DistnameInfo->new($dist);
+		no warnings 'uninitialized'; # undefs may happen in $author and $distname if it's a mod, not a dist
+		if (my $old_d = $dists->{$d->dist}->{$thisperl}->{$thisarch}) {
+		    if (safe_version($d->version) > safe_version($old_d->{dist}->version)) {
+			push @new_dist_or_mods, $dist;
+		    } elsif ($debug) {
+			warn "Skipping already tested $dist\n";
+		    }
+		} else {
+		    push @new_dist_or_mods, $dist;
+		}
 	    }
 	}
 	@dist_or_mods = @new_dist_or_mods;
