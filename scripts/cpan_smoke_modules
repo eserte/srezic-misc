@@ -1093,7 +1093,6 @@ EOF
 	my @new_dist_or_mods;
 	for my $dist (@dist_or_mods) {
 	    my $d = CPAN::DistnameInfo->new($dist);
-	    my($author, $distname) = $dist =~ m{(.*)/(.*)}; # XXX should use distnameinfo
 	    no warnings 'uninitialized'; # undefs may happen in $author and $distname if it's a mod, not a dist
 	    if (my $old_d = $dists->{$d->dist}->{$thisperl}->{$thisarch}) {
 		if (safe_version($d->version) > safe_version($old_d->{dist}->version)) {
