@@ -9,19 +9,17 @@
 
 =head1 NAME
 
-pm-to-deb - return debian package names for perl modules
+pm-to-deb - return Debian package names for Perl modules
 
 =head1 SYNOPSIS
 
+    $ apt-file update
     $ pm-to-deb DBI DBD::mysql Template Kwalify Does::Not::Exist
-    Cannot find package for Does::Not::Exist
     libdbd-mysql-perl
     libdbi-perl
     libkwalify-perl
     libtemplate-perl
-
-You can also use the C<-fast> switch, but in this case there's no
-report for missing packages. And it needs L<Regexp::Assemble>.
+    Cannot find package for Does::Not::Exist
 
 In a CPAN distribution directory it's possible to get the requirements
 from the F<META.yml> file:
@@ -38,7 +36,7 @@ prereqs listed:
 
 use strict;
 use warnings;
-our $VERSION = '2.01';
+our $VERSION = '3.00';
 
 use File::Basename 'dirname';
 use File::Spec;
@@ -52,16 +50,16 @@ my $all;
 my $from_mymeta;
 my $from_meta;
 my @contents_files;
-GetOptions("fast!" => \$fast,
-           "direct!" => \$direct,
-           "sources-list|s=s" => \$sources_list,
-           "v" => \$v,
-           "all" => \$all,
-           'from-mymeta' => \$from_mymeta,
-           'from-meta' => \$from_meta,
+my $method = 'direct-cache-capture';
+GetOptions('method=s'         => \$method,
+           'sources-list|s=s' => \$sources_list,
+           'v'                => \$v,
+           'all'              => \$all,
+           'from-mymeta'      => \$from_mymeta,
+           'from-meta'        => \$from_meta,
            'contents-file=s@' => \@contents_files,
           )
-    or die "usage: $0 [--sources-list ...] [-fast] [-all] [-v] ...";
+    or die "usage: $0 [--from-mymeta | --from-meta] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] ...\n";
 
 my @modules;
 if ($from_mymeta) {
@@ -80,31 +78,8 @@ use the --from-mymeta or --from-meta switches
 if in a CPAN distribution directory.
 EOF
 
-my $locator;
-my @cmd;
-## dlocate only works for *installed* packages
-#if (!is_in_path("dlocate")) {
-#    if (!is_in_path("apt-file")) {
-#        die "Neither dlocate nor apt-file are installed, cannot proceed.\n";
-#    } else {
-#        warn "dlocate is not available, fallback to slower apt-file.\n";
-	if (!is_in_path("apt-file")) {
-	    die "Please install apt-file first.\n";
-        }
-        $locator = 'apt-file';
-        @cmd = ('apt-file');
-	if (defined $sources_list) {
-            push @cmd, '--sources-list', $sources_list;
-        }
-        push @cmd, ('search', '--regexp');
-#    }
-#} else {
-#    $locator = 'dlocate';
-#    @cmd = ('dlocate', '--');
-#}
-
-my %seen_package;
-
+# Find the library path of this perl. . and /etc/perl are removed.
+# Symlinks are resolved and added additionally to the symlink entry.
 my @my_INC = map {
     # perl's @INC may say .../5.10 (which is just a symlink), while
     # apt-file says .../5.10.0
@@ -121,11 +96,9 @@ my @my_INC = map {
     $_ ne '.' && $_ ne '/etc/perl'
 } @INC;
 
-if ($fast) {
-    my $regexp = make_regexp(@modules);
-    my @packages = find_packages_for_regexp($regexp);
-    print map { "$_\n" } sort @packages;
-} elsif ($direct) {
+if ($method eq 'direct-cache-capture') {
+    # This is the best method: reasonably fast for large module lists
+    # and capable to output missing packages.
     my $prefix_rx = "^(?:" . join("|", map { quotemeta(substr($_, 1)) } @my_INC) . ")/";
     my %capture_to_module;
     my $regexp = do {
@@ -140,8 +113,21 @@ if ($fast) {
     $regexp = qr{$regexp};
     my %seen_module;
     if (!@contents_files) {
+        require Config;
         require File::Glob;
-        @contents_files = File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-amd64.gz"); # XXX use archname!!!
+        my($archname) = $Config::Config{'osvers'} =~ m{-([^-]+)$};
+        if (!$archname) {
+            warn "WARN: Cannot guess archname from \$Config{osvers}, fallback to amd64\n";
+            $archname = 'amd64';
+        }
+        if (-d "$ENV{HOME}/.cache/apt-file") { # non-root usage
+            @contents_files = File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-$archname.gz");
+        } else { # root usage
+            @contents_files = File::Glob::bsd_glob("/var/cache/apt/apt-file/*_Contents-$archname.gz");
+        }
+        if (!@contents_files) {
+            die "Cannot find any Contents files. Maybe 'apt-file update' was never run?\n";
+        }
     }
     my @packages; my %seen_package; # don't want to depend on Tie::IxHash
     for my $file (@contents_files) {
@@ -174,52 +160,84 @@ if ($fast) {
         }
     }
     exit $not_found_count;
+
 } else {
-    my $not_found_count = 0;
-    for my $module (@modules) {
-        my $module_file = module_to_file($module);
 
-        # ?: is only needed for apt-file < 2.1.0
-        my $regexp;
-        if ($locator eq 'apt-file') {
-            $regexp = "(?:" . join("|", map { substr($_, 1) } @my_INC) . ")/$module_file";
-        } elsif ($locator eq 'dlocate') {
-            $regexp = "("   . join("|", map { substr($_, 1) } @my_INC) . ")/$module_file";
-        } else {
-            die "Locator <$locator>?";
+    my $locator;
+    my @cmd;
+    # dlocate only works for *installed* packages
+    if ($method =~ m{^dlocate(-fast)?$}) {
+        if (!is_in_path("dlocate")) {
+            die "dlocate is not installed, cannot proceed.\n";
+        }
+        $locator = 'dlocate';
+        @cmd = ('dlocate', '--');
+    } elsif ($method =~ m{^apt-file(-fast)?$}) {
+        if (!is_in_path("apt-file")) {
+            die "apt-file is not installed, cannot proceed.\n";
+        }
+        $locator = 'apt-file';
+        @cmd = ('apt-file');
+	if (defined $sources_list) {
+            push @cmd, '--sources-list', $sources_list;
+        }
+        push @cmd, ('search', '--regexp');
+    } else {
+        die "Invalid method '$method'.\n";
+    }
+
+    my $find_packages_for_regexp = sub {
+        my $regexp = shift;
+
+        my %new_package;
+
+        open my $fh, "-|", @cmd, $regexp
+            or die $!;
+        while(<$fh>) {
+            chomp;
+            my($pack, $file) = split /\s*:\s*/;
+            $new_package{$pack}++;
         }
 
+        if (!$all) {
+            remove_conflicting_packages(\%new_package);
+        }
+
+        keys %new_package;
+    };
+
+    if ($method =~ m{-fast$}) {
+        my $regexp = make_regexp(@modules);
         my @packages = find_packages_for_regexp($regexp);
+        print map { "$_\n" } sort @packages;
+    } else {
+        my $not_found_count = 0;
+        my %seen_package;
+        for my $module (@modules) {
+            my $module_file = module_to_file($module);
 
-        if (!@packages) {
-            warn "Cannot find package for $module\n";
-            $not_found_count++;
-        } else {
-            print map { "$_\n" } grep { !$seen_package{$_}++ } sort @packages;
+            # ?: is only needed for apt-file < 2.1.0
+            my $regexp;
+            if ($locator eq 'apt-file') {
+                $regexp = "(?:" . join("|", map { substr($_, 1) } @my_INC) . ")/$module_file";
+            } elsif ($locator eq 'dlocate') {
+                $regexp = "("   . join("|", map { substr($_, 1) } @my_INC) . ")/$module_file";
+            } else {
+                die "Locator <$locator>?";
+            }
+
+            my @packages = find_packages_for_regexp($regexp);
+
+            if (!@packages) {
+                warn "Cannot find package for $module\n";
+                $not_found_count++;
+            } else {
+                print map { "$_\n" } grep { !$seen_package{$_}++ } sort @packages;
+            }
         }
+        #print join("\n", sort keys %package), "\n";
+        exit $not_found_count;
     }
-    #print join("\n", sort keys %package), "\n";
-    exit $not_found_count;
-}
-
-sub find_packages_for_regexp {
-    my $regexp = shift;
-
-    my %new_package;
-
-    open my $fh, "-|", @cmd, $regexp
-        or die $!;
-    while(<$fh>) {
-        chomp;
-        my($pack, $file) = split /\s*:\s*/;
-        $new_package{$pack}++;
-    }
-
-    if (!$all) {
-        remove_conflicting_packages(\%new_package);
-    }
-
-    keys %new_package;
 }
 
 # Hardcoded list of conflicting packages.
@@ -280,20 +298,106 @@ sub make_regexp {
     $regexp;
 }
 
+=head1 DESCRIPTION
+
+B<pm-to-deb> returns for the given Perl and CPAN modules a list of
+corresponding Debian packages. The list is written to C<STDOUT>, one
+package per line. If some modules could not be mapped to Debian
+packages, then these are written to C<STDERR>; also the exit code is
+greater than zero in this case.
+
+=head2 OPTIONS
+
+=over
+
+=item C<--from-meta>
+
+Use the requirement list from the F<META.yml> file in the current
+directory as the input list of modules.
+
+=item C<--from-mymeta>
+
+Use the requirement list from the F<MYMETA.yml> file in the current
+directory as the input list of modules. This file is usually created
+after running F<perl Makefile.PL> resp. F<perl Build.PL>, and is more
+accurate than the F<META.yml> list, at least for the current system.
+
+=back
+
+If neither C<--from-meta> nor C<--from-mymeta> is given, then
+B<pm-to-deb> expects a list of modules as arguments.
+
+=head2 OBSCURE OPTIONS
+
+=over
+
+=item C<--method I<method>>
+
+Use a different method for determining the mapping. Currently there are:
+
+=over
+
+=item * C<direct-cache-capture>
+
+The default method. It parses the Contents files fetched by C<apt-file
+update> directly and uses a regexp-capture technique to find out which
+modules cannot be mapped to packages.
+
+=item * C<apt-file>
+
+Use L<apt-file(1)> instead of parsing the Contents files directly.
+Quite slow.
+
+=item * C<apt-file-fast>
+
+Like C<apt-file>, but uses a combined regexp (which is assembled with
+L<Regexp::Assemble>) to speed up the search; the downside is that
+there's no output about unmapped modules.
+
+=item * C<dlocate>
+
+Use L<dlocate(1)> for the file-to-package mapping. C<dlocate> operates
+only on installed packages.
+
+=item * C<dlocate-fast>
+
+Like C<dlocate>, but use L<Regexp::Assemble> for faster searching.
+
+=back
+
+=item C<--sources-list sourceslist>
+
+Specify the C<--sources-list> option to be passed to C<apt-file> (only
+for methods using C<apt-file>).
+
+=item C<--all>
+
+For modules mapping to multiple packages return them all. Only
+applicable for C<apt-file*> methods.
+
+=item C<--contents-file file.gz>
+
+Use one or more specific Contents file for parsing. Mainly used for
+debugging.
+
+=back
+
 =head1 BUGS
 
- * It is possible that a module is provided by more than one package.
-   There's a list of some of these conflicting packages
-   (Image::Magick, GD), but possibly more are missing.
+It is possible that a Perl module is provided by more than one Debian
+package. There's a list of some of these conflicting packages
+(Image::Magick, GD), but only for the C<apt-file*> method, and
+possibly more conflicts are missing.
 
- * It's not very fast.
+It's not very fast. The default method C<direct-cache-capture> may
+take some 30-60s, other methods may be much slower.
 
 =head1 TODO
 
- * It would be nice that in the case of conflicting modules, already
-   installed packages would be preferred. This would be useful if the
-   generated list is used for installing packages on the current host,
-   but not for generating package lists for meta packages or so.
+It would be nice that in the case of conflicting modules, already
+installed packages would be preferred. This would be useful if the
+generated list is used for installing packages on the current host,
+but not for generating package lists for meta packages or so.
 
 =head1 AUTHOR
 
