@@ -129,7 +129,8 @@ if ($method eq 'direct-cache-capture') {
             die "Cannot find any Contents files. Maybe 'apt-file update' was never run?\n";
         }
     }
-    my @packages; my %seen_package; # don't want to depend on Tie::IxHash
+
+    my %module_to_packages;
     for my $file (@contents_files) {
         open my $fh, '-|', 'zcat', $file or die $!;
         while(<$fh>) {
@@ -137,18 +138,45 @@ if ($method eq 'direct-cache-capture') {
         }
         while(<$fh>) {
             if ($_ =~ $regexp) {
+                my $module;
                 for my $capture (keys %+) {
-                    $seen_module{$capture_to_module{$capture}} = 1;
+                    $module = $capture_to_module{$capture};
                 }
+                die "UNEXPECTED ERROR: cannot find module for current captures (line $_, regexp $regexp)"
+                    if !defined $module;
+                $seen_module{$module} = 1;
                 my($location) = $_ =~ m{.*/(.*)};
-                push @packages, $location
-                    if !$seen_package{$location}++;
+                $module_to_packages{$module}->{$location} = 1;
             }
         }
     }
-    for my $package (@packages) {
-        print $package, "\n";
+
+    my %packages;
+    for my $module (sort keys %module_to_packages) {
+        my @alternatives = sort keys %{ $module_to_packages{$module} };
+        if ($v) {
+            print join(' | ', @alternatives) . " # $module\n";
+        } else {
+            if (@alternatives > 1) {
+                my @alternatives_without_perl = grep { $_ ne 'perl' && $_ ne 'perl-modules' } @alternatives;
+                if (@alternatives_without_perl == 1) {
+                    $packages{$alternatives_without_perl[0]} = 1;
+                } else {
+                    warn "WARN: multiple alternatives for $module: @alternatives, choose one...\n";
+                    $packages{$alternatives[0]} = 1;
+                }
+            } else {
+                $packages{$alternatives[0]} = 1;
+            }
+        }
     }
+
+    if (!$v) { # in -v mode we're already done
+        for my $package (sort keys %packages) {
+            print $package, "\n";
+        }
+    }
+
     my $not_found_count = 0;
     for my $module (@modules) {
         if (!$seen_module{$module}) {
