@@ -43,11 +43,13 @@ our $VERSION = '2.01';
 use Getopt::Long;
 my $sources_list;
 my $fast;
+my $direct;
 my $v;
 my $all;
 my $from_mymeta;
 my $from_meta;
 GetOptions("fast!" => \$fast,
+           "direct!" => \$direct,
            "sources-list|s=s" => \$sources_list,
            "v" => \$v,
            "all" => \$all,
@@ -112,17 +114,24 @@ my @my_INC = map {
 } @INC;
 
 if ($fast) {
-    # This is only faster if Regexp::Assemble is used
-    my @module_files = map { module_to_file($_) } @modules;
-    my $prefix_rx = "(?:" . join("|", map { substr($_, 1) } @my_INC) . ")/";
-    require Regexp::Assemble;
-    my $ra = Regexp::Assemble->new;
-    for my $module_file (@module_files) {
-        $ra->add($prefix_rx . quotemeta($module_file));
-    }
-    my $regexp = $ra->re;
+    my $regexp = make_regexp(@modules);
     my @packages = find_packages_for_regexp($regexp);
     print map { "$_\n" } sort @packages;
+} elsif ($direct) {
+    require File::Glob;
+    my $regexp = make_regexp(@modules); $regexp = qr{$regexp};
+    for my $file (File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-amd64.gz")) { # XXX use archname!!!
+        open my $fh, '-|', 'zcat', $file or die $!;
+        while(<$fh>) {
+            last if /^FILE\s+LOCATION$/;
+        }
+        while(<$fh>) {
+            if ($_ =~ $regexp) {
+                my($location) = $_ =~ m{.*/(.*)};
+                print $location, "\n";
+            }
+        }
+    }
 } else {
     my $not_found_count = 0;
     for my $module (@modules) {
@@ -214,6 +223,19 @@ sub load_requires {
     require YAML;
     my $d = YAML::LoadFile($file);
     sort keys %{ $d->{requires} || {} };
+}
+
+sub make_regexp {
+    my(@modules) = @_;
+    my @module_files = map { module_to_file($_) } @modules;
+    my $prefix_rx = "(?:" . join("|", map { substr($_, 1) } @my_INC) . ")/";
+    require Regexp::Assemble;
+    my $ra = Regexp::Assemble->new;
+    for my $module_file (@module_files) {
+        $ra->add($prefix_rx . quotemeta($module_file));
+    }
+    my $regexp = $ra->re;
+    $regexp;
 }
 
 =head1 BUGS
