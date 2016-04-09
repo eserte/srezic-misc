@@ -40,7 +40,10 @@ use strict;
 use warnings;
 our $VERSION = '2.01';
 
+use File::Basename 'dirname';
+use File::Spec;
 use Getopt::Long;
+
 my $sources_list;
 my $fast;
 my $direct;
@@ -48,6 +51,7 @@ my $v;
 my $all;
 my $from_mymeta;
 my $from_meta;
+my @contents_files;
 GetOptions("fast!" => \$fast,
            "direct!" => \$direct,
            "sources-list|s=s" => \$sources_list,
@@ -55,6 +59,7 @@ GetOptions("fast!" => \$fast,
            "all" => \$all,
            'from-mymeta' => \$from_mymeta,
            'from-meta' => \$from_meta,
+           'contents-file=s@' => \@contents_files,
           )
     or die "usage: $0 [--sources-list ...] [-fast] [-all] [-v] ...";
 
@@ -103,14 +108,17 @@ my %seen_package;
 my @my_INC = map {
     # perl's @INC may say .../5.10 (which is just a symlink), while
     # apt-file says .../5.10.0
-    my $l = readlink $_;
-    if (defined $l && $l ne $_) {
-        ($_, $l);
-    } else {
-        $_;
+    my $dir = $_;
+    my $l = readlink $dir;
+    if (defined $l) {
+        $l = File::Spec->rel2abs($l, dirname $dir);
+        if ($l eq $dir) {
+            undef $l;
+        }
     }
+    ($dir, (defined $l ? $l : ()));
 } grep {
-    $_ ne "."
+    $_ ne '.' && $_ ne '/etc/perl'
 } @INC;
 
 if ($fast) {
@@ -118,20 +126,54 @@ if ($fast) {
     my @packages = find_packages_for_regexp($regexp);
     print map { "$_\n" } sort @packages;
 } elsif ($direct) {
-    require File::Glob;
-    my $regexp = make_regexp(@modules); $regexp = qr{$regexp};
-    for my $file (File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-amd64.gz")) { # XXX use archname!!!
+    my $prefix_rx = "^(?:" . join("|", map { quotemeta(substr($_, 1)) } @my_INC) . ")/";
+    my %capture_to_module;
+    my $regexp = do {
+        my $i = 0;
+        $prefix_rx . '(' . join('|', map {
+            ++$i;
+            $capture_to_module{'m'.$i} = $_;
+            my $module_file = module_to_file($_);
+            "(?<m$i>" . quotemeta($module_file) . ')';
+        } @modules) . ')';
+    };
+    $regexp = qr{$regexp};
+    my %seen_module;
+    if (!@contents_files) {
+        require File::Glob;
+        @contents_files = File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-amd64.gz"); # XXX use archname!!!
+    }
+    my @packages; my %seen_package; # don't want to depend on Tie::IxHash
+    for my $file (@contents_files) {
         open my $fh, '-|', 'zcat', $file or die $!;
         while(<$fh>) {
             last if /^FILE\s+LOCATION$/;
         }
         while(<$fh>) {
             if ($_ =~ $regexp) {
+                for my $capture (keys %+) {
+                    $seen_module{$capture_to_module{$capture}} = 1;
+                }
                 my($location) = $_ =~ m{.*/(.*)};
-                print $location, "\n";
+                push @packages, $location
+                    if !$seen_package{$location}++;
             }
         }
     }
+    for my $package (@packages) {
+        print $package, "\n";
+    }
+    my $not_found_count = 0;
+    for my $module (@modules) {
+        if (!$seen_module{$module}) {
+            warn "Cannot find package for $module\n";
+            $not_found_count++;
+            if ($not_found_count > 126) {
+                $not_found_count = 126;
+            }
+        }
+    }
+    exit $not_found_count;
 } else {
     my $not_found_count = 0;
     for my $module (@modules) {
