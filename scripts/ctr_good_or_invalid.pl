@@ -765,6 +765,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('defined array');
 		} elsif (
+			 m{Unrecognized character \\x[01][0-9A-F]; marked by .*\$<-- HERE near column \d+ $at_source_qr}
+			) {
+		    $add_analysis_tag->('literal control char');
+		} elsif (
 			 m<\Qsyntax error \E$at_source_without_dot_qr\Q, near "package \E.*\{>
 			) {
 		    $add_analysis_tag->('modern package declaration');
@@ -781,6 +785,10 @@ sub parse_test_report {
 			 m{^String found where operator expected at \S+ line \d+, near "Carp::croak }
 			) {
 		    $add_analysis_tag->('possibly missing use Carp');
+		} elsif (
+			 m{^Undefined subroutine &\S+ called $at_source_qr}
+			) {
+		    $add_analysis_tag->('possibly missing use/require');
 		} elsif (
 			 m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
 			) {
@@ -879,6 +887,14 @@ sub parse_test_report {
 		    }
 		}
 	    } elsif ($section eq 'ENVIRONMENT') {
+		if (m{^\s+PERL5LIB = (.*)}) {
+		    my $length_perl5lib = length $1;
+		    if      ($length_perl5lib >= 128*1024) {
+			$add_analysis_tag->("!!!very long PERL5LIB ($length_perl5lib bytes)!!!");
+		    } elsif ($length_perl5lib >= 48*1024) {
+			$add_analysis_tag->("long PERL5LIB ($length_perl5lib bytes)");
+		    }
+		}
 		if ($maybe_system_perl) {
 		    if (   m{config_args=.*/BSDPAN}   # FreeBSD version, old, with BSDPAN
 			|| m{config_args=.*-Dsitearch=/usr/local/lib/perl5/site_perl/mach} # FreeBSD version, new, "mach"
