@@ -49,6 +49,7 @@ my $v;
 my $all;
 my $from_mymeta;
 my $from_meta;
+my $from_log;
 my @contents_files;
 my $method = 'direct-cache-capture';
 GetOptions('method=s'         => \$method,
@@ -57,9 +58,10 @@ GetOptions('method=s'         => \$method,
            'all'              => \$all,
            'from-mymeta'      => \$from_mymeta,
            'from-meta'        => \$from_meta,
+           'from-log=s'       => \$from_log,
            'contents-file=s@' => \@contents_files,
           )
-    or die "usage: $0 [--from-mymeta | --from-meta] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] ...\n";
+    or die "usage: $0 [--from-mymeta | --from-meta | --from-log] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] ...\n";
 
 my @modules;
 if ($from_mymeta) {
@@ -69,6 +71,9 @@ if ($from_meta) {
     warn "WARNING: you specified --from-mymeta AND --from-meta, which is not very useful. Still continuing...\n";
     push @modules, load_requires('META.yml');
 }
+if (defined $from_log) {
+    push @modules, parse_log_for_modules($from_log);
+}
 
 push @modules, @ARGV;
 @modules
@@ -77,6 +82,11 @@ Please specify one or more module names, or
 use the --from-mymeta or --from-meta switches
 if in a CPAN distribution directory.
 EOF
+
+@modules = do {
+    my %seen;
+    grep { !$seen{$_}++ } @modules;
+};
 
 # Find the library path of this perl. . and /etc/perl are removed.
 # Symlinks are resolved and added additionally to the symlink entry.
@@ -310,7 +320,32 @@ sub load_requires {
     my $file = shift;
     require YAML;
     my $d = YAML::LoadFile($file);
-    sort keys %{ $d->{requires} || {} };
+    my @modules = sort keys %{ $d->{requires} || {} };
+    if ($v) {
+        warn "Found the following modules in ${file}'s requires section:\n@modules\n";
+    }
+    @modules;
+}
+
+sub parse_log_for_modules {
+    my $from_log = shift;
+    my %modules;
+    open my $fh, '<', $from_log
+        or die "Can't open $from_log: $!";
+    while(<$fh>) {
+        if (m{Can't locale (.*?)\.pm in \@INC}) {
+            (my $mod = $1) =~ s{/}{::}g;
+            $modules{$mod} = 1;
+        }
+        if (m{you may need to install the (\S+) module}) {
+            $modules{$1} = 1;
+        }
+    }
+    my @modules = sort keys %modules;
+    if ($v) {
+        warn "Found the following modules in $from_log:\n@modules\n";
+    }
+    @modules;
 }
 
 sub make_regexp {
@@ -349,6 +384,12 @@ Use the requirement list from the F<MYMETA.yml> file in the current
 directory as the input list of modules. This file is usually created
 after running F<perl Makefile.PL> resp. F<perl Build.PL>, and is more
 accurate than the F<META.yml> list, at least for the current system.
+
+=item C<--from-log I<file>>
+
+Specify a log file which contains "Can't locate ... in @INC" errors.
+This log file is parsed and the found modules used as input list of
+modules.
 
 =back
 
