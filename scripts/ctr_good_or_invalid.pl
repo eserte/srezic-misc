@@ -24,7 +24,7 @@ use CPAN::Version ();
 use Getopt::Long;
 use POSIX qw(strftime);
 
-my @current_beforemaintrelease_pairs = ('5.22.1:5.23.9');
+my @current_beforemaintrelease_pairs = ('5.22.1:5.23.9', '5.22.1:5.22.2 RC1');
 
 # Patterns for report analysis
 my $v_version_qr = qr{v[\d\.]+};
