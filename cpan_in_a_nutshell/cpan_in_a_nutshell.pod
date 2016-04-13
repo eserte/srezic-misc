@@ -847,6 +847,31 @@ updated every night on Unix boxes.
 
 A speed research: L<http://rjbs.manxome.org/rubric/entry/1981>.
 
+=head3 Changing the directory
+
+For a simple change of the current working directory, use the perl
+builting L<chdir|perlfunc/chdir>.
+
+L<File::pushd> allows a temporary change of the current working
+directory, which is automatically reverted one the created guard
+object goes out of scope.
+
+L<File::chdir> can do the same, but it uses a localized variable
+C<$CWD> instead.
+
+L<File::Tools> provides a number of commonly found file-handling Unix
+tools as Perl functions; amongst them also C<pushd> and C<popd>. Note
+that this version is not capable of automatically revert the
+directory.
+
+L<Cwd::Guard> works similar as L<File::pushd>. It's using fchdir under
+the hood, so should be safe against directory renames while the guard
+is in effect.
+
+L<File::cd> is another module for temporary directory changes with a
+different interface: here a callback function is supplied for the code
+which should run within the changed directory.
+
 =head2 Free disk space
 
 L<Filesys::DfPortable> is probably the best choice. It supports both
