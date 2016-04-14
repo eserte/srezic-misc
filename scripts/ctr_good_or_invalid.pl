@@ -491,6 +491,7 @@ sub parse_test_report {
 		    $add_analysis_tag->('notests');
 		} elsif (
 			 /^OS unsupported$/ ||
+			 /^OS unsupported. This is only for .+$/ ||
 			 /^OS unsupported $at_source_qr$/ ||
 			 /^No support for OS$/ ||
 			 /^No support for OS at /
