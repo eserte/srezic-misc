@@ -61,6 +61,7 @@ my $do_check_screensaver = 1;
 my $do_scenario_buttons;
 my @annotate_files;
 my $show_only;
+my $fast_forward;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -82,6 +83,7 @@ GetOptions("good" => \$only_good,
 	   "scenario-buttons!" => \$do_scenario_buttons,
 	   'annotate-file=s@' => \@annotate_files,
 	   'show-only' => \$show_only,
+	   'fast-forward' => \$fast_forward,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
@@ -1242,6 +1244,10 @@ sub set_currfile {
     }
 
     $mw->title($title);
+
+    if ($fast_forward) {
+	$next_b->invoke;
+    }
 }
 
 {
