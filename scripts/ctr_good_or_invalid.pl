@@ -245,6 +245,9 @@ set_term_title("report sender: interactive mode");
 my %images;
 my $mw = tkinit;
 $mw->geometry($geometry) if $geometry;
+if ($fast_forward) {
+    $mw->iconify;
+}
 my $balloon = $mw->Balloon;
 
 my $currfile_i = 0;
@@ -1248,6 +1251,7 @@ sub set_currfile {
     $mw->title($title);
 
     if ($fast_forward) {
+	warn "$title...\n";
 	$next_b->invoke;
     }
 }
@@ -1448,15 +1452,18 @@ sub nextfile {
 	$currfile_i++;
 	set_currfile();
     } else {
-	$mw->destroy if $quit_at_end;
-	if ($mw->messageBox(-icon => "question",
-			    -title => "End of list",
-			    -message => "No more files. Quit?",
-			    -type => "YesNo",
-			   ) eq 'Yes') {
-	    $mw->destroy;
+	if ($quit_at_end) {
+	    $mw->afterIdle(sub { $mw->destroy });
 	} else {
-	    warn "Continuing?";
+	    if ($mw->messageBox(-icon => "question",
+				-title => "End of list",
+				-message => "No more files. Quit?",
+				-type => "YesNo",
+			       ) eq 'Yes') {
+		$mw->destroy;
+	    } else {
+		warn "Continuing?";
+	    }
 	}
     }
 }
