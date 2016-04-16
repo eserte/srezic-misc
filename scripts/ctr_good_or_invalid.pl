@@ -1251,7 +1251,16 @@ sub set_currfile {
     $mw->title($title);
 
     if ($fast_forward) {
-	warn "$title...\n";
+	require Time::HiRes;
+	our $fast_foward_last_time;
+	my $delta;
+	if (defined $fast_foward_last_time) {
+	    $delta = sprintf "prev=%5.3fs", Time::HiRes::time() - $fast_foward_last_time;
+	} else {
+	    $delta = '           ';
+	}
+	$fast_foward_last_time = Time::HiRes::time();
+	warn "$delta $title...\n";
 	$next_b->invoke;
     }
 }
