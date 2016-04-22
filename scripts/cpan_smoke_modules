@@ -1826,19 +1826,36 @@ EOF
 }
 
 sub _can_df {
-    eval { require Filesys::DfPortable; 1 } || eval { require Filesys::Df; 1 };
+    eval { require Filesys::DfPortable; 1 } || eval { require Filesys::Df; 1 } || $^O eq 'linux';
 }
 
 sub _df {
     my $dir = shift;
     if (defined &Filesys::DfPortable::dfportable) {
 	Filesys::DfPortable::dfportable($dir);
-    } else {
+    } elsif (defined &Filesys::Df::df) {
 	my $dfres = Filesys::Df::df($dir);
 	if ($dfres) {
 	    $dfres->{bavail} *= 1024;
 	}
 	$dfres;
+    } elsif ($^O eq 'linux') {
+	my @cmd = (qw(df --output=avail,iavail,itotal --block-size=k), $dir);
+	open my $fh, '-|', @cmd
+	    or die "Error while running '@cmd': $!";
+	<$fh>; # header
+	chomp;
+	my($bavail, $iavail, $itotal) = split /\s+/, scalar <$fh>;
+	$bavail =~ s{K$}{};
+	$bavail *= 1024;
+	my $dfres = {
+		     bavail => $bavail,
+		     favail => $iavail,
+		     files  => $itotal,
+		    };
+	$dfres;
+    } else {
+	die "FATAL: should never happen: cannot do df";
     }
 }
 
