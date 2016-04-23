@@ -1840,7 +1840,7 @@ sub _df {
 	}
 	$dfres;
     } elsif ($^O eq 'linux') {
-	my @cmd = (qw(df --output=avail,iavail,itotal --block-size=k), $dir);
+	my @cmd = ('df', '--output=avail,iavail,itotal', '--block-size=k', $dir);
 	open my $fh, '-|', @cmd
 	    or die "Error while running '@cmd': $!";
 	<$fh>; # header
