@@ -475,6 +475,10 @@ if (!@perls) {
 	} else {
 	    @candidates = glob("/usr/local/bin/perl5.*.*");
 	}
+	# Also add perlbrew perls:
+	for my $candidate (glob("$ENV{HOME}/perl5/perlbrew/perls/*/bin/perl5.*.*")) {
+	    push @candidates, $candidate;
+	}
 
 	my %latest_blead; # type ("", "t") -> version --- make sure that all availables types (debug, threaded, normal) of the latest bleadperls are tested
 	my $max_stable_perl_ver;
