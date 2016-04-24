@@ -28,6 +28,7 @@ my @current_beforemaintrelease_pairs = (
 					#'5.22.1:5.23.9',
 					'5.22.1:5.22.2 RC1',
 					'5.22.1:5.24.0 RC1',
+					'5.22.1:5.24.0 RC2', # future pair
 				       );
 
 # Patterns for report analysis
