@@ -127,13 +127,20 @@ if ($method eq 'direct-cache-capture') {
         require File::Glob;
         my($archname) = $Config::Config{'osvers'} =~ m{-([^-]+)$};
         if (!$archname) {
-            warn "WARN: Cannot guess archname from \$Config{osvers}, fallback to amd64\n";
-            $archname = 'amd64';
+            if ($Config::Config{'myuname'} =~ m{debian \S+ x86_64 gnulinux}) {
+                $archname = 'amd64';
+            } else {
+                warn "WARN: Cannot guess archname from \$Config{osvers} or \$Config{uname}, fallback to amd64\n";
+                $archname = 'amd64';
+            }
         }
         if (-d "$ENV{HOME}/.cache/apt-file") { # non-root usage
             @contents_files = File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-$archname.gz");
         } else { # root usage
-            @contents_files = File::Glob::bsd_glob("/var/cache/apt/apt-file/*_Contents-$archname.gz");
+            @contents_files = (
+                               File::Glob::bsd_glob("/var/cache/apt/apt-file/*_Contents-$archname.gz"),
+                               File::Glob::bsd_glob("/var/lib/apt/lists/*_Contents-$archname.lz4"),
+                              );
         }
         if (!@contents_files) {
             die "Cannot find any Contents files. Maybe 'apt-file update' was never run?\n";
@@ -142,7 +149,13 @@ if ($method eq 'direct-cache-capture') {
 
     my %module_to_packages;
     for my $file (@contents_files) {
-        open my $fh, '-|', 'zcat', $file or die $!;
+        my @cmd;
+        if ($file =~ m{\.lz4$}) {
+            @cmd = ('/usr/lib/apt/apt-helper', 'cat-file', $file);
+        } else {
+            @cmd = ('zcat', $file);
+        }
+        open my $fh, '-|', @cmd or die "Error running @cmd: $!";
         while(<$fh>) {
             last if /^FILE\s+LOCATION$/;
         }
