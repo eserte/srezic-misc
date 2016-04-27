@@ -797,10 +797,6 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('possibly missing use Carp');
 		} elsif (
-			 m{^Undefined subroutine &\S+ called $at_source_qr}
-			) {
-		    $add_analysis_tag->('possibly missing use/require');
-		} elsif (
 			 m{\bDBD::SQLite::db do failed: database is locked $at_source_qr}
 			) {
 		    $add_analysis_tag->('possible file temp locking issue');
@@ -813,7 +809,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('use strict error message');
 		} elsif (
-			 m{Can't locate object method "builder" via package "Test::Simple" at }
+			 m{Can't locate object method "builder" via package "Test::Simple" at } ||
+			 m{Undefined subroutine &Test2::Global::test2_stack called at }
 			) {
 		    $add_analysis_tag->('Test-Simple problem'); # probably a problem with beta Test-Simple
 		} elsif (
@@ -847,6 +844,11 @@ sub parse_test_report {
 			 m{Error processing template: .*, message: file error - INCLUDE_PATH exceeds \d+ directories}
 			) {
 		    $add_analysis_tag->('@INC too big for TT2');
+		} elsif (
+			 m{^Undefined subroutine &\S+ called $at_source_qr}
+			) {
+		    # quite unspecific, more specific ones exist above
+		    $add_analysis_tag->('possibly missing use/require');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
