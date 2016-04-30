@@ -1283,6 +1283,9 @@ EOF
 	if ($batch) {
 	    $cpan_shell_init .= q#$CPAN::Config->{build_requires_install_policy} =~ s{ask/}{}; #; # don't be interactive
 	}
+	if ($do_action eq 'shell') {
+	    $cpan_shell_init .= q#$CPAN::Config->{scan_cache} = q[never]; #;
+	}
 
 	# perl belongs to this user -> no sudo necessary
 	my $need_sudo_keeper;
