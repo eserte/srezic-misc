@@ -27,6 +27,7 @@ use POSIX qw(strftime);
 my @current_beforemaintrelease_pairs = (
 					'5.22.1:5.22.2 RC1',
 					'5.22.1:5.24.0 RC3',
+					'5.22.1:5.24.0 RC4',
 				       );
 
 # Patterns for report analysis
