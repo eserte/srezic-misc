@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,7 +14,7 @@
 
 use strict;
 use FindBin;
-use File::Basename qw(basename);
+use File::Basename qw(basename dirname);
 use File::Path qw(mkpath);
 use File::Temp qw(tempfile);
 use Getopt::Long;
