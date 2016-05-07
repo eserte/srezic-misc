@@ -1342,7 +1342,11 @@ EOF
 		    die "cpanconf key '$key' is probably invalid --- or use --cpanconf-unchecked instead\n";
 		}
 		if ($key =~ m{list$}) { # special handling for array
-		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
+		    if (!length $val) {
+			$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = []; #;
+		    } else {
+			$cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = [q[# . $val . q#]]; #;
+		    }
 		} else {
 		    $cpan_shell_init .= q#$CPAN::Config->{# . $key . q#} = q[# . $val . q#]; #;
 		}
