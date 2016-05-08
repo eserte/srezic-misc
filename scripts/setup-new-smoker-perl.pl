@@ -657,6 +657,16 @@ installed. For FreeBSD, install the security/ca_root_nss package, and
 make sure that the /etc/ssl symlink is created (see the port options).
 Double check if the port is creating this symlink at all.
 
+=item perl 5.8.1's CPAN.pm is too old
+
+CPAN 1.76_xx is too old for L<cpan_smoke_modules>, so the module
+installation step fails. Currently it's necessary to upgrade CPAN.pm
+manually like this (change perl version here):
+
+    cpan_smoke_modules -pv 5.8.1 -old-cpan-pm-hack -install CPAN
+
+And then resume C<setup-new-smoker-perl.pl>.
+
 =back
 
 =cut
