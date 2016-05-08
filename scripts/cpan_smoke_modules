@@ -119,6 +119,7 @@ my $my_tmpdir;
 my $stop_signal;
 my $action_count = 0;
 my $fail_if_nothing_done;
+my $old_cpan_pm_hack;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -239,6 +240,7 @@ GetOptions("n" => \$n,
 	   },
 	   'mytmpdir=s' => \$my_tmpdir,
 	   'failifnothingdone|fail-if-nothing-done!' => \$fail_if_nothing_done,
+	   'oldcpanpmhack|old-cpan-pm-hack!' => \$old_cpan_pm_hack, # e.g. for CPAN 1.76_01
 	  )
     or die <<EOF;
 usage: $0
@@ -1255,7 +1257,11 @@ EOF
 
 	my $cpan_shell_init = "";
 	$cpan_shell_init .= q#{ package CPAN::SRTShell; @ISA = $CPAN::Frontend; sub mysleep { shift; sleep shift()/10 }} $CPAN::Frontend="CPAN::SRTShell";#;
-	$cpan_shell_init .= q#CPAN::HandleConfig->load; #;
+	if ($old_cpan_pm_hack) {
+	    $cpan_shell_init .= q#CPAN::Config->load; #; # 1.76_01 does not have CPAN::HandleConfig
+	} else {
+	    $cpan_shell_init .= q#CPAN::HandleConfig->load; #;
+	}
 	if ($^O ne 'MSWin32') { # somehow does not work under Windows
 	    $cpan_shell_init .= q{$CPAN::VERSION >= 1.9205 or warn(("*"x70)."\n*** Old CPAN version $CPAN::VERSION\n".("*"x70)."\n"); };
 	}
@@ -1770,6 +1776,7 @@ sub xterm_conf {
 
 sub check_disk_free {
     return if $^O eq 'MSWin32'; # XXX can't check yet
+    return if $old_cpan_pm_hack; # don't bother around patching CPAN::HandleConfig calls...
 
     my($perl) = @_;
     # File::HomeDir is needed because of http://rt.cpan.org/Ticket/Display.html?id=34066
