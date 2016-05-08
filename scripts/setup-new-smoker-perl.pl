@@ -545,8 +545,32 @@ END {
 sub toolchain_modules_installed_check {
     my @missing_modules;
     my $this_perl = "$perldir/bin/perl";
+    my @this_perl_INC;
+    my @cmd = ($this_perl, '-e', 'print $_, "\n" for (@INC)');
+    open my $fh, '-|', @cmd
+	or die "Can't run @cmd: $!";
+    while(<$fh>) {
+	chomp;
+	push @this_perl_INC, $_;
+    }
+    close $fh
+	or die "Failed to run @cmd: $!";
+
+    my $module_exists = sub {
+	my($filename) = @_;
+	$filename =~ s{::}{/}g;
+	$filename .= ".pm";
+	foreach my $prefix (@this_perl_INC) {
+	    my $realfilename = "$prefix/$filename";
+	    if (-r $realfilename) {
+		return 1;
+	    }
+	}
+	return 0;
+    };
+
     for my $toolchain_module (@toolchain_modules) {
-	if (!module_exists($toolchain_module)) {
+	if (!$module_exists->($toolchain_module)) {
 	    push @missing_modules, $toolchain_module;
 	}
     }
@@ -622,24 +646,6 @@ sub sudo (@) {
     };
     no strict 'refs';
     *{__PACKAGE__.'::SavePwd2::DESTROY'} = $DESTROY;
-}
-# REPO END
-
-# REPO BEGIN
-# REPO NAME module_exists /home/e/eserte/src/srezic-repository 
-# REPO MD5 1ea9ee163b35d379d89136c18389b022
-sub module_exists {
-    my($filename) = @_;
-    $filename =~ s{::}{/}g;
-    $filename .= ".pm";
-    return 1 if $INC{$filename};
-    foreach my $prefix (@INC) {
-	my $realfilename = "$prefix/$filename";
-	if (-r $realfilename) {
-	    return 1;
-	}
-    }
-    return 0;
 }
 # REPO END
 
