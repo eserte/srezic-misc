@@ -16,7 +16,6 @@ use strict;
 use FindBin;
 use File::Basename qw(basename dirname);
 use File::Path qw(mkpath);
-use File::Temp qw(tempfile);
 use Getopt::Long;
 
 use autodie qw(:all);
@@ -412,9 +411,12 @@ my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::
 
 step "Install modules needed for CPAN::Reporter",
     ensure => sub {
-	toolchain_modules_installed_check();
+	my @missing_modules = toolchain_modules_installed_check();
+	return @missing_modules == 0;
     }, 
     using => sub {
+	my @missing_modules = toolchain_modules_installed_check();
+
 	# XXX Temporary (?) hack: use the stable
 	# RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
 	# the latter does not always pass tests. Note that this
@@ -423,7 +425,7 @@ step "Install modules needed for CPAN::Reporter",
 	# UPDATE: Expect 1.32 has also problematic tests.
 	my @to_install = map {
 	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
-	} @toolchain_modules;
+	} @missing_modules;
 
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", @to_install, "-perl", "$perldir/bin/perl";
     };
@@ -541,41 +543,14 @@ END {
 }
 
 sub toolchain_modules_installed_check {
+    my @missing_modules;
     my $this_perl = "$perldir/bin/perl";
-    my($tmpfh,$tmpfile) = tempfile(SUFFIX => "setup_new_smoker_perl.txt", UNLINK => 1)
-	or die $!;
     for my $toolchain_module (@toolchain_modules) {
-	if ($toolchain_module eq 'Term::ReadLine::Perl') {
-	    print $tmpfh "Term::ReadLine\n"; # hack needed here, see https://rt.cpan.org/Ticket/Display.html?id=89894
-	}
-	print $tmpfh "$toolchain_module\n";
-    }
-    close $tmpfh or die $!;
-
-    my $total_success = 1;
-
-    # CPAN::Reporter::PrereqCheck is really only for internal use, and
-    # the call convention is different, but doing it as designed would
-    # make the code unnecessarily more complicated...
-    #
-    # On first-time install there will be a "Can't location
-    # CPAN/Reporter/PrereqCheck..." error.
-    my $prereq_result = qx/$this_perl -MCPAN::Reporter::PrereqCheck -e "CPAN::Reporter::PrereqCheck::_run()" < $tmpfile/;
-    unlink $tmpfile; # do it early
-
-    if ($? != 0) {
-	$total_success = 0; # probably no CPAN::Reporter::PrereqCheck available
-    } else {
-	for my $line (split "\n", $prereq_result) {
-	    next unless length $line;
-	    my(undef, $met, undef) = split " ", $line;
-	    if (!$met) {
-		$total_success = 0;
-		last;
-	    }
+	if (!module_exists($toolchain_module)) {
+	    push @missing_modules, $toolchain_module;
 	}
     }
-    $total_success;
+    @missing_modules;
 }
 
 sub step ($%) {
@@ -647,6 +622,24 @@ sub sudo (@) {
     };
     no strict 'refs';
     *{__PACKAGE__.'::SavePwd2::DESTROY'} = $DESTROY;
+}
+# REPO END
+
+# REPO BEGIN
+# REPO NAME module_exists /home/e/eserte/src/srezic-repository 
+# REPO MD5 1ea9ee163b35d379d89136c18389b022
+sub module_exists {
+    my($filename) = @_;
+    $filename =~ s{::}{/}g;
+    $filename .= ".pm";
+    return 1 if $INC{$filename};
+    foreach my $prefix (@INC) {
+	my $realfilename = "$prefix/$filename";
+	if (-r $realfilename) {
+	    return 1;
+	}
+    }
+    return 0;
 }
 # REPO END
 
