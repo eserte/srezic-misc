@@ -174,7 +174,9 @@ step "CPAN/MyConfig.pm exists",
 	if (!-e $cpan_myconfig) {
 	    my $cpan_myconfig_dir = dirname($cpan_myconfig);
 	    mkpath $cpan_myconfig_dir if !-d $cpan_myconfig_dir;
-	    open my $ofh, ">", $cpan_myconfig;
+	    my $tmp_cpan_myconfig = "$cpan_myconfig.$$.tmp";
+	    open my $ofh, ">", $tmp_cpan_myconfig
+		or die "Cannot write to $tmp_cpan_myconfig: $!";
 	    my $conf_contents = <<'EOF';
 $CPAN::Config = {
   'colorize_output' => q[1],
@@ -192,8 +194,12 @@ __END__
 EOF
 	    $conf_contents =~ s{__HOME__}{$ENV{HOME}};
 	    print $ofh $conf_contents;
+	    close $ofh
+		or die "Error while writing to $tmp_cpan_myconfig: $!";
+	    rename $tmp_cpan_myconfig, $cpan_myconfig
+		or die "Cannot rename $tmp_cpan_myconfig to $cpan_myconfig: $!";
 	    require CPAN;
-	    CPAN::HandleConfig->load;
+	    CPAN::HandleConfig->load; # this is a syntax check AND is hopefully non-interactive; if not, then at least the questions happen early
 	}
     };
 
