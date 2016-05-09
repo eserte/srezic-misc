@@ -404,6 +404,21 @@ step "Symlink in /usr/local/bin",
 #sudo chown -R cpansand:cpansand $MYPERLDIR && sudo chmod -R ugo+r $MYPERLDIR
 #- switch now to cpansand (set again MYPERLDIR and MYPERLVER!)
 
+# install CPAN.pm plugins early --- otherwise CPAN.pm refuses to work unless
+# the plugin list is set to empty
+my @cpan_pm_plugins = qw(CPAN::Plugin::Sysdeps);
+
+step "Install CPAN.pm plugins",
+    ensure => sub {
+	my @missing_modules = modules_installed_check(\@cpan_pm_plugins);
+	return @missing_modules == 0;
+    },
+    using => sub {
+	my @missing_modules = modules_installed_check(\@cpan_pm_plugins);
+	# Start CPAN.pm with plugin_list set to empty list
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
+    };
+
 # install both YAML::Syck and YAML, because it's not clear what's configured
 # for CPAN.pm (by default it's probably YAML, but on cvrsnica/biokovo it's
 # set to YAML::Syck)
@@ -411,11 +426,11 @@ my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::
 
 step "Install modules needed for CPAN::Reporter",
     ensure => sub {
-	my @missing_modules = toolchain_modules_installed_check();
+	my @missing_modules = modules_installed_check(\@toolchain_modules);
 	return @missing_modules == 0;
     }, 
     using => sub {
-	my @missing_modules = toolchain_modules_installed_check();
+	my @missing_modules = modules_installed_check(\@toolchain_modules);
 
 	# XXX Temporary (?) hack: use the stable
 	# RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
@@ -446,7 +461,7 @@ step "Report toolchain modules",
     },
     using => sub {
 	# note: as this is the last step (currently), explicitely use -signalend
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @toolchain_modules, "-perl", "$perldir/bin/perl";
+	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	system "touch", "$state_dir/.reported_toolchain";
     };
@@ -542,7 +557,8 @@ END {
     }
 }
 
-sub toolchain_modules_installed_check {
+sub modules_installed_check {
+    my $modules_ref = shift;
     my @missing_modules;
     my $this_perl = "$perldir/bin/perl";
     my @this_perl_INC;
@@ -569,7 +585,7 @@ sub toolchain_modules_installed_check {
 	return 0;
     };
 
-    for my $toolchain_module (@toolchain_modules) {
+    for my $toolchain_module (@$modules_ref) {
 	if (!$module_exists->($toolchain_module)) {
 	    push @missing_modules, $toolchain_module;
 	}
