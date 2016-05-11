@@ -126,11 +126,16 @@ if ($method eq 'direct-cache-capture') {
         require Config;
         require File::Glob;
         my($archname) = $Config::Config{'osvers'} =~ m{-([^-]+)$};
-        if (!$archname) {
-            if ($Config::Config{'myuname'} =~ m{debian \S+ x86_64 gnulinux}) {
+        if (!$archname || $archname eq 'generic') {
+            # Some examples:
+            # Debian/squeeze:              myuname='linux madeleine 3.2.0-4-amd64 #1 smp debian 3.2.39-2 x86_64 gnulinux ';
+            # Debian/wheezy self-compiled: myuname='linux eserte 3.2.0-4-amd64 #1 smp debian 3.2.60-1+deb7u3 x86_64 gnulinux ';
+            # Debian/jessie:               myuname='linux themisto 3.16.0-4-amd64 #1 smp debian 3.16.7-ckt20-1+deb8u3 (2016-01-17) x86_64 gnulinux ';
+            # Mint13:                      myuname='linux panlong 2.6.42-37-generic #58-ubuntu smp thu jan 24 15:28:10 utc 2013 x86_64 x86_64 x86_64 gnulinux ';
+            if ($Config::Config{'myuname'} =~ m{ x86_64 gnulinux}) {
                 $archname = 'amd64';
             } else {
-                warn "WARN: Cannot guess archname from \$Config{osvers} or \$Config{uname}, fallback to amd64\n";
+                warn "WARN: Cannot guess archname from \$Config{osvers} or \$Config{myuname}, fallback to amd64\n";
                 $archname = 'amd64';
             }
         }
