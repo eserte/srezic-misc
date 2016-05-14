@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -43,7 +43,15 @@ Fetching source failed
 Maybe a fitting deb-src entry is missing in sources.list?
 Try to add something like the following on ubuntu/mint systems:
 
+    deb-src http://archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse
+
+or
+
     deb-src http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
+
+Followed by calling
+
+    apt-get update
 
 EOF
 
