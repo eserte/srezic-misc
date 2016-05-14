@@ -12,6 +12,11 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
+# If things fail, then maybe the following is missing:
+#
+#     sudo apt-get install libmagickcore-dev
+#
+
 use strict;
 use File::Temp qw(tempdir);
 use Getopt::Long;
