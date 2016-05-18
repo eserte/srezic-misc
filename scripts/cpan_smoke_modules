@@ -348,8 +348,8 @@ TRY_TYPESCRIPT: {
 	    }
 	};
 
-	if ($^O !~ m{^(linux|freebsd)$}) {
-	    $no_typescript_sub->("-typescript implemented only for linux and freebsd");
+	if ($^O !~ m{^(linux|freebsd|darwin)$}) {
+	    $no_typescript_sub->("-typescript implemented only for linux, freebsd, and darwin");
 	}
 	if (!is_in_path('script')) {
 	    $no_typescript_sub->("-typescript specified, but 'script' executable is not in path");
@@ -1468,7 +1468,7 @@ EOF
 	}
 
 	if ($do_typescript) {
-	    if ($^O eq 'freebsd') {
+	    if ($^O eq 'freebsd' || $^O eq 'darwin') {
 		unshift @cmd, 'script', ($do_filemon ? '-f' : ()), '-a', $typescript_file;
 	    } elsif ($^O eq 'linux') {
 		my($tmpfh,$tmpfile) = tempfile(UNLINK => 1, SUFFIX => '.typescript.sh') or die $!;
@@ -2259,8 +2259,8 @@ installed. This option is on by default.
 Create a typescript of the smoke run. The output is written to
 F<~/.cpan_smoke_modules_typescripts> in date-specific subdirectories.
 
-Requires L<script(1)> to be available, and works only for FreeBSD and
-Linux. This option is on by default.
+Requires L<script(1)> to be available, and works only for FreeBSD, Mac
+OS X and Linux. This option is on by default.
 
 L<script(1)> is usually implemented by creating a pseudo-terminal, so
 a password in a L<sudo> session is not shared across multiple smoker
