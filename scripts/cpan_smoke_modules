@@ -820,6 +820,7 @@ if ($my_tmpdir) {
 if ((   $n                    # no idletermchecker in no exec mode:
      || !$ENV{DISPLAY}        # no idletermchecker if there's no DISPLAY
      || $do_action eq 'shell'
+     || $^O eq 'darwin'       # idletermchecker causes too much flicker on Macs
     ) && $warntimeout) {
     $warntimeout = undef;
 }
@@ -1595,7 +1596,7 @@ END {
 	system @idletermchecker_cmd, "-tk", "-s", "-remove", $tty;
     }
 
-    if ($signal_end && time-$start_time>60 && is_in_path("tkmessage")) {
+    if ($signal_end && time-$start_time>60 && is_in_path("tkmessage") && $^O ne 'darwin') {
 	my $msg = "Smoking finished (perls=" . join(", ", @perls) . ", dists=";
 	$msg .= @dist_or_mods > 3 ? join(", ", @dist_or_mods[0..2]) . " ..." : join(", ", @dist_or_mods);
 	$msg .= ")";
