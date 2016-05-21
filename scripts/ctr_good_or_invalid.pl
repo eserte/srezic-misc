@@ -25,7 +25,7 @@ use Getopt::Long;
 use POSIX qw(strftime);
 
 my @current_beforemaintrelease_pairs = (
-					'5.22.2:5.24.0',
+					'5.24.0:5.25.1',
 				       );
 
 # Patterns for report analysis
