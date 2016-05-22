@@ -24,6 +24,8 @@ use CPAN::Version ();
 use Getopt::Long;
 use POSIX qw(strftime);
 
+sub sort_by_example ($@);
+
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.1',
 				       );
@@ -1108,7 +1110,7 @@ sub set_currfile {
     # Create the tags with the recent states for this distribution.
     my %recent_states_with_pv_and_archname = get_recent_states_with_pv_and_archname(\%recent_states);
     my %pv_os_analysis = rough_pv_os_analysis(\%recent_states_with_pv_and_archname);
-    for my $recent_state (sort keys %recent_states) {
+    for my $recent_state (sort_by_example [qw(fail pass unknown na)], keys %recent_states) {
 	my $count_old = scalar @{ $recent_states{$recent_state}->{old} || [] };
 	my $count_new = scalar @{ $recent_states{$recent_state}->{new} || [] };
 	my $color = (
@@ -1775,6 +1777,24 @@ KzAyOjAwOApw2AAAAABJRU5ErkJggg==
 EOF
     }
 }
+
+# REPO BEGIN
+# REPO NAME sort_by_example /home/e/eserte/src/srezic-repository 
+# REPO MD5 44ca029b43df0207958ba6b2f276f3eb
+sub sort_by_example ($@) {
+    my $example_ref = shift;
+    my %score = do {
+	my $score = 1;
+	map { ($_ => $score++) } reverse @$example_ref;
+    };
+    no warnings "uninitialized";
+    sort {
+	my $score_a = $score{$a};
+	my $score_b = $score{$b};
+	!defined $score_a && !defined $score_b ? $a cmp $b : $score{$b} <=> $score{$a};
+    } @_;
+}
+# REPO END
 
 __END__
 
