@@ -13,6 +13,16 @@
 #
 
 use strict;
+use FindBin;
+use lib "$FindBin::RealBin/../lib/perl";
+
+BEGIN {
+    if ($ENV{USER} eq 'eserte') { # XXX enable experiment only for me
+	eval q{ use CtrGetReportsFastReader };
+	warn $@ if $@;
+    }
+}
+
 use File::Basename qw(basename);
 use File::Copy qw(move);
 use Hash::Util qw(lock_keys);
@@ -1330,7 +1340,22 @@ sub get_recent_states {
 			push @{ $recent_states{$recent_state}->{$age} }, "$directory/" . $recent_res->{file};
 		    }
 		} else {
-		    if (opendir(my $DIR, $directory)) {
+		    if (defined &CtrGetReportsFastReader::get_matching_entries) {
+			warn "INFO: use fast C reader for $directory and $distv\n";
+			for my $file (CtrGetReportsFastReader::get_matching_entries($directory, $distv)) {
+			    # XXX avoid code duplication!
+			    if ($file ne $currfile_base) { # don't show current report in NEW counts
+				if (index($file, $distv) >= 0) { # quick check
+				    if (my $recent_res = parse_report_filename($file)) {
+					if ($recent_res->{distv} eq $distv) {
+					    my $recent_state = $recent_res->{state};
+					    push @{ $recent_states{$recent_state}->{$age} }, "$directory/$file";
+					}
+				    }
+				}
+			    }
+			}
+		    } elsif (opendir(my $DIR, $directory)) {
 			while(defined(my $file = readdir $DIR)) {
 			    if ($file ne $currfile_base) { # don't show current report in NEW counts
 				if (index($file, $distv) >= 0) { # quick check
