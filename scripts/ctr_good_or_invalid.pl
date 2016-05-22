@@ -1107,6 +1107,7 @@ sub set_currfile {
 
     # Create the tags with the recent states for this distribution.
     my %recent_states_with_pv_and_archname = get_recent_states_with_pv_and_archname(\%recent_states);
+    my %pv_os_analysis = rough_pv_os_analysis(\%recent_states_with_pv_and_archname);
     for my $recent_state (sort keys %recent_states) {
 	my $count_old = scalar @{ $recent_states{$recent_state}->{old} || [] };
 	my $count_new = scalar @{ $recent_states{$recent_state}->{new} || [] };
@@ -1115,28 +1116,34 @@ sub set_currfile {
 		     $recent_state eq 'fail' ? 'red'   : 'orange'
 		    );
 	my $sample_recent_file = $count_old ? $recent_states{$recent_state}->{old}->[0] : $recent_states{$recent_state}->{new}->[0];
-	my $b = $analysis_frame->Button(-text => "$recent_state: $count_old" . ($count_new ? " + $count_new new" : ''),
-					@common_analysis_button_config,
-					-bg => $color,
-					-command => sub {
-					    my $t = $more->Toplevel(-title => $sample_recent_file);
-					    my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
-					    $more->Load($sample_recent_file);
-					    $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
-					    my $modtime_epoch = (stat($sample_recent_file))[9];
-					    my $modtime = scalar localtime $modtime_epoch;
-					    my $plus_duration = '';
-					    if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
-						$plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
-						    (
-						     DateTime->from_epoch(epoch => $modtime_epoch),
-						     DateTime->now
-						    ) . ')';
-					    }
-					    $t->Label(-text => "Report created: $modtime$plus_duration", -anchor => 'w')->pack(qw(-fill x -expand 1));
-					    $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
-					},
-				       )->pack;
+	my $f = $analysis_frame->Frame->pack;
+	my $b = $f->Button(-text => "$recent_state: $count_old" . ($count_new ? " + $count_new new" : ''),
+			   @common_analysis_button_config,
+			   -bg => $color,
+			   -command => sub {
+			       my $t = $more->Toplevel(-title => $sample_recent_file);
+			       my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
+			       $more->Load($sample_recent_file);
+			       $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
+			       my $modtime_epoch = (stat($sample_recent_file))[9];
+			       my $modtime = scalar localtime $modtime_epoch;
+			       my $plus_duration = '';
+			       if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
+				   $plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
+				       (
+					DateTime->from_epoch(epoch => $modtime_epoch),
+					DateTime->now
+				       ) . ')';
+			       }
+			       $t->Label(-text => "Report created: $modtime$plus_duration", -anchor => 'w')->pack(qw(-fill x -expand 1));
+			       $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
+			   },
+			  )->pack(-side => 'left');
+	for my $type (qw(pv os)) {
+	    if ($pv_os_analysis{$type}->{$recent_state}) {
+		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state})->pack(-side => 'left');
+	    }
+	}
 	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv_and_archname{$recent_state} }));
     }
 
@@ -1411,6 +1418,86 @@ sub _sort_pv_archname {
 	    warn "WARN: ignore unparsable version '$_'";
 	}
     } @{ $recent_states_with_pv };
+}
+
+sub rough_pv_os_analysis {
+    my $recent_states_with_pv_and_archname_ref = shift;
+    my @all_recent_states; # flat list
+    for my $recent_state (keys %$recent_states_with_pv_and_archname_ref) {
+	for my $entry (@{ $recent_states_with_pv_and_archname_ref->{$recent_state} }) {
+	    push @all_recent_states, { %$entry, state => $recent_state };
+	}
+    }
+    @all_recent_states = _sort_pv_archname(\@all_recent_states);
+    my %state_pv_analysis;
+    {
+	my $current_state;
+	my $current_begin_pv;
+	my $current_end_pv;
+	for my $entry (@all_recent_states) {
+	    my $set_current = sub {
+		if (exists $state_pv_analysis{$entry->{state}}) {
+		    # invalidate
+		    $state_pv_analysis{$entry->{state}} = undef;
+		    undef $current_state;
+		} else {
+		    $current_state = $entry->{state};
+		    $current_begin_pv = $current_end_pv = $entry->{version};
+		}
+	    };
+	    if (!$current_state) {
+		$set_current->();
+	    } else {
+		if ($entry->{state} eq $current_state) {
+		    $current_end_pv = $entry->{version};
+		} else {
+		    if ($current_end_pv eq $entry->{version}) {
+			# different states for same version
+			$state_pv_analysis{$current_state} = undef;
+			$state_pv_analysis{$entry->{state}} = undef;
+			undef $current_state;
+		    } else {
+			$state_pv_analysis{$current_state} = $current_begin_pv eq $current_end_pv ? $current_begin_pv : "$current_begin_pv..$current_end_pv";
+			$set_current->();
+		    }
+		}
+	    }
+	}
+	if (defined $current_state) {
+	    $state_pv_analysis{$current_state} = $current_begin_pv eq $current_end_pv ? $current_begin_pv : "$current_begin_pv..$current_end_pv";
+	}
+	for my $state (keys %state_pv_analysis) {
+	    if (!defined $state_pv_analysis{$state}) {
+		delete $state_pv_analysis{$state};
+	    }
+	}
+    }
+
+    @all_recent_states = sort { $a->{archname} cmp $b->{archname} } @all_recent_states;
+    my %state_os_analysis;
+    {
+	my %os_state_count;
+	for my $entry (@all_recent_states) {
+	    my $arch_os;
+	    if ($entry->{archname} =~ m{^(darwin|MSWin32|cygwin)}) {
+		$arch_os = $1;
+	    } else {
+		($arch_os) = $entry->{archname} =~ m{^[^- ]+-([^- ]+)};
+	    }
+	    $os_state_count{$arch_os}->{$entry->{state}}++;
+	}
+	for my $arch_os (keys %os_state_count) {
+	    if (keys %{ $os_state_count{$arch_os} } == 1) {
+		my $state = (keys %{ $os_state_count{$arch_os} })[0];
+		push @{ $state_os_analysis{$state} }, $arch_os;
+	    }
+	}
+	for my $state (keys %state_os_analysis) {
+	    $state_os_analysis{$state} = join(',', sort @{ $state_os_analysis{$state} });
+	}
+    }
+
+    (pv => \%state_pv_analysis, os => \%state_os_analysis);
 }
 
 sub get_recent_reports_from_cache {
