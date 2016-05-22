@@ -1143,7 +1143,11 @@ sub set_currfile {
 			  )->pack(-side => 'left');
 	for my $type (qw(pv os)) {
 	    if ($pv_os_analysis{$type}->{$recent_state}) {
-		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state})->pack(-side => 'left');
+		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state},
+			  -bg => $color,
+			  -borderwidth => 1,
+			  -relief => 'raised',
+			 )->pack(-side => 'left');
 	    }
 	}
 	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv_and_archname{$recent_state} }));
