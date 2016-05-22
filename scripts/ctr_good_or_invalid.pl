@@ -1341,7 +1341,7 @@ sub get_recent_states {
 		    }
 		} else {
 		    if (defined &CtrGetReportsFastReader::get_matching_entries) {
-			warn "INFO: use fast C reader for $directory and $distv\n";
+			#warn "INFO: use fast C reader for $directory and $distv\n";
 			for my $file (CtrGetReportsFastReader::get_matching_entries($directory, $distv)) {
 			    # XXX avoid code duplication!
 			    if ($file ne $currfile_base) { # don't show current report in NEW counts
