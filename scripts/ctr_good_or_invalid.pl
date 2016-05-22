@@ -1390,25 +1390,27 @@ sub get_recent_states {
 		}
 	    }
 
-	    {
-		#no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
-		@{ $recent_states_with_pv{$state} } =
-		    map { $_->[0] }
-		    sort {
-			$a->[1] cmp $b->[1]
-		    } map {
-			if (my(@v_comp) = $_->{version} =~ m{^(\d+)\.(\d+)\.(\d+)(?: RC(\d+))?}) {
-			    if (!defined $v_comp[3]) { $v_comp[3] = 9999 } # assume we have never more than 9999 RCs...
-			    [$_, join('', map { chr $_ } @v_comp)];
-			} else {
-			    warn "WARN: ignore unparsable version '$_'";
-			}
-		    } @{ $recent_states_with_pv{$state} };
-	    }
+	    @{ $recent_states_with_pv{$state} } = _sort_pv_archname($recent_states_with_pv{$state});
 	}
 
 	%recent_states_with_pv;
     }
+}
+
+sub _sort_pv_archname {
+    my $recent_states_with_pv = shift;
+    #no warnings 'uninitialized'; # XXX mysterious uninitialized value in sort warnings
+    map { $_->[0] }
+    sort {
+	$a->[1] cmp $b->[1]
+    } map {
+	if (my(@v_comp) = $_->{version} =~ m{^(\d+)\.(\d+)\.(\d+)(?: RC(\d+))?}) {
+	    if (!defined $v_comp[3]) { $v_comp[3] = 9999 } # assume we have never more than 9999 RCs...
+	    [$_, join('', map { chr $_ } @v_comp)];
+	} else {
+	    warn "WARN: ignore unparsable version '$_'";
+	}
+    } @{ $recent_states_with_pv };
 }
 
 sub get_recent_reports_from_cache {
