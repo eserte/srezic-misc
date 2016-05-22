@@ -17,7 +17,18 @@ use strict;
 use vars qw($VERSION);
 $VERSION = '0.01';
 
-use Inline 'C';
+my $inline_dir;
+BEGIN {
+    $inline_dir = "$ENV{HOME}/.cache/CtrGetReportsFastReader";
+    if (!-d $inline_dir) {
+	require File::Path;
+	File::Path::mkpath($inline_dir);
+    }
+}
+
+use Inline C => 'DATA',
+           directory => $inline_dir,
+;
 
 1;
 
