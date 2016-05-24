@@ -1127,31 +1127,58 @@ sub set_currfile {
 		     $recent_state eq 'pass' ? 'green' :
 		     $recent_state eq 'fail' ? 'red'   : 'orange'
 		    );
-	my $sample_recent_file = $count_old ? $recent_states{$recent_state}->{old}->[0] : $recent_states{$recent_state}->{new}->[0];
+	my @sample_recent_files = (
+				   @{ $recent_states{$recent_state}->{old} || [] },
+				   @{ $recent_states{$recent_state}->{new} || [] },
+				  );
+	my $sample_recent_file_counter = 0;
 	my $f = $analysis_frame->Frame->pack;
 	my $b = $f->Button(-text => "$recent_state: $count_old" . ($count_new ? " + $count_new new" : ''),
 			   @common_analysis_button_config,
 			   -bg => $color,
 			   -command => sub {
-			       my $t = $more->Toplevel(-title => $sample_recent_file);
+			       my $t = $more->Toplevel(-title => '<empty>');
 			       my $more = $t->Scrolled('More')->pack(qw(-fill both -expand 1));
-			       $more->Load($sample_recent_file);
 			       $more->Subwidget('scrolled')->Subwidget('text')->configure(-background => '#f0f0c0'); # XXX really so complicated?
-			       my $modtime_epoch = (stat($sample_recent_file))[9];
-			       my $modtime = scalar localtime $modtime_epoch;
-			       my $plus_duration = '';
-			       if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
-				   $plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
-				       (
-					DateTime->from_epoch(epoch => $modtime_epoch),
-					DateTime->now
-				       ) . ')';
-			       }
-			       $t->Label(-text => "Report created: $modtime$plus_duration", -anchor => 'w')->pack(qw(-fill x -expand 1));
-			       $t->Button(-text => 'Close', -command => sub { $t->destroy })->pack(-fill => 'x');
+			       my $rcl = $t->Label(-anchor => 'w')->pack(qw(-fill x));
+			       my $load_current_file = sub {
+				   my $sample_recent_file = $sample_recent_files[$sample_recent_file_counter];
+				   $more->Load($sample_recent_file);
+				   $t->title($sample_recent_file);
+				   my $modtime_epoch = (stat($sample_recent_file))[9];
+				   my $modtime = scalar localtime $modtime_epoch;
+				   my $plus_duration = '';
+				   if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
+				       $plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
+					   (
+					    DateTime->from_epoch(epoch => $modtime_epoch),
+					    DateTime->now
+					   ) . ')';
+				   }
+				   $rcl->configure(-text => "$sample_recent_file_counter/$#sample_recent_files | Report created: $modtime$plus_duration");
+			       };
+			       my $f = $t->Frame->pack(qw(-fill x));
+			       $f->Button(-text => 'Close', -command => sub { $t->destroy })->pack(qw(-fill x -side left));
+			       $f->Button(-text => '<', -command => sub {
+					      if ($sample_recent_file_counter > 0) {
+						  $sample_recent_file_counter--;
+						  $load_current_file->();
+					      } else {
+						  warn "Already on first file...\n";
+					      }
+					  })->pack(qw(-fill x -side left));
+			       $f->Button(-text => '>', -command => sub {
+					      if ($sample_recent_file_counter < $#sample_recent_files) {
+						  $sample_recent_file_counter++;
+						  $load_current_file->();
+					      } else {
+						  warn "Already on last file...\n";
+					      }
+					  })->pack(qw(-fill x -side left));
+			       $load_current_file->();
 			   },
 			  )->pack(-side => 'left');
-	for my $type (qw(pv os)) {
+	for my $type (qw(pv os datetime)) {
 	    if ($pv_os_analysis{$type}->{$recent_state}) {
 		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state},
 			  -bg => $color,
@@ -1384,7 +1411,7 @@ sub get_recent_states {
     #
     # Return value:
     # (
-    #     'fail' => [{ version => '5.10.1', archname => 'amd64-freebsd'}, { version => '5.12.1 RC1' ... }, ...  ],
+    #     'fail' => [{ version => '5.10.1', archname => 'amd64-freebsd', epoch => 1464115555 }, { version => '5.12.1 RC1' ... }, ...  ],
     #     'pass' => [ ... ],
     # )
     #
@@ -1400,6 +1427,7 @@ sub get_recent_states {
 	    for my $f (map { @$_ } values %$hash) {
 		if (!exists $report_file_info{$f}) {
 		    if (open my $fh, $f) {
+			my($epoch) = $f =~ m{\.(\d+)\.\d+\.rpt$};
 			my($x_test_reporter_perl, $archname);
 			while(<$fh>) {
 			    chomp;
@@ -1414,7 +1442,7 @@ sub get_recent_states {
 				} elsif (!defined $archname) {
 				    warn "WARN: cannot find Subjech header with archname in $f";
 				} else {
-				    $report_file_info{$f} = { version => $x_test_reporter_perl, archname => $archname };
+				    $report_file_info{$f} = { version => $x_test_reporter_perl, archname => $archname, epoch => $epoch };
 				}
 				last;
 			    }
@@ -1528,7 +1556,51 @@ sub rough_pv_os_analysis {
 	}
     }
 
-    (pv => \%state_pv_analysis, os => \%state_os_analysis);
+    @all_recent_states = sort { $a->{epoch} <=> $b->{epoch} } @all_recent_states;
+    my %state_datetime_analysis;
+    {
+	my $current_state;
+	my $current_begin_epoch;
+	my $current_end_epoch;
+	my $stringify = sub {
+	    strftime("%F", localtime $current_begin_epoch) .
+		($current_begin_epoch != $current_end_epoch
+		 ? ".." . strftime("%F", localtime $current_end_epoch)
+		 : '');
+	};
+	for my $entry (@all_recent_states) {
+	    my $set_current = sub {
+		if (exists $state_datetime_analysis{$entry->{state}}) {
+		    # invalidate
+		    $state_datetime_analysis{$entry->{state}} = undef;
+		    undef $current_state;
+		} else {
+		    $current_state = $entry->{state};
+		    $current_begin_epoch = $current_end_epoch = $entry->{epoch};
+		}
+	    };
+	    if (!$current_state) {
+		$set_current->();
+	    } else {
+		if ($entry->{state} eq $current_state) {
+		    $current_end_epoch = $entry->{epoch};
+		} else {
+		    $state_datetime_analysis{$current_state} = $stringify->();
+		    $set_current->();
+		}
+	    }
+	}
+	if (defined $current_state) {
+	    $state_datetime_analysis{$current_state} = $stringify->();
+	}
+	for my $state (keys %state_datetime_analysis) {
+	    if (!defined $state_datetime_analysis{$state}) {
+		delete $state_datetime_analysis{$state};
+	    }
+	}
+    }
+
+    (pv => \%state_pv_analysis, os => \%state_os_analysis, datetime => \%state_datetime_analysis);
 }
 
 sub get_recent_reports_from_cache {
