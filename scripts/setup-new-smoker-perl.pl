@@ -448,6 +448,8 @@ step "Install modules needed for CPAN::Reporter",
 	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
 	} @missing_modules;
 
+	local $ENV{HARNESS_OPTIONS};
+	$ENV{HARNESS_OPTIONS} = "j$jobs" if $jobs > 1;
 	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", @to_install, "-perl", "$perldir/bin/perl";
     };
 
