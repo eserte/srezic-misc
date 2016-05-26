@@ -41,6 +41,15 @@ if ($keep) {
 my $workdir = tempdir("imagemagick-install-XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
 chdir $workdir or die $!;
 
+if (!-x '/usr/bin/dpkg-source') {
+    my @cmd = ('apt-get', 'install', 'dpkg-dev');
+    if ($< != 0) {
+	unshift @cmd, 'sudo';
+    }
+    system @cmd;
+    $? == 0 or warn "Installing dpkg-dev failed, probably next steps will fail.\n";
+}
+
 system('apt-get', 'source', 'perlmagick');
 $? == 0 or mydie <<'EOF';
 Fetching source failed
