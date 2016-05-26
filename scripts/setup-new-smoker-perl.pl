@@ -97,7 +97,7 @@ my $term_title_prefix = "Setup new smoker perl $perlver";
 set_term_title $term_title_prefix;
 
 my $perldir = "/usr/perl$perlver";
-if ($^O eq 'linux') {
+if ($^O eq 'linux' || $^O eq 'darwin') {
     $perldir = "/opt/perl-$perlver";
 }
 my $perldir_suffix = '';
