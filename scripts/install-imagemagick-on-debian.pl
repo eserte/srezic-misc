@@ -17,6 +17,10 @@
 #     sudo apt-get install libmagickcore-dev
 #
 
+# NOTE! Currently building on debian/jessie fails.
+# debian/wheezy and earlier (and possibly corresponding
+# Ubuntu or Mint versions) should work.
+
 use strict;
 use File::Temp qw(tempdir);
 use Getopt::Long;
