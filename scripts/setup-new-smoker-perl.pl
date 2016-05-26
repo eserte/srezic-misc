@@ -18,7 +18,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(mkpath);
 use Getopt::Long;
 
-use autodie qw(:all);
+use autodie qw(:default);
 
 sub save_pwd2 ();
 sub step ($%);
@@ -26,6 +26,8 @@ sub sudo (@);
 
 sub check_term_title ();
 sub set_term_title ($);
+
+sub my_system (@);
 
 my $argv_fingerprint = join ' ', @ARGV;
 
@@ -232,9 +234,9 @@ step "Download perl $perlver",
 	chdir $download_directory;
 	my $tmp_perl_tar_gz = $perl_tar_gz.".~".$$."~";
 	if (is_in_path('wget')) {
-	    system 'wget', "-O", $tmp_perl_tar_gz, $download_url;
+	    my_system 'wget', "-O", $tmp_perl_tar_gz, $download_url;
 	} else {
-	    system 'curl', '-o', $tmp_perl_tar_gz, $download_url;
+	    my_system 'curl', '-o', $tmp_perl_tar_gz, $download_url;
 	}
 	rename $tmp_perl_tar_gz, $perl_tar_gz;
     };
@@ -252,8 +254,8 @@ step "Extract in $src_dir",
     using => sub {
 	my $save_pwd = save_pwd2;
 	chdir $src_dir;
-	system "tar", "xf", $downloaded_perl;
-	system "touch", "$perl_src_dir/.extracted";
+	my_system "tar", "xf", $downloaded_perl;
+	my_system "touch", "$perl_src_dir/.extracted";
     };
 
 step 'Valid source directory',
@@ -288,8 +290,8 @@ if (defined $patchperl_path) {
 	using => sub {
 	    my $save_pwd = save_pwd2;
 	    chdir $perl_src_dir;
-	    system $patchperl_path;
-	    system "touch", ".patched";
+	    my_system $patchperl_path;
+	    my_system "touch", ".patched";
 	};
 }
 
@@ -299,7 +301,7 @@ if ($use_pthread) {
     my $hints_file   = "$perl_src_dir/hints/freebsd.sh";
     step 'Enable pthread',
 	ensure => sub {
-	    no autodie;
+	    no autodie; # not really needed
 	    system 'fgrep', '-sq', $end_marker, $hints_file;
 	    return ($? == 0 ? 1 : 0);
 	},
@@ -350,13 +352,13 @@ step "Build perl",
 			     ' && nice make' . ($jobs&&$jobs>1 ? " -j$jobs" : '') . ' all'
 			    );
 	    print STDERR "+ @build_cmd\n";
-	    system @build_cmd;
+	    my_system @build_cmd;
 
 	    set_term_title "$term_title_prefix: Test perl";
 	    if (!eval {
 		local $ENV{TEST_JOBS};
 		$ENV{TEST_JOBS} = $jobs if $jobs > 1;
-		system 'nice', 'make', 'test';
+		my_system 'nice', 'make', 'test';
 		1;
 	    }) {
 		while () {
@@ -373,7 +375,7 @@ step "Build perl",
 		}
 	    }
 	}
-	system "touch", $built_file;
+	my_system "touch", $built_file;
     };
 
 my $state_dir = "$perldir/.install_state";
@@ -389,7 +391,7 @@ step "Install perl",
 	    sudo 'mkdir', $state_dir;
 	    sudo 'chown', (getpwuid($<))[0], $state_dir;
 	}
-	system 'touch', "$state_dir/.installed";
+	my_system 'touch', "$state_dir/.installed";
     };
 
 step "Symlink perl for devel perls",
@@ -426,7 +428,7 @@ step "Install CPAN.pm plugins",
     using => sub {
 	my @missing_modules = modules_installed_check(\@cpan_pm_plugins);
 	# Start CPAN.pm with plugin_list set to empty list
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
     };
 
 # install both YAML::Syck and YAML, because it's not clear what's configured
@@ -454,7 +456,7 @@ step "Install modules needed for CPAN::Reporter",
 
 	local $ENV{HARNESS_OPTIONS};
 	$ENV{HARNESS_OPTIONS} = "j$jobs" if $jobs > 1;
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", @to_install, "-perl", "$perldir/bin/perl";
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", @to_install, "-perl", "$perldir/bin/perl";
     };
 
 step "Install and report Kwalify",
@@ -462,9 +464,9 @@ step "Install and report Kwalify",
 	-f "$state_dir/.reported_kwalify"
     },
     using => sub {
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", qw(Kwalify), "-perl", "$perldir/bin/perl";
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
-	system "touch", "$state_dir/.reported_kwalify";
+	my_system "touch", "$state_dir/.reported_kwalify";
     };
 
 step "Report toolchain modules",
@@ -473,9 +475,9 @@ step "Report toolchain modules",
     },
     using => sub {
 	# note: as this is the last step (currently), explicitely use -signalend
-	system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
-	system "touch", "$state_dir/.reported_toolchain";
+	my_system "touch", "$state_dir/.reported_toolchain";
     };
 
 step "Force a fail report",
@@ -483,9 +485,9 @@ step "Force a fail report",
 	-f "$state_dir/.reported_fail"
     },
     using => sub {
-	eval { system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
+	eval { my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
 	# XXX unfortunately, won't fail if reporting did not work for some reason
-	system "touch", "$state_dir/.reported_fail";
+	my_system "touch", "$state_dir/.reported_fail";
     };
 
 step "Maybe upgrade CPAN.pm",
@@ -493,10 +495,10 @@ step "Maybe upgrade CPAN.pm",
 	-f "$state_dir/.cpan_pm_upgrade_done"
     },
     using => sub {
-	if (!eval { system $^X, '-MCPAN 1.9463', '-e1'; 1 }) { # the CPAN version with new config option prefer_external_tar
-	    system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
+	if (!eval { my_system $^X, '-MCPAN 1.9463', '-e1'; 1 }) { # the CPAN version with new config option prefer_external_tar
+	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
 	}
-	system "touch", "$state_dir/.cpan_pm_upgrade_done";
+	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
     };
 
 if ($for_cpansand) {
@@ -617,7 +619,7 @@ sub step ($%) {
 
 sub sudo (@) {
     my(@cmd) = @_;
-    system 'sudo', '-v';
+    my_system 'sudo', '-v';
     if (!$sudo_validator_pid) {
 	my $parent = $$;
 	$sudo_validator_pid = fork;
@@ -628,11 +630,11 @@ sub sudo (@) {
 		if (!kill 0 => $parent) {
 		    exit;
 		}
-		system 'sudo', '-v';
+		my_system 'sudo', '-v';
 	    }
 	}
     }
-    system 'sudo', @cmd;
+    my_system 'sudo', @cmd;
 }
 
 {
@@ -655,6 +657,19 @@ sub sudo (@) {
 	} else {
 	    Term::Title::set_titlebar($string);
 	}
+    }
+}
+
+sub my_system (@) {
+    my @cmd = @_;
+    system @cmd;
+    if ($? & 127) {
+	my $signalNum = $? & 127;
+	die sprintf "ERROR: Command '%s' died with signal %d, %s coredump", "@cmd", $signalNum, ($? & 128) ? 'with' : 'without';
+    } elsif ($? != 0) {
+	die "ERROR: Command '@cmd' exited with exit code " . ($?>>8);
+    } else {
+	# successful!
     }
 }
 
