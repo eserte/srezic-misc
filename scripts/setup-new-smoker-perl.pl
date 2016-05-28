@@ -260,7 +260,7 @@ step "Extract in $src_dir",
 
 step 'Valid source directory',
     ensure => sub {
-	no autodie 'open';
+	# no autodie 'open'; # XXX don't use no autodie if use autodie is not used --- https://rt.cpan.org/Ticket/Display.html?id=114798
 	if (open my $fh, "<", "$perl_src_dir/.valid_for") {
 	    chomp(my $srcdir_argv_fingerprint = <$fh>);
 	    if ($srcdir_argv_fingerprint eq $argv_fingerprint) {
@@ -301,7 +301,7 @@ if ($use_pthread) {
     my $hints_file   = "$perl_src_dir/hints/freebsd.sh";
     step 'Enable pthread',
 	ensure => sub {
-	    no autodie; # not really needed
+	    # no autodie; # not really needed --- NO! XXX don't use no autodie if use autodie is not used --- https://rt.cpan.org/Ticket/Display.html?id=114798
 	    system 'fgrep', '-sq', $end_marker, $hints_file;
 	    return ($? == 0 ? 1 : 0);
 	},
