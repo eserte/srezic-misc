@@ -563,7 +563,7 @@ if ($for_cpansand) {
 #	  as "pistacchio-perl".
 
 END {
-    if ($main_pid == $$) {
+    if (defined $main_pid && $main_pid == $$) {
 	if ($sudo_validator_pid) {
 	    kill $sudo_validator_pid;
 	    undef $sudo_validator_pid;
