@@ -18,8 +18,6 @@ use File::Basename qw(basename dirname);
 use File::Path qw(mkpath);
 use Getopt::Long;
 
-use autodie qw(:default);
-
 sub save_pwd2 ();
 sub step ($%);
 sub sudo (@);
@@ -28,6 +26,8 @@ sub check_term_title ();
 sub set_term_title ($);
 
 sub my_system (@);
+sub my_chdir ($);
+sub my_rename ($$);
 
 my $argv_fingerprint = join ' ', @ARGV;
 
@@ -198,8 +198,7 @@ EOF
 	    print $ofh $conf_contents;
 	    close $ofh
 		or die "Error while writing to $tmp_cpan_myconfig: $!";
-	    rename $tmp_cpan_myconfig, $cpan_myconfig
-		or die "Cannot rename $tmp_cpan_myconfig to $cpan_myconfig: $!";
+	    my_rename $tmp_cpan_myconfig, $cpan_myconfig;
 	    require CPAN;
 	    CPAN::HandleConfig->load; # this is a syntax check AND is hopefully non-interactive; if not, then at least the questions happen early
 	}
@@ -214,7 +213,8 @@ step ".cpanreporter/config.ini exists",
 	if (!-e $cpanreporter_config_ini) {
 	    my $cpanreporter_config_ini_dir = dirname($cpanreporter_config_ini);
 	    mkpath $cpanreporter_config_ini_dir if !-d $cpanreporter_config_ini_dir;
-	    open my $ofh, ">", $cpanreporter_config_ini;
+	    open my $ofh, ">", "$cpanreporter_config_ini~"
+		or die "Can't write to $cpanreporter_config_ini~: $!";
 	    my $conf_contents = <<'EOF';
 edit_report=default:no
 email_from=srezic@cpan.org
@@ -222,6 +222,9 @@ send_report=default:yes fail:ask/yes
 transport = Metabase uri http://metabase.cpantesters.org/beta/ id_file /home/e/eserte/.cpanreporter/srezic_metabase_id.json
 EOF
 	    print $ofh $conf_contents;
+	    close $ofh
+		or die "Error while writing to $cpanreporter_config_ini~: $!";
+	    my_rename "$cpanreporter_config_ini~", $cpanreporter_config_ini;
 	}
     };
 
@@ -231,14 +234,14 @@ step "Download perl $perlver",
     },
     using => sub {
 	my $save_pwd = save_pwd2;
-	chdir $download_directory;
+	my_chdir $download_directory;
 	my $tmp_perl_tar_gz = $perl_tar_gz.".~".$$."~";
 	if (is_in_path('wget')) {
 	    my_system 'wget', "-O", $tmp_perl_tar_gz, $download_url;
 	} else {
 	    my_system 'curl', '-o', $tmp_perl_tar_gz, $download_url;
 	}
-	rename $tmp_perl_tar_gz, $perl_tar_gz;
+	my_rename $tmp_perl_tar_gz, $perl_tar_gz;
     };
 
 my $src_dir = "/usr/local/src";
@@ -253,14 +256,13 @@ step "Extract in $src_dir",
     },
     using => sub {
 	my $save_pwd = save_pwd2;
-	chdir $src_dir;
+	my_chdir $src_dir;
 	my_system "tar", "xf", $downloaded_perl;
 	my_system "touch", "$perl_src_dir/.extracted";
     };
 
 step 'Valid source directory',
     ensure => sub {
-	# no autodie 'open'; # XXX don't use no autodie if use autodie is not used --- https://rt.cpan.org/Ticket/Display.html?id=114798
 	if (open my $fh, "<", "$perl_src_dir/.valid_for") {
 	    chomp(my $srcdir_argv_fingerprint = <$fh>);
 	    if ($srcdir_argv_fingerprint eq $argv_fingerprint) {
@@ -278,8 +280,11 @@ EOF
 	}	
     },
     using => sub {
-	open my $ofh, ">", "$perl_src_dir/.valid_for";
+	open my $ofh, ">", "$perl_src_dir/.valid_for"
+	    or die "Error while writing $perl_src_dir/.valid_for: $!";
 	print $ofh $argv_fingerprint;
+	close $ofh
+	    or die "Error while writing $perl_src_dir/.valid_for: $!";
     };
 
 if (defined $patchperl_path) {
@@ -289,7 +294,7 @@ if (defined $patchperl_path) {
 	},
 	using => sub {
 	    my $save_pwd = save_pwd2;
-	    chdir $perl_src_dir;
+	    my_chdir $perl_src_dir;
 	    my_system $patchperl_path;
 	    my_system "touch", ".patched";
 	};
@@ -301,13 +306,13 @@ if ($use_pthread) {
     my $hints_file   = "$perl_src_dir/hints/freebsd.sh";
     step 'Enable pthread',
 	ensure => sub {
-	    # no autodie; # not really needed --- NO! XXX don't use no autodie if use autodie is not used --- https://rt.cpan.org/Ticket/Display.html?id=114798
 	    system 'fgrep', '-sq', $end_marker, $hints_file;
 	    return ($? == 0 ? 1 : 0);
 	},
 	using => sub {
 	    chmod 0644, $hints_file;
-	    open my $ofh, ">>", $hints_file;
+	    open my $ofh, ">>", $hints_file
+		or die "Error appending to $hints_file: $!";
 	    print $ofh $begin_marker . "\n" . <<'EOF' . $end_marker . "\n";
 case "$ldflags" in
     *-pthread*)
@@ -318,7 +323,8 @@ case "$ldflags" in
         ;;
 esac
 EOF
-	    close $ofh;
+	    close $ofh
+		or die "Error appending to $hints_file: $!";
 	};
 }
 
@@ -332,7 +338,7 @@ step "Build perl",
 	for my $looks_like_built (glob(".built*")) {
 	    unlink $looks_like_built;
 	}
-	chdir $perl_src_dir;
+	my_chdir $perl_src_dir;
 	{
 	    my $need_usedevel;
 	    if ($perlver =~ m{^5\.(\d+)} && $1 >= 7 && $1%2 == 1) {
@@ -385,7 +391,7 @@ step "Install perl",
     },
     using => sub {
 	my $save_pwd = save_pwd2;
-	chdir $perl_src_dir;
+	my_chdir $perl_src_dir;
 	sudo 'make', 'install';
 	if (!-d $state_dir) {
 	    sudo 'mkdir', $state_dir;
@@ -660,6 +666,18 @@ sub sudo (@) {
 	    Term::Title::set_titlebar($string);
 	}
     }
+}
+
+sub my_rename ($$) {
+    my($from, $to) = @_;
+    rename $from, $to
+	or die "Error while renaming $from to $to: $!";
+}
+
+sub my_chdir ($) {
+    my $dir = shift;
+    chdir $dir
+	or die "Error while changing to $dir: $!";
 }
 
 sub my_system (@) {
