@@ -57,7 +57,7 @@ void get_matching_entries(SV* dir_sv, SV* search_sv) {
     while((got = getdents(fd, buf, BUFLEN)) > 0) {
 	struct dirent *ent = (struct dirent*)buf;
 	while((long)ent-(long)buf < got) {
-	    if (strstr(ent->d_name, search) != NULL) {
+	    if (ent->d_fileno != 0 && strstr(ent->d_name, search) != NULL) {
 		Inline_Stack_Push(newSVpv(ent->d_name, 0));
 	    }
 	    ent = (struct dirent*)((long)ent + ent->d_reclen);
