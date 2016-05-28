@@ -1158,23 +1158,26 @@ sub set_currfile {
 				   $rcl->configure(-text => "$sample_recent_file_counter/$#sample_recent_files | Report created: $modtime$plus_duration");
 			       };
 			       my $f = $t->Frame->pack(qw(-fill x));
-			       $f->Button(-text => 'Close', -command => sub { $t->destroy })->pack(qw(-fill x -side left));
-			       $f->Button(-text => '<', -command => sub {
-					      if ($sample_recent_file_counter > 0) {
-						  $sample_recent_file_counter--;
-						  $load_current_file->();
-					      } else {
-						  warn "Already on first file...\n";
-					      }
-					  })->pack(qw(-fill x -side left));
-			       $f->Button(-text => '>', -command => sub {
-					      if ($sample_recent_file_counter < $#sample_recent_files) {
-						  $sample_recent_file_counter++;
-						  $load_current_file->();
-					      } else {
-						  warn "Already on last file...\n";
-					      }
-					  })->pack(qw(-fill x -side left));
+			       my $close_b = $f->Button(-text => 'Close', -command => sub { $t->destroy })->pack(qw(-fill x -side left));
+			       my $prev_b = $f->Button(-text => '<', -command => sub {
+							   if ($sample_recent_file_counter > 0) {
+							       $sample_recent_file_counter--;
+							       $load_current_file->();
+							   } else {
+							       warn "Already on first file...\n";
+							   }
+						       })->pack(qw(-fill x -side left));
+			       my $next_b = $f->Button(-text => '>', -command => sub {
+							   if ($sample_recent_file_counter < $#sample_recent_files) {
+							       $sample_recent_file_counter++;
+							       $load_current_file->();
+							   } else {
+							       warn "Already on last file...\n";
+							   }
+						       })->pack(qw(-fill x -side left));
+			       $t->bind('<Left>' => sub { $prev_b->invoke });
+			       $t->bind('<Right>' => sub { $next_b->invoke });
+			       $t->bind('<Escape>' => sub { $close_b->invoke });
 			       $load_current_file->();
 			   },
 			  )->pack(-side => 'left');
