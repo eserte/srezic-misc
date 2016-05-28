@@ -29,7 +29,23 @@ sub my_system (@);
 sub my_chdir ($);
 sub my_rename ($$);
 
-my $argv_fingerprint = join ' ', @ARGV;
+my $argv_fingerprint;
+{
+    my @argv_fingerprint;
+    for(my $i=0; $i<=$#ARGV; $i++) {
+	my $arg = $ARGV[$i];
+	if ($arg =~ m{^-j(?:obs)?(=.*)?$}) {
+	    if (length $1) {
+		# just skip
+	    } else {
+		$i++;
+	    }
+	} else {
+	    push @argv_fingerprint, $arg;
+	}
+    }
+    $argv_fingerprint = join ' ', @argv_fingerprint;
+}
 
 # -notypescript, because -typescript uses another terminal,
 # and in this terminal the sudo_keeper is not active. Anyway,
