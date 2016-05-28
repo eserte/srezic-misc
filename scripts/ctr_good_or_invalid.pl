@@ -529,7 +529,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('experimental functions on references');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
+			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values|splice) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
 		} elsif ( # should be before pod coverage and maybe pod tests
@@ -602,7 +602,8 @@ sub parse_test_report {
 		    $add_analysis_tag->('prereq fail');
 		} elsif (
 			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array)|subroutine entry)\)/ ||
-			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/
+			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/ ||
+			 /Type of arg \d+ to (?:splice) must be array \(not null operation\)/
 			) {
 		    $add_analysis_tag->('container func on ref');
 		} elsif (
