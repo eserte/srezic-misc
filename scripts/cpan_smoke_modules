@@ -120,6 +120,7 @@ my $stop_signal;
 my $action_count = 0;
 my $fail_if_nothing_done;
 my $old_cpan_pm_hack;
+my $sysdeps;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -241,6 +242,7 @@ GetOptions("n" => \$n,
 	   'mytmpdir=s' => \$my_tmpdir,
 	   'failifnothingdone|fail-if-nothing-done!' => \$fail_if_nothing_done,
 	   'oldcpanpmhack|old-cpan-pm-hack!' => \$old_cpan_pm_hack, # e.g. for CPAN 1.76_01
+	   'sysdeps' => \$sysdeps,
 	  )
     or die <<EOF;
 usage: $0
@@ -327,6 +329,10 @@ if ($deterministic_hashes && defined $perl_hash_seed) {
 }
 if ($deterministic_hashes) {
     $perl_hash_seed = 0;
+}
+
+if ($sysdeps) {
+    push @cpan_conf_unchecked, 'plugin_list=CPAN::Plugin::Sysdeps' . ($batch ? '=batch' : '');
 }
 
 $SIG{HUP} = sub {
