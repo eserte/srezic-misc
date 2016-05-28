@@ -380,7 +380,7 @@ step "Build perl",
 	    if (!eval {
 		local $ENV{TEST_JOBS};
 		$ENV{TEST_JOBS} = $jobs if $jobs > 1;
-		my_system 'nice', 'make', 'test';
+		my_system 'nice', 'make', 'test_harness'; # test_harness appeared in 2001
 		1;
 	    }) {
 		while () {
