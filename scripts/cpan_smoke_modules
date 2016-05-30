@@ -1851,7 +1851,16 @@ EOF
 }
 
 sub _can_df {
-    eval { require Filesys::DfPortable; 1 } || eval { require Filesys::Df; 1 } || $^O eq 'linux';
+    eval { require Filesys::DfPortable; 1 } || eval { require Filesys::Df; 1 } || _has_modern_gnu_df();
+}
+
+sub _has_modern_gnu_df {
+    return 0 if $^O ne 'linux';
+    my $version_output = qx(df --version);
+    return 0 if !length $version_output;
+    my($version) = $version_output =~ m{df \(GNU coreutils\) (\d+\.\d+)};
+    return 0 if !$version;
+    return $version >= 8.21; # support for --output, see http://savannah.gnu.org/forum/forum.php?forum_id=7505
 }
 
 sub _df {
