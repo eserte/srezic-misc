@@ -1011,20 +1011,21 @@ if ($use_vncserver) {
     if (!$x11_display) {
 	$x11_display = find_free_x11_display();
     }
-    my @cmd = ('vncserver', $x11_display);
+    my @cmd = ('vncserver', $x11_display, '-localhost', '-nolisten', 'tcp');
     warn "INFO: starting vncserver on display $x11_display...\n";
     system @cmd;
     if ($? != 0) {
 	die "ERROR: Failure running '@cmd'";
     }
+    my $try_x11_display = $x11_display;
     # Do a double check if it's working
     if (is_in_path('xset')) { # hopefully everywhere installed...
-	system "xset -display $x11_display q >/dev/null 2>&1";
+	system "xset -display $try_x11_display q >/dev/null 2>&1";
 	if ($? != 0) {
-	    die "ERROR: X11 display check using 'xset' failed, refuse to continue...\n";
+	    die "ERROR: X11 display check using 'xset -display $try_x11_display' failed, refuse to continue...\n";
 	}
     }
-    $effective_x11_display = $x11_display;
+    $effective_x11_display = $try_x11_display;
 }
 
 maybe_pause();
