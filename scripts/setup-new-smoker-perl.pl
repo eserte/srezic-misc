@@ -206,10 +206,14 @@ $CPAN::Config = {
   'prefs_dir' => q[__HOME__/.cpan/prefs],
   'test_report' => q[1],
   'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
+  'yaml_module' => q[YAML::Syck],
 };
 1;
 __END__
 EOF
+	    # Why YAML::Syck?
+	    # -> https://github.com/ingydotnet/yaml-pm/issues/135
+
 	    $conf_contents =~ s{__HOME__}{$ENV{HOME}};
 	    print $ofh $conf_contents;
 	    close $ofh
