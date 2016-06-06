@@ -202,7 +202,9 @@ $CPAN::Config = {
   'colorize_warn' => q[bold red],
   'index_expire' => q[0.05],
   'make_install_make_command' => q[sudo /usr/bin/make],
+  'makepl_arg' => q[],
   'mbuild_install_build_command' => q[sudo ./Build],
+  'mbuildpl_arg' => q[],
   'prefs_dir' => q[__HOME__/.cpan/prefs],
   'test_report' => q[1],
   'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
@@ -213,6 +215,20 @@ __END__
 EOF
 	    # Why YAML::Syck?
 	    # -> https://github.com/ingydotnet/yaml-pm/issues/135
+
+	    # Why explicitely set makepl_arg and mbuildpl_arg?
+	    # If Debian's changed cpan runs first, then it created
+	    # a CPAN/MyConfig.pm with the following settings:
+	    #  'makepl_arg' => q[INSTALLDIRS=site],
+	    #  'mbuildpl_arg' => q[--installdirs site],
+	    # I guess the intention is to make sure that module
+	    # installed by CPAN.pm never overwrite the default debian
+	    # install. However, this settings cause at least two
+	    # problems:
+	    # - GD 2.56 struggles if it finds unexpected parameters to
+	    #   the Build.PL call
+	    # - perl 5.10 and earlier has site_perl after lib, so
+	    #   installing core modules like Test::More fails
 
 	    $conf_contents =~ s{__HOME__}{$ENV{HOME}};
 	    print $ofh $conf_contents;
