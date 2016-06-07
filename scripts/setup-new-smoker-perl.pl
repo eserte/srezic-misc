@@ -833,6 +833,13 @@ manually like this (change perl version here):
 
 And then resume C<setup-new-smoker-perl.pl>.
 
+=item perl test failures with perl 5.16.3 on debian/jessie
+
+This can be solved by using gcc-4.8 (instead of gcc-4.9) and _not_
+running parallel tests (-jobs is global, so don't specify it at all):
+
+    setup-new-smoker-perl.pl -pv 5.16.3 -cc gcc-4.8 -patchperl
+
 =back
 
 =cut
