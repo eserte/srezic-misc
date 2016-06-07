@@ -2372,6 +2372,19 @@ the active C<PATH>. This may workaround errors when tests are not
 using C<$^X>, but the first perl in C<PATH> which may be the system
 perl.
 
+=item -sysdeps
+
+=item -sysdeps-batch
+
+=item -no-sysdeps
+
+Use the module L<CPAN::Plugin::Sysdeps> to install system packages if
+required for the currently tested CPAN modules. Using C<-sysdeps> the
+installation is interactive: the user is always asked before
+installing system packages. With C<-sysdeps-batch> the installation is
+automatic as much as possible, but read L<CPAN::Plugin::Sysdeps/* Batch
+mode>.
+
 =back
 
 =head1 DEFAULT CONFIGURATION
