@@ -71,6 +71,7 @@ my $cf_email;
 if ($ENV{USER} =~ m{eserte|slaven}) {
     $cf_email = 'srezic@cpan.org'; # XXX make configurable?
 }
+my $cc;
 GetOptions(
 	   "perlver|pv=s" => \$perlver,
 	   "debug"     => \$build_debug,
@@ -85,6 +86,7 @@ GetOptions(
 	   "pthread!"  => \$use_pthread,
 	   'shared!'   => \$use_shared,
 	   'extraconfigopts=s' => \$extra_config_opts,
+	   'cc=s' => \$cc,
 	  )
     or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
@@ -381,6 +383,7 @@ step "Build perl",
 		$need_usedevel = 1;
 	    }
 	    my @build_cmd = (
+			     ($cc ? "env CC='$cc' " : '') .
 			     "nice ./configure.gnu --prefix=$perldir" .
 			     ($need_usedevel ? ' -Dusedevel -Dusemallocwrap=no' : '') .
 			     ($build_debug ? ' -DDEBUGGING' : '') .
