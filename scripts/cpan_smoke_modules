@@ -120,7 +120,7 @@ my $stop_signal;
 my $action_count = 0;
 my $fail_if_nothing_done;
 my $old_cpan_pm_hack;
-my $sysdeps; # '', 'verbose', 'batch'
+my $sysdeps = ''; # '', 'verbose', 'batch'
 
 # prepend extra options from rc file
 if (-r $rc_file) {
