@@ -72,6 +72,7 @@ if ($ENV{USER} =~ m{eserte|slaven}) {
     $cf_email = 'srezic@cpan.org'; # XXX make configurable?
 }
 my $cc;
+Getopt::Long::Configure("bundling_override");
 GetOptions(
 	   "perlver|pv=s" => \$perlver,
 	   "debug"     => \$build_debug,
