@@ -768,7 +768,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('new regexp feature');
 		} elsif (
-			 m{\QUnescaped left brace in regex is deprecated}
+			 m{\QUnescaped left brace in regex is deprecated} ||
+			 m{\QUnescaped left brace in regex is illegal}
 			) {
 		    $add_analysis_tag->('new regexp deprecation');
 		} elsif (
