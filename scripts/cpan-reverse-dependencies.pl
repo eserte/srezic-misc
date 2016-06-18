@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -13,15 +13,43 @@
 #
 
 use strict;
+use Getopt::Long;
 use LWP::UserAgent;
-use JSON::XS;
+
+my $recurse;
+GetOptions("rec|recurse!" => \$recurse)
+    or die "usage?";
 
 my $mod = shift
-    or die "Module?";
+    or die "Module or distribution?";
 
 my $ua = LWP::UserAgent->new;
-my $resp = $ua->post('http://api.metacpan.org/v0/release/_search',
-		     Content => <<"EOF",
+
+if ($recurse) {
+    if ($mod =~ m{::}) {
+	die "Please specify a distribution with version number, not a module";
+    }
+
+    require XML::LibXML;
+
+    my $resp = $ua->get('http://deps.cpantesters.org/depended-on-by.pl?xml=1;dist='.$mod);
+    if (!$resp->is_success) {
+	die "Fetching failed: " . $resp->as_string;
+    }
+    my $p = XML::LibXML->load_xml(string => $resp->decoded_content(charset => 'none'));
+    for my $node ($p->findnodes('//depended_on_by//dist/name')) {
+	print $node->findvalue('.'), "\n";
+    }
+
+} else {
+    if ($mod =~ m{-}) {
+	die "Please specify a module, not a distribution";
+    }
+
+    require JSON::XS;
+
+    my $resp = $ua->post('http://api.metacpan.org/v0/release/_search',
+			 Content => <<"EOF",
 {
   "query": {
     "match_all": {}
@@ -37,14 +65,15 @@ my $resp = $ua->post('http://api.metacpan.org/v0/release/_search',
   }
 }
 EOF
-		    );
-if (!$resp->is_success) {
-    die $resp->as_string;
-}
+			);
+    if (!$resp->is_success) {
+	die $resp->as_string;
+    }
 
-my $data = decode_json($resp->decoded_content(charset => 'none'));
-my @dists = map { $_->{fields}->{distribution} } @{ $data->{hits}->{hits} || [] };
-print join("\n",@dists), "\n";
+    my $data = JSON::XS::decode_json($resp->decoded_content(charset => 'none'));
+    my @dists = map { $_->{fields}->{distribution} } @{ $data->{hits}->{hits} || [] };
+    print join("\n",@dists), "\n";
+}
 
 __END__
 
