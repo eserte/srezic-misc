@@ -37,7 +37,7 @@ use POSIX qw(strftime);
 sub sort_by_example ($@);
 
 my @current_beforemaintrelease_pairs = (
-					'5.24.0:5.25.1',
+					'5.24.0:5.25.2',
 				       );
 
 # Patterns for report analysis
@@ -623,6 +623,8 @@ sub parse_test_report {
 			 /\Qmake: exec(gcc) failed (No such file or directory)/
 			) {
 		    $add_analysis_tag->('gcc not found');
+		} elsif ($currarchname =~ m{freebsd} && /g\+\+: not found/) { # XXX actually should also check for osvers>=10
+		    $add_analysis_tag->('clang++ vs. g++');
 		} elsif (
 			 /^.*?$c_ext_qr:\d+:\s+error:\s+/     || # gcc
 			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ || # gcc or clang
