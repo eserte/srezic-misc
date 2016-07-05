@@ -58,6 +58,7 @@ my $batch = 1;
 my $for_parallel_smoker = 0;
 my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
+my @skip_perls;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $per_day_build_dir = 1; # currently it's really a build dir for every 3 hours, not a daily one
@@ -150,6 +151,7 @@ GetOptions("n" => \$n,
 	   "rr" => \$rr,
 	   "a|allperls!" => \$all_perls,
 	   "skipsystemperl|skip-system-perl" => \$skip_system_perl,
+	   'skipperl|skip-perl=s@' => \@skip_perls,
 	   "i|install" => sub { $do_action = "install" },
 	   'reinstall' => sub { $do_action = 'reinstall' },
 	   "shell" => sub {
@@ -568,6 +570,12 @@ if (!@perls) {
 
 	# Newest first
 	my @all_perls = map { $_->[0] } sort { $b->[1] <=> $a->[1] } @all_perl_defs;
+
+	# -skipperl
+	if (@skip_perls) {
+	    my %skip_perls = map{($_,1)} @skip_perls;
+	    @all_perls = grep { !$skip_perls{$_} } @all_perls;
+	}
 
 	print STDERR "INFO: Found perls: @all_perls\n";
 
@@ -2234,6 +2242,11 @@ version via the C<-perl> or C<-pv> option is requested.
 
 Skip a perl in F</usr/local/bin> which is symlinked to the system perl
 (F</usr/bin/perl>).
+
+=item -skipperl /path/to/perl
+
+Skip this perl if running in C<-allperls> mode. This option may be
+given multiple times.
 
 =item -install
 
