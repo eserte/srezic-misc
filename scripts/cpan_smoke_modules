@@ -1123,13 +1123,20 @@ EOF
 	    no warnings 'once';
 	    local $MLDBM::UseDB = 'DB_File';
 	    local $MLDBM::Serializer = 'Storable';
-	    warn "INFO: About to lock $reports_sent_cache_file...\n";
-	    open my $lockfh, '<', $reports_sent_cache_file
-		or die $!;
-	    flock $lockfh, &Fcntl::LOCK_SH
-		or die "Can't lock $reports_sent_cache_file: $!";
+	    my $lockfh;
+	    my $tie_flags = 0;
+	    if (!-e $reports_sent_cache_file) {
+		warn "WARN: $reports_sent_cache_file does not exist --- is this a first-time run?\n";
+		$tie_flags |= &Fcntl::O_CREAT;
+	    } else {
+		warn "INFO: About to lock $reports_sent_cache_file...\n";
+		open $lockfh, '<', $reports_sent_cache_file
+		    or die $!;
+		flock $lockfh, &Fcntl::LOCK_SH
+		    or die "Can't lock $reports_sent_cache_file: $!";
+	    }
 	    warn "INFO: About to tie $reports_sent_cache_file...\n";
-	    tie my %cache, 'MLDBM', $reports_sent_cache_file, &Fcntl::O_RDONLY, 0
+	    tie my %cache, 'MLDBM', $reports_sent_cache_file, &Fcntl::O_RDONLY|$tie_flags, 0
 		or die "Can't tie $reports_sent_cache_file: $!";
 	    for my $dist (@dist_or_mods) {
 		my $d = CPAN::DistnameInfo->new($dist);
