@@ -824,22 +824,28 @@ installed. For FreeBSD, install the security/ca_root_nss package, and
 make sure that the /etc/ssl symlink is created (see the port options).
 Double check if the port is creating this symlink at all.
 
-=item perl 5.8.1's CPAN.pm is too old
+=item CPAN.pm in perl 5.8.8 and older is too old
 
 CPAN 1.76_xx is too old for L<cpan_smoke_modules>, so the module
 installation step fails. Currently it's necessary to upgrade CPAN.pm
 manually like this (change perl version here):
 
     cpan_smoke_modules -pv 5.8.1 -old-cpan-pm-hack -install CPAN
+    cpan_smoke_modules -pv 5.8.8 -old-cpan-pm-hack -install CPAN
 
 And then resume C<setup-new-smoker-perl.pl>.
 
-=item perl test failures with perl 5.16.3 on debian/jessie
+In very pathological cases this does not work at all. Then just try to
+unpack, build and install CPAN.pm manually.
+
+=item perl test failures with older perls on debian/jessie
 
 This can be solved by using gcc-4.8 (instead of gcc-4.9) and _not_
 running parallel tests (-jobs is global, so don't specify it at all):
 
     setup-new-smoker-perl.pl -pv 5.16.3 -cc gcc-4.8 -patchperl
+
+Problem seen with perl-5.16.3 and perl-5.8.8.
 
 =back
 
