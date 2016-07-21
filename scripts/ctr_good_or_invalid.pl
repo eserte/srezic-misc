@@ -38,6 +38,9 @@ sub sort_by_example ($@);
 
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.2',
+					'5.24.0:5.25.3',
+ 					'5.24.0:5.24.1 RC1',
+ 					'5.22.2:5.22.3 RC1',
 				       );
 
 # Patterns for report analysis
@@ -719,6 +722,7 @@ sub parse_test_report {
 			 /^\s*#\s+Failed test at .* line \d+\.$/ ||
 			 /^\s*#\s+Failed test \(.*\)$/ ||
 			 /^\s*#\s+Failed test \d+ in .* at line \d+$/ ||
+			 m{^Failed\s+\d+/\d+\s+subtests\s*$} ||
 			 /^# Looks like your test exited with \d+ just after / ||
 			 /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/
 			) {
