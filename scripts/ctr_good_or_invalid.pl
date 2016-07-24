@@ -866,7 +866,7 @@ sub parse_test_report {
 			 m{^Undefined subroutine &\S+ called $at_source_qr}
 			) {
 		    # quite unspecific, more specific ones exist above
-		    $add_analysis_tag->('possibly missing use/require');
+		    $add_analysis_tag->('undefined subroutine'); # previously called "possibly missing use/require", but this was often misleading
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
