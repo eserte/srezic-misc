@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.2',
 					'5.24.0:5.25.3',
- 					'5.24.0:5.24.1 RC1',
- 					'5.22.2:5.22.3 RC1',
+ 					'5.24.0:5.24.1 RC2',
+ 					'5.22.2:5.22.3 RC2',
 				       );
 
 # Patterns for report analysis
