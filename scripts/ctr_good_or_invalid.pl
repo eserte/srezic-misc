@@ -823,6 +823,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('UNIVERSAL export');
 		} elsif (
+			 m{\QUnimplemented: POSIX::tmpnam()}
+			) {
+		    $add_analysis_tag->('POSIX::tmpnam');
+		} elsif (
 			 m{did you forget to declare "my } # since perl 5.21.4
 			) {
 		    $add_analysis_tag->('use strict error message');
