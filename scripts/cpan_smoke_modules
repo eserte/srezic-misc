@@ -1449,6 +1449,14 @@ EOF
 	    unshift @cmd, 'ionice', '-c2', '-n6';
 	}
 
+	my $use_limits = $use_limits;
+	if ($short_hostname eq 'eserte' && $perl =~ /t$/) {
+	    # XXX Many modules fail with Out of memory on eserte.dev4...
+	    # maybe the machine has to much memory (32GB) and therefore
+	    # the threading libraries reserves more memory?
+	    warn "INFO: turning off -limits on this host for perl=$perl...\n";
+	    $use_limits = 0;
+	}
 	if ($use_limits) {
 	    my $data_limit = 1024*1024*1024;
 	    my $cputime_limit = 3600*1;
