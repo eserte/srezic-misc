@@ -336,8 +336,15 @@ sub module_to_file {
 
 sub load_requires {
     my $file = shift;
-    require YAML;
-    my $d = YAML::LoadFile($file);
+    my $d;
+    if      (eval { require YAML::XS; 1}) {
+        $d = YAML::XS::LoadFile($file);
+    } elsif (eval { require YAML::Syck; 1}) {
+        $d = YAML::Syck::LoadFile($file);
+    } else {
+        require YAML;
+        $d = YAML::LoadFile($file);
+    }
     my @modules = sort keys %{ $d->{requires} || {} };
     if ($v) {
         warn "Found the following modules in ${file}'s requires section:\n@modules\n";
