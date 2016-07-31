@@ -1450,7 +1450,7 @@ EOF
 	}
 
 	my $use_limits = $use_limits;
-	if ($short_hostname eq 'eserte' && $perl =~ /t$/) {
+	if ($short_hostname eq 'eserte' && ($perl =~ /t$/ || $perl =~ m{5\.\d+\.\d+(-RC\d+)?t/bin/perl})) {
 	    # XXX Many modules fail with Out of memory on eserte.dev4...
 	    # maybe the machine has to much memory (32GB) and therefore
 	    # the threading libraries reserves more memory?
