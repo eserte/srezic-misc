@@ -1455,7 +1455,7 @@ sub get_recent_states {
 				if (!defined $x_test_reporter_perl) {
 				    warn "WARN: cannot find X-Test-Reporter-Perl header in $f";
 				} elsif (!defined $archname) {
-				    warn "WARN: cannot find Subjech header with archname in $f";
+				    warn "WARN: cannot find Subject header with archname in $f";
 				} else {
 				    $report_file_info{$f} = { version => $x_test_reporter_perl, archname => $archname, epoch => $epoch };
 				}
