@@ -1455,6 +1455,10 @@ EOF
 		# XXX Many modules fail with Out of memory on eserte.dev4...
 		# maybe the machine has too much memory (32GB) and therefore
 		# the threading libraries reserve more memory?
+		#
+		# XXX still is not enough for some modules (e.g.
+		# Net-SSLeay-1.77). 4GB does not eiether help in this
+		# case.
 		warn "INFO: higher memory limit on this host...\n";
 		$data_limit = 3*1024*1024*1024;
 	    }
