@@ -38,8 +38,8 @@ sub sort_by_example ($@);
 
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.3',
- 					'5.24.0:5.24.1 RC2',
- 					'5.22.2:5.22.3 RC2',
+ 					'5.24.0:5.24.1 RC3',
+ 					'5.22.2:5.22.3 RC3',
 				       );
 
 # Patterns for report analysis
@@ -464,6 +464,7 @@ sub parse_test_report {
 
 	my $maybe_system_perl; # can be decided later; contains failed line or zero
 	my $maybe_pod_coverage_test; # will be decided later; contains failed line or zero
+	my $maybe_harness_killed;
 	my %signalled; # test script -> signal
 	my %testfile_to_linenumber;
 
@@ -875,6 +876,15 @@ sub parse_test_report {
 			) {
 		    # rather unspecific, do as rather last check
 		    $add_analysis_tag->('bailout');
+		} elsif (
+			 /^Killed$/
+			) {
+		    $maybe_harness_killed = 1;
+		} elsif (
+			 $maybe_harness_killed &&
+			 /^\Qmake: *** [test_dynamic] Error 137/
+			) {
+		    $add_analysis_tag->('killed harness');
 		} elsif (
 			 /Fatal error: .*: No space left on device/ # from gcc
 			 || /ERROR: .*: No space left on device/ # from EUMM
