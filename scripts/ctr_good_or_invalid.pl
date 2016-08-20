@@ -62,6 +62,7 @@ my @common_analysis_button_config =
 my $only_good;
 my $auto_good = 1;
 my $only_pass_is_good;
+my $auto_good_file;
 my $sort_by_date;
 my $reversed;
 my $geometry;
@@ -78,6 +79,7 @@ my $fast_forward;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
+	   'auto-good-file=s' => \$auto_good_file,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
 		   $sort_by_date = 1;
@@ -182,6 +184,12 @@ if (-d $done_directory) {
 my $good_rx = $only_pass_is_good ? qr{/(pass)\.} : qr{/(pass|unknown|na)\.};
 my $maybe_good_rx = $only_pass_is_good ? qr{/(unknown|na)\.} : undef;
 
+my $auto_good_rx;
+if ($auto_good_file) {
+    $auto_good_rx = read_auto_good_file($auto_good_file);
+    #if ($auto_good_rx) { warn "DEBUG: auto_good_rx=$auto_good_rx\n" }
+}
+
 my @new_files;
 # "pass" is always good
 # "na" and "unknown" is good if --only-pass-is-good given
@@ -189,6 +197,9 @@ my @new_files;
 for my $file (@files) {
     my $is_good;
     if ($file =~ $good_rx) {
+	$is_good = 1;
+    } elsif ($auto_good_rx && $file =~ $auto_good_rx) {
+	warn "INFO: $file matches entry in auto good file\n";
 	$is_good = 1;
     } elsif (defined $maybe_good_rx && $file =~ $maybe_good_rx) {
 	my $ret = parse_test_report($file);
@@ -388,6 +399,12 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		   $ec->bell;
 		   $ec->focus;
 	       })->pack(-side => "left");
+    $f->Button(-text => 'fname->sel',
+	       -command => sub {
+		   $mw->SelectionOwn;
+		   $mw->SelectionHandle; # calling this mysteriously solves the closure problem...
+		   $mw->SelectionHandle(sub { return basename $currfile });
+	       })->pack(-side => 'left');
 }
 
 set_currfile();
@@ -1821,6 +1838,37 @@ sub read_annotate_txt {
 	}
     }
     (\%distvname2annotation, \%distname2annotation);
+}
+
+sub read_auto_good_file {
+    my $auto_good_file = shift;
+    my @auto_good_rxs;
+    open my $fh, $auto_good_file
+	or die "Can't open $auto_good_file: $!";
+    while(<$fh>) {
+	chomp;
+	next if $_ eq '' || $_ =~ m{^#};
+	if (my($type, $val) = $_ =~ m{^(.)(.*)}) {
+	    if      ($type eq '"') {
+		push @auto_good_rxs, quotemeta($val);
+	    } elsif ($type eq '/') {
+		if (!eval { qr{$val} }) {
+		    die "Regexp syntax check for '$val' failed: $@";
+		}
+		push @auto_good_rxs, $val;
+	    } else {
+		die qq{Invalid type '$type', line '$_' must begin with " or /};
+	    }
+	} else {
+	    die "Can't parse line <$_> in $auto_good_file";
+	}
+    }
+    if (@auto_good_rxs) {
+	my $auto_good_rx = '/(?:' . join('|', @auto_good_rxs) . ')';
+	qr{$auto_good_rx};
+    } else {
+	undef;
+    }
 }
 
 sub make_query_string {
