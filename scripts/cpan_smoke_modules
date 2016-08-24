@@ -199,6 +199,7 @@ GetOptions("n" => \$n,
 	   'pre=s@' => \@pre_dist_or_mods,
 	   'cpanconf=s@' => \@cpan_conf,
 	   'cpanconfunchecked|cpanconf-unchecked=s@' => \@cpan_conf_unchecked, # XXX I would like to have --cpanconf! instead, but this is not possible with GetOptions
+	   'fastfail' => sub { push @cpan_conf, 'halt_on_failure=1' },
 	   'destroyperl!' => \$destroy_perl_in_path,
 	   'addthisperlpath!' => \$add_this_perl_path,
 	   'as-root' => \$as_root,
