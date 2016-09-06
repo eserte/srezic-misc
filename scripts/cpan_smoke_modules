@@ -280,7 +280,7 @@ usage: $0
 
 -a: use all installed perls (otherwise some perls will not be used)
 -perl path: use the named perl
--pv x.y.z: use the perl named by version number (or use conditions <, >, <=, >=)
+-pv x.y.z: use the perl named by version number (or use conditions <, >, <=, >=, !=)
 -thisperl: use the current perl in PATH (useful for perlbrew)
 
 -pre dist/module: module or distribution which should be tested before all others
@@ -442,7 +442,7 @@ my @pv_conditions;
 if (@pv) {
     my @remaining_pvs;
     for my $pv (@pv) {
-	if (my($expr, $value) = $pv =~ m{^([<>]=?)(.*)}) {
+	if (my($expr, $value) = $pv =~ m{^([<>!]=?)(.*)}) {
 	    require version;
 	    push @pv_conditions, [$expr, version->new($value)];
 	} else {
@@ -2240,7 +2240,7 @@ are installed or symlinked as F</usr/local/bin/perlX.Y.Z>.
 =item -pv I<cond>I<version>
 
 Use all available perl versions, restricted by the given condition.
-I<cond> may be C<< < >>, C<< <= >>, C<< => >>, or C<< > >>. I<version>
+I<cond> may be C<< < >>, C<< <= >>, C<< => >>, C<< > >>, or C<< != >>. I<version>
 is a two-dot version (e.g. C<5.8.9>). Example: C<< -pv >=5.10.0 >>.
 Don't forget that C<< > >> and C<< < >> have to be escaped in most
 shells.
