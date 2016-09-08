@@ -701,7 +701,8 @@ sub parse_test_report {
 			 m{\Qsyntax error at inc/Devel/CheckLib.pm line \E\d+\Q, near "\E.\Qmm_attr_key qw(LIBS INC)"} ||
 			 m{\Qsyntax error at inc/Module/Install/XSUtil.pm line \E\d+\Q, near "\E.\Qchecklib qw(inc::Devel::CheckLib Devel::CheckLib)"} ||
 			 m{\QUndefined subroutine &Scalar::Util::set_prototype called at } ||
-			 m{\QCan't locate YAML/Base.pm in @INC (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+}
+			 m{\QCan't locate YAML/Base.pm in @INC (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+} ||
+			 m{\QRegexp modifiers "/a" and "/d" are mutually exclusive at inc/Module/Install/AutoInstall.pm}
 			) {
 		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (
@@ -840,6 +841,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('UNIVERSAL export');
 		} elsif (
+			 m{\QCalling POSIX::tmpnam() is deprecated} ||
 			 m{\QUnimplemented: POSIX::tmpnam()}
 			) {
 		    $add_analysis_tag->('POSIX::tmpnam');
