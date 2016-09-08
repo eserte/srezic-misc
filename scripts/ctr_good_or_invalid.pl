@@ -399,12 +399,31 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		   $ec->bell;
 		   $ec->focus;
 	       })->pack(-side => "left");
-    $f->Button(-text => 'fname->sel',
-	       -command => sub {
-		   $mw->SelectionOwn;
-		   $mw->SelectionHandle; # calling this mysteriously solves the closure problem...
-		   $mw->SelectionHandle(sub { return basename $currfile });
-	       })->pack(-side => 'left');
+    {
+	my $ff = $f->Frame->pack(qw(-side left));
+	my $smallfont = 'helvetica 5';
+	$ff->Button(-text => 'fname->sel',
+		    -pady => 0, -borderwidth => 0,
+		    -font => $smallfont,
+		    -command => sub {
+			$mw->SelectionOwn;
+			$mw->SelectionHandle; # calling this mysteriously solves the closure problem...
+			$mw->SelectionHandle(sub { return basename $currfile });
+		    })->pack;
+	$ff->Button(-text => 'short',
+		    -pady => 0, -borderwidth => 0,
+		    -font => $smallfont,
+		    -command => sub {
+			$mw->SelectionOwn;
+			$mw->SelectionHandle; # calling this mysteriously solves the closure problem...
+			$mw->SelectionHandle(sub {
+						 my $text = basename $currfile;
+						 $text =~ s{(?:amd64-freebsd|x86_64-linux).*}{};
+						 $text = q{"} . $text . qq{\n};
+						 return $text;
+					     });
+		    })->pack;
+    }
 }
 
 set_currfile();
