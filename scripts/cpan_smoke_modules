@@ -1019,24 +1019,10 @@ $PERL_CPAN_REPORTER_DIR = $ENV{PERL_CPAN_REPORTER_DIR} if $ENV{PERL_CPAN_REPORTE
 
 my $effective_x11_display;
 if ($use_vncserver) {
-    if (!$x11_display) {
-	$x11_display = find_free_x11_display();
+    start_x11_server();
+    if (!check_x11_server()) {
+	warn "WARN: vnc server immediately crashed? Or another problem?\n";
     }
-    my @cmd = ('vncserver', $x11_display, '-localhost', '-nolisten', 'tcp');
-    warn "INFO: starting vncserver on display $x11_display...\n";
-    system @cmd;
-    if ($? != 0) {
-	die "ERROR: Failure running '@cmd'";
-    }
-    my $try_x11_display = $x11_display;
-    # Do a double check if it's working
-    if (is_in_path('xset')) { # hopefully everywhere installed...
-	system "xset -display $try_x11_display q >/dev/null 2>&1";
-	if ($? != 0) {
-	    die "ERROR: X11 display check using 'xset -display $try_x11_display' failed, refuse to continue...\n";
-	}
-    }
-    $effective_x11_display = $try_x11_display;
 }
 
 maybe_pause();
@@ -1596,6 +1582,11 @@ EOF
 	    }
 	}
 
+	if (!check_x11_server()) {
+	    warn "WARN: try to restart vncserver...\n";
+	    start_x11_server();
+	}
+
 	system @cmd;
 	if ($? & 127) {
 	    die sprintf("Child died with signal %d, %s coredump\n",
@@ -1670,6 +1661,57 @@ sub maybe_pause {
 	} while(-e $pause_file);
 	print STDERR "\nNOTE: Continuing...\n";
 	xterm_conf('-title', 'Smoker continues');
+    }
+}
+
+sub start_x11_server {
+    if (!$x11_display) {
+	$x11_display = find_free_x11_display();
+    }
+    my @cmd = ('vncserver', $x11_display, '-localhost', '-nolisten', 'tcp');
+    warn "INFO: starting vncserver on display $x11_display...\n";
+    system @cmd;
+    if ($? != 0) {
+	die "ERROR: Failure running '@cmd'";
+    }
+    my $try_x11_display = $x11_display;
+    # Do a double check if it's working
+    if (is_in_path('xset')) { # hopefully everywhere installed...
+	system "xset -display $try_x11_display q >/dev/null 2>&1";
+	if ($? != 0) {
+	    die "ERROR: X11 display check using 'xset -display $try_x11_display' failed, refuse to continue...\n";
+	}
+    }
+    $effective_x11_display = $try_x11_display;
+}
+
+# Return false if something is wrong, i.e. an expected vncserver is
+# not running anymore. Note that true is also returned if no
+# vncserver should be running at all.
+sub check_x11_server {
+    if ($use_vncserver && $effective_x11_display) {
+	my $pid_file = "$ENV{HOME}/.vnc/" . hostname . $effective_x11_display . ".pid";
+	if (open my $fh, '<', $pid_file) {
+	    chomp(my $pid = <$fh>);
+	    if (!$pid) {
+		warn "WARN: unexpected: no pid file found in '$pid_file'\n";
+		0;
+	    } else {
+		# we assume that vncserver belongs to the current
+		# user, so no EEXISTS tricks needed
+		if (kill 0 => $pid) {
+		    1;
+		} else {
+		    warn "WARN: vncserver (pid $pid) not running\n";
+		    0;
+		}
+	    }
+	} else {
+	    warn "WARN: cannot open vncserver pid file '$pid_file'\n";
+	    0;
+	}
+    } else {
+	1;
     }
 }
 
