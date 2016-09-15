@@ -148,7 +148,12 @@ if ($method eq 'direct-cache-capture') {
                               );
         }
         if (!@contents_files) {
-            die "Cannot find any Contents files. Maybe 'apt-file update' was never run?\n";
+            system('which apt-file >/dev/null 2>&1');
+            if ($? != 0) {
+                die "apt-file does not seem to be installed.\nPlease install it using 'apt-get install apt-file'\nand then run 'apt-file update'\n";
+            } else {
+                die "Cannot find any Contents files. Maybe 'apt-file update' was never run?\n";
+            }
         }
     }
 
