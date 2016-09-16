@@ -612,6 +612,10 @@ sub parse_test_report {
 			 /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
 			) {
 		    $add_analysis_tag->('prereq test');
+		} elsif (   # this should come before 'prereq fail' tests, see below for more 'possibly old bundled modules' stuff
+			 m{\QCan't locate MooX/Struct.pm in \E\@INC (?:\Q(you may need to install the MooX::Struct module) \E)?\(\@INC contains: .* inc .* at \S+/Module/Install/Admin/Copyright.pm}
+			) {
+		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (   # this should come before the generic 'prereq fail' test
 			    m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /etc/perl} # Debian version
 			 || m{^\s*or make that module available in \@INC \(\@INC contains.* /etc/perl} # base class error, Debian version
@@ -721,7 +725,10 @@ sub parse_test_report {
 			 m{\Qsyntax error at inc/Module/Install/XSUtil.pm line \E\d+\Q, near "\E.\Qchecklib qw(inc::Devel::CheckLib Devel::CheckLib)"} ||
 			 m{\QUndefined subroutine &Scalar::Util::set_prototype called at } ||
 			 m{\QCan't locate YAML/Base.pm in @INC (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+} ||
-			 m{\QRegexp modifiers "/a" and "/d" are mutually exclusive at inc/Module/Install/AutoInstall.pm}
+			 m{\QCan't locate YAML/Base.pm in @INC (you may need to install the YAML::Base module) (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+} ||
+			 m{\QRegexp modifiers "/a" and "/d" are mutually exclusive at inc/Module/Install/AutoInstall.pm} ||
+			 m{\QBEGIN failed--compilation aborted at inc/Module/Install/Makefile.pm line \Q\d+\.} ||
+			 m{\QRedundant argument in sprintf at inc/Spiffy.pm line 225.}
 			) {
 		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (
