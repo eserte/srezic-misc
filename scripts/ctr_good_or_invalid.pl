@@ -37,6 +37,7 @@ use POSIX qw(strftime);
 sub sort_by_example ($@);
 
 my @current_beforemaintrelease_pairs = (
+					'5.24.0:5.25.5',
 					'5.24.0:5.25.4',
  					'5.24.0:5.24.1 RC3',
  					'5.22.2:5.22.3 RC3',
