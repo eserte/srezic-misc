@@ -64,6 +64,7 @@ my $only_good;
 my $auto_good = 1;
 my $only_pass_is_good;
 my $auto_good_file;
+my $confirmed_failure_file;
 my $sort_by_date;
 my $reversed;
 my $geometry;
@@ -81,6 +82,7 @@ GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
 	   'auto-good-file=s' => \$auto_good_file,
+	   'confirmed-failure-file=s' => \$confirmed_failure_file,
 	   "sort=s" => sub {
 	       if ($_[1] eq 'date') {
 		   $sort_by_date = 1;
@@ -186,9 +188,12 @@ my $good_rx = $only_pass_is_good ? qr{/(pass)\.} : qr{/(pass|unknown|na)\.};
 my $maybe_good_rx = $only_pass_is_good ? qr{/(unknown|na)\.} : undef;
 
 my $auto_good_rx;
+my $confirmed_failure_rx;
 if ($auto_good_file) {
     $auto_good_rx = read_auto_good_file($auto_good_file);
     #if ($auto_good_rx) { warn "DEBUG: auto_good_rx=$auto_good_rx\n" }
+} elsif ($confirmed_failure_file) {
+    $confirmed_failure_rx = read_auto_good_file($confirmed_failure_file);
 }
 
 my @new_files;
@@ -1366,6 +1371,17 @@ sub set_currfile {
 		$w = $analysis_frame->Label(-text => $annotation_label)->pack;
 	    }
 	    $balloon->attach($w, -msg => $annotation_text);
+	}
+    }
+
+    {
+	if ($currfile =~ $confirmed_failure_rx) {
+	    $analysis_frame->Label(
+				   -text => "Confirmed \x{2714}",
+				   @common_analysis_button_config,
+				   -bg => '#008000',
+				   -fg => '#ffffff',
+				  )->pack;
 	}
     }
 
