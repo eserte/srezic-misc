@@ -575,7 +575,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('experimental functions on references');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values|splice) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
+			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values|splice|each) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
 		} elsif ( # should be before pod coverage and maybe pod tests
@@ -922,6 +922,14 @@ sub parse_test_report {
 			) {
 		    # quite unspecific, more specific ones exist above
 		    $add_analysis_tag->('undefined subroutine'); # previously called "possibly missing use/require", but this was often misleading
+		} elsif (
+			 m{^make(?:\[\d+\])?: don't know how to make .*\. Stop$} # BSD make output
+			) {
+		    $add_analysis_tag->('make problem (unhandled target)');
+		} elsif (
+			 m{^Makefile:\d+: recipe for target '(.*?)' failed$} && $1 !~ m{^(?:test_dynamic|all)$}
+			) {
+		    $add_analysis_tag->('make problem (failed target)');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
