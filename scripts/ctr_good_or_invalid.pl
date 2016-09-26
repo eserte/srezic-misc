@@ -927,7 +927,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('make problem (unhandled target)');
 		} elsif (
-			 m{^Makefile:\d+: recipe for target '(.*?)' failed$} && $1 !~ m{^(?:test_dynamic|all)$}
+			 m{^Makefile:\d+: recipe for target '(.*?)' failed$} && $1 !~ m{^(?:test|test_dynamic|all)$}
 			) {
 		    $add_analysis_tag->('make problem (failed target)');
 		} elsif (
@@ -1383,7 +1383,7 @@ sub set_currfile {
     }
 
     {
-	if ($currfile =~ $confirmed_failure_rx) {
+	if ($confirmed_failure_rx && $currfile =~ $confirmed_failure_rx) {
 	    $analysis_frame->Label(
 				   -text => "Confirmed \x{2714}",
 				   @common_analysis_button_config,
