@@ -1850,6 +1850,16 @@ sub parse_distvname {
 sub read_annotate_txt {
     my($mandatory_file, @optional_files) = @_;
     my(%distvname2annotation, %distname2annotation);
+    my $add_annotation = sub ($$) {
+	my($dest_ref, $annotation) = @_;
+	if (!defined $$dest_ref || !length $$dest_ref) {
+	    $$dest_ref = $annotation;
+	} elsif ($$dest_ref =~ m{(^|,)\Q$annotation\E(,|$)}) {
+	    # don't add
+	} else {
+	    $$dest_ref .= ',' . $annotation;
+	}
+    };
     for my $def (
 		 [$mandatory_file, 1],
 		 (map {[$_, 0]} @optional_files),
@@ -1871,17 +1881,13 @@ sub read_annotate_txt {
 	    my($distvname, $annotation) = split /\s+/, $_, 2;
 	    my($distname, $distversion) = parse_distvname($distvname);
 
-	    if (exists $distvname2annotation{$distvname}) {
-		$distvname2annotation{$distvname} .= ',' . $annotation;
-	    } else {
-		$distvname2annotation{$distvname} = $annotation;
-	    }
+	    $add_annotation->(\$distvname2annotation{$distvname}, $annotation);
 	    if (exists $distname2annotation{$distname}) {
 		my $cmp = cmp_version($distname2annotation{$distname}->{version}, $distversion);
 		if ($cmp < 0) { # existing is older
 		    $distname2annotation{$distname} = { version => $distversion, annotation => $annotation };
 		} elsif ($cmp == 0) {
-		    $distname2annotation{$distname}->{annotation} .= ',' . $annotation;
+		    $add_annotation->(\$distname2annotation{$distname}->{annotation}, $annotation);
 		} else {
 		    # ignore
 		}
