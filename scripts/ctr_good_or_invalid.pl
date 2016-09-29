@@ -878,6 +878,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('POSIX::tmpnam');
 		} elsif (
+			 m{\QThe encoding pragma is no longer supported}
+			) {
+		    $add_analysis_tag->('encoding pragma');
+		} elsif (
 			 m{did you forget to declare "my } # since perl 5.21.4
 			) {
 		    $add_analysis_tag->('use strict error message');
