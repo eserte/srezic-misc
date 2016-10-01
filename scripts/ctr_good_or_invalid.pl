@@ -1388,7 +1388,7 @@ sub set_currfile {
 		    }
 		}
 		if ($changed) {
-		    $annotation_text = join(',', @annotations);
+		    $annotation_text = join("\n", @annotations); # turn commas into newlines, because lines may be long by now...
 		}
 	    }
 	    my $w;
