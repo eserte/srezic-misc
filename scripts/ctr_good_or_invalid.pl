@@ -23,7 +23,7 @@ BEGIN {
     }
 }
 
-use File::Basename qw(basename);
+use File::Basename qw(basename dirname);
 use File::Copy qw(move);
 use Hash::Util qw(lock_keys);
 use Tk;
@@ -1374,14 +1374,20 @@ sub set_currfile {
 		last if defined $url;
 	    }
 	    {
-		my $found;
+		my $changed;
 		for my $annotation (@annotations) {
 		    if ($rtticket_to_title->{$annotation}) {
 			$annotation .= " ($rtticket_to_title->{$annotation})";
-			$found = 1;
+			$changed = 1;
+		    } elsif ($annotation =~ m{/github.com/.*/issues/}) {
+			my $title = get_cached_github_issue_title($annotation);
+			if (defined $title) {
+			    $annotation .= " ($title)";
+			    $changed = 1;
+			}
 		    }
 		}
-		if ($found) {
+		if ($changed) {
 		    $annotation_text = join(',', @annotations);
 		}
 	    }
@@ -1961,6 +1967,43 @@ sub read_rt_information {
 	}
     }
     \%rtticket_to_title;
+}
+
+sub get_cached_github_issue_title {
+    my($url) = @_;
+    my $title;
+    if ($url =~ s{/github.com/}{/api.github.com/repos/}) {
+	eval {
+	    require DB_File;
+	    require Fcntl;
+	    my $cache_file = "$ENV{HOME}/.cache/ctr_good_or_invalid/github_issue_titles.db";
+	    if (!-d dirname($cache_file)) {
+		require File::Path;
+		File::Path::mkpath(dirname($cache_file));
+	    }
+	    # XXX implement locking for all!
+	    tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+		or die "ERROR: Can't tie cache file $cache_file: $!";
+	    if (exists $db{$url}) {
+		$title = $db{$url};
+	    } else {
+		warn "INFO: Not found in cache, try to fetch from $url...\n";
+		require LWP::UserAgent;
+		require JSON::XS;
+		my $resp = LWP::UserAgent->new->get($url);
+		if ($resp->is_success) {
+		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
+		    $db{$url} = $title;
+		}
+	    }
+	};
+	if ($@) {
+	    warn "ERROR: $@";
+	}
+    } else {
+	warn "WARN: Unexpected github URL '$url'";
+    }
+    $title;
 }
 
 sub make_query_string {
