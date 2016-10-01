@@ -113,9 +113,10 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
 return 1 if caller(); # for modulino-style testing
 
-my($distvname2annotation, $distname2annotation);
+my($distvname2annotation, $distname2annotation, $rtticket_to_title);
 if (@annotate_files) {
     ($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
+    $rtticket_to_title = read_rt_information();
 }
 
 if ($auto_good) {
@@ -1372,6 +1373,18 @@ sub set_currfile {
 		} # ... or something else
 		last if defined $url;
 	    }
+	    {
+		my $found;
+		for my $annotation (@annotations) {
+		    if ($rtticket_to_title->{$annotation}) {
+			$annotation .= " ($rtticket_to_title->{$annotation})";
+			$found = 1;
+		    }
+		}
+		if ($found) {
+		    $annotation_text = join(',', @annotations);
+		}
+	    }
 	    my $w;
 	    if ($url) {
 		$w = $analysis_frame->Button(-text => $annotation_label,
@@ -1932,6 +1945,22 @@ sub read_auto_good_file {
     } else {
 	undef;
     }
+}
+
+# XXX Should be replaced by something else (e.g. rt+github clients)
+sub read_rt_information {
+    my %rtticket_to_title;
+    if (open my $fh, "$ENV{HOME}/Mail/rt-cpan/.overview") {
+	while(<$fh>) {
+	    if (my($rtticket, $title) = $_ =~ m{\t\[rt.cpan.org #(\d+)\] AutoReply: ([^\t]+)}) {
+		if (!exists $rtticket_to_title{$rtticket}) {
+		    $title =~ s{^\s+}{}; $title =~ s{\s+$}{};
+		    $rtticket_to_title{$rtticket} = $title;
+		}
+	    }
+	}
+    }
+    \%rtticket_to_title;
 }
 
 sub make_query_string {
