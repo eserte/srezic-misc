@@ -1787,28 +1787,48 @@ sub nextfile {
     }
 }
 
+{
+my $X11_Protocol_usable;
 sub is_user_at_computer {
-    my $ret = eval {
-	require X11::Protocol;
-	my $X = X11::Protocol->new;
-	$X->init_extension('MIT-SCREEN-SAVER')
-	    or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
-	my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
-	$on_or_off eq 'On' ? 0 : 1;
-    };
-    if ($@) {
-	if ($do_check_screensaver) {
-	    if ($@ =~ m{(Can't connect to display|Connection refused)}) {
-		(my $err = $@) =~ s{\n}{ }g;
-		warn "Error: $err, assume script has no connection to display...\n";
-		return 0;
+    my $ret;
+    if (defined $X11_Protocol_usable && !$X11_Protocol_usable) {
+	$ret = 1;
+    } else {
+	$ret = eval {
+	    require X11::Protocol;
+	    # Somehow this does not work from a MacOSX system to a remote Unix system...
+	    # it even hangs, so need to setup a timeout mechanism.
+	    local $SIG{ALRM} = sub {
+		$X11_Protocol_usable = 0;
+		die "Timeout while doing X11::Protocol stuff...";
+	    };
+	    alarm(1);
+	    my $X = X11::Protocol->new;
+	    alarm(0);
+	    $X->init_extension('MIT-SCREEN-SAVER')
+		or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
+	    my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
+	    $X11_Protocol_usable = 1;
+	    $on_or_off eq 'On' ? 0 : 1;
+	};
+	if ($@) {
+	    if ($do_check_screensaver) {
+		if ($@ =~ m{(Can't connect to display|Connection refused)}) {
+		    (my $err = $@) =~ s{\n}{ }g;
+		    warn "Error: $err, assume script has no connection to display...\n";
+		    $ret = 0;
+		} elsif ($@ =~ m{Timeout while doing X11::Protocol stuff}) {
+		    $ret = 1;
+		} else {
+		    die $@;
+		}
+	    } else {
+		$ret = 1;
 	    }
-	    die $@;
-	} else {
-	    return 1;
 	}
     }
     $ret;
+}
 }
 
 sub parse_report_filename {
