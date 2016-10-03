@@ -814,20 +814,27 @@ if ($my_tmpdir) {
 		# may use it...
 	    }
 	    my $_another_tmp = $another_tmp . '/cpansmoker' . (!$user_owned ? "-$<" : '');
+	    # user owned temp directory does not 
+	    my $tmp_mode = $user_owned ? 0755 : 01777;
 	    if (!-d $_another_tmp) {
-		mkdir $_another_tmp
+		mkdir $_another_tmp, $tmp_mode
 		    or die "Cannot create $_another_tmp: $!";
 		if (!$user_owned) {
-		    chmod 01777, $_another_tmp
-			or die "Cannot set sticky bit: $!";
+		    # the mode in the mkdir call may be modified by
+		    # umask; so correct the mode here
+		    chmod $tmp_mode, $_another_tmp;
 		}
 	    }
 
 	    if ($per_day_build_dir) {
 		$_another_tmp .= '/' . per_day_directory_name();
 		if (!-d $_another_tmp) {
-		    mkdir $_another_tmp
+		    mkdir $_another_tmp, $tmp_mode
 			or die "Cannot create $_another_tmp: $!";
+		    if (!$user_owned) {
+			# see above
+			chmod $tmp_mode, $_another_tmp;
+		    }
 		}
 	    }
 
