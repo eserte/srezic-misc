@@ -1029,6 +1029,7 @@ sub parse_test_report {
 		if ($currarchname =~ m{(linux|freebsd)}) { # don't know for other OS
 		    if    ($signal == 11) { $signal = 'SEGV' }
 		    elsif ($signal == 6)  { $signal = 'ABRT' }
+		    elsif ($signal == 8)  { $signal = 'FPE'  }
 		    elsif ($signal == 9)  { $signal = 'KILL' }
 		    elsif ($signal == 14) { $signal = 'ALRM' }
 		    elsif ($signal == 13) { $signal = 'PIPE' }
