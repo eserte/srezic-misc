@@ -63,7 +63,9 @@ my @regular_perls;
 my $use_regular_perls;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
+my($lock_build_dir, $lock_tmp_dir);
 my $per_day_build_dir = 1; # currently it's really a build dir for every 3 hours, not a daily one
+my $build_dir_hours = 1; # XXX was 3
 my $split_dists = $^O eq 'MSWin32' ? 5 : 40;
 my $has_xterm_conf;
 my $skip_tested;
@@ -913,6 +915,7 @@ if ($my_tmpdir) {
 			chmod $tmp_mode, $_another_tmp;
 		    }
 		}
+		$lock_tmp_dir = lock_directory($_another_tmp, 'sh');
 	    }
 
 	    $ENV{TMPDIR} = $_another_tmp;
@@ -1462,7 +1465,10 @@ EOF
 
 	if ($per_day_build_dir) {
 	    my $today = per_day_directory_name();
-	    $cpan_shell_init .= q{$CPAN::Config->{build_dir} .= "/} . $today . q{"; mkdir $CPAN::Config->{build_dir}; }; # let CPAN fail if mkdir was not successful
+	    my $full_today_dir = $CPAN::Config->{build_dir} . '/' . $today;
+	    mkdir $full_today_dir if !-d $full_today_dir;
+	    $lock_build_dir = lock_directory($full_today_dir, 'sh');
+	    $cpan_shell_init .= q{$CPAN::Config->{build_dir} .= "/} . $today . q{"; };
 	}
 
 	if ($debug) {
@@ -2176,7 +2182,7 @@ sub check_disk_free_directory {
 		$entry =~ $date_rx;
 		my $hour = $4 || 0;
 		my $epoch = Time::Local::timelocal(0,0,$hour,$3,$2-1,$1);
-		if (time - $epoch >= (3+3)*3600) { # older than 3 plus 3 hours
+		if (time - $epoch >= $build_dir_hours*2*3600) { # always keep two (or one?) build dirs
 		    $oldest_directory = "$parent_dir/$entry";
 		}
 	    }
@@ -2195,10 +2201,16 @@ sub check_disk_free_directory {
 			$warned{$last_remove_candidate} = 1;
 		    }
 		} else {
-		    warn "INFO: Remove now oldest build directory: $oldest_directory\n";
-		    rmtree($oldest_directory, 0, 0);
-		    $last_remove_candidate = $oldest_directory;
-		    next; # retry
+		    my $lock = eval { lock_directory($oldest_directory, 'ex') };
+		    if ($@) {
+			warn "INFO: $oldest_directory is in use, don't remove...\n";
+			last;
+		    } else {
+			warn "INFO: Remove now oldest build directory: $oldest_directory\n";
+			rmtree($oldest_directory, 0, 0);
+			$last_remove_candidate = $oldest_directory;
+			next; # retry
+		    }
 		}
 	    }
 	}
@@ -2269,8 +2281,30 @@ sub per_day_directory_name {
     my $time = time;
     my $today = POSIX::strftime('%Y%m%d', localtime $time);
     my $hour = POSIX::strftime('%H', localtime $time);
-    $hour = sprintf '%02d', int($hour / 3) * 3;
+    $hour = sprintf '%02d', int($hour / $build_dir_hours) * $build_dir_hours;
     $today . $hour;
+}
+
+# Possible return values:
+# - undef:     no locking possible at all
+# - $fh:       lock file handle, please keep it
+# - exception: lock not possible, another lock is already active
+sub lock_directory {
+    my($dir, $how) = @_;
+    open my $fh, '<', $dir
+	or do {
+	    warn "WARNING: Cannot lock directory '$dir' ($!); disable locking mechanism.\n";
+	    return;
+	};
+    require Fcntl;
+    my $flag = (
+		$how eq 'ex' ? &Fcntl::LOCK_EX :
+		$how eq 'sh' ? &Fcntl::LOCK_SH :
+		die "ERROR: Invalid lock_directory flag '$how' (use ex or sh)"
+	       );
+    flock $fh, $flag | &Fcntl::LOCK_NB
+	or die "Can't lock $dir with '$how': $!";
+    $fh;
 }
 
 # Rather slow, has to load CPAN.pm to get version.
