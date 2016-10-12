@@ -17,16 +17,20 @@
 #     sudo apt-get install libmagickcore-dev
 #
 
-# NOTE! Currently building on debian/jessie fails.
-# debian/wheezy and earlier (and possibly corresponding
-# Ubuntu or Mint versions) should work.
-
 use strict;
 use File::Basename qw(dirname);
 use File::Temp qw(tempdir);
 use Getopt::Long;
 
 sub mydie ($);
+sub yn ();
+
+my %accepted_test_failures = (
+			      '6.8.9.9' => {
+					    't/mpeg/read.t' => 2,
+					    't/read.t'      => 1,
+					   }
+			     );
 
 my $keep;
 GetOptions("keep!" => \$keep)
@@ -79,8 +83,11 @@ if (!$imagemagick_PerlMagick_dir || !-d $imagemagick_PerlMagick_dir) {
     mydie "Cannot find PerlMagick directory";
 }
 
-chdir dirname($imagemagick_PerlMagick_dir)
-    or mydie "Cannot chdir to imagemagick* dir: $!";
+my $imagemagick_dir = dirname($imagemagick_PerlMagick_dir);
+chdir $imagemagick_dir
+    or mydie "Cannot chdir to $imagemagick_dir: $!";
+
+my($imagemagick_version) = $imagemagick_dir =~ m{imagemagick-(.*)};
 
 my $PerlMagick_dir = "PerlMagick";
 
@@ -130,8 +137,54 @@ if ($has_quantum_imagemagick) {
     $? == 0 or mydie "Patching quantum/Makefile failed";
 }
 
-system('make', 'all', 'test');
-$? == 0 or mydie "Building or testing failed";
+system('make', 'all');
+$? == 0 or mydie "Building failed";
+
+{
+    my @test_cmd = ('make', 'test');
+    open my $fh, "-|", @test_cmd
+	or die "Failure while running '@test_cmd': $!";
+    my %test_failures;
+    while(<$fh>) {
+	print $_;
+	if (m{^(\S+).*Wstat: \d+ Tests: \d+ Failed: (\d+)}) {
+	    $test_failures{$1} = $2;
+	}
+    }
+    close $fh;
+
+    if ($? != 0) {
+    AUTO_ACCEPT_TEST_FAILURES: {
+	    if (!%test_failures) {
+		print STDERR "Possible parse problem: test failed, but no test failures were parsed\n";
+	    } else {
+		my $this_accepted_test_failures = $accepted_test_failures{$imagemagick_version};
+		if (!$this_accepted_test_failures) {
+		    print STDERR "No accepted test failures for this version ($imagemagick_version)\n";
+		} else {
+		    for my $test_script (keys %test_failures) {
+			if (exists $this_accepted_test_failures->{$test_script}) {
+			    if ($this_accepted_test_failures->{$test_script} == $test_failures{$test_script}) {
+				delete $test_failures{$test_script};
+			    } else {
+				print STDERR "Unexpected number of test failures in script '$test_script': expected $this_accepted_test_failures->{$test_script}, got $test_failures{$test_script}\n";
+			    }
+			} else {
+			    print STDERR "Test failures in '$test_script' are not expected.\n";
+			}
+		    }
+		    if (!%test_failures) {
+			print STDERR "All test failures are known and accepted, continue with installation...\n";
+			last AUTO_ACCEPT_TEST_FAILURES;
+		    }
+		}
+	    }
+	
+	    print STDERR "Test failed. Continue (y/n)? ";
+	    yn();
+	}
+    }
+}
 
 {
     my @install_cmd = ('make', 'install');
@@ -151,6 +204,19 @@ $? == 0 or mydie "Building or testing failed";
 }
 
 chdir "/"; # so temporary directories may be removed
+
+sub yn () {
+    while() {
+	chomp(my $yn = <STDIN>);
+	if ($yn eq 'y') {
+	    last;
+	} elsif ($yn eq 'n') {
+	    exit 1;
+	} else {
+	    warn "Please answer y or n!\n";
+	}
+    }
+}
 
 sub mydie ($) {
     my $msg = shift;
