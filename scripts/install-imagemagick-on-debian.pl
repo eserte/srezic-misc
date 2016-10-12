@@ -22,6 +22,7 @@
 # Ubuntu or Mint versions) should work.
 
 use strict;
+use File::Basename qw(dirname);
 use File::Temp qw(tempdir);
 use Getopt::Long;
 
@@ -73,10 +74,33 @@ Followed by calling
 
 EOF
 
-my($PerlMagick_dir) = glob("imagemagick-*/PerlMagick");
-if (!$PerlMagick_dir || !-d $PerlMagick_dir) {
+my($imagemagick_PerlMagick_dir) = glob("imagemagick-*/PerlMagick");
+if (!$imagemagick_PerlMagick_dir || !-d $imagemagick_PerlMagick_dir) {
     mydie "Cannot find PerlMagick directory";
 }
+
+chdir dirname($imagemagick_PerlMagick_dir)
+    or mydie "Cannot chdir to imagemagick* dir: $!";
+
+my $PerlMagick_dir = "PerlMagick";
+
+# Do we have a modern, quantum-enabled ImageMagick (debian/jessie and
+# newer)?
+my $has_quantum_imagemagick = -d "$PerlMagick_dir/quantum";
+
+if ($has_quantum_imagemagick) {
+    # Replace .in files early
+    system($^X, '-i.bak', '-pe', 's{-lperl}{}; s{\Q-L../magick/.libs}{};', "$PerlMagick_dir/Makefile.PL.in");
+    $? == 0 or mydie "Patching PerlMagick/Makefile.PL.in failed";
+    system($^X, '-i.bak', '-pe', 's{-lperl}{}; s{\Q-L../../magick/.libs}{};', "$PerlMagick_dir/quantum/Makefile.PL.in");
+    $? == 0 or mydie "Patching PerlMagick/quantum/Makefile.PL.in failed";
+
+    system './configure', "--with-perl=$perl";
+    $? == 0 or mydie "configure step failed";
+    system 'make', 'perl-sources';
+    $? == 0 or mydie "make step failed";
+}
+
 chdir $PerlMagick_dir
     or mydie "Cannot chdir to $PerlMagick_dir: $!";
 
@@ -91,11 +115,20 @@ EOF
 	or die "Error while writing typemap: $!";
 }
 
-system($^X, '-i.bak', '-pe', 's{-lperl}{}', 'Makefile.PL');
-$? == 0 or mydie "Patching Makefile.PL failed";
+if (!$has_quantum_imagemagick) {
+    system($^X, '-i.bak', '-pe', 's{-lperl}{}', 'Makefile.PL');
+    $? == 0 or mydie "Patching Makefile.PL failed";
+}
 
 system($perl, 'Makefile.PL');
 $? == 0 or mydie "Running Makefile.PL failed";
+
+if ($has_quantum_imagemagick) {
+    system($^X, '-i.bak', '-pe', 's{^LD_RUN_PATH *=.*}{}', 'Makefile');
+    $? == 0 or mydie "Patching Makefile failed";
+    system($^X, '-i.bak', '-pe', 's{^LD_RUN_PATH *=.*}{}', 'quantum/Makefile');
+    $? == 0 or mydie "Patching quantum/Makefile failed";
+}
 
 system('make', 'all', 'test');
 $? == 0 or mydie "Building or testing failed";
