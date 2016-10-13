@@ -36,6 +36,8 @@ use POSIX qw(strftime);
 
 sub sort_by_example ($@);
 
+use constant USE_BETA_MATRIX => 1;
+
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.5',
 					'5.24.0:5.25.4',
@@ -362,7 +364,7 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		       -width => 24,
 		       -command => sub {
 			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("http://matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
+			   Tk::Pod::WWWBrowser::start_browser("http://" . (USE_BETA_MATRIX ? 'beta-' : '') . "matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($matrix_b, -msg => 'Matrix');
     }
