@@ -40,9 +40,8 @@ use constant USE_BETA_MATRIX => 1;
 
 my @current_beforemaintrelease_pairs = (
 					'5.24.0:5.25.5',
-					'5.24.0:5.25.4',
- 					'5.24.0:5.24.1 RC3',
- 					'5.22.2:5.22.3 RC3',
+ 					'5.24.0:5.24.1 RC4',
+ 					'5.22.2:5.22.3 RC4',
 				       );
 
 # Patterns for report analysis
