@@ -929,7 +929,8 @@ sub parse_test_report {
 		    # quite unspecific, more specific ones exist above
 		    $add_analysis_tag->('undefined subroutine'); # previously called "possibly missing use/require", but this was often misleading
 		} elsif (
-			 m{^make(?:\[\d+\])?: don't know how to make .*\. Stop$} # BSD make output
+			 m{^make(?:\[\d+\])?: don't know how to make .*\. Stop$} || # BSD make output
+		         m{^\Qmake: *** No rule to make target \E.*\Q, needed by \E.*\Q.  } # GNU make output
 			) {
 		    $add_analysis_tag->('make problem (unhandled target)');
 		} elsif (
