@@ -378,35 +378,54 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($mc_b, -msg => 'MetaCPAN');
     }
-    $f->Button(-text => "ctgetreports",
-	       -command => sub {
-		   require Tk::ExecuteCommand;
-		   require File::Temp;
-		   my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
-		   my $t = $mw->Toplevel(-title => "Reports on $currdist $currversion");
-		   my $ec = $t->ExecuteCommand()->pack;
-		   $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --dumpvars=. --dumpfile=$tempfile");
-		   $ec->execute_command;
-		   $ec->bell;
-		   $ec->destroy;
-		   $t->update;
-		   my $m = $t->Scrolled("More", -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
-		   $t->update;
-		   $m->Load($tempfile);
-		   $m->Subwidget("scrolled")->focus;
-	       })->pack(-side => "left");
-    $f->Button(-text => "solve",
-	       -command => sub {
-		   require Tk::ExecuteCommand;
-		   require File::Temp;
-		   my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
-		   my $t = $mw->Toplevel(-title => "Solve $currdist $currversion");
-		   my $ec = $t->ExecuteCommand()->pack(qw(-fill both -expand 1));
-		   $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --solve --dumpfile=$tempfile");
-		   $ec->execute_command;
-		   $ec->bell;
-		   $ec->focus;
-	       })->pack(-side => "left");
+    # XXX should this be enabled by option? what about the directory?
+    {
+	my $cached_analysis_dir = "/tmp/cached-analysis";
+	if (-d $cached_analysis_dir) {
+	    $f->Button(-text => 'local analysis',
+		       -command => sub {
+			   my $cached_analysis_file = "$cached_analysis_dir/$currdist-$currversion.analysis";
+			   if (-e $cached_analysis_file) {
+			       my $t = $mw->Toplevel(-title => "Local analysis on $currdist $currversion");
+			       my $txt = $t->Scrolled('More', -scrollbars => 'ose')->pack(-fill => 'both', -expand => 1);
+			       $txt->Load($cached_analysis_file);
+			   } else {
+			       $mw->messageBox(-message => 'No cached analysis available');
+			   }
+		       })->pack(-side => 'left');
+	}
+    }
+    if (0) { # XXX never used these buttons...
+	$f->Button(-text => "ctgetreports",
+		   -command => sub {
+		       require Tk::ExecuteCommand;
+		       require File::Temp;
+		       my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
+		       my $t = $mw->Toplevel(-title => "Reports on $currdist $currversion");
+		       my $ec = $t->ExecuteCommand()->pack;
+		       $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --dumpvars=. --dumpfile=$tempfile");
+		       $ec->execute_command;
+		       $ec->bell;
+		       $ec->destroy;
+		       $t->update;
+		       my $m = $t->Scrolled("More", -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
+		       $t->update;
+		       $m->Load($tempfile);
+		       $m->Subwidget("scrolled")->focus;
+		   })->pack(-side => "left");
+	$f->Button(-text => "solve",
+		   -command => sub {
+		       require Tk::ExecuteCommand;
+		       require File::Temp;
+		       my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
+		       my $t = $mw->Toplevel(-title => "Solve $currdist $currversion");
+		       my $ec = $t->ExecuteCommand()->pack(qw(-fill both -expand 1));
+		       $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --solve --dumpfile=$tempfile");
+		       $ec->execute_command;
+		       $ec->bell;
+		       $ec->focus;
+		   })->pack(-side => "left");
+    }
     {
 	my $ff = $f->Frame->pack(qw(-side left));
 	my $smallfont = 'helvetica 5';
