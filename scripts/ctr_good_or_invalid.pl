@@ -1289,7 +1289,7 @@ sub set_currfile {
 			       $load_current_file->();
 			   },
 			  )->pack(-side => 'left');
-	for my $type (qw(pv os datetime)) {
+	for my $type (qw(pv os datetime threaded)) {
 	    if ($pv_os_analysis{$type}->{$recent_state}) {
 		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state},
 			  -bg => $color,
@@ -1674,8 +1674,10 @@ sub rough_pv_os_analysis {
 
     @all_recent_states = sort { $a->{archname} cmp $b->{archname} } @all_recent_states;
     my %state_os_analysis;
+    my %state_threaded_analysis;
     {
 	my %os_state_count;
+	my %threaded_state_count;
 	for my $entry (@all_recent_states) {
 	    my $arch_os;
 	    if ($entry->{archname} =~ m{^(darwin|MSWin32|cygwin)}) {
@@ -1684,7 +1686,11 @@ sub rough_pv_os_analysis {
 		($arch_os) = $entry->{archname} =~ m{^[^- ]+-([^- ]+)};
 	    }
 	    $os_state_count{$arch_os}->{$entry->{state}}++;
+
+	    my $is_threaded = $entry->{archname} =~ m{-thread[- ]} ? 'threaded' : 'unthreaded';
+	    $threaded_state_count{$is_threaded}->{$entry->{state}}++;
 	}
+
 	for my $arch_os (keys %os_state_count) {
 	    if (keys %{ $os_state_count{$arch_os} } == 1) {
 		my $state = (keys %{ $os_state_count{$arch_os} })[0];
@@ -1693,6 +1699,20 @@ sub rough_pv_os_analysis {
 	}
 	for my $state (keys %state_os_analysis) {
 	    $state_os_analysis{$state} = join(',', sort @{ $state_os_analysis{$state} });
+	}
+
+	for my $is_threaded (keys %threaded_state_count) {
+	    if (keys %{ $threaded_state_count{$is_threaded} } == 1) {
+		my $state = (keys %{ $threaded_state_count{$is_threaded} })[0];
+		push @{ $state_threaded_analysis{$state} }, $is_threaded;
+	    }
+	}
+	for my $state (keys %state_threaded_analysis) {
+	    if (@{ $state_threaded_analysis{$state} } == 2) { # "threaded,unthreaded" -> uninteresting!
+		delete $state_threaded_analysis{$state};
+	    } else {
+		$state_threaded_analysis{$state} = join(',', sort @{ $state_threaded_analysis{$state} });
+	    }
 	}
     }
 
@@ -1740,7 +1760,7 @@ sub rough_pv_os_analysis {
 	}
     }
 
-    (pv => \%state_pv_analysis, os => \%state_os_analysis, datetime => \%state_datetime_analysis);
+    (pv => \%state_pv_analysis, os => \%state_os_analysis, datetime => \%state_datetime_analysis, threaded => \%state_threaded_analysis);
 }
 
 sub get_recent_reports_from_cache {
