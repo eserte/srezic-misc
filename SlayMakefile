@@ -58,7 +58,7 @@
 
 {
     use vars '$CPAN_PREREQS';
-    $CPAN_PREREQS = q(pistachio-perl VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk Tk::More MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter YAML Date::Parse);
+    $CPAN_PREREQS = q(VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk Tk::More MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter YAML Date::Parse);
 }
 
 all: permissions

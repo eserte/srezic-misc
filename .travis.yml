@@ -20,13 +20,20 @@ perl:
   - "5.12"
   - "5.10"
 
+addons:
+  apt:
+    packages:
+# for DB_File
+      - libdb-dev
+
 before_install:
   - git clone https://github.com/eserte/travis-helper-cpan-pm.git
   - ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
   - which cpan
+# has to be patched
   - cpan Slay::Makefile
 install:
-  - slaymake install-prereqs-with-cpan
+  - slaymake install-prereqs-with-cpanm
 script:
   - slaymake test-t
   - slaymake test-compile
