@@ -106,4 +106,10 @@ test-compile:
 	}
 
 test-t:
-	prove -r t
+	{
+	    my @cmd = qw(prove -r t);
+	    system @cmd;
+	    die "@cmd failed" if $? != 0;
+	}
+
+
