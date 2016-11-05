@@ -25,6 +25,7 @@ before_install:
   - which cpan
   - cpan Slay::Makefile
 install:
-  - slaymake install-prereqs-with-cpanm
+  - slaymake install-prereqs-with-cpan
 script:
-  - slaymake test
+  - slaymake test-t
+  - slaymake test-compile

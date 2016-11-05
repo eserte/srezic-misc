@@ -58,7 +58,7 @@
 
 {
     use vars '$CPAN_PREREQS';
-    $CPAN_PREREQS = q(pistachio-perl VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter);
+    $CPAN_PREREQS = q(pistachio-perl VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk Tk::More MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter YAML Date::Parse);
 }
 
 all: permissions
@@ -81,6 +81,11 @@ install-prereqs:
 install-prereqs-with-cpanm:
 	cpanm --quiet --notest $CPAN_PREREQS
 
+install-prereqs-with-cpan:
+	cpan $CPAN_PREREQS
+
+# XXX Unfortunately SlayMakefile does not fail if any of the targets fail
+# XXX So best is to call the targets separately
 test:	test-t test-compile
 
 test-compile:
