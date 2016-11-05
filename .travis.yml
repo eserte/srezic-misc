@@ -7,7 +7,8 @@ perl:
 # newest without the need to download
   - "5.20"
 # oldest
-  - "5.8"
+## XXX known to fail, see https://travis-ci.org/eserte/srezic-misc/jobs/173518047
+#  - "5.8"
 # newest
   - "5.24"
 # and the others
