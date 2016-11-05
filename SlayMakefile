@@ -56,6 +56,10 @@
     }
 }
 
+{
+    use vars '$CPAN_PREREQS';
+    $CPAN_PREREQS = q(pistachio-perl VCS Date::ICal Text::vCard PerlIO::gzip Email::MIME);
+}
 
 all: permissions
 
@@ -72,7 +76,10 @@ permissions:
 # XXX does not work --- tty is missing within slaymake, but is needed for password input
 # XXX maybe these should go into pistachio-perl-manager.pl?
 install-prereqs:
-	cpan_smoke_modules -install -perl pistachio-perl VCS Date::ICal Text::vCard PerlIO::gzip Email::MIME
+	cpan_smoke_modules -notypescript -install -perl $CPAN_PREREQS
+
+install-prereqs-with-cpanm:
+	cpanm --quiet --notest $CPAN_PREREQS
 
 test:	test-t test-compile
 
@@ -87,6 +94,7 @@ test-compile:
 		$perl = $^X;
 	    }
 	    for my $script (<scripts/*>) {
+		next if $script =~ m{/00MIGRATED$};
 		system($perl, '-c', $script);
 		is($?, 0, "$script compiled OK");
 	    }
