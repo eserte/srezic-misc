@@ -1,0 +1,25 @@
+branches:
+ except:
+  - /appveyor/
+
+language: perl
+perl:
+  - "5.24"
+  - "5.8"
+  - "5.22"
+  - "5.10"
+  - "5.20"
+  - "5.12"
+  - "5.18"
+  - "5.14"
+  - "5.16"
+
+before_install:
+  - git clone https://github.com/eserte/travis-helper-cpan-pm.git
+  - ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
+  - which cpan
+  - cpan Slay::Makefile
+install:
+  - slaymake install-prereqs-with-cpanm
+script:
+  - slaymake test
