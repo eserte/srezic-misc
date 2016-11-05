@@ -11,7 +11,17 @@ use File::Temp qw(tempdir);
 use Test::More 'no_plan';
 
 my $scripts_dir = "$FindBin::RealBin/../../scripts";
-require "$scripts_dir/ctr_good_or_invalid.pl";
+{
+    local $FindBin::RealBin = $scripts_dir;
+    require "$scripts_dir/ctr_good_or_invalid.pl";
+}
+
+# _get_status_balloon_msg was refactored in Jan 2016
+sub _get_status_balloon_msg {
+    my($recent_states, $recent_state) = @_;
+    my %recent_states_with_pv = get_recent_states_with_pv_and_archname($recent_states);
+    join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv{$recent_state} });
+}
 
 my $tmpdir = tempdir(CLEANUP => 1, TMPDIR => 1);
 for my $def (
@@ -46,11 +56,11 @@ EOF
 		    'new' => ["$tmpdir/pass.Something-1.0-windows.rpt"],
 		   },
 	);
-    my $msg = _get_status_balloon_msg($recent_states{'PASS'});
+    my $msg = _get_status_balloon_msg(\%recent_states, 'PASS');
     chomp(my $expected_msg = <<'EOF');
-perl v5.18.4 PASS Something-1.0 linux
-perl v5.20.0 PASS Something-1.0 freebsd
-perl v5.22.0 PASS Something-1.0 windows
+5.18.4 linux
+5.20.0 freebsd
+5.22.0 windows
 EOF
     is $msg, $expected_msg;
 }
@@ -62,10 +72,10 @@ EOF
 		    'new' => ["$tmpdir/pass.Something-1.0-windows.rpt", "$tmpdir/pass.Something-1.0-windows-123456.rpt"],
 		   },
 	);
-    my $msg = _get_status_balloon_msg($recent_states{'PASS'});
+    my $msg = _get_status_balloon_msg(\%recent_states, 'PASS');
     chomp(my $expected_msg = <<'EOF');
-perl v5.22.0 RC1 PASS Something-1.0 windows
-perl v5.22.0 PASS Something-1.0 windows
+5.22.0 RC1 windows
+5.22.0 windows
 EOF
     is $msg, $expected_msg;
 }
