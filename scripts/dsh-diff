@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 use strict;
 use warnings;
-our $VERSION = 0.003;
+our $VERSION = 0.004;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
@@ -14,10 +14,12 @@ use IPC::Run qw(run);
 
 my $default_jobs_for_c = 20;
 
-my(@dsh_files, @dsh_groups, @hosts, $reference_host, @use_normalizer, $jobs);
+my(@dsh_files, @dsh_groups, @hosts, @ssh_opts, $reference_host, @use_normalizer, $jobs, $use_sudo);
 Getopt::Long::Configure("bundling_override");
 GetOptions('f=s@' => \@dsh_files,
 	   'g=s@' => \@dsh_groups,
+	   'o=s@' => \@ssh_opts,
+	   'sudo!' => \$use_sudo,
 	   'j=i' => \$jobs,
 	   "c" => sub {
 	       $jobs = $default_jobs_for_c;
@@ -110,9 +112,11 @@ if (!$reference_host) {
     die "Cannot find a first host, maybe the group file @dsh_files is empty?";
 }
 
+my @use_ssh_opts = ("-o", "ClearAllForwardings=yes", (map { ("-o", $_) } @ssh_opts));
+
 my($tmp2fh,$principal_file) = tempfile(UNLINK => 1)
     or die $!;
-my @cmd = ("ssh", "-o", "ClearAllForwardings=yes", $reference_host, "cat $file_to_diff");
+my @cmd = ("ssh", @use_ssh_opts, $reference_host, ($use_sudo ? 'sudo ' : '') . "cat $file_to_diff");
 open my $sshfh, "-|", @cmd
     or die $!;
 while(<$sshfh>) {
@@ -138,11 +142,11 @@ for my $other_host (@other_hosts) {
     } else {
 	print_separator($other_host);
     }
-    my @ssh_base_cmd = ("ssh", "-o", "ClearAllForwardings=yes", $other_host);
+    my @ssh_base_cmd = ("ssh", @use_ssh_opts, $other_host);
     if ($normalizer) {
 	my($tmp3fh,$remote_file) = tempfile(UNLINK => 1, SUFFIX => "_$other_host.tmp")
 	    or die "Can't create temporary file: $!";
-	my @cmd = (@ssh_base_cmd, "cat", $file_to_diff);
+	my @cmd = (@ssh_base_cmd, ($use_sudo ? 'sudo ' : '') . "cat", $file_to_diff);
 	my $buf;
 	my $success = run [@cmd], ">", \$buf;
 	if (!$success) {
@@ -166,7 +170,7 @@ for my $other_host (@other_hosts) {
 	    }
 	}
     } else {
-	my @remote_diff_cmd = (@ssh_base_cmd, "diff -u - $file_to_diff");
+	my @remote_diff_cmd = (@ssh_base_cmd, ($use_sudo ? 'sudo ' : '') . "diff -u - $file_to_diff");
 	if ($pfm) {
 	    my $diff;
 	    run [@remote_diff_cmd], "<", $principal_file, ">", \$diff; # no success check here, diff returns non-zero on diffs
