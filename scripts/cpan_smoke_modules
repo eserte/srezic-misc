@@ -1334,6 +1334,7 @@ EOF
 		} else {
 		    warn "sudo operation necessary, but no sudo_keeper program available...\n";
 		}
+		$cpan_shell_init .= q#$CPAN::Config->{make_install_make_command}=q{sudo make}; $CPAN::Config->{mbuild_install_build_command}=q{sudo ./Build}; #;
 	    }
 	}
 	
