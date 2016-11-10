@@ -851,6 +851,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('new regexp deprecation');
 		} elsif (
+			 m{# +Error: +Feature bundle ".*" is not supported by Perl .*$at_source_qr}
+			) {
+		    $add_analysis_tag->('perl too old for feature');
+		} elsif (
 			 m{\Q(Might be a runaway multi-line // string starting on line \E\d+} ||
 			 m{\QSearch pattern not terminated \E$at_source_qr} ||
 			 m{syntax error $at_source_without_dot_qr, near "// }
