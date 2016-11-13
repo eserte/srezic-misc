@@ -36,7 +36,7 @@ prereqs listed:
 
 use strict;
 use warnings;
-our $VERSION = '3.00';
+our $VERSION = '3.01';
 
 use File::Basename 'dirname';
 use File::Spec;
@@ -123,22 +123,8 @@ if ($method eq 'direct-cache-capture') {
     $regexp = qr{$regexp};
     my %seen_module;
     if (!@contents_files) {
-        require Config;
+        my $archname = get_archname();
         require File::Glob;
-        my($archname) = $Config::Config{'osvers'} =~ m{-([^-]+)$};
-        if (!$archname || $archname eq 'generic') {
-            # Some examples:
-            # Debian/squeeze:              myuname='linux madeleine 3.2.0-4-amd64 #1 smp debian 3.2.39-2 x86_64 gnulinux ';
-            # Debian/wheezy self-compiled: myuname='linux eserte 3.2.0-4-amd64 #1 smp debian 3.2.60-1+deb7u3 x86_64 gnulinux ';
-            # Debian/jessie:               myuname='linux themisto 3.16.0-4-amd64 #1 smp debian 3.16.7-ckt20-1+deb8u3 (2016-01-17) x86_64 gnulinux ';
-            # Mint13:                      myuname='linux panlong 2.6.42-37-generic #58-ubuntu smp thu jan 24 15:28:10 utc 2013 x86_64 x86_64 x86_64 gnulinux ';
-            if ($Config::Config{'myuname'} =~ m{ x86_64 gnulinux}) {
-                $archname = 'amd64';
-            } else {
-                warn "WARN: Cannot guess archname from \$Config{osvers} or \$Config{myuname}, fallback to amd64\n";
-                $archname = 'amd64';
-            }
-        }
         if (-d "$ENV{HOME}/.cache/apt-file") { # non-root usage
             @contents_files = File::Glob::bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-$archname.gz");
         } else { # root usage
@@ -389,6 +375,34 @@ sub make_regexp {
     }
     my $regexp = $ra->re;
     $regexp;
+}
+
+sub get_archname {
+    if (is_in_path('dpkg')) {
+        if (open my $fh, '-|', 'dpkg', '--print-architecture') {
+            chomp(my $archname = <$fh>);
+            if (defined $archname && length $archname) {
+                return $archname;
+            }
+        }
+    }
+    warn "WARN: dpkg is not available, fallback to guessing for archname detection...\n";
+    require Config;
+    my($archname) = $Config::Config{'osvers'} =~ m{-([^-]+)$};
+    if (!$archname || $archname eq 'generic') {
+        # Some examples:
+        # Debian/squeeze:              myuname='linux madeleine 3.2.0-4-amd64 #1 smp debian 3.2.39-2 x86_64 gnulinux ';
+        # Debian/wheezy self-compiled: myuname='linux eserte 3.2.0-4-amd64 #1 smp debian 3.2.60-1+deb7u3 x86_64 gnulinux ';
+        # Debian/jessie:               myuname='linux themisto 3.16.0-4-amd64 #1 smp debian 3.16.7-ckt20-1+deb8u3 (2016-01-17) x86_64 gnulinux ';
+        # Mint13:                      myuname='linux panlong 2.6.42-37-generic #58-ubuntu smp thu jan 24 15:28:10 utc 2013 x86_64 x86_64 x86_64 gnulinux ';
+        if ($Config::Config{'myuname'} =~ m{ x86_64 gnulinux}) {
+            $archname = 'amd64';
+        } else {
+            warn "WARN: Cannot guess archname from \$Config{osvers} or \$Config{myuname}, fallback to amd64\n";
+            $archname = 'amd64';
+        }
+    }
+    $archname;
 }
 
 =head1 DESCRIPTION
