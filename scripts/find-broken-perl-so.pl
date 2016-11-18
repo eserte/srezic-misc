@@ -182,4 +182,10 @@ __END__
 
     for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl -doit; done
 
+=head1 BUGS
+
+This script should do some kind of dependency ordering. If for example
+openssl was updated, then first Net::SSLeay should be updated,
+followed by other modules possibly using both openssl and Net::SSLeay.
+
 =cut
