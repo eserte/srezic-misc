@@ -1208,10 +1208,15 @@ EOF
 	# possible to specify distributions.
 	open my $fh, '-|', $perl, '-MCPAN', '-e', <<'EOF', @dist_or_mods or die $!;
 use strict;
-for my $mod (@ARGV) {
-    my $inst_file = eval { CPAN::Shell->expand("Module", $mod)->inst_file };
+for my $dist_or_mod (@ARGV) {
+    my $inst_file;
+    if ($dist_or_mod =~ m{[/-]}) {
+	$inst_file = eval { CPAN::Shell->expand("Distribution", $dist_or_mod)->inst_file };
+    } else {
+	$inst_file = eval { CPAN::Shell->expand("Module", $dist_or_mod)->inst_file };
+    }
     if ($inst_file) {
-	print $mod, "\n";
+	print $dist_or_mod, "\n";
     }
 }
 EOF
