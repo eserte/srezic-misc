@@ -17,11 +17,12 @@ use Config;
 use File::Find;
 use Getopt::Long;
 
-my $v;
+my $v = 0;
 my $doit;
 my @ignorerxs;
 GetOptions(
 	   "v+" => \$v,
+	   'q|quiet' => sub { $v = -1 },
 	   "doit" => \$doit,
 	   'ignorerx=s@' => \@ignorerxs,
 	  )
@@ -43,7 +44,7 @@ my %so_not_found;
 
 for my $search_lib (@search_libs) {
     if (!-d $search_lib) {
-	print STDERR "INFO: skipping non-existent search lib path '$search_lib'\n";
+	print STDERR "INFO: skipping non-existent search lib path '$search_lib'\n" if $v >= 0;
     } else {
 	File::Find::find({wanted => \&wanted}, $search_lib);
     }
@@ -65,7 +66,7 @@ for my $mod (
 	     # XXX scheinen doch "echte" Fehler zu sein --- qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
 	    ) {
     if (exists $broken_module{$mod}) {
-	print STDERR "INFO: removing false positive $mod from list\n";
+	print STDERR "INFO: removing false positive $mod from list\n" if $v >= 0;
 	delete $broken_module{$mod};
     }
 }
@@ -74,7 +75,7 @@ if (@ignorerxs) {
     for my $mod (keys %broken_module) {
 	for my $ignorerx (@ignorerxs) {
 	    if ($mod =~ $ignorerx) {
-		print STDERR "INFO: remove $mod from list (matching --ignorerx param $ignorerx)\n";
+		print STDERR "INFO: remove $mod from list (matching --ignorerx param $ignorerx)\n" if $v >= 0;
 		delete $broken_module{$mod};
 		last;
 	    }
@@ -117,7 +118,7 @@ sub wanted {
 	    $module =~ s{.*/auto/}{};
 	    $module =~ s{/}{::}g;
 	    $broken_module{$module} = 1;
-	    if ($v) {
+	    if ($v >= 1) {
 		while ($res =~ m{^\s+(.*?)\s+=>.*not found}gm) {
 		    $so_not_found{$1}->{$File::Find::name} = 1;
 		}
