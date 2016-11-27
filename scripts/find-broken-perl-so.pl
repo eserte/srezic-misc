@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2015,2016 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -19,14 +19,20 @@ use Getopt::Long;
 
 my $v;
 my $doit;
+my @ignorerxs;
 GetOptions(
 	   "v+" => \$v,
 	   "doit" => \$doit,
+	   'ignorerx=s@' => \@ignorerxs,
 	  )
-    or die "usage: $0 [-v] [-doit]";
+    or die "usage: $0 [-v] [-doit] [-ignorerx rx ...]";
 
 if ($doit && !has_cpan_smoke_modules_cmd()) {
     die "Sorry, -doit is only possible if cpan_smoke_modules is available";
+}
+
+for my $ignorerx (@ignorerxs) {
+    $ignorerx = qr{$ignorerx};
 }
 
 my @search_libs = $Config{'sitearch'};
@@ -61,6 +67,18 @@ for my $mod (
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n";
 	delete $broken_module{$mod};
+    }
+}
+
+if (@ignorerxs) {
+    for my $mod (keys %broken_module) {
+	for my $ignorerx (@ignorerxs) {
+	    if ($mod =~ $ignorerx) {
+		print STDERR "INFO: remove $mod from list (matching --ignorerx param $ignorerx)\n";
+		delete $broken_module{$mod};
+		last;
+	    }
+	}
     }
 }
 
