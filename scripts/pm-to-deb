@@ -495,6 +495,17 @@ debugging.
 
 =back
 
+=head1 EXAMPLES
+
+To install dependencies of an already extracted standard perl
+distribution with a shipped F<Makefile.PL> do:
+
+   apt-file update && sudo apt-get update && perl Makefile.PL && sudo apt-get install $(pm-to-deb --from-mymeta)
+
+If only F<Build.PL> is shipped do instead:
+
+   apt-file update && sudo apt-get update && perl Build.PL && sudo apt-get install $(pm-to-deb --from-mymeta)
+
 =head1 BUGS
 
 It is possible that a Perl module is provided by more than one Debian
