@@ -42,16 +42,25 @@ my %seen;
 my %broken_module;
 my %so_not_found;
 
+my $ext = $^O eq 'darwin' ? 'bundle' : 'so';
+
+if ($^O eq 'darwin') {
+    print STDERR "Completely untested for MacOSX. Press RETURN to continue. ";
+    <STDIN>;    
+}
+
 for my $search_lib (@search_libs) {
     if (!-d $search_lib) {
 	print STDERR "INFO: skipping non-existent search lib path '$search_lib'\n" if $v >= 0;
+    } elsif ($^O eq 'darwin') {
+	File::Find::find({wanted => \&wanted_darwin}, $search_lib);
     } else {
 	File::Find::find({wanted => \&wanted}, $search_lib);
     }
 }
 
 if (%so_not_found) {
-    print STDERR "The following .so could not be found:\n";
+    print STDERR "The following .$ext could not be found:\n";
     for my $so (sort keys %so_not_found) {
 	print STDERR "  $so (used in: " . join(', ', sort keys %{$so_not_found{$so}}) . ")\n";
     }
@@ -108,7 +117,7 @@ EOF
     }
     print STDERR "\n";
 } else {
-    print STDERR "No broken .so files found in @search_libs\n";
+    print STDERR "No broken .$ext files found in @search_libs\n";
 }
 
 sub wanted {
@@ -124,6 +133,26 @@ sub wanted {
 		    $so_not_found{$1}->{$File::Find::name} = 1;
 		}
 	    }
+	}
+	$seen{$File::Find::name} = 1;
+    }
+}
+
+# XXX completely untested, probably does not work!
+sub wanted_darwin {
+    if (-f $_ && m{\.bundle\z} && !$seen{$File::Find::name}) {
+	my $res = `otool -L $File::Find::name 2>&1`;
+	if ($res =~ m{not found}) {
+	    (my $module = $File::Find::name) =~ s{/[^/]+$}{};
+	    $module =~ s{.*/auto/}{};
+	    $module =~ s{/}{::}g;
+	    $broken_module{$module} = 1;
+	    if ($v >= 1) {
+		while ($res =~ m{^\s+(.*?)\s+=>.*not found}gm) {
+		    $so_not_found{$1}->{$File::Find::name} = 1;
+		}
+	    }
+	    warn "$module -> $res"; # XXX
 	}
 	$seen{$File::Find::name} = 1;
     }
