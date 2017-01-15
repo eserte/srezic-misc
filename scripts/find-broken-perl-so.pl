@@ -74,6 +74,7 @@ for my $mod (
 	     'Judy', # libJudy is in .../Alien/Judy/libJudy.so.1, LD_LIBRARY_PATH tricks?
 	     'Vmprobe::Cache', 'Vmprobe::Cache::Snapshot', # deleted from CPAN, only at BackPAN: https://metacpan.org/release/FRACTAL/Vmprobe-v0.1.5
 	     # XXX scheinen doch "echte" Fehler zu sein --- qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
+	     'CSS::Sass::plugins::glob', 'CSS::Sass::plugins::math', # belong to CSS::Sass
 	    ) {
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n" if $v >= 0;
@@ -236,5 +237,11 @@ __END__
 This script should do some kind of dependency ordering. If for example
 openssl was updated, then first Net::SSLeay should be updated,
 followed by other modules possibly using both openssl and Net::SSLeay.
+
+Does not detect problems in the dependencies of
+Google::ProtocolBuffers::Dynamic (seen on FreeBSD 10.3, after
+upgrading from 10.1). The following fixed the problem:
+
+    cpan_smoke_modules -reinstall Alien::uPB Alien::ProtoBuf Google::ProtocolBuffers::Dynamic
 
 =cut
