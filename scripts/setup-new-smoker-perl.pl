@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -68,6 +68,7 @@ my $use_pthread;
 my $use_shared;
 my $extra_config_opts;
 my $cf_email;
+my $use_sudo_v = 1;
 if ($ENV{USER} =~ m{eserte|slaven}) {
     $cf_email = 'srezic@cpan.org'; # XXX make configurable?
 }
@@ -88,6 +89,7 @@ GetOptions(
 	   'shared!'   => \$use_shared,
 	   'extraconfigopts=s' => \$extra_config_opts,
 	   'cc=s' => \$cc,
+	   'sudo-v!' => \$use_sudo_v,
 	  )
     or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
@@ -667,7 +669,9 @@ sub step ($%) {
 
 sub sudo (@) {
     my(@cmd) = @_;
-    my_system 'sudo', '-v';
+    if ($use_sudo_v) {
+	my_system 'sudo', '-v';
+    }
     if (!$sudo_validator_pid) {
 	my $parent = $$;
 	$sudo_validator_pid = fork;
@@ -678,7 +682,9 @@ sub sudo (@) {
 		if (!kill 0 => $parent) {
 		    exit;
 		}
-		my_system 'sudo', '-v';
+		if ($use_sudo_v) {
+		    my_system 'sudo', '-v';
+		}
 	    }
 	}
     }
@@ -846,6 +852,13 @@ running parallel tests (-jobs is global, so don't specify it at all):
     setup-new-smoker-perl.pl -pv 5.16.3 -cc gcc-4.8 -patchperl
 
 Problem seen with perl-5.16.3 and perl-5.8.8.
+
+=item sudo unexpectedly asks for a password
+
+This was observed on CentOS 7 systems with sudo 1.8.6p7: the C<sudo
+-v> command asks for a password, even if the user is setup to do
+passwordless sudo. Workaround: start this command with the
+C<--no-sudo-v> option.
 
 =back
 
