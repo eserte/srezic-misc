@@ -220,6 +220,14 @@ GetOptions("n" => \$n,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
 	   'minbuilddircleanup=s' => \$min_build_dir_cleanup,
+	   'mindirinodes=s' => sub {
+	       my($val) = $_[1] =~ m{^([\d\.]+)%$};
+	       if (defined $val) {
+		   $min_dir_inodes_percent = $val;
+	       } else {
+		   die "Please specify value as number%, e.g. 10%\n";
+	       }
+	   },
 	   'hidemod=s@' => \@hidemod,
 	   'timefake=s' => \$time_fake,
 	   'vnc!'  => \$use_vncserver,
