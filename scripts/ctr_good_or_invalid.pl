@@ -700,6 +700,7 @@ sub parse_test_report {
 		} elsif (
 			 /^.*?$c_ext_qr:\d+:\s+error:\s+/     || # gcc
 			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ || # gcc or clang
+			 /^.*?$c_ext_qr:\d+:\d+:\s+Fehler:\s+/ || # localized (seen on CentOS7)
 			 /^cc: acomp failed for .*\.c/           # solaris cc, unspecific
 			) {
 		    $add_analysis_tag->('c compile error');
