@@ -82,7 +82,7 @@ if ($scenario) {
     for my $spec (@specs) {
 	my($perlver, $stableness, $range) = split /,/, $spec;
 	spec_usage if !defined $range;
-	spec_usage("perl version in '$spec' does not look like expected") if $perlver !~ m{^\d+\.\d+\.}; # does not look like a perl version (be not to strict here)
+	spec_usage("perl version in '$spec' does not look like expected") if $perlver !~ m{^\d+\.\d+\.} && $perlver ne 'system'; # does not look like a perl version (be not to strict here)
 	spec_usage("stableness in '$spec' must be 'stable' or 'devel'") if $stableness !~ m{^(devel|stable)$};
 	spec_usage("time range in '$spec' does not look like '-\${DAYS}d'") if $range !~ m{^-\d+.*};
     }
@@ -102,6 +102,14 @@ sub run_smoker ($$$) {
     warn "*** $perl_version: Just test uploads last $interval, " . ($stability eq 'stable' ? 'only stable' : 'also devel') . " versions...\n";
     my $perl_exe;
  FIND_PERL: {
+	if ($perl_version eq 'system') {
+	    my $try_perl_exe = '/usr/bin/perl';
+	    if (-x $try_perl_exe) {
+		$perl_exe = $try_perl_exe;
+		last FIND_PERL;
+	    }
+	    die "System perl $try_perl_exe not available";
+	}
 	for my $prefix ('/usr/perl', '/opt/perl-') {
 	    my $try_perl_exe;
 	    $try_perl_exe = $prefix . $perl_version . '/bin/perl' . $perl_version;
