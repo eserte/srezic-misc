@@ -154,12 +154,12 @@ if ($method eq 'direct-cache-capture') {
         open my $fh, '-|', @cmd or die "Error running @cmd: $!";
         my $l = <$fh>;
         if ($l =~ /^This file maps each file available/) {
-            do {
+            while (defined($l = <$fh>)) {
                 if ($l =~ /^FILE\s+LOCATION$/) {
                     $l = <$fh>;
                     last;
                 }
-            } while(defined($l = <$fh>));
+            }
         } elsif ($l =~ /^FILE\s+LOCATION$/) {
             $l = <$fh>;
         }
