@@ -2,7 +2,7 @@
 # -*- perl -*-
 
 #
-# Copyright (C) 2008,2009,2016 Slaven Rezic All rights reserved.
+# Copyright (C) 2008,2009,2016,2017 Slaven Rezic All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -152,21 +152,31 @@ if ($method eq 'direct-cache-capture') {
             @cmd = ('zcat', $file);
         }
         open my $fh, '-|', @cmd or die "Error running @cmd: $!";
-        while(<$fh>) {
-            last if /^FILE\s+LOCATION$/;
-        }
-        while(<$fh>) {
-            if ($_ =~ $regexp) {
-                my $module;
-                for my $capture (keys %+) {
-                    $module = $capture_to_module{$capture};
+        my $l = <$fh>;
+        if ($l =~ /^This file maps each file available/) {
+            do {
+                if ($l =~ /^FILE\s+LOCATION$/) {
+                    $l = <$fh>;
+                    last;
                 }
-                die "UNEXPECTED ERROR: cannot find module for current captures (line $_, regexp $regexp)"
-                    if !defined $module;
-                $seen_module{$module} = 1;
-                my($location) = $_ =~ m{.*/(.*)};
-                $module_to_packages{$module}->{$location} = 1;
-            }
+            } while(defined($l = <$fh>));
+        } elsif ($l =~ /^FILE\s+LOCATION$/) {
+            $l = <$fh>;
+        }
+        if (defined $l) {
+            do {
+                if ($l =~ $regexp) {
+                    my $module;
+                    for my $capture (keys %+) {
+                        $module = $capture_to_module{$capture};
+                    }
+                    die "UNEXPECTED ERROR: cannot find module for current captures (line $l, regexp $regexp)"
+                        if !defined $module;
+                    $seen_module{$module} = 1;
+                    my($location) = $l =~ m{.*/(.*)};
+                    $module_to_packages{$module}->{$location} = 1;
+                }
+            } while(defined($l = <$fh>));
         }
     }
 
