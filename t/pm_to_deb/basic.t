@@ -22,20 +22,42 @@ my @contents_files = (
 		     );
 plan skip_all => "No contents file found, maybe apt-file update was never called" if !@contents_files;
 
-diag "Found the following contents files:\n" . join("\n", @contents_files);
-
 plan 'no_plan';
+
+{
+    my $diag_shown;
+    sub more_diag () {
+	return if $diag_shown;
+	diag "\nFound the following contents files:\n" . join("\n", @contents_files);
+	diag "\nContents of sources.list files:\n" . `grep --color=always --with-filename '^deb.*' /etc/apt/sources.list /etc/apt/sources.list.d/*`;
+	$diag_shown = 1;
+    }
+}
 
 my $pm_to_db = "$FindBin::RealBin/../../scripts/pm-to-deb";
 
 {
     my $out = `$^X $pm_to_db Moose`;
-    is $out, "libmoose-perl\n", 'found package for Moose';
+    is $out, "libmoose-perl\n", 'found package for Moose'
+	or more_diag;
+}
+
+{
+    my $out = `$^X $pm_to_db Storable`;
+    like $out, qr{^(perl|libperl5.\d+)$}, 'found package for Storable'
+	or more_diag;
+}
+
+{
+    my $out = `$^X $pm_to_db --ignore-installed Storable`;
+    is $out, "", 'Storable is very likely to be installed'
+	or more_diag;
 }
 
 {
     my $out = `$^X $pm_to_db This::Module::Does::Not::Exist 2>&1`;
-    is $out, "Cannot find package for This::Module::Does::Not::Exist\n", 'error message for non-existing package';
+    is $out, "Cannot find package for This::Module::Does::Not::Exist\n", 'error message for non-existing package'
+	or more_diag;
 }
 
 # REPO BEGIN
