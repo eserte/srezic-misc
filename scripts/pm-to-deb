@@ -384,7 +384,7 @@ sub load_requires {
     if ($all_requires) {
         %modules = (%modules, %{ $d->{configure_requires} || {} }, %{ $d->{build_requires} || {} });
     }
-    my @modules = sort keys %modules;
+    my @modules = sort grep { $_ ne 'perl' } keys %modules;
     if ($v) {
         warn "Found the following modules in ${file}'s requires section:\n@modules\n";
     }
