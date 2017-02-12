@@ -30,32 +30,34 @@ plan 'no_plan';
 	return if $diag_shown;
 	diag "\nFound the following contents files:\n" . join("\n", @contents_files);
 	diag "\nContents of sources.list files:\n" . `grep --color=always --with-filename '^deb.*' /etc/apt/sources.list /etc/apt/sources.list.d/*`;
+	#diag "\nGrepping Moose.pm:\n" . `zgrep /Moose.pm ~/.cache/apt-file/*gz`;
 	$diag_shown = 1;
     }
 }
 
+my $perl = '/usr/bin/perl'; # makes sense only with system perl, force it
 my $pm_to_db = "$FindBin::RealBin/../../scripts/pm-to-deb";
 
 {
-    my $out = `$^X $pm_to_db Moose`;
+    my $out = `$perl $pm_to_db Moose`;
     is $out, "libmoose-perl\n", 'found package for Moose'
 	or more_diag;
 }
 
 {
-    my $out = `$^X $pm_to_db Storable`;
+    my $out = `$perl $pm_to_db Storable`;
     like $out, qr{^(perl|libperl5.\d+)$}, 'found package for Storable'
 	or more_diag;
 }
 
 {
-    my $out = `$^X $pm_to_db --ignore-installed Storable`;
+    my $out = `$perl $pm_to_db --ignore-installed Storable`;
     is $out, "", 'Storable is very likely to be installed'
 	or more_diag;
 }
 
 {
-    my $out = `$^X $pm_to_db This::Module::Does::Not::Exist 2>&1`;
+    my $out = `$perl $pm_to_db This::Module::Does::Not::Exist 2>&1`;
     is $out, "Cannot find package for This::Module::Does::Not::Exist\n", 'error message for non-existing package'
 	or more_diag;
 }
