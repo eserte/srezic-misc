@@ -3,28 +3,32 @@ branches:
   - /appveyor/
 
 language: perl
-perl:
+matrix:
+  include:
 # newest without the need to download
-  - "5.20"
+    - perl: "5.20"
+      env: WITH_APT_FILE=1
 # oldest
 ## XXX known to fail, see https://travis-ci.org/eserte/srezic-misc/jobs/173518047
-#  - "5.8"
+#    - perl: "5.8"
 # newest
-  - "5.24"
+    - perl: "5.24"
 # and the others
-  - "5.22"
-  - "5.18"
+    - perl: "5.22"
+    - perl: "5.18"
 # 2nd group (5 parallel jobs @ travis)
-  - "5.16"
-  - "5.14"
-  - "5.12"
-  - "5.10"
+    - perl: "5.16"
+    - perl: "5.14"
+    - perl: "5.12"
+    - perl: "5.10"
 
 addons:
   apt:
     packages:
 # for DB_File
       - libdb-dev
+# for extended pm-to-deb tests
+      - apt-file
 
 before_install:
   - git clone https://github.com/eserte/travis-helper-cpan-pm.git
@@ -34,6 +38,10 @@ before_install:
   - cpan Slay::Makefile
 install:
   - slaymake install-prereqs-with-cpanm
+
+before_script:
+  - if [ "$WITH_APT_FILE" = "1" ]; then apt-file update; fi
+
 script:
   - slaymake test-t
   - slaymake test-compile
