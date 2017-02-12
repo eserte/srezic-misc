@@ -53,6 +53,7 @@ my $from_log;
 my @contents_files;
 my $method = 'direct-cache-capture';
 my $ignore_installed;
+my $all_requires;
 GetOptions('method=s'         => \$method,
            'sources-list|s=s' => \$sources_list,
            'v'                => \$v,
@@ -62,16 +63,19 @@ GetOptions('method=s'         => \$method,
            'from-log=s'       => \$from_log,
            'contents-file=s@' => \@contents_files,
            'ignore-installed' => \$ignore_installed,
+           'all-requires'     => \$all_requires, # XXX undocumented, will the name stay?
           )
     or die "usage: $0 [--from-mymeta | --from-meta | --from-log] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] [-ignore-installed] ...\n";
 
 my @modules;
 if ($from_mymeta) {
-    push @modules, load_requires('MYMETA.yml');
+    push @modules, load_requires('MYMETA.yml', $all_requires);
 }
 if ($from_meta) {
-    warn "WARNING: you specified --from-mymeta AND --from-meta, which is not very useful. Still continuing...\n";
-    push @modules, load_requires('META.yml');
+    if ($from_mymeta) {
+        warn "WARNING: you specified --from-mymeta AND --from-meta, which is not very useful. Still continuing...\n";
+    }
+    push @modules, load_requires('META.yml', $all_requires);
 }
 if (defined $from_log) {
     push @modules, parse_log_for_modules($from_log);
@@ -366,7 +370,7 @@ sub module_to_file {
 }
 
 sub load_requires {
-    my $file = shift;
+    my($file, $all_requires) = @_;
     my $d;
     if      (eval { require YAML::XS; 1}) {
         $d = YAML::XS::LoadFile($file);
@@ -376,7 +380,11 @@ sub load_requires {
         require YAML;
         $d = YAML::LoadFile($file);
     }
-    my @modules = sort keys %{ $d->{requires} || {} };
+    my %modules = %{ $d->{requires} || {} };
+    if ($all_requires) {
+        %modules = (%modules, %{ $d->{configure_requires} || {} }, %{ $d->{build_requires} || {} });
+    }
+    my @modules = sort keys %modules;
     if ($v) {
         warn "Found the following modules in ${file}'s requires section:\n@modules\n";
     }
