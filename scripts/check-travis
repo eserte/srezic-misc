@@ -13,7 +13,7 @@ GetOptions("d|debug" => \$debug)
 my $repo = shift
     or die "usage: $0 [--debug] user/repo\n";
 my $success = check_travis $repo;
-exit $success ? 0 : 1;
+exit($success ? 0 : 1);
 
 {
     # XXX taken from deployment.pl in CPAN-Testers-Matrix
