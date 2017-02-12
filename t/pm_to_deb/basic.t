@@ -7,9 +7,23 @@
 
 use strict;
 use FindBin;
+use File::Glob 'bsd_glob';
 use Test::More;
 
 plan skip_all => "Not on a debian system or apt-file unavailable?" if !is_in_path('apt-file');
+
+# XXX Duplicated globs (almost, $achname missing here)
+my @contents_files = (
+		      # user usage
+		      bsd_glob("$ENV{HOME}/.cache/apt-file/*_Contents-*.gz"),
+		      # root usage
+		      bsd_glob("/var/cache/apt/apt-file/*_Contents-*.gz"),
+		      bsd_glob("/var/lib/apt/lists/*_Contents-*.lz4"),
+		     );
+plan skip_all => "No contents file found, maybe apt-file update was never called" if !@contents_files;
+
+diag "Found the following contents files:\n" . join("\n", @contents_files);
+
 plan 'no_plan';
 
 my $pm_to_db = "$FindBin::RealBin/../../scripts/pm-to-deb";
