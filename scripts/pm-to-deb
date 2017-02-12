@@ -52,6 +52,7 @@ my $from_meta;
 my $from_log;
 my @contents_files;
 my $method = 'direct-cache-capture';
+my $ignore_installed;
 GetOptions('method=s'         => \$method,
            'sources-list|s=s' => \$sources_list,
            'v'                => \$v,
@@ -60,8 +61,9 @@ GetOptions('method=s'         => \$method,
            'from-meta'        => \$from_meta,
            'from-log=s'       => \$from_log,
            'contents-file=s@' => \@contents_files,
+           'ignore-installed' => \$ignore_installed,
           )
-    or die "usage: $0 [--from-mymeta | --from-meta | --from-log] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] ...\n";
+    or die "usage: $0 [--from-mymeta | --from-meta | --from-log] [--sources-list ...] [--contents-file ...] [-method ...] [-all] [-v] [-ignore-installed] ...\n";
 
 my @modules;
 if ($from_mymeta) {
@@ -180,6 +182,18 @@ if ($method eq 'direct-cache-capture') {
         }
     }
 
+    my $is_package_missing = do {
+        my $missing_packages;
+        sub ($) {
+            my $package = shift;
+            if (!$missing_packages) {
+                my @all_packages = map { keys %{ $module_to_packages{$_} } } keys %module_to_packages;
+                $missing_packages = { map { ($_,1) } missing_deb_packages(@all_packages) };
+            }
+            $missing_packages->{$package};
+        };
+    };
+
     my %packages;
     for my $module (sort keys %module_to_packages) {
         my @alternatives = sort keys %{ $module_to_packages{$module} };
@@ -187,12 +201,24 @@ if ($method eq 'direct-cache-capture') {
             print join(' | ', @alternatives) . " # $module\n";
         } else {
             if (@alternatives > 1) {
-                my @alternatives_without_perl = grep { $_ ne 'perl' && $_ ne 'perl-modules' } @alternatives;
+                my @alternatives_without_perl = grep { !/^( perl
+                                                          | perl-modules
+                                                          | perl-modules-5.22
+                                                          )$/x } @alternatives;
                 if (@alternatives_without_perl == 1) {
                     $packages{$alternatives_without_perl[0]} = 1;
                 } else {
-                    warn "WARN: multiple alternatives for $module: @alternatives, choose one...\n";
-                    $packages{$alternatives[0]} = 1;
+                    my @installed_alternatives = grep { !$is_package_missing->($_) } @alternatives_without_perl;
+                    if (@installed_alternatives == 1) {
+                        warn "INFO: multiple alternatives for $module: @alternatives, choose the only installed one...\n";
+                        $packages{$installed_alternatives[0]} = 1;
+                    } elsif (@installed_alternatives > 1) {
+                        warn "WARN: multiple installed alternatives for $module: @installed_alternatives, choose one...\n";
+                        $packages{$installed_alternatives[0]} = 1;
+                    } else {
+                        warn "WARN: multiple alternatives for $module: @alternatives, choose one...\n";
+                        $packages{$alternatives[0]} = 1;
+                    }
                 }
             } else {
                 $packages{$alternatives[0]} = 1;
@@ -202,7 +228,11 @@ if ($method eq 'direct-cache-capture') {
 
     if (!$v) { # in -v mode we're already done
         for my $package (sort keys %packages) {
-            print $package, "\n";
+            if ($ignore_installed && !$is_package_missing->($package)) {
+                # ignore
+            } else {
+                print $package, "\n";
+            }
         }
     }
 
@@ -445,6 +475,10 @@ Specify a log file which contains "Can't locate ... in @INC" errors.
 This log file is parsed and the found modules used as input list of
 modules.
 
+=item C<--ignore-installed>
+
+Print only the list of debian packages which are currently not installed.
+
 =back
 
 If neither C<--from-meta> nor C<--from-mymeta> is given, then
@@ -510,11 +544,20 @@ debugging.
 To install dependencies of an already extracted standard perl
 distribution with a shipped F<Makefile.PL> do:
 
-   apt-file update && sudo apt-get update && perl Makefile.PL && sudo apt-get install $(pm-to-deb --from-mymeta)
+   apt-file update && sudo apt-get update && perl Makefile.PL && sudo apt-get install $(pm-to-deb --from-mymeta --ignore-installed)
 
 If only F<Build.PL> is shipped do instead:
 
-   apt-file update && sudo apt-get update && perl Build.PL && sudo apt-get install $(pm-to-deb --from-mymeta)
+   apt-file update && sudo apt-get update && perl Build.PL && sudo apt-get install $(pm-to-deb --from-mymeta --ignore-installed)
+
+=head1 NOTES
+
+If there are many packages providing a module, then already installed
+packages will be preferred. This would be useful if the generated list
+is used for installing packages on the current host, but not for
+generating package lists for meta packages or so. In the latter case,
+the current workaround is to use the C<-v> option, which will output
+all alternatives.
 
 =head1 BUGS
 
@@ -525,13 +568,6 @@ possibly more conflicts are missing.
 
 It's not very fast. The default method C<direct-cache-capture> may
 take some 30-60s, other methods may be much slower.
-
-=head1 TODO
-
-It would be nice that in the case of conflicting modules, already
-installed packages would be preferred. This would be useful if the
-generated list is used for installing packages on the current host,
-but not for generating package lists for meta packages or so.
 
 =head1 AUTHOR
 
@@ -600,6 +636,61 @@ BEGIN {
 	};
     }
 }
+# REPO END
+
+# REPO BEGIN
+# REPO NAME missing_deb_packages /home/eserte/src/srezic-repository 
+# REPO MD5 9bc63aaafbedc35bbee31300c3f73b09
+
+sub missing_deb_packages {
+    my(@packages) = @_;
+    return if !@packages;
+
+    require IPC::Open3;
+    require Symbol;
+
+    my @missing_packages;
+
+    if (@packages) {
+	my %seen_packages;
+	my %required_version;
+	for my $package (@packages) {
+	    if (ref $package eq 'ARRAY') {
+		my($package_name, $package_version) = @$package;
+		$required_version{$package_name} = $package_version;
+		$package = $package_name;
+	    }
+	}
+	my @cmd = ('dpkg-query', '-W', '-f=${Package}\t${Status}\t${Version}\n', @packages);
+	my $err = Symbol::gensym();
+	my $fh;
+	my $pid = IPC::Open3::open3(undef, $fh, $err, @cmd)
+	    or die "Error running '@cmd': $!";
+	while(<$fh>) {
+	    chomp;
+	    if (m{^([^\t]+)\t([^\t]+)\t([^\t]*)$}) {
+		if ($2 ne 'install ok installed') {
+		    push @missing_packages, $1;
+		}
+		if ($required_version{$1} && $required_version{$1} ne $3) {
+		    push @missing_packages, $1;
+		}
+		$seen_packages{$1} = 1;
+	    } else {
+		warn "ERROR: cannot parse $_, ignore line...\n";
+	    }
+	}
+	waitpid $pid, 0;
+	for my $package (@packages) {
+	    if (!$seen_packages{$package}) {
+		push @missing_packages, $package;
+	    }
+	}
+    }
+    @missing_packages;
+
+}
+
 # REPO END
 
 # Local Variables:
