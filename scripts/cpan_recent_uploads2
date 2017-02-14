@@ -225,6 +225,7 @@ GATHER_DATA: {
 		my $do = eval { CPAN::Shell->expand('Distribution', $path) };
 		debug('not indexed'), next if !$do;
 	    }
+	    debug('dist only in RECENT, not on CPAN'), next if $path =~ m{\QF/FZ/FZAKER/booking/appsec/Bookings-Security-CVSS-0.03.tar.gz\E$};
 	    print $path, "\n";
 	}
 	last GATHER_DATA if !@aggregator;
