@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2015,2016 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2015,2016,2017 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -228,9 +228,9 @@ __END__
 
 =head1 EXAMPLES
 
-    for perl in /usr/perl5.*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl -doit; done
+    for perl in /usr/perl5.*/bin/perl; do echo "---> $perl"; $perl ./find-broken-perl-so.pl -doit; done
 
-    for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl /tmp/find-broken-perl-so.pl -doit; done
+    for perl in /opt/perl*/bin/perl; do echo "---> $perl"; $perl ./find-broken-perl-so.pl -doit; done
 
 =head1 BUGS
 
