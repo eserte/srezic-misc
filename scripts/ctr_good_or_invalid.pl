@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -1162,7 +1162,7 @@ sub set_currfile {
 	my $get_dist = sub {
 	    my $file = shift;
 	    (my $dist_os = $file) =~ s{.*/}{};
-	    $dist_os =~ s{\.(x86_64|amd64|i[3456]86).*}{};
+	    $dist_os =~ s{\.(x86_64|amd64|i[3456]86|darwin-2level|darwin-thread-multi-2level).*}{};
 	    $dist_os;
 	};
 
