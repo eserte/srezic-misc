@@ -281,7 +281,7 @@ usage: $0
      [-timefake options]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc] [-x11display :...]
-     [-minbuilddiravail bytes|...k|...M|...G]
+     [-minbuilddiravail bytes|...k|...M|...G|...%]
      [-reloadindex]
      [-[no]savereports] [-[no]createreportdirectories]
      [dist ...]
@@ -1929,9 +1929,13 @@ EOF
 		) {
 	my($varref, $name) = @$def;
 	if ($$varref) {
-	    $$varref =~ s{([\d\.]+)([kMG])}{int($1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die))}e;
-	    if ($$varref !~ m{^\d+$}) {
-		die "(expanded) $name value '$$varref' does not look like an integer number";
+	    if ($$varref =~ m{^[\d\.]+%$}) {
+		# accept, looks like percent
+	    } else {
+		$$varref =~ s{([\d\.]+)([kMG])}{int($1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die))}e;
+		if ($$varref !~ m{^\d+$}) {
+		    die "(expanded) $name value '$$varref' does not look like an integer number";
+		}
 	    }
 	}
     }
@@ -1977,19 +1981,23 @@ sub _df {
 	my $dfres = Filesys::Df::df($dir);
 	if ($dfres) {
 	    $dfres->{bavail} *= 1024;
+	    $dfres->{blocks} *= 1024;
 	}
 	$dfres;
     } elsif ($^O eq 'linux') {
-	my @cmd = ('df', '--output=avail,iavail,itotal', '--block-size=k', $dir);
+	my @cmd = ('df', '--output=avail,size,iavail,itotal', '--block-size=k', $dir);
 	open my $fh, '-|', @cmd
 	    or die "Error while running '@cmd': $!";
 	<$fh>; # header
 	chomp;
-	my($bavail, $iavail, $itotal) = split /\s+/, scalar <$fh>;
+	my($bavail, $blocks, $iavail, $itotal) = split /\s+/, scalar <$fh>;
 	$bavail =~ s{K$}{};
 	$bavail *= 1024;
+	$blocks =~ s{K$}{};
+	$blocks *= 1024;
 	my $dfres = {
 		     bavail => $bavail,
+		     blocks => $blocks,
 		     favail => $iavail,
 		     files  => $itotal,
 		    };
@@ -2031,6 +2039,13 @@ sub check_disk_free_directory {
 		    $inode_ok = 0;
 		}
 	    }
+	}
+
+	if ($check_free_bytes =~ m{^([\d\.]+)%$}) {
+	    if (!defined $dfres->{blocks}) {
+		die "'blocks' information not available in df output";
+	    }
+	    $check_free_bytes = ($1/100) * $dfres->{blocks};
 	}
 
 	if ($dfres->{bavail} < $check_free_bytes) {
@@ -2492,6 +2507,40 @@ installation is interactive: the user is always asked before
 installing system packages. With C<-sysdeps-batch> the installation is
 automatic as much as possible, but read L<CPAN::Plugin::Sysdeps/* Batch
 mode>.
+
+=item -minbuilddiravail I<sizespec>
+
+Assure that at least the specified amount of disk space is available
+in the CPAN build directory. If there's not enough space, then try to
+cleanup old per-date build directories. If there's nothing more to
+cleanup, then wait some minutes and re-check. Effectively this means
+that the smoker stops unless cleanup happens from an external party.
+
+The default value is about 2GB.
+
+I<sizespec> is either bytes, maybe suffixed with a unit (k, M, G), or
+a percentage (e.g. C<8%>).
+
+=item -minbuilddircleanup I<sizespec>
+
+Similar to C<-minbuilddiravail> this is checking for disk space and
+starts the cleanup process if less than the configured value is
+reached. Other than C<-minbuilddiravail> the smoker won't stop if it's
+not possible to cleanup enough disk space.
+
+By default this option is not active.
+
+A good value to use is C<8%> (or a little bit greater) if using
+munin's default warning limit of C<92%>.
+
+=item -mindirinodes I<percent>%
+
+Assure that at least the specified percentage of inodes is available
+in the CPAN build directory. Similar like C<-minbuilddiravail>, a
+cleanup process will start if not enough is available, and possibly
+the smoker can get stopped.
+
+The default value is 5%.
 
 =back
 
