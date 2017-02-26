@@ -1467,19 +1467,11 @@ EOF
 
 	if ($use_limits) {
 	    my $data_limit = 1024*1024*1024;
-	    if ($^O eq 'linux' && open my $fh, '/etc/debian_version') {
-		if (scalar <$fh> =~ m{^((8|9|10)\.|jessie|stretch|sid)}) {
-		    # if (($short_hostname eq 'eserte' || $short_hostname eq 'cabulja' || $short_hostname eq 'prod3' || $short_hostname eq 'prod4') && $^O eq 'linux') { # ($perl =~ /t$/ || $perl =~ m{5\.\d+\.\d+(-RC\d+)?t/bin/perl})) {
-		    # XXX Many modules fail with Out of memory on eserte.dev4...
-		    # maybe the machine has too much memory (32GB) and therefore
-		    # the threading libraries reserve more memory?
-		    #
-		    # XXX still is not enough for some modules (e.g.
-		    # Net-SSLeay-1.77). 4GB does not eiether help in this
-		    # case.
-		    warn "INFO: higher memory limit on this host...\n";
-		    $data_limit = 3*1024*1024*1024;
-		}
+	    # Out of memory problems seen on various debian (>=jessie)
+	    # systems and CentOS7, so use a higher limit here
+	    if ($^O eq 'linux') {
+		warn "INFO: higher memory limit on linux hosts...\n";
+		$data_limit = 3*1024*1024*1024;
 	    }
 	    my $cputime_limit = 3600*1;
 	    my $openfiles_limit = 2048; # the freebsd default is at 22500
