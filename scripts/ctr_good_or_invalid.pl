@@ -720,6 +720,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('other c compiler error');
 		} elsif (
+			 m{^/usr/include/c\+\+/[^:]+:\d+:\d+: fatal error: } # g++
+			) {
+		    $add_analysis_tag->('c++ compile error');
+		} elsif (
 			 /^\s*(#\s+Error:\s+)?Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/ || # freebsd variant
 			 /^\s*(#\s+Error:\s+)?Can't load '.*?\.so' for module .*: .*?\.so: undefined symbol: \S+ $at_source_qr/ || # linux variant
 			 /^\s*(#\s+Error:\s+)?Can't load '.*?\.so' for module .*: .*?\.so(?:\.\d+)?: perl: fatal: relocation error: .*: referenced symbol not found $at_source_qr/ # solaris variant
