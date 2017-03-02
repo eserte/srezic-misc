@@ -58,7 +58,7 @@ exit($success ? 0 : 1);
 	    while () {
 		my $build = $get_current_build->();
 		if (!$build) {
-		    print STDERR "Cannot find commit $current_commit_id at travis, will try later...\n";
+		    print STDERR "Cannot find commit $current_commit_id at $builds_url, will try later...\n";
 		    $wait->();
 		} else {
 		    $build_id = $build->{id};
@@ -125,6 +125,7 @@ sub guess_project_from_git () {
 	if ($l =~ m{^origin\s+(\S+)}) {
 	    my $project = $1;
 	    $project =~ s{\.git$}{};
+	    $project =~ s{^git\@github.com:}{};
 	    $project =~ s{.*/([^/]+/[^/]+)$}{$1};
 	    return $project if defined $project && length $project;
 	}
