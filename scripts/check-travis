@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Term::ANSIColor;
 
 sub check_travis ($);
 sub debug ($);
@@ -83,6 +84,15 @@ exit($success ? 0 : 1);
 		my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
 		return $data;
 	    };
+	    my $maybe_colored = sub {
+		my($title, $number, $color) = @_;
+		my $msg = "$title=$number";
+		if ($number == 0) {
+		    $msg;
+		} else {
+		    colored($msg, $color);
+		}		    
+	    };
 	    while () {
 		my $build = $get_current_build->();
 		my $successful = 0;
@@ -102,7 +112,10 @@ exit($success ? 0 : 1);
 		} elsif ($running == 0) {
 		    last;
 		}
-		print STDERR "Status at travis: running=$running successful=$successful failures=$failures\n";
+		print STDERR "Status at travis: ".
+		    $maybe_colored->("running",    $running,    "yellow")." ".
+		    $maybe_colored->("successful", $successful, "green")." ".
+		    $maybe_colored->("failures",   $failures,   "red")."\n";
 		$wait->();
 	    }
 	}
