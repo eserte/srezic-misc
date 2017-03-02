@@ -31,10 +31,10 @@ exit($success ? 0 : 1);
 	my $ua = LWP::UserAgent->new(timeout => 10);
 	my $wait = sub {
 	    for (reverse(0..14)) {
-		print STDERR "\rwait $_ second(s)";
-		sleep 1;
+		print STDERR "\rwait $_ second" . ($_ != 1 ? "s " : "  ");
+		sleep 1 if $_ > 0;
 	    }
-	    print STDERR "\n";
+	    print STDERR "\r";
 	};
 
 	my $build_id;
