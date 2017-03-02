@@ -6,11 +6,12 @@ use Getopt::Long;
 
 sub check_travis ($);
 sub debug ($);
+sub guess_project_from_git ();
 
 my $debug;
 GetOptions("d|debug" => \$debug)
     or die "usage: $0 [--debug] user/repo\n";
-my $repo = shift
+my $repo = shift || guess_project_from_git
     or die "usage: $0 [--debug] user/repo\n";
 my $success = check_travis $repo;
 exit($success ? 0 : 1);
@@ -115,4 +116,19 @@ exit($success ? 0 : 1);
 	    print STDERR "$msg\n";
 	}
     }
+}
+
+sub guess_project_from_git () {
+    chomp(my(@l) = `git remote -v 2>/dev/null`);
+    # example: origin  git://github.com/eserte/doit.git (fetch)
+    for my $l (@l) {
+	if ($l =~ m{^origin\s+(\S+)}) {
+	    my $project = $1;
+	    $project =~ s{\.git$}{};
+	    $project =~ s{.*/([^/]+/[^/]+)$}{$1};
+	    return $project if defined $project && length $project;
+	}
+    }
+    warn "Cannot guess project from current directory...\n";
+    undef;
 }
