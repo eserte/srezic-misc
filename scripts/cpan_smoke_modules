@@ -644,28 +644,32 @@ TRY_PARTIAL_RESOLVE: {
     my $dist_qr = qr{^(.*-.*)(?:\.(?:tar\.gz|tar.bz2|zip))?$}; # partial multi-level distname, with optional suffix
 
     # Try first if we can use fast module lookup using PCPF
-    if (@dist_or_mods == 1 &&
-	$dist_or_mods[0] !~ m{/} &&
-	$dist_or_mods[0] =~ $dist_qr &&
-	eval { require Parse::CPAN::Packages::Fast; Parse::CPAN::Packages::Fast->can('_module_lookup') }
-       ) {
-	my($distname) = $dist_or_mods[0] =~ $dist_qr;
-	$distname =~ s{-\d+(\.\d+)*$}{}; # strip version
-	(my $modname = $distname) =~ s{-}{::}g;
-	# Following may fail if there's no 02packages.details file at
-	# all, or if it was removed right now by another CPAN.pm
-	# process.
-	my $ret = eval {
-	    # XXX using still experimental function _module_lookup
-	    Parse::CPAN::Packages::Fast->_module_lookup($modname,
-							Parse::CPAN::Packages::Fast->_default_packages_file_batch,
-							"/tmp/02-packages-cache-$<", # XXX predictable file!
-						       );
-	};
-	if ($ret) {
-	    warn "INFO: Resolve partial distname $dist_or_mods[0] -> $ret->{dist} (using PCPF)\n";
-	    @dist_or_mods = $ret->{dist};
-	    last TRY_PARTIAL_RESOLVE;
+    if (@dist_or_mods == 1 && $dist_or_mods[0] !~ m{/} && $dist_or_mods[0] =~ $dist_qr) {
+	if (!eval { require Parse::CPAN::Packages::Fast; 1 }) {
+	    warn "INFO: cannot use PCPF (not installed or too old)\n";
+	} elsif (!Parse::CPAN::Packages::Fast->can('_module_lookup')) {
+	    warn "INFO: cannot use PCPF (no _module_lookup, too old?)\n";
+	} else {
+	    my($distname) = $dist_or_mods[0] =~ $dist_qr;
+	    $distname =~ s{-\d+(\.\d+)*$}{}; # strip version
+	    (my $modname = $distname) =~ s{-}{::}g;
+	    # Following may fail if there's no 02packages.details file at
+	    # all, or if it was removed right now by another CPAN.pm
+	    # process.
+	    my $ret = eval {
+		# XXX using still experimental function _module_lookup
+		Parse::CPAN::Packages::Fast->_module_lookup($modname,
+							    Parse::CPAN::Packages::Fast->_default_packages_file_batch,
+							    "/tmp/02-packages-cache-$<", # XXX predictable file!
+							   );
+	    };
+	    if (!$ret) {
+		warn "INFO: cannot use PCPF (did not resolve, or other reasons)\n";
+	    } else {
+		warn "INFO: Resolve partial distname $dist_or_mods[0] -> $ret->{dist} (using PCPF)\n";
+		@dist_or_mods = $ret->{dist};
+		last TRY_PARTIAL_RESOLVE;
+	    }
 	}
     }
 
