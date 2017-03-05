@@ -665,10 +665,12 @@ TRY_PARTIAL_RESOLVE: {
 	    };
 	    if (!$ret) {
 		warn "INFO: cannot use PCPF (did not resolve, or other reasons)\n";
-	    } else {
+	    } elsif (index("/$ret->{dist}", "/$dist_or_mods[0]") >= 0) {
 		warn "INFO: Resolve partial distname $dist_or_mods[0] -> $ret->{dist} (using PCPF)\n";
 		@dist_or_mods = $ret->{dist};
 		last TRY_PARTIAL_RESOLVE;
+	    } else {
+		warn "INFO: cannot use resolved $ret->{dist}, fallback to slower method\n";
 	    }
 	}
     }
