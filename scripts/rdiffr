@@ -1,0 +1,192 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2017 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use Getopt::Long;
+use Net::OpenSSH;
+
+sub usage () {
+    die <<EOF;
+usage: $0 [--debug] [-x|--exclude=file] host1 host2 dir ...
+EOF
+}
+
+my $debug = 0;
+my @exclude;
+GetOptions(
+	   "debug+"       => \$debug,
+	   'x|exclude=s@' => \@exclude,
+	  ) or usage;
+my $left_host = shift or usage;
+my $right_host = shift or usage;
+my @dirs = @ARGV;
+if (!@dirs) {
+    warn "Please specify directories to compare.\n";
+    usage;
+}
+my $exclude_rx = '';
+if (@exclude) {
+    $exclude_rx = '^(' . join("|", map { quotemeta } @exclude) . ')$';
+}
+
+if ($debug >= 2) {
+    require Data::Dumper;
+}
+
+# First pass: transfer file names, together with some stat
+# information, especially size, but also mode, user/group (names, not
+# ids, optionally mtime). Use preferably File::Find, maybe find+printf
+#
+# XXX use everywhere // instead of || if perl supports it (check first)
+my @cmd = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, @dirs);
+my $exclude_rx = shift @ARGV;
+$exclude_rx = qr{$exclude_rx};
+my(%uid2name, %gid2name);
+find(sub {
+    if ($_ =~ $exclude_rx) {
+        $File::Find::prune = 1;
+        return;
+    }
+    my($dev,undef,$mode,undef,$uid,$gid,undef,$size) = lstat($_);
+    $File::Find::prune |= ($dev != $File::Find::topdev);
+    my $user = ($uid2name{$uid} ||= ((getpwuid($uid))[0] || "#$uid"));
+    my $group = ($gid2name{$gid} ||= ((getgrgid($gid))[0] || "#$gid"));
+    my $symlinkval = -l $_ ? readlink($_) : '-';
+    $size = 0 if !-f $_;
+    print join("\0", $mode, $user, $group, $size, $symlinkval, $File::Find::name), "\0\0";
+}, @ARGV)
+EOF
+
+my($left_fname2info, $right_fname2info);
+
+sub get_fname2info {
+    my($fh) = @_;
+    my %fname2info;
+    local $/ = "\0\0";
+    while(<$fh>) {
+	my($mode,$user,$group,$size,$symlinkval,$fname) = split /\0/, $_;
+	$fname2info{$fname} = {mode => $mode, user => $user, group => $group, size => $size, symlinkval => $symlinkval};
+    }
+    \%fname2info;
+}
+
+for my $def (
+	     [$left_host,  \$left_fname2info],
+	     [$right_host, \$right_fname2info],
+	    ) {
+    my($host, $fname2info_ref) = @$def;
+    if ($host eq '__local__') {
+	open my $fh, '-|', @cmd or die $!;
+	$$fname2info_ref = get_fname2info($fh);
+	close $fh or die $!;
+    } else {
+	my $ssh = Net::OpenSSH->new($host);
+	$ssh->error and die $ssh->error;
+	my($rout, $pid) = $ssh->pipe_out(@cmd);
+	$$fname2info_ref = get_fname2info($rout);
+	close $rout or die $!;
+    }
+    if ($debug) {
+	warn "Found " . scalar(keys %$$fname2info_ref) . " file(s) on $host\n";
+    }
+}
+
+my @left_fnames  = sort keys %$left_fname2info;
+my @right_fnames = sort keys %$right_fname2info;
+my $left_fnames_i = my $right_fnames_i = 0;
+while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
+    if ($debug >= 2) {
+	warn "$left_fnames[$left_fnames_i] <=> $right_fnames[$right_fnames_i]\n";
+    }
+    if      ($left_fnames_i > $#left_fnames) {
+	print "Only on $right_host: $right_fnames[$right_fnames_i]\n";
+	$right_fnames_i++;
+    } elsif ($right_fnames_i > $#right_fnames) {
+	print "Only on $left_host: $left_fnames[$left_fnames_i]\n";
+	$left_fnames_i++;
+    } else {
+	my $left_fname = $left_fnames[$left_fnames_i];
+	my $right_fname = $right_fnames[$right_fnames_i];
+	my $cmp = $left_fname cmp $right_fname;
+	if ($cmp < 0) {
+	    print "Only on $left_host: $left_fname\n";
+	    $left_fnames_i++;
+	} elsif ($cmp > 0) {
+	    print "Only on $right_host: $right_fname\n";
+	    $right_fnames_i++;
+	} else {
+	    my @diffs;
+	    my $left_info = $left_fname2info->{$left_fname};
+	    my $right_info = $right_fname2info->{$right_fname};
+	    if ($debug >= 2) {
+		print STDERR Data::Dumper->new([$left_info, $right_info],[qw(left_info right_info)])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump;
+	    }
+	    if      ($left_info->{mode} != $right_info->{mode}) {
+		push @diffs, sprintf "mode: %o vs. %o", $left_info->{mode}, $right_info->{mode};
+	    } elsif ($left_info->{user} ne $right_info->{user}) {
+		push @diffs, "user: $left_info->{user} vs. $right_info->{user}";
+	    } elsif ($left_info->{group} ne $right_info->{group}) {
+		push @diffs, "group: $left_info->{group} vs. $right_info->{group}";
+	    } elsif ($left_info->{size} != $right_info->{size}) {
+		push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
+	    } elsif ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
+		push @diffs, "symlink target: $left_info->{symlinkval} vs. $right_info->{symlinkval}";
+	    }
+	    if (@diffs) {
+		# XXX formatting?
+		print "$left_fname\n";
+		for my $diff (@diffs) {
+		    print "  $diff\n";
+		}
+	    }
+	    $left_fnames_i++;
+	    $right_fnames_i++;
+	}
+    }
+}
+
+# Second pass: for all files which have same size: run md5 (with
+# Digest::MD5 or md5sum/md5) on the file contents
+
+# Third pass: output differences. Sort files alphabetically. Output
+# also stat diffs, maybe git-like. Fetch contents for files with
+# different content, and run this through diff -u. Maybe don't fetch
+# for binary content.
+
+# Questions: optionally cache things?
+
+# XXX There should also be a mode where directories are differently
+# named on left and right system. In this case, maybe work only with
+# relative filenames; also maybe don't support multiple directories.
+
+# XXX make it possible to use sudo, additionally
+
+__END__
+
+=head1 NAME
+
+rdiffr - remote diff, recursive
+
+=head1 SYNOPSIS
+
+Run diff between two remote hosts, using ssh, on a number of
+directories:
+
+   rdiffr user@host1.example.org user@host2.example.org /etc /usr/local/etc ...
+
+Run diff between the local system and a remote host:
+
+   rdiffr __local__ user@host1.example.org /etc /usr/local/etc ...
+
+=cut
