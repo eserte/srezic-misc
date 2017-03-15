@@ -81,18 +81,26 @@ sub get_fname2info {
     \%fname2info;
 }
 
+my %ssh;
+for my $host ($left_host, $right_host) {
+    if ($host ne '__local__') {
+	my $ssh = Net::OpenSSH->new($host);
+	$ssh->error and die $ssh->error;
+	$ssh{$host} = $ssh;
+    }
+}
+
 for my $def (
 	     [$left_host,  \$left_fname2info],
 	     [$right_host, \$right_fname2info],
 	    ) {
     my($host, $fname2info_ref) = @$def;
-    if ($host eq '__local__') {
+    my $ssh = $ssh{$host};
+    if (!$ssh) {
 	open my $fh, '-|', @cmd or die $!;
 	$$fname2info_ref = get_fname2info($fh);
 	close $fh or die $!;
     } else {
-	my $ssh = Net::OpenSSH->new($host);
-	$ssh->error and die $ssh->error;
 	my($rout, $pid) = $ssh->pipe_out(@cmd);
 	$$fname2info_ref = get_fname2info($rout);
 	close $rout or die $!;
@@ -100,6 +108,13 @@ for my $def (
     if ($debug) {
 	warn "Found " . scalar(keys %$$fname2info_ref) . " file(s) on $host\n";
     }
+}
+
+my($left_tmp, $right_tmp);
+sub get_tmp {
+    require File::Temp;
+    my(undef,$tmpfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "rdiffr_XXXXXXXX");
+    $tmpfile;
 }
 
 my @left_fnames  = sort keys %$left_fname2info;
@@ -127,6 +142,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	    $right_fnames_i++;
 	} else {
 	    my @diffs;
+	    my $content_diff;
 	    my $left_info = $left_fname2info->{$left_fname};
 	    my $right_info = $right_fname2info->{$right_fname};
 	    if ($debug >= 2) {
@@ -138,16 +154,61 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		push @diffs, "user: $left_info->{user} vs. $right_info->{user}";
 	    } elsif ($left_info->{group} ne $right_info->{group}) {
 		push @diffs, "group: $left_info->{group} vs. $right_info->{group}";
-	    } elsif ($left_info->{size} != $right_info->{size}) {
-		push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
 	    } elsif ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
 		push @diffs, "symlink target: $left_info->{symlinkval} vs. $right_info->{symlinkval}";
+	    } elsif ($left_info->{size} != $right_info->{size}) {
+		push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
+		my($left_cmp_file, $right_cmp_file);
+		for my $def (
+			     [$left_host, \$left_tmp, \$left_cmp_file],
+			     [$right_host, \$right_tmp, \$right_cmp_file],
+			    ) {
+		    my($host, $tmp_ref, $cmp_file_ref) = @$def;
+		    if ($ssh{$host}) {
+			if (!defined $$tmp_ref) {
+			    $$tmp_ref = get_tmp();
+			}
+			my($rout, $pid) = $ssh{$host}->pipe_out("cat", $left_fname);
+			local $/ = \4096;
+			open my $ofh, ">", $$tmp_ref
+			    or die $!;
+			while(<$rout>) {
+			    print $ofh $_;
+			}
+			close $ofh
+			    or die $!;
+			close $rout
+			    or die $!;
+			$$cmp_file_ref = $$tmp_ref;
+		    } else {
+			$$cmp_file_ref = $left_fname;
+		    }
+		}
+		{
+		    open my $fh, '-|', 'diff', '-u', $left_cmp_file, $right_cmp_file
+			or die $!;
+		    my $first_line = <$fh>;
+		    if ($first_line =~ m{^---}) {
+			scalar <$fh>; # overread also 2nd line
+			$content_diff .= "--- $left_host: $left_fname\n";
+			$content_diff .= "+++ $right_host: $right_fname\n";
+		    } else {
+			$content_diff .= $first_line; # XXX can this happen? binary files?
+		    }
+		    local $/ = \4096;
+		    while(<$fh>) {
+			$content_diff .= $_;
+		    }
+		}
 	    }
 	    if (@diffs) {
 		# XXX formatting?
 		print "$left_fname\n";
 		for my $diff (@diffs) {
 		    print "  $diff\n";
+		}
+		if (defined $content_diff) {
+		    print $content_diff;
 		}
 	    }
 	    $left_fnames_i++;
