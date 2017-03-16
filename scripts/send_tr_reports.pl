@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014,2015 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015,2017 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -122,8 +122,20 @@ for my $file (@reports) {
 	$r->{_perl_version}->{_osvers} = $config->{osvers};
     }
 
-    $r->send or
-	die "Something failed in $process_file: " . $r->errstr . ". Stop.\n";
+ DO_SEND: {
+	my $max_try = 2;
+	my $sleep = 10;
+	for my $try (1..$max_try) {
+	    last DO_SEND if $r->send;
+	    warn "Something failed in $process_file: " . $r->errstr . ".\n";
+	    if ($try == $max_try) {
+		die "Stop.\n";
+	    }
+	    warn "Sleeping ${sleep}s before retrying...\n";
+	    sleep $sleep;
+	}
+	die "Should not happen";
+    }
     my $done_file = $done_dir . "/" . basename($file);
     rename $process_file, $done_file
 	or die "Cannot move $process_file to $done_file: $!";
