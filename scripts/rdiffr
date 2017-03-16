@@ -51,10 +51,12 @@ if ($debug >= 2) {
 # XXX use everywhere // instead of || if perl supports it (check first)
 my @cmd = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, @dirs);
 my $exclude_rx = shift @ARGV;
-$exclude_rx = qr{$exclude_rx};
+if (length $exclude_rx) {
+    $exclude_rx = qr{$exclude_rx};
+}
 my(%uid2name, %gid2name);
 find(sub {
-    if ($_ =~ $exclude_rx) {
+    if (length $exclude_rx && $_ =~ $exclude_rx) {
         $File::Find::prune = 1;
         return;
     }
