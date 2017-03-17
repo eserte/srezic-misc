@@ -24,9 +24,11 @@ EOF
 
 my $debug = 0;
 my @exclude;
+my $diffopts;
 GetOptions(
 	   "debug+"       => \$debug,
 	   'x|exclude=s@' => \@exclude,
+	   'diffopts=s'   => \$diffopts,
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -42,6 +44,12 @@ if (@exclude) {
 
 if ($debug >= 2) {
     require Data::Dumper;
+}
+
+my @diffopts = ('-u');
+if ($diffopts) {
+    require Text::ParseWords;
+    push @diffopts, Text::ParseWords::shellwords($diffopts);
 }
 
 # First pass: transfer file names, together with some stat
@@ -187,19 +195,23 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		    }
 		}
 		{
-		    open my $fh, '-|', 'diff', '-u', $left_cmp_file, $right_cmp_file
+		    open my $fh, '-|', 'diff', @diffopts, $left_cmp_file, $right_cmp_file
 			or die $!;
-		    my $first_line = <$fh>;
-		    if ($first_line =~ m{^---}) {
-			scalar <$fh>; # overread also 2nd line
-			$content_diff .= "--- $left_host: $left_fname\n";
-			$content_diff .= "+++ $right_host: $right_fname\n";
+		    if (eof $fh) {
+			# no diffs --- may happen if e.g. -b -B is specified
 		    } else {
-			$content_diff .= $first_line; # XXX can this happen? binary files?
-		    }
-		    local $/ = \4096;
-		    while(<$fh>) {
-			$content_diff .= $_;
+			my $first_line = <$fh>;
+			if ($first_line =~ m{^---}) {
+			    scalar <$fh>; # overread also 2nd line
+			    $content_diff .= "--- $left_host: $left_fname\n";
+			    $content_diff .= "+++ $right_host: $right_fname\n";
+			} else {
+			    $content_diff .= $first_line; # XXX can this happen? binary files?
+			}
+			local $/ = \4096;
+			while(<$fh>) {
+			    $content_diff .= $_;
+			}
 		    }
 		}
 	    }
