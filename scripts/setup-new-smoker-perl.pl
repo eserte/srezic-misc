@@ -59,6 +59,7 @@ my $build_debug;
 my $build_threads;
 my $morebits;
 my $use_longdouble;
+my $use_mallocwrap;
 my $for_cpansand;
 my $use_patchperl;
 my $patchperl_path;
@@ -80,6 +81,7 @@ GetOptions(
 	   "threads"   => \$build_threads,
 	   "morebits"  => \$morebits,
 	   "longdouble" => \$use_longdouble,
+	   "usemallocwrap!" => \$use_mallocwrap,
 	   "cpansand"  => \$for_cpansand,
 	   "patchperl" => \$use_patchperl,
 	   "patchperlpath=s" => \$patchperl_path,
@@ -385,10 +387,18 @@ step "Build perl",
 	    if ($perlver =~ m{^5\.(\d+)} && $1 >= 7 && $1%2 == 1) {
 		$need_usedevel = 1;
 	    }
+	    if (!defined $use_mallocwrap) {
+		if ($need_usedevel) {
+		    $use_mallocwrap = 0;
+		} else {
+		    $use_mallocwrap = 1;
+		}
+	    }
 	    my @build_cmd = (
 			     ($cc ? "env CC='$cc' " : '') .
 			     "nice ./configure.gnu --prefix=$perldir" .
-			     ($need_usedevel ? ' -Dusedevel -Dusemallocwrap=no' : '') .
+			     ($need_usedevel ? ' -Dusedevel' : '') .
+			     (!$use_mallocwrap ? ' -Dusemallocwrap=no' : '') . # usemallocwrap=yes is probably default
 			     ($build_debug ? ' -DDEBUGGING' : '') .
 			     ($build_threads ? ' -Dusethreads' : '') .
 			     ($morebits ? die("No support for morebits") : '') .
