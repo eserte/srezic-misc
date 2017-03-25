@@ -124,7 +124,7 @@ for my $file (@reports) {
 
  DO_SEND: {
 	my $max_try = 2;
-	my $sleep = 10;
+	my $sleep = 30;
 	for my $try (1..$max_try) {
 	    last DO_SEND if $r->send;
 	    warn "Something failed in $process_file: " . $r->errstr . ".\n";
