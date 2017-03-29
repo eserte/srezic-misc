@@ -346,16 +346,20 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 
     $f->Label(-width => 2)->pack(-side => "left"); # Spacer
 
+    # Buttons to start external applications,
+    # in the order: general information (MetaCPAN),
+    # report information (Matrix), analysis,
+    # issue tracker
     {
-	my $rt_b =
-	    $f->Button(-text => 'RT',
-		       -image => $images{rt},
+	my $mc_b =
+	    $f->Button(-text => 'MetaCPAN',
+		       -image => $images{metacpan},
 		       -width => 24,
 		       -command => sub {
 			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . make_query_string(Name=>$currdist));
+			   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
 		       })->pack(-side => 'left', -fill => 'y');
-	$balloon->attach($rt_b, -msg => 'RT @ CPAN');
+	$balloon->attach($mc_b, -msg => 'MetaCPAN');
     }
     {
 	my $matrix_b =
@@ -369,18 +373,7 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 	$balloon->attach($matrix_b, -msg => 'Matrix');
     }
     {
-	my $mc_b =
-	    $f->Button(-text => 'MetaCPAN',
-		       -image => $images{metacpan},
-		       -width => 24,
-		       -command => sub {
-			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
-		       })->pack(-side => 'left', -fill => 'y');
-	$balloon->attach($mc_b, -msg => 'MetaCPAN');
-    }
-    # XXX should this be enabled by option? what about the directory?
-    {
+	# XXX should this be enabled by option? what about the directory?
 	my $cached_analysis_dir = "/tmp/cached-analysis";
 	if (-d $cached_analysis_dir) {
 	    $f->Button(-text => 'local analysis',
@@ -396,36 +389,16 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 		       })->pack(-side => 'left');
 	}
     }
-    if (0) { # XXX never used these buttons...
-	$f->Button(-text => "ctgetreports",
-		   -command => sub {
-		       require Tk::ExecuteCommand;
-		       require File::Temp;
-		       my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
-		       my $t = $mw->Toplevel(-title => "Reports on $currdist $currversion");
-		       my $ec = $t->ExecuteCommand()->pack;
-		       $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --dumpvars=. --dumpfile=$tempfile");
-		       $ec->execute_command;
-		       $ec->bell;
-		       $ec->destroy;
-		       $t->update;
-		       my $m = $t->Scrolled("More", -scrollbars => "osoe")->pack(qw(-fill both -expand 1));
-		       $t->update;
-		       $m->Load($tempfile);
-		       $m->Subwidget("scrolled")->focus;
-		   })->pack(-side => "left");
-	$f->Button(-text => "solve",
-		   -command => sub {
-		       require Tk::ExecuteCommand;
-		       require File::Temp;
-		       my($tmpfh, $tempfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "_report.txt");
-		       my $t = $mw->Toplevel(-title => "Solve $currdist $currversion");
-		       my $ec = $t->ExecuteCommand()->pack(qw(-fill both -expand 1));
-		       $ec->configure(-command => "ctgetreports $currdist --ctformat=yaml --solve --dumpfile=$tempfile");
-		       $ec->execute_command;
-		       $ec->bell;
-		       $ec->focus;
-		   })->pack(-side => "left");
+    {
+	my $rt_b =
+	    $f->Button(-text => 'RT',
+		       -image => $images{rt},
+		       -width => 24,
+		       -command => sub {
+			   require Tk::Pod::WWWBrowser;
+			   Tk::Pod::WWWBrowser::start_browser("http://rt.cpan.org/Public/Dist/Display.html?" . make_query_string(Name=>$currdist));
+		       })->pack(-side => 'left', -fill => 'y');
+	$balloon->attach($rt_b, -msg => 'RT @ CPAN');
     }
     {
 	my $ff = $f->Frame->pack(qw(-side left));
