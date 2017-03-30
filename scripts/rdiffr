@@ -185,9 +185,10 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			while(<$rout>) {
 			    print $ofh $_;
 			}
+			if (!close $rout) {
+			    print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
+			}
 			close $ofh
-			    or die $!;
-			close $rout
 			    or die $!;
 			$$cmp_file_ref = $$tmp_ref;
 		    } else {
