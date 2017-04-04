@@ -18,17 +18,19 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug] [-x|--exclude=file] host1 host2 dir ...
+usage: $0 [--debug] [-x|--exclude=file] [--sudo-fallback] host1 host2 dir ...
 EOF
 }
 
 my $debug = 0;
 my @exclude;
 my $diffopts;
+my $sudo_fallback;
 GetOptions(
 	   "debug+"       => \$debug,
 	   'x|exclude=s@' => \@exclude,
 	   'diffopts=s'   => \$diffopts,
+	   'sudo-fallback!' => \$sudo_fallback,
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -178,7 +180,13 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			if (!defined $$tmp_ref) {
 			    $$tmp_ref = get_tmp();
 			}
-			my($rout, $pid) = $ssh{$host}->pipe_out("cat", $left_fname);
+			my @cmd = ("cat", $left_fname);
+			$ssh{$host}->system('test', '-r', $left_fname);
+			if ($? != 0) {
+			    unshift @cmd, 'sudo';
+			}
+			warn "Read on $host: @cmd...\n" if $debug;
+			my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
 			local $/ = \4096;
 			open my $ofh, ">", $$tmp_ref
 			    or die $!;
