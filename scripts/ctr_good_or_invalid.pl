@@ -1033,16 +1033,16 @@ sub parse_test_report {
 	}
 	if (%signalled) {
 	    while(my($testfile, $signal) = each %signalled) {
-		if ($currarchname =~ m{(linux|freebsd)}) { # don't know for other OS
+		if ($currarchname =~ m{(linux|freebsd|darwin)}) { # don't know for other OS
 		    if    ($signal == 11) { $signal = 'SEGV' }
 		    elsif ($signal == 6)  { $signal = 'ABRT' }
 		    elsif ($signal == 8)  { $signal = 'FPE'  }
 		    elsif ($signal == 9)  { $signal = 'KILL' }
 		    elsif ($signal == 14) { $signal = 'ALRM' }
 		    elsif ($signal == 13) { $signal = 'PIPE' }
-		    elsif (($signal == 30 && $currarchname =~ m{freebsd}) ||
+		    elsif (($signal == 30 && $currarchname =~ m{freebsd|darwin}) ||
 			   ($signal == 10 && $currarchname =~ m{linux})) { $signal = 'USR1' }
-		    elsif (($signal == 10 && $currarchname =~ m{freebsd}) ||
+		    elsif (($signal == 10 && $currarchname =~ m{freebsd|darwin}) ||
 			   ($signal ==  7 && $currarchname =~ m{linux})) { $signal = 'BUS' }
 		    elsif ($signal == 4)  { $signal = 'ILL' }
 
