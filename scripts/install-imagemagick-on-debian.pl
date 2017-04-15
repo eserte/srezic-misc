@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2016 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016,2017 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -24,12 +24,17 @@ use Getopt::Long;
 
 sub mydie ($);
 sub yn ();
+sub deb_src_advice ();
 
 my %accepted_test_failures = (
 			      '6.8.9.9' => {
 					    't/mpeg/read.t' => 2,
 					    't/read.t'      => 1,
-					   }
+					   },
+			      '6.9.7.4+dfsg' => {
+						 't/tiff/read.t' => 2,
+						 't/tiff/write.t' => 4,
+						},
 			     );
 
 my $keep;
@@ -60,23 +65,7 @@ if (!-x '/usr/bin/dpkg-source') {
 }
 
 system('apt-get', 'source', 'perlmagick');
-$? == 0 or mydie <<'EOF';
-Fetching source failed
-
-Maybe a fitting deb-src entry is missing in sources.list?
-Try to add something like the following on ubuntu/mint systems:
-
-    deb-src http://archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse
-
-or
-
-    deb-src http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
-
-Followed by calling
-
-    apt-get update
-
-EOF
+$? == 0 or deb_src_advice;
 
 my($imagemagick_PerlMagick_dir) = glob("imagemagick-*/PerlMagick");
 if (!$imagemagick_PerlMagick_dir || !-d $imagemagick_PerlMagick_dir) {
@@ -223,4 +212,38 @@ sub mydie ($) {
     $File::Temp::KEEP_ALL = 1;
     die $msg;
 }
+
+sub deb_src_advice () {
+    chomp(my $codename = `lsb_release -cs`);
+    my $sources_list_message;
+    if ($codename eq 'stretch') {
+	$sources_list_message .= <<'EOF';
+Try to add something like the following on debian/stretch systems:
+
+    deb-src http://http.debian.net/debian stretch main contrib non-free
+EOF
+    } else {
+	$sources_list_message .= <<'EOF';
+Try to add something like the following on ubuntu/mint systems:
+
+    deb-src http://archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse
+
+or
+
+    deb-src http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
+EOF
+    }
+    mydie <<"EOF";
+Fetching source failed
+
+Maybe a fitting deb-src entry is missing in /etc/apt/sources.list?
+$sources_list_message
+
+Followed by calling
+
+    apt-get update
+
+EOF
+}
+
 __END__
