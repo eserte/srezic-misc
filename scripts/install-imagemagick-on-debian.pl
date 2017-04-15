@@ -53,6 +53,7 @@ if ($keep) {
 }
 
 my $workdir = tempdir("imagemagick-install-XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
+chmod 0755, $workdir or die "Can't chmod 0755 $workdir: $!";
 chdir $workdir or die $!;
 
 if (!-x '/usr/bin/dpkg-source') {
