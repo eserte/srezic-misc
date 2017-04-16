@@ -38,7 +38,7 @@ before_install:
 # has to be patched
   - cpan Slay::Makefile
 install:
-  - slaymake install-prereqs-with-cpanm
+  - slaymake install-prereqs-with-cpan
 
 before_script:
   - if [ "$WITH_APT_FILE" = "1" ]; then apt-file update; fi

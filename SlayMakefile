@@ -82,7 +82,13 @@ install-prereqs-with-cpanm:
 	cpanm --quiet --notest $CPAN_PREREQS
 
 install-prereqs-with-cpan:
-	cpan $CPAN_PREREQS
+	cpan $CPAN_PREREQS >/tmp/srezic-misc-prereq-install.log 2>&1 || (cat /tmp/srezic-misc-prereq-install.log; false)
+	# Additional check
+	{
+	    for my $mod (split / /, $CPAN_PREREQS) {
+		system 'perl', '-e', 'require ' . $mod;
+	    }
+	}
 
 # XXX Unfortunately SlayMakefile does not fail if any of the targets fail
 # XXX So best is to call the targets separately
