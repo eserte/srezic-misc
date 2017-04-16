@@ -437,7 +437,7 @@ $mw->bind("<F5>" => sub { $next_b->invoke });
 if ($auto_good) {
     $mw->repeat(2*1000, sub {
 		    if (!is_user_at_computer()) {
-			warn "User not anymore at computer, quitting...\n";
+			warn "User not anymore at computer (" . strftime("%F %T", localtime) . "), quitting...\n";
 			$mw->destroy;
 		    }
 		})
@@ -1817,6 +1817,7 @@ sub nextfile {
 
 {
 my $X11_Protocol_usable;
+my $X11_Protocol_Ext_DPMS_warn_once;
 sub is_user_at_computer {
     my $ret;
     if (defined $X11_Protocol_usable && !$X11_Protocol_usable) {
@@ -1837,7 +1838,24 @@ sub is_user_at_computer {
 		or die "MIT-SCREEN-SAVER extension not available or CPAN module X11::Protocol::Ext::MIT_SCREEN_SAVER not installed";
 	    my($on_or_off) = $X->MitScreenSaverQueryInfo($X->root);
 	    $X11_Protocol_usable = 1;
-	    $on_or_off eq 'On' ? 0 : 1;
+	    my $ss_off = $on_or_off eq 'On' ? 0 : 1;
+	    if ($ss_off) {
+		# maybe DPMS is on? Check, but don't fail
+		eval {
+		    local $^W = 0; # because of https://rt.cpan.org/Ticket/Display.html?id=121190
+		    $X->init_extension('DPMS')
+			or die "DPMS extension not available or CPAN module X11::Protocol::Ext::DPMS not installed";
+		    my($power_level,$state) = $X->DPMSInfo($X->root);
+		    if (!$state || $power_level eq 'DPMSModeOn') {
+			$ss_off = 1;
+		    }
+		};
+		if ($@ && !$X11_Protocol_Ext_DPMS_warn_once) {
+		    warn "Warning: $@";
+		    $X11_Protocol_Ext_DPMS_warn_once = 1;
+		}
+	    }
+	    $ss_off;
 	};
 	if ($@) {
 	    if ($do_check_screensaver) {
