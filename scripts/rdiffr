@@ -239,6 +239,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	}
     }
 }
+print "Finished.\n" if $debug; # not to stderr, so it's printed last
 
 # Second pass: for all files which have same size: run md5 (with
 # Digest::MD5 or md5sum/md5) on the file contents
