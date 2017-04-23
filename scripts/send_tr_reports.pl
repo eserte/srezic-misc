@@ -123,7 +123,7 @@ for my $file (@reports) {
     }
 
  DO_SEND: {
-	my $max_try = 3;
+	my $max_try = 5;
 	my $sleep = 60;
 	for my $try (1..$max_try) {
 	    last DO_SEND if $r->send;
