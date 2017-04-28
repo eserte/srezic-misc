@@ -566,11 +566,11 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('smartmatch');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|shift|unshift|splice) on reference is experimental $at_source_qr$/
+			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|values|shift|unshift|splice|each) on reference is experimental $at_source_qr$/
 			) {
 		    $add_analysis_tag->('experimental functions on references');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?Experimental (?:push|keys|values|splice|each) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
+			 /^(?:#\s+Error:\s+)?Experimental (?:push|pop|keys|values|shift|unshift|splice|each) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
 		} elsif ( # should be before pod coverage and maybe pod tests
