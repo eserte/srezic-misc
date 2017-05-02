@@ -26,11 +26,13 @@ my $debug = 0;
 my @exclude;
 my $diffopts;
 my $sudo_fallback;
+my $right_dir;
 GetOptions(
 	   "debug+"       => \$debug,
 	   'x|exclude=s@' => \@exclude,
 	   'diffopts=s'   => \$diffopts,
 	   'sudo-fallback!' => \$sudo_fallback,
+	   'right-dir=s'  => \$right_dir,
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -38,6 +40,9 @@ my @dirs = @ARGV;
 if (!@dirs) {
     warn "Please specify directories to compare.\n";
     usage;
+}
+if (defined $right_dir && @dirs > 1) {
+    die "Only one directory to compare supported if --right-dir is specified.\n";
 }
 my $exclude_rx = '';
 if (@exclude) {
@@ -59,7 +64,7 @@ if ($diffopts) {
 # ids, optionally mtime). Use preferably File::Find, maybe find+printf
 #
 # XXX use everywhere // instead of || if perl supports it (check first)
-my @cmd = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, @dirs);
+my @cmd_without_dirs = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx);
 my $exclude_rx = shift @ARGV;
 if (length $exclude_rx) {
     $exclude_rx = qr{$exclude_rx};
@@ -83,11 +88,14 @@ EOF
 my($left_fname2info, $right_fname2info);
 
 sub get_fname2info {
-    my($fh) = @_;
+    my($fh, $right_dir_mapping) = @_;
     my %fname2info;
     local $/ = "\0\0";
     while(<$fh>) {
 	my($mode,$user,$group,$size,$symlinkval,$fname) = split /\0/, $_;
+	if ($right_dir_mapping) {
+	    substr($fname, 0, length($right_dir_mapping->[1]), $right_dir_mapping->[0]);
+	}
 	$fname2info{$fname} = {mode => $mode, user => $user, group => $group, size => $size, symlinkval => $symlinkval};
     }
     \%fname2info;
@@ -103,18 +111,20 @@ for my $host ($left_host, $right_host) {
 }
 
 for my $def (
-	     [$left_host,  \$left_fname2info],
-	     [$right_host, \$right_fname2info],
+	     [$left_host,  \$left_fname2info,  0],
+	     [$right_host, \$right_fname2info, defined $right_dir],
 	    ) {
-    my($host, $fname2info_ref) = @$def;
+    my($host, $fname2info_ref, $need_right_dir_mapping) = @$def;
     my $ssh = $ssh{$host};
+    my @extra_fname2info_args = $need_right_dir_mapping ? [$dirs[0], $right_dir] : ();
+    my @use_dirs              = $need_right_dir_mapping ? ($right_dir) : @dirs;
     if (!$ssh) {
-	open my $fh, '-|', @cmd or die $!;
-	$$fname2info_ref = get_fname2info($fh);
+	open my $fh, '-|', @cmd_without_dirs, @use_dirs or die $!;
+	$$fname2info_ref = get_fname2info($fh, @extra_fname2info_args);
 	close $fh or die $!;
     } else {
-	my($rout, $pid) = $ssh->pipe_out(@cmd);
-	$$fname2info_ref = get_fname2info($rout);
+	my($rout, $pid) = $ssh->pipe_out(@cmd_without_dirs, @use_dirs);
+	$$fname2info_ref = get_fname2info($rout, @extra_fname2info_args);
 	close $rout or die $!;
     }
     if ($debug) {
