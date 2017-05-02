@@ -18,18 +18,21 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug] [-x|--exclude=file] [--sudo-fallback] host1 host2 dir ...
+usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--sudo-fallback] host1 host2
+EOFdir ...
 EOF
 }
 
 my $debug = 0;
 my @exclude;
+my @exclude_path_rx;
 my $diffopts;
 my $sudo_fallback;
 my $right_dir;
 GetOptions(
 	   "debug+"       => \$debug,
 	   'x|exclude=s@' => \@exclude,
+	   'exclude-path-rx=s@' => \@exclude_path_rx,
 	   'diffopts=s'   => \$diffopts,
 	   'sudo-fallback!' => \$sudo_fallback,
 	   'right-dir=s'  => \$right_dir,
@@ -47,6 +50,17 @@ if (defined $right_dir && @dirs > 1) {
 my $exclude_rx = '';
 if (@exclude) {
     $exclude_rx = '^(' . join("|", map { quotemeta } @exclude) . ')$';
+    if ($debug) {
+	warn "exclude_rx=$exclude_rx\n";
+    }
+}
+my $exclude_path_rx = '';
+if (@exclude_path_rx) {
+    for (@exclude_path_rx) { qr{$_} } # regexp syntax check
+    $exclude_path_rx = '^(' . join("|", @exclude_path_rx) . ')$';
+    if ($debug) {
+	warn "exclude_path_rx=$exclude_path_rx\n";
+    }
 }
 
 if ($debug >= 2) {
@@ -64,14 +78,22 @@ if ($diffopts) {
 # ids, optionally mtime). Use preferably File::Find, maybe find+printf
 #
 # XXX use everywhere // instead of || if perl supports it (check first)
-my @cmd_without_dirs = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx);
+my @cmd_without_dirs = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, $exclude_path_rx);
 my $exclude_rx = shift @ARGV;
 if (length $exclude_rx) {
     $exclude_rx = qr{$exclude_rx};
 }
+my $exclude_path_rx = shift @ARGV;
+if (length $exclude_path_rx) {
+    $exclude_path_rx = qr{$exclude_path_rx};
+}
 my(%uid2name, %gid2name);
 find(sub {
     if (length $exclude_rx && $_ =~ $exclude_rx) {
+        $File::Find::prune = 1;
+        return;
+    }
+    if (length $exclude_path_rx && $File::Find::name =~ $exclude_path_rx) {
         $File::Find::prune = 1;
         return;
     }
@@ -283,5 +305,16 @@ directories:
 Run diff between the local system and a remote host:
 
    rdiffr __local__ user@host1.example.org /etc /usr/local/etc ...
+
+If top directories differ on both hosts, then use C<--right-dir> to
+specify the top directory on the right one. Note that in this mode
+it's possible to specifiy only one directory at all:
+
+   rdiffr user@host1.example.org user@host2.example.org /mnt/home --right-dir /export/home
+
+To exclude files or paths from comparisons it's possible to use
+C<--exclude> or C<--exclude-rx-path>. C<--exclude> expects a full file
+basename, while C<--exclude-rx-path> does regexp matches on the whole
+path. Both options may be combined and used multiple times.
 
 =cut
