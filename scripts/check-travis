@@ -99,9 +99,9 @@ exit($success ? 0 : 1);
 		my $failures = 0;
 		my $running = 0;
 		for my $job (@{ $build->{matrix} }) {
-		    if (!defined $job->{result}) {
+		    if (!defined $job->{finished_at}) {
 			$running++;
-		    } elsif ($job->{result} == 0) {
+		    } elsif (defined $job->{result} && $job->{result} == 0) {
 			$successful++;
 		    } else {
 			$failures++;
