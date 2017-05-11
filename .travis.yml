@@ -31,6 +31,9 @@ addons:
       - libdb-dev
 # for extended pm-to-deb tests
       - apt-file
+# so VCS.pm actually works
+      - cvs
+      - rcs
 
 before_install:
   - git clone https://github.com/eserte/travis-helper-cpan-pm.git
