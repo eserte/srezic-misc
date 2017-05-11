@@ -3,13 +3,13 @@ branches:
   - /appveyor/
 
 language: perl
+dist: trusty
 matrix:
   include:
 # newest without the need to download
     - perl: "5.20"
 # oldest
-## XXX known to fail, see https://travis-ci.org/eserte/srezic-misc/jobs/173518047
-#    - perl: "5.8"
+    - perl: "5.8"
 # newest
     - perl: "5.24"
 # actual apt-file test (with something resembling to system perl)
@@ -20,8 +20,12 @@ matrix:
 # 2nd group (5 parallel jobs @ travis)
     - perl: "5.18"
     - perl: "5.16"
+      dist: precise
     - perl: "5.12"
     - perl: "5.10"
+  allow_failures:
+## XXX known to fail, see https://travis-ci.org/eserte/srezic-misc/jobs/173518047
+    - perl: "5.8"
 
 addons:
   apt:
