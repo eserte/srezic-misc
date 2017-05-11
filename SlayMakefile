@@ -104,8 +104,11 @@ test-compile:
 		diag("pistachio-perl not found in PATH, fallback to standard perl");
 		$perl = $^X;
 	    }
+	    system('perl', '-e', 'exit($] >= 5.010)');
+	    my $perl_5010_or_better = $? == 0;
 	    for my $script (<scripts/*>) {
 		next if $script =~ m{/00MIGRATED$};
+		next if $script =~ m{/reports-sent-cache.pl$} && !$perl_5010_or_better;
 		system($perl, '-c', $script);
 		is($?, 0, "$script compiled OK");
 	    }
