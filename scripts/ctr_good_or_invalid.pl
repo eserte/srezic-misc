@@ -17,7 +17,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl";
 
 BEGIN {
-    if ($ENV{USER} eq 'eserte') { # XXX enable experiment only for me
+    if ($ENV{USER} eq 'eserte' && $^O ne "darwin") { # XXX enable experiment only for me
 	eval q{ use CtrGetReportsFastReader };
 	warn $@ if $@;
     }
