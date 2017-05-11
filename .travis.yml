@@ -23,9 +23,6 @@ matrix:
       dist: precise
     - perl: "5.12"
     - perl: "5.10"
-  allow_failures:
-## XXX known to fail, see https://travis-ci.org/eserte/srezic-misc/jobs/173518047
-    - perl: "5.8"
 
 addons:
   apt:
