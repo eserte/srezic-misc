@@ -292,12 +292,14 @@ my $following_dists_text;
 my $prev_b;
 my $next_b;
 my $good_b;
+my $all_good_b;
 my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 {
     my $f = $mw->Frame->pack(-fill => "x");
     $f->Label(-text => "Report created:")->pack(-side => "left");
     $f->Label(-textvariable => \$modtime)->pack(-side => "left");
     $f->Label(-textvariable => \$following_dists_text)->pack(-side => "left");
+    $all_good_b = $f->Button(-padx => 0, -pady => 0, -borderwidth => 1, -state => 'disabled', -text => "All good")->pack(-side => "left");
 
     $f->Label(-text => "/ " . scalar(@files))->pack(-side => "right");
     $f->Label(-textvariable => \$currfile_st)->pack(-side => "right");
@@ -1148,9 +1150,11 @@ sub set_currfile {
 	my $curr_dist = $get_dist->($currfile);
 	# assume files are sorted
 	my $following_same_dist = 0;
+	my @curr_dist_files = $currfile;
 	for my $i ($currfile_i+1 .. $#files) {
 	    my $dist = $get_dist->($files[$i]);
 	    if ($dist eq $curr_dist) {
+		push @curr_dist_files, $files[$i];
 		$following_same_dist++;
 	    } else {
 		last;
@@ -1170,6 +1174,12 @@ sub set_currfile {
 	    }
 	} else {
 	    $following_dists_text = '';
+	}
+
+	if (@curr_dist_files > 1) {
+	    $all_good_b->configure(-state => 'normal', -command => sub { all_good(@curr_dist_files) });
+	} else {
+	    $all_good_b->configure(-state => 'disabled', -command => undef);
 	}
     }
 
@@ -1459,6 +1469,15 @@ sub set_currfile {
 	}
 	close $ofh;
     }
+}
+
+sub all_good {
+    my(@curr_dist_files) = @_;
+    for my $file (@curr_dist_files) {
+	move $file, $good_directory
+	    or die "Cannot move $file to $good_directory: $!";
+    }
+    nextfile(scalar @curr_dist_files);
 }
 
 # Return value:
@@ -1795,8 +1814,9 @@ sub get_recent_reports_from_cache {
 }
 
 sub nextfile {
-    if ($currfile_i < $#files) {
-	$currfile_i++;
+    my $increment = shift || 1;
+    if ($currfile_i+$increment <= $#files) {
+	$currfile_i+=$increment;
 	set_currfile();
     } else {
 	if ($quit_at_end) {
