@@ -123,6 +123,7 @@ my $action_count = 0;
 my $fail_if_nothing_done;
 my $old_cpan_pm_hack;
 my $sysdeps = ''; # '', 'verbose', 'batch'
+my $do_rt121665_hack = 1;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -260,6 +261,7 @@ GetOptions("n" => \$n,
 	   'sysdeps'              => sub { $sysdeps = 'interactive' },
 	   'sysdeps-batch'        => sub { $sysdeps = 'batch' },
 	   'no-sysdeps|nosysdeps' => sub { $sysdeps = '' },
+	   'rt121665-hack!' => \$do_rt121665_hack,
 	  )
     or die <<EOF;
 usage: $0
@@ -1379,10 +1381,13 @@ EOF
 		if (is_in_path('sudo_keeper')) {
 		    $need_sudo_keeper = 1;
 		} else {
-		    warn "sudo operation necessary, but no sudo_keeper program available...\n";
+		    warn "NOTE: sudo operation necessary, but no sudo_keeper program available...\n";
 		}
 		# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=121665
-		my $perl_use_unsafe_inc_hack = $perl =~ /5\.26\.0/ ? 'env PERL_USE_UNSAFE_INC=1 ' : '';
+		my $perl_use_unsafe_inc_hack = $do_rt121665_hack && $perl =~ /5\.26\.0/ ? 'env PERL_USE_UNSAFE_INC=1 ' : '';
+		if ($perl_use_unsafe_inc_hack ne '') {
+		    warn "NOTE: using hack for RT #121665\n";
+		}
 		$cpan_shell_init .= q#$CPAN::Config->{make_install_make_command}=q{sudo # . $perl_use_unsafe_inc_hack . q#make}; $CPAN::Config->{mbuild_install_build_command}=q{sudo # . $perl_use_unsafe_inc_hack . q#./Build}; #;
 	    }
 	}
