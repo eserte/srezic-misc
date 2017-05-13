@@ -1178,8 +1178,11 @@ sub set_currfile {
 
 	if (@curr_dist_files > 1) {
 	    $all_good_b->configure(-state => 'normal', -command => sub { all_good(@curr_dist_files) });
+	    my $max_balloon_lines = 10;
+	    $balloon->attach($all_good_b, -msg => join("\n", @curr_dist_files > $max_balloon_lines ? (@curr_dist_files[0..int($max_balloon_lines/2)-1], "...", @curr_dist_files[-int($max_balloon_lines/2)..-1]) : @curr_dist_files));
 	} else {
 	    $all_good_b->configure(-state => 'disabled', -command => undef);
+	    $balloon->attach($all_good_b, -msg => '');
 	}
     }
 
