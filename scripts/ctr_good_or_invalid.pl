@@ -1346,6 +1346,17 @@ sub set_currfile {
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
+
+	my $get_scenario_cmd = sub {
+	    my($currfulldist, $scenario) = @_;
+	    my $cpan_smoke_modules_options = '-perlr -skipsystemperl';
+	    if ($scenario eq 'generic') {
+		"cpan_smoke_modules $cpan_smoke_modules_options $currfulldist";
+	    } else {
+		qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="$cpan_smoke_modules_options" -scenario $scenario $currfulldist};
+	    }
+	};
+
 	for my $_scenario (@scenarios) {
 	    my $scenario = $_scenario;
 	    if ($scenario eq 'prereq' && %prereq_fails) {
@@ -1361,14 +1372,23 @@ sub set_currfile {
 	    } else {
 		$label = $scenario;
 	    }
-	    my $b = $analysis_frame->Button(-text => $label,
-					    @common_analysis_button_config,
-					    -command => sub {
-						schedule_recheck($x_test_reporter_distfile, $scenario);
-					    })->pack;
+	    my $scenario_cmd = $get_scenario_cmd->($x_test_reporter_distfile, $scenario);
+	    my $f = $analysis_frame->Frame->pack;
+	    my $b = $f->Button(-text => $label,
+			       @common_analysis_button_config,
+			       -command => sub {
+				   schedule_recheck($scenario_cmd);
+			       })->pack(-side => 'left');
 	    if ($need_balloon) {
 		$balloon->attach($b, -msg => $scenario);
 	    }
+	    $f->Button(-text => 'Sel',
+		       @common_analysis_button_config,
+		       -command => sub {
+			$mw->SelectionOwn;
+			$mw->SelectionHandle; # do we have a closure problem here, too?
+			$mw->SelectionHandle(sub { return $scenario_cmd . "\n" });
+		    })->pack(-side => 'left');
 	}
     }
 
@@ -1457,19 +1477,14 @@ sub set_currfile {
 {
     my $date_comment_added;
     sub schedule_recheck {
-	my($currfulldist, $scenario) = @_;
+	my($scenario_cmd) = @_;
 	open my $ofh, ">>", "$ENV{HOME}/trash/cpan_smoker_recheck"
 	    or die "Can't open file: $!";
 	if (!$date_comment_added) {
 	    print $ofh "# added " . scalar(localtime) . "\n";
 	    $date_comment_added = 1;
 	}
-	my $cpan_smoke_modules_options = '-perlr -skipsystemperl';
-	if ($scenario eq 'generic') {
-	    print $ofh "cpan_smoke_modules $cpan_smoke_modules_options $currfulldist\n";
-	} else {
-	    print $ofh qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="$cpan_smoke_modules_options" -scenario $scenario $currfulldist\n};
-	}
+	print $ofh $scenario_cmd, "\n";
 	close $ofh;
     }
 }
