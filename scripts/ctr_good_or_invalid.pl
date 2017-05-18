@@ -615,6 +615,16 @@ sub parse_test_report {
 			 /\QFailed test 'Found some modules that didn't show up in PREREQ_PM or *_REQUIRES/
 			) {
 		    $add_analysis_tag->('prereq test');
+		} elsif (
+			 /\QCan't locate object method "parse" via package "Mojo::Home"/ ||
+			 /\Q"slurp" is not exported by the Mojo::Util module/ ||
+			 /\Q"spurt" is not exported by the Mojo::Util module/
+			) {
+		    $add_analysis_tag->('mojolicious regression');
+		} elsif (
+			 /\QIn method \E.*\Q: I was expecting a parameter list, not "{"/
+			) {
+		    $add_analysis_tag->('Function::Parameters regression');
 		} elsif (   # this should come before 'prereq fail' tests, see below for more 'possibly old bundled modules' stuff
 			 m{\QCan't locate MooX/Struct.pm in \E\@INC (?:\Q(you may need to install the MooX::Struct module) \E)?\(\@INC contains: .* inc .* at \S+/Module/Install/Admin/Copyright.pm}
 			) {
@@ -806,6 +816,10 @@ sub parse_test_report {
 			 /Can't connect to \S+ \((Invalid argument|Bad hostname)\) $at_source_qr/
 			) {
 		    $add_analysis_tag->('remote connection problem');
+		} elsif (
+			 /Can't connect .*certificate verify failed/
+			) {
+		    $add_analysis_tag->('ssl certificate problem');
 		} elsif (
 			 /^Files=\d+, Tests=\d+, (\d+) wallclock secs /
 			) {
@@ -1268,6 +1282,14 @@ sub set_currfile {
 	my $do_tick = (
 		          ($analysis_tag eq 'encoding pragma' && $annotation_text_for_analysis =~ m{encoding\s+pragma}i)
 		       || ($analysis_tag eq 'new regexp deprecation' && $annotation_text_for_analysis =~ m{unescaped\s+left\s+brace}i)
+		       || ($analysis_tag eq 'experimental functions on references are forbidden' && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
+		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
+		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
+		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{undeclared dependenc}i)
+		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
+		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{Mojo::(Util|Home)})
+		       || ($analysis_tag eq 'Function::Parameters regression' && $annotation_text_for_analysis =~ m{Function::Parameters})
+		       || ($analysis_tag eq 'c compile error' && $annotation_text_for_analysis =~ m{(compilation|compile) (error|fail)}i)
 		      );
 	if ($do_tick) {
 	    $f->Label(
