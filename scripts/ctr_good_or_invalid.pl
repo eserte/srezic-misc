@@ -1073,6 +1073,56 @@ sub parse_test_report {
     return \%ret;
 }
 
+sub get_annotation_info {
+    my($fulldist) = @_;
+    my($dist, $version) = parse_distvname($fulldist);
+
+    my($annotation_text, $annotation_label);
+    if ($distvname2annotation && $distvname2annotation->{$fulldist}) {
+	$annotation_text = $distvname2annotation->{$fulldist};
+	$annotation_label = 'Annotation';
+    } elsif ($distname2annotation && $distname2annotation->{$dist}) {
+	$annotation_text = $distname2annotation->{$dist}->{annotation} . ' (version ' . $distname2annotation->{$dist}->{version} . ')';
+	$annotation_label = 'Old Annotation';
+    }
+    if (defined $annotation_text) {
+	my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
+	my $url;
+	for my $annotation (@annotations) {
+	    if ($annotation =~ m{^(\d+)}) { # ... of rt.cpan.org ticket ids
+		$url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
+	    } elsif ($annotation =~ m{^(https?://\S+)}) { # ... or URLs
+		$url = $1;
+	    } # ... or something else
+	    last if defined $url;
+	}
+	{
+	    my $changed;
+	    for my $annotation (@annotations) {
+		if ($rtticket_to_title->{$annotation}) {
+		    $annotation .= " ($rtticket_to_title->{$annotation})";
+		    $changed = 1;
+		} elsif ($annotation =~ m{/github.com/.*/issues/}) {
+		    my $title = get_cached_github_issue_title($annotation);
+		    if (defined $title) {
+			$annotation .= " ($title)";
+			$changed = 1;
+		    }
+		}
+	    }
+	    if ($changed) {
+		$annotation_text = join("\n", @annotations); # turn commas into newlines, because lines may be long by now...
+	    }
+	}
+	return (
+		label => $annotation_label,
+		text  => $annotation_text,
+		url   => $url,
+	       );
+    }
+    ();
+}
+
 sub set_currfile {
     $currfile = $files[$currfile_i];
     $mw->title("Loading " . basename($currfile) . "...");
@@ -1191,25 +1241,41 @@ sub set_currfile {
 	%recent_states = get_recent_states();
     }
 
+    my %annotation_info = get_annotation_info($currfulldist);
+
     # Create the "analysis tags"
     my $generic_analysis_tag_value = delete $analysis_tags{__GENERIC_TEST_FAILURE__};
     if (!%analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
 	$generic_analysis_tag_value->{__bgcolor__} = 'white'; # different color than the other analysis tags
 	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
     }
+    my $annotation_text_for_analysis = $annotation_info{text} || '';
     for my $analysis_tag (sort keys %analysis_tags) {
 	my @lines = @{ $analysis_tags{$analysis_tag}->{lines} || [] };
 	my $bgcolor = $analysis_tags{$analysis_tag}->{__bgcolor__} || 'yellow';
 	my $lines_i = 0;
-	$analysis_frame->Button(-text => $analysis_tag,
-				@common_analysis_button_config,
-				-bg => $bgcolor,
-				-command => sub {
-				    $more->Subwidget('scrolled')->see("$lines[$lines_i].0");
-				    $lines_i++;
-				    if ($lines_i > $#lines) { $lines_i = 0 }
-				},
-			       )->pack;
+	my $f = $analysis_frame->Frame->pack;
+	$f->Button(-text => $analysis_tag,
+		   @common_analysis_button_config,
+		   -bg => $bgcolor,
+		   -command => sub {
+		       $more->Subwidget('scrolled')->see("$lines[$lines_i].0");
+		       $lines_i++;
+		       if ($lines_i > $#lines) { $lines_i = 0 }
+		   },
+		  )->pack(-side => "left");
+	# XXX needs to be converted into something table/mapping based
+	my $do_tick = (
+		          ($analysis_tag eq 'encoding pragma' && $annotation_text_for_analysis =~ m{encoding\s+pragma}i)
+		       || ($analysis_tag eq 'new regexp deprecation' && $annotation_text_for_analysis =~ m{unescaped\s+left\s+brace}i)
+		      );
+	if ($do_tick) {
+	    $f->Label(
+		      -text => "\x{2713}",
+		      -fg => 'DarkGreen',
+		      -padx => 0, -pady => 0, -borderwidth => 0,
+		     )->pack(-side => "left");
+	}
     }
 
     # Highlight the lines in the text which caused the analysis
@@ -1351,7 +1417,7 @@ sub set_currfile {
 	    my($currfulldist, $scenario) = @_;
 	    my $cpan_smoke_modules_options = '-perlr -skipsystemperl';
 	    if ($scenario eq 'generic') {
-		"cpan_smoke_modules $cpan_smoke_modules_options $currfulldist";
+		"cpan_smoke_modules $cpan_smoke_modules_options $currfulldist -skiptested";
 	    } else {
 		qq{~/src/srezic-misc/scripts/cpan_smoke_modules_wrapper3 -minimize-work -cpansmokemodulesoptions="$cpan_smoke_modules_options" -scenario $scenario $currfulldist};
 	    }
@@ -1387,63 +1453,26 @@ sub set_currfile {
 		       -command => sub {
 			$mw->SelectionOwn;
 			$mw->SelectionHandle; # do we have a closure problem here, too?
-			$mw->SelectionHandle(sub { return $scenario_cmd . "\n" });
+			$mw->SelectionHandle(sub { return $scenario_cmd });
 		    })->pack(-side => 'left');
 	}
     }
 
     ($currdist, $currversion) = parse_distvname($currfulldist);
 
-    { # requires up-to-date $currdist!
-	my($annotation_text, $annotation_label);
-	if ($distvname2annotation && $distvname2annotation->{$currfulldist}) {
-	    $annotation_text = $distvname2annotation->{$currfulldist};
-	    $annotation_label = 'Annotation';
-	} elsif ($distname2annotation && $distname2annotation->{$currdist}) {
-	    $annotation_text = $distname2annotation->{$currdist}->{annotation} . ' (version ' . $distname2annotation->{$currdist}->{version} . ')';
-	    $annotation_label = 'Old Annotation';
+    {
+	my($url, $annotation_label, $annotation_text) = @annotation_info{qw(url label text)};
+	my $w;
+	if ($url) {
+	    $w = $analysis_frame->Button(-text => $annotation_label,
+					 -command => sub {
+					     require Tk::Pod::WWWBrowser;
+					     Tk::Pod::WWWBrowser::start_browser($url);
+					 })->pack;
+	} else {
+	    $w = $analysis_frame->Label(-text => $annotation_label)->pack;
 	}
-	if (defined $annotation_text) {
-	    my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
-	    my $url;
-	    for my $annotation (@annotations) {
-		if ($annotation =~ m{^(\d+)}) { # ... of rt.cpan.org ticket ids
-		    $url = "https://rt.cpan.org/Public/Bug/Display.html?id=$1";
-		} elsif ($annotation =~ m{^(https?://\S+)}) { # ... or URLs
-		    $url = $1;
-		} # ... or something else
-		last if defined $url;
-	    }
-	    {
-		my $changed;
-		for my $annotation (@annotations) {
-		    if ($rtticket_to_title->{$annotation}) {
-			$annotation .= " ($rtticket_to_title->{$annotation})";
-			$changed = 1;
-		    } elsif ($annotation =~ m{/github.com/.*/issues/}) {
-			my $title = get_cached_github_issue_title($annotation);
-			if (defined $title) {
-			    $annotation .= " ($title)";
-			    $changed = 1;
-			}
-		    }
-		}
-		if ($changed) {
-		    $annotation_text = join("\n", @annotations); # turn commas into newlines, because lines may be long by now...
-		}
-	    }
-	    my $w;
-	    if ($url) {
-		$w = $analysis_frame->Button(-text => $annotation_label,
-					     -command => sub {
-						 require Tk::Pod::WWWBrowser;
-						 Tk::Pod::WWWBrowser::start_browser($url);
-					     })->pack;
-	    } else {
-		$w = $analysis_frame->Label(-text => $annotation_label)->pack;
-	    }
-	    $balloon->attach($w, -msg => $annotation_text);
-	}
+	$balloon->attach($w, -msg => $annotation_text);
     }
 
     {
