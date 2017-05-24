@@ -727,6 +727,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('out of memory');
 		} elsif (
+			 /^Segmentation fault$/
+			) {
+		    $add_analysis_tag->('signal SEGV');
+		} elsif (
 			 m{^ERROR: Can't create '.*/Alien} ||
 			 m{^/bin/mkdir: kann Verzeichnis .*/auto/share/dist/Alien.* nicht anlegen: Keine Berechtigung}
 			) {
@@ -1285,11 +1289,16 @@ sub set_currfile {
 		       || ($analysis_tag eq 'experimental functions on references are forbidden' && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
-		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{undeclared dependenc}i)
+		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed)}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
 		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{Mojo::(Util|Home)})
 		       || ($analysis_tag eq 'Function::Parameters regression' && $annotation_text_for_analysis =~ m{Function::Parameters})
 		       || ($analysis_tag eq 'c compile error' && $annotation_text_for_analysis =~ m{(compilation|compile) (error|fail)}i)
+		       || ($analysis_tag eq 'out of memory' && $annotation_text_for_analysis =~ m{out of memory}i)
+		       || ($analysis_tag eq 'signal SEGV' && $annotation_text_for_analysis =~ m{(segmentation fault|segfault)}i)
+		       || ($analysis_tag eq 'system perl used' && $annotation_text_for_analysis =~ m{system\s+perl}i)
+		       ### generic match
+		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
 	if ($do_tick) {
 	    $f->Label(
