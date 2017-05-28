@@ -20,6 +20,7 @@ use POSIX qw(strftime);
 
 sub check_term_title ();
 sub set_term_title ($);
+sub _ts ();
 
 my $use_mail;
 my $cpan_uid = 'srezic';
@@ -127,7 +128,7 @@ for my $file (@reports) {
 	my $sleep = 60;
 	for my $try (1..$max_try) {
 	    last DO_SEND if $r->send;
-	    warn "Something failed in $process_file: " . $r->errstr . ".\n";
+	    warn "[" . _ts . "] Something failed in $process_file: " . $r->errstr . ".\n";
 	    if ($try == $max_try) {
 		die "Stop.\n";
 	    }
@@ -163,6 +164,10 @@ set_term_title "Report sender finished";
 	    Term::Title::set_titlebar($string);
 	}
     }
+}
+
+sub _ts () {
+    strftime("%Y-%m-%d %H:%M:%S", localtime);
 }
 
 __END__
