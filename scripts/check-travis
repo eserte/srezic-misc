@@ -107,15 +107,15 @@ exit($success ? 0 : 1);
 			$failures++;
 		    }
 		}
+		print STDERR "Status at travis: ".
+		    $maybe_colored->("running",    $running,    "yellow")." ".
+		    $maybe_colored->("successful", $successful, "green")." ".
+		    $maybe_colored->("failures",   $failures,   "red")."\n";
 		if ($failures) {
 		    die "At least one job failed. See https://travis-ci.org/$repo for more information.\n";
 		} elsif ($running == 0) {
 		    last;
 		}
-		print STDERR "Status at travis: ".
-		    $maybe_colored->("running",    $running,    "yellow")." ".
-		    $maybe_colored->("successful", $successful, "green")." ".
-		    $maybe_colored->("failures",   $failures,   "red")."\n";
 		$wait->();
 	    }
 	}
