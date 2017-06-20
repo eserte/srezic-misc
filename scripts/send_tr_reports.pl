@@ -24,11 +24,13 @@ sub _ts ();
 
 my $use_mail;
 my $cpan_uid = 'srezic';
+my $limit;
 GetOptions(
 	   "mail" => \$use_mail,
 	   "cpan-uid=s" => \$cpan_uid,
+	   "limit=i" => \$limit,
 	  )
-    or die "usage: $0 [-mail] [-cpan-uid ...]";
+    or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number]";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -62,6 +64,12 @@ my @reports = (
 if (!@reports) {
     set_term_title 'No reports to send';
     exit 0;
+}
+
+if ($limit && $limit < scalar(@reports)) {
+    print STDERR "Limit number of reports from " . scalar(@reports) . "... ";
+    @reports = @reports[0..$limit-1];
+    print STDERR "to " . scalar(@reports) . ".\n";
 }
 
 my $sending_reports_msg = sub {
