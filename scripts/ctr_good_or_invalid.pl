@@ -574,6 +574,10 @@ sub parse_test_report {
 			 /^(?:#\s+Error:\s+)?Experimental (?:push|pop|keys|values|shift|unshift|splice|each) on scalar is now forbidden $at_source_without_dot_qr(?:\.$|, near)/
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?\QUse of strings with code points over 0xFF as arguments to bitwise and (&) operator is not allowed\E $at_source_qr$/
+			) {
+		    $add_analysis_tag->('code points over 0xFF');
 		} elsif ( # should be before pod coverage and maybe pod tests
 			 /Unrecognized character .* at \._\S+ line \d+\./ ||
 			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
@@ -657,6 +661,11 @@ sub parse_test_report {
 			) {
 		    $prereq_fails{$1} = 1;
 		    $add_analysis_tag->('prereq fail');
+		} elsif (
+			 /^(?:#\s+Error:\s+)?(\S+) version \d\S* required--this is only version \d\S* $at_source_qr/
+			) {
+		    $prereq_fails{$1} = 1;
+		    $add_analysis_tag->('prereq version fail');
 		} elsif (
 			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array)|subroutine entry)\)/ ||
 			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/ ||
@@ -1289,6 +1298,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed)}i)
+		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
 		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{Mojo::(Util|Home)})
 		       || ($analysis_tag eq 'Function::Parameters regression' && $annotation_text_for_analysis =~ m{Function::Parameters})
@@ -1296,6 +1306,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'out of memory' && $annotation_text_for_analysis =~ m{out of memory}i)
 		       || ($analysis_tag eq 'signal SEGV' && $annotation_text_for_analysis =~ m{(segmentation fault|segfault)}i)
 		       || ($analysis_tag eq 'system perl used' && $annotation_text_for_analysis =~ m{system\s+perl}i)
+		       || ($analysis_tag eq 'code points over 0xFF' && $annotation_text_for_analysis =~ m{code.points.over.0xFF}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
@@ -1434,6 +1445,7 @@ sub set_currfile {
 			       'perl critic' => 'testperlcritic',
 			       'signature mismatch' => 'testsignature',
 			       'prereq fail' => 'prereq',
+			       'prereq version fail' => 'prereq',
 			       'prereq test' => 'testprereq',
 			       'kwalitee test' => 'testkwalitee',
 			       'system perl used' => 'systemperl',
