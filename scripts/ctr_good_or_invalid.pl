@@ -576,7 +576,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('experimental functions on references are forbidden');
 		} elsif (
-			 /^(?:#\s+Error:\s+)?\QUse of strings with code points over 0xFF as arguments to bitwise and (&) operator is not allowed\E $at_source_qr$/
+			 /^(?:#\s+Error:\s+)?\QUse of strings with code points over 0xFF as arguments to \E.*\Q operator is not allowed\E $at_source_qr$/
 			) {
 		    $add_analysis_tag->('code points over 0xFF');
 		} elsif ( # should be before pod coverage and maybe pod tests
@@ -1301,7 +1301,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
-		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{Mojo::(Util|Home)})
+		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{(removal.*Mojolicious|Mojo::(Util|Home))})
 		       || ($analysis_tag eq 'Function::Parameters regression' && $annotation_text_for_analysis =~ m{Function::Parameters})
 		       || ($analysis_tag eq 'c compile error' && $annotation_text_for_analysis =~ m{(compilation|compile) (error|fail)}i)
 		       || ($analysis_tag eq 'out of memory' && $annotation_text_for_analysis =~ m{out of memory}i)
