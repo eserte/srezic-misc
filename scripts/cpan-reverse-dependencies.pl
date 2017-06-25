@@ -48,19 +48,16 @@ if ($recurse) {
 
     require JSON::XS;
 
-    my $resp = $ua->post('http://api.metacpan.org/v0/release/_search',
+    my $resp = $ua->post('https://fastapi.metacpan.org/v1/release/_search',
 			 Content => <<"EOF",
 {
-  "query": {
-    "match_all": {}
-  },
   "size": 5000,
   "fields": [ "distribution" ],
   "filter": {
     "and": [
-      { "term": { "release.dependency.module": "$mod" } },
-      { "term": {"release.maturity": "released"} },
-      { "term": {"release.status": "latest"} }
+      { "term": {"dependency.module": "$mod" } },
+      { "term": {"maturity": "released"} },
+      { "term": {"status": "latest"} }
     ]
   }
 }
