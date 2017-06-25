@@ -54,6 +54,11 @@ my $argv_fingerprint;
 my @cpan_smoke_modules_common_install_opts = ('-minbuilddiravail', '0.5G', '-notypescript', '-install');
 my @cpan_smoke_modules_common_opts         = ('-minbuilddiravail', '0.5G');
 
+# Some interesting CPAN.pm versions:
+# * 1.9463: with new config option prefer_external_tar
+# * 2.07:   plugin support
+my $min_CPAN_version = '2.07';
+
 my $perlver;
 my $build_debug;
 my $build_threads;
@@ -555,7 +560,7 @@ step "Maybe upgrade CPAN.pm",
 	-f "$state_dir/.cpan_pm_upgrade_done"
     },
     using => sub {
-	if (!eval { my_system $^X, '-MCPAN 1.9463', '-e1'; 1 }) { # the CPAN version with new config option prefer_external_tar
+	if (!eval { my_system $^X, "-MCPAN $min_CPAN_version", '-e1'; 1 }) {
 	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
 	}
 	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
