@@ -44,6 +44,13 @@ GetOptions("keep!" => \$keep)
 my $perl = shift
     or die "Please specify perl to use (full path)";
 
+if (-d $perl) {
+    my $candidate = "$perl/bin/perl";
+    if (-x $candidate) {
+	$perl = $candidate;
+    } # else will fail later
+}
+
 if (!-x $perl || !-f $perl) {
     die "'$perl' is not a perl executable";
 }
