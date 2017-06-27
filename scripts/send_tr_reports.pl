@@ -25,10 +25,12 @@ sub _ts ();
 my $use_mail;
 my $cpan_uid = 'srezic';
 my $limit;
+my $beta_test;
 GetOptions(
 	   "mail" => \$use_mail,
 	   "cpan-uid=s" => \$cpan_uid,
 	   "limit=i" => \$limit,
+	   "beta" => \$beta_test,
 	  )
     or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number]";
 
@@ -74,7 +76,7 @@ if ($limit && $limit < scalar(@reports)) {
 
 my $sending_reports_msg = sub {
     my $reports_i = shift;
-    "Sending reports (" . $reports_i . "/" . scalar(@reports) . ")";
+    "Sending reports (" . $reports_i . "/" . scalar(@reports) . ")" . ($beta_test ? " [-> BETA]" : "");
 };
 
 set_term_title $sending_reports_msg->(0);
@@ -89,9 +91,14 @@ for my $file (@reports) {
     }
     warn "File $file does not exist anymore?", next if !-r $file;
     warn "$file...\n";
-    my $process_file = $process_dir . "/" . basename($file);
-    rename $file, $process_file
-	or die "Cannot move $file to $process_file: $!";
+    my $process_file;
+    if ($beta_test) {
+	$process_file = $file;
+    } else {
+	$process_file = $process_dir . "/" . basename($file);
+	rename $file, $process_file
+	    or die "Cannot move $file to $process_file: $!";
+    }
     my @tr_args;
     if ($use_mail) {
 	@tr_args = (from => "srezic\@cpan.org",
@@ -99,9 +106,13 @@ for my $file (@reports) {
 		    mx => ["localhost"],
 		   );
     } else {
+	my $url = 'https://metabase.cpantesters.org/api/v1/';
+	if ($beta_test) {
+	    $url = 'http://metabase-beta.cpantesters.org/api/v1';
+	}
 	@tr_args = (transport => 'Metabase',
 		    transport_args => [
-				       uri => 'https://metabase.cpantesters.org/api/v1/',
+				       uri => $url,
 				       id_file => "$ENV{HOME}/.cpanreporter/" . $cpan_uid . "_metabase_id.json",
 				      ],
 		   );
@@ -145,9 +156,11 @@ for my $file (@reports) {
 	}
 	die "Should not happen";
     }
-    my $done_file = $done_dir . "/" . basename($file);
-    rename $process_file, $done_file
-	or die "Cannot move $process_file to $done_file: $!";
+    if (!$beta_test) {
+	my $done_file = $done_dir . "/" . basename($file);
+	rename $process_file, $done_file
+	    or die "Cannot move $process_file to $done_file: $!";
+    }
 }
 
 set_term_title "Report sender finished";
