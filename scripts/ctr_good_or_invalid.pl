@@ -1417,7 +1417,10 @@ sub set_currfile {
 			 )->pack(-side => 'left');
 	    }
 	}
-	$balloon->attach($b, -msg => join("\n", map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv_and_archname{$recent_state} }));
+	my $max_balloon_lines = 75; # XXX hardcoded for screenheight=1080 and standard Tk font size (on which system?)
+	my @balloon_lines = map { $_->{version} . " " . $_->{archname} } @{ $recent_states_with_pv_and_archname{$recent_state} };
+	# note: asymmetric partition: 1/4 for old versions, 3/4 for new versions
+	$balloon->attach($b, -msg => join("\n", @balloon_lines > $max_balloon_lines ? (@balloon_lines[0..int($max_balloon_lines/4)-1], "...", @balloon_lines[-int($max_balloon_lines*3/4)..-1]) : @balloon_lines));
     }
 
     # Possible regression on the beforemaintrelease page?
