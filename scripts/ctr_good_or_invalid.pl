@@ -597,6 +597,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('hidden MacOSX file');
 		} elsif (
+			 /^(?:#\s+Error:\s+)?\QUse of bare << to mean <<"" is forbidden\E $at_source_qr$/
+			) {
+		    $add_analysis_tag->('bare << forbidden');
+		} elsif (
 			 /^#\s+Failed test 'POD test for [^']+'$/
 			) {
 		    $add_analysis_tag->('pod test');
