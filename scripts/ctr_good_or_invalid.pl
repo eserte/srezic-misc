@@ -580,19 +580,23 @@ sub parse_test_report {
 		} elsif (
 			 /^(?:#\s+Error:\s+)?\QUse of strings with code points over 0xFF as arguments to \E.*\Q operator is not allowed\E $at_source_qr$/
 			) {
-		    $add_analysis_tag->('code points over 0xFF');
+		    $add_analysis_tag->('code points over 0xFF'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l97
 		} elsif (
-			 /^(?:#\s+Error:\s+)?\QUse of inherited AUTOLOAD for non-method \E.*\Q is no longer allowed\E $at_source_qr$/
+			 /\QUse of inherited AUTOLOAD for non-method \E.*\Q is no longer allowed\E $at_source_qr$/
 			) {
-		    $add_analysis_tag->('inherited AUTOLOAD forbidden');
+		    $add_analysis_tag->('inherited AUTOLOAD forbidden'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l93
 		} elsif (
 			 m{\QSetting $/ to a reference to \E.*\Q is forbidden\E $at_source_qr$}
 			) {
-		    $add_analysis_tag->('non-positive $/');
+		    $add_analysis_tag->('non-positive $/'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l80
 		} elsif (
 			 /^(?:#\s+Error:\s+)?\QUse of code point 0x\E[0-9A-F]+\Q is not allowed; the permissible max is 0x\E[0-9A-F]+ $at_source_qr$/
 			) {
-		    $add_analysis_tag->('max unicode code point');
+		    $add_analysis_tag->('max unicode code point'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l85
+		} elsif (
+			 /(Cannot open .* as a dirhandle: it is already open as a filehandle|Cannot open .* as a filehandle: it is already open as a dirhandle) $at_source_qr$/
+			) {
+		    $add_analysis_tag->('same symbol for dirfh and filefh'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l71
 		} elsif ( # should be before pod coverage and maybe pod tests
 			 /Unrecognized character .* at \._\S+ line \d+\./ ||
 			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
