@@ -43,8 +43,8 @@ my @current_beforemaintrelease_pairs = (
  					'5.24.0:5.24.1',
  					'5.22.2:5.22.3',
 					'5.26.0:5.27.1',
-					'5.22.3:5.22.4 RC1',
-					'5.24.1:5.24.2 RC1',
+					'5.22.3:5.22.4',
+					'5.24.1:5.24.2',
 				       );
 
 # Patterns for report analysis
