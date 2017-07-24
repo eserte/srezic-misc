@@ -123,7 +123,7 @@ my $action_count = 0;
 my $fail_if_nothing_done;
 my $old_cpan_pm_hack;
 my $sysdeps = ''; # '', 'verbose', 'batch'
-my $do_rt121665_hack = 1;
+my $do_rt121665_hack = 0;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -1384,7 +1384,7 @@ EOF
 		    warn "NOTE: sudo operation necessary, but no sudo_keeper program available...\n";
 		}
 		# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=121665
-		my $perl_use_unsafe_inc_hack = $do_rt121665_hack && $perl =~ /5\.26\.0/ ? 'env PERL_USE_UNSAFE_INC=1 ' : '';
+		my $perl_use_unsafe_inc_hack = $do_rt121665_hack && $perl =~ /5\.(26|27)\.\d+/ ? 'env PERL_USE_UNSAFE_INC=1 ' : '';
 		if ($perl_use_unsafe_inc_hack ne '') {
 		    warn "NOTE: using hack for RT #121665\n";
 		}
