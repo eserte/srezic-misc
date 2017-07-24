@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 # -*- mode:perl;coding:iso-8859-1; -*-
 
 #
@@ -16,6 +16,7 @@
 # No user-servicable parts below this point.
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Encode;
 
@@ -86,6 +87,7 @@ my @encoding_result;
 
 for my $encoding (@expected_encodings) {
     my $characters = eval {
+	no warnings;
 	decode($encoding, $octets_to_analyze, Encode::FB_CROAK|Encode::LEAVE_SRC);
     };
     if (!$@) {
