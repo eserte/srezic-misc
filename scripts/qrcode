@@ -37,6 +37,6 @@ if (eval { require Imager::QRCode; 1 }) {
 	or die $!;
 }
 
-system 'eog', $temp;
+system 'eog', '--new-instance', $temp;
 
 __END__
