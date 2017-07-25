@@ -117,35 +117,36 @@ for my $file (@reports) {
 				      ],
 		   );
     }
-    my $r = Test::Reporter->new(@tr_args);
-
-    # XXX Another TR bug: should not set these two by default
-    # See https://rt.cpan.org/Ticket/Display.html?id=76447
-    # XXX see also below
-    undef $r->{_perl_version}->{_archname};
-    undef $r->{_perl_version}->{_osvers};
-
-    $r->read($process_file);
-
-    # XXX fix t::r bug?
-    # XXX Still problematic in current TR versions using Metabase?
-    $r->{_subject} =~ s{\n}{}g;
-
-    # XXX 2nd half on another TR bug: set the correct values for
-    # _archname and _osvers
-    # See https://rt.cpan.org/Ticket/Display.html?id=76447
-    {
-	use Config::Perl::V ();
-	my $perlv = $r->{_perl_version}->{_myconfig};
-	my $config = Config::Perl::V::summary(Config::Perl::V::plv2hash($perlv));
-	$r->{_perl_version}->{_archname} = $config->{archname};
-	$r->{_perl_version}->{_osvers} = $config->{osvers};
-    }
 
  DO_SEND: {
 	my $max_try = 5;
 	my $sleep = 60;
 	for my $try (1..$max_try) {
+	    my $r = Test::Reporter->new(@tr_args);
+
+	    # XXX Another TR bug: should not set these two by default
+	    # See https://rt.cpan.org/Ticket/Display.html?id=76447
+	    # XXX see also below
+	    undef $r->{_perl_version}->{_archname};
+	    undef $r->{_perl_version}->{_osvers};
+
+	    $r->read($process_file);
+
+	    # XXX fix t::r bug?
+	    # XXX Still problematic in current TR versions using Metabase?
+	    $r->{_subject} =~ s{\n}{}g;
+
+	    # XXX 2nd half on another TR bug: set the correct values for
+	    # _archname and _osvers
+	    # See https://rt.cpan.org/Ticket/Display.html?id=76447
+	    {
+		use Config::Perl::V ();
+		my $perlv = $r->{_perl_version}->{_myconfig};
+		my $config = Config::Perl::V::summary(Config::Perl::V::plv2hash($perlv));
+		$r->{_perl_version}->{_archname} = $config->{archname};
+		$r->{_perl_version}->{_osvers} = $config->{osvers};
+	    }
+
 	    last DO_SEND if $r->send;
 	    warn "[" . _ts . "] Something failed in $process_file: " . $r->errstr . ".\n";
 	    if ($try == $max_try) {
