@@ -17,7 +17,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../lib/perl";
 
 BEGIN {
-    if ($ENV{USER} eq 'eserte' && $^O ne "darwin") { # XXX enable experiment only for me
+    if ($ENV{USER} eq 'eserte' && $^O eq "freebsd") { # XXX enable experiment only for me. linux does not have getdents in glibc.
 	eval q{ use CtrGetReportsFastReader };
 	warn $@ if $@;
     }
