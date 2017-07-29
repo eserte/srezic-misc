@@ -117,10 +117,13 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
 return 1 if caller(); # for modulino-style testing
 
-my($distvname2annotation, $distname2annotation, $rtticket_to_title);
+my($distvname2annotation, $distname2annotation);
 if (@annotate_files) {
     ($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
-    $rtticket_to_title = read_rt_information();
+}
+my $rtticket_to_title;
+if (0 && @annotate_files) {
+    $rtticket_to_title = read_rt_information(); # old GNUS hack, not used anymore
 }
 
 if ($auto_good) {
@@ -1148,9 +1151,15 @@ sub get_annotation_info {
 	{
 	    my $changed;
 	    for my $annotation (@annotations) {
-		if ($rtticket_to_title->{$annotation}) {
+		if ($rtticket_to_title && $rtticket_to_title->{$annotation}) {
 		    $annotation .= " ($rtticket_to_title->{$annotation})";
 		    $changed = 1;
+		} elsif ($annotation =~ m{^\d+$}) {
+		    my $subject = get_cached_rt_subject($annotation);
+		    if (defined $subject) {
+			$annotation .= " ($subject)";
+			$changed = 1;
+		    }
 		} elsif ($annotation =~ m{/github.com/.*/issues/}) {
 		    my $title = get_cached_github_issue_title($annotation);
 		    if (defined $title) {
@@ -2168,6 +2177,44 @@ sub read_rt_information {
 	}
     }
     \%rtticket_to_title;
+}
+
+sub get_cached_rt_subject {
+    my($rt_number) = @_;
+    my $url = 'https://rt.cpan.org/Ticket/Display.html?id=' . $rt_number;
+    my $subject;
+    eval {
+	require DB_File;
+	require Fcntl;
+	my $cache_file = "$ENV{HOME}/.cache/ctr_good_or_invalid/rt_subjects.db";
+	if (!-d dirname($cache_file)) {
+	    require File::Path;
+	    File::Path::mkpath(dirname($cache_file));
+	}
+	# XXX implement locking for all!
+	tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+	    or die "ERROR: Can't tie cache file $cache_file: $!";
+	if (exists $db{$url}) {
+	    $subject = $db{$url};
+	} else {
+	    warn "INFO: Not found in cache, try to fetch from $url...\n";
+	    require LWP::UserAgent;
+	    my $resp = LWP::UserAgent->new->get($url);
+	    if ($resp->is_success) {
+		# Quick'n'dirty parsing
+		if ($resp->decoded_content(charset => "none") =~ m{<td class="message-header-value">\s*(.+)</td>}) {
+		    $subject = $1;
+		    $db{$url} = $subject;
+		} else {
+		    warn "ERROR: cannot parse message-header-value out of '$url'";
+		}
+	    }
+	}
+    };
+    if ($@) {
+	warn "ERROR: $@";
+    }
+    $subject;	
 }
 
 sub get_cached_github_issue_title {
