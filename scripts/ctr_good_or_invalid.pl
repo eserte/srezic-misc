@@ -1340,6 +1340,8 @@ sub set_currfile {
 		       || ($analysis_tag eq 'system perl used' && $annotation_text_for_analysis =~ m{system\s+perl}i)
 		       || ($analysis_tag eq 'code points over 0xFF' && $annotation_text_for_analysis =~ m{code.points.over.0xFF}i)
 		       || ($analysis_tag eq 'inherited AUTOLOAD forbidden' && $annotation_text_for_analysis =~ m{inherited AUTOLOAD.*(forbidden|no longer allowed)}i)
+		       || ($analysis_tag eq 'deprecation (Moose)' && $annotation_text_for_analysis =~ m{New Moose may break your code}i)
+		       || ($analysis_tag eq 'bare << forbidden' && $annotation_text_for_analysis =~ m{\bbare\b.*<<.*\bforbidden\b})
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
