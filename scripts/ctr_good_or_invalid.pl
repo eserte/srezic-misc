@@ -2200,13 +2200,29 @@ sub get_cached_rt_subject {
 	} else {
 	    warn "INFO: Not found in cache, try to fetch from $url...\n";
 	    require LWP::UserAgent;
+	    require HTML::Entities;
 	    my $resp = LWP::UserAgent->new->get($url);
 	    if ($resp->is_success) {
 		# Quick'n'dirty parsing
-		if ($resp->decoded_content(charset => "none") =~ m{<td class="message-header-value">\s*(.+)</td>}) {
-		    $subject = $1;
-		    $db{$url} = $subject;
-		} else {
+	    DO_PARSE: {
+		    my $content = $resp->decoded_content(charset => "none");
+		    my $next_is_subject;
+		    for my $line (split /\n/, $content) {
+			if ($next_is_subject) {
+			    if ($line =~ m{<td class="message-header-value">\s*(.+)</td>}) {
+				$subject = HTML::Entities::decode_entities($1);
+				$db{$url} = $subject;
+				last DO_PARSE;
+			    } else {
+				warn "ERROR: expected Subject value, but cannot parse it";
+				$next_is_subject = 0;
+			    }
+			} else {
+			    if ($line =~ m{class="message-header-key">Subject:}) {
+				$next_is_subject = 1;
+			    }
+			}
+		    }
 		    warn "ERROR: cannot parse message-header-value out of '$url'";
 		}
 	    }
