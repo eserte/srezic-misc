@@ -589,7 +589,7 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('inherited AUTOLOAD forbidden'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l93
 		} elsif (
-			 m{\QSetting $/ to a reference to \E.*\Q is forbidden\E $at_source_qr$}
+			 m{Setting \$/ to a reference to .* is forbidden $at_source_qr$}
 			) {
 		    $add_analysis_tag->('non-positive $/'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l80
 		} elsif (
@@ -1342,6 +1342,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'inherited AUTOLOAD forbidden' && $annotation_text_for_analysis =~ m{inherited AUTOLOAD.*(forbidden|no longer allowed)}i)
 		       || ($analysis_tag eq 'deprecation (Moose)' && $annotation_text_for_analysis =~ m{New Moose may break your code}i)
 		       || ($analysis_tag eq 'bare << forbidden' && $annotation_text_for_analysis =~ m{\bbare\b.*<<.*\bforbidden\b})
+		       || ($analysis_tag eq 'non-positive $/' && $annotation_text_for_analysis =~ m{setting.*\$/.*reference.*forbidden}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
