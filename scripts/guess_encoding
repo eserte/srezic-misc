@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+use charnames ();
 use Getopt::Long;
 use Encode;
 
@@ -96,13 +97,26 @@ for my $encoding (@expected_encodings) {
 	    $got_codepoints{$codepoint}++;
 	}
 	my $fitting_codepoints = 0;
+	my %unexpected_codepoints;
 	while(my($k,$v) = each %got_codepoints) {
 	    if (exists $expected_codepoints{$k}) {
 		$fitting_codepoints++;
+	    } else {
+		$unexpected_codepoints{$k}++;
 	    }
 	}
 	if (keys %got_codepoints) {
 	    push @encoding_result, [$encoding, $fitting_codepoints*100/keys %got_codepoints];
+	    if (%unexpected_codepoints) {
+		my @unexpected_codepoints;
+		for my $codepoint (sort { $unexpected_codepoints{$b} <=> $unexpected_codepoints{$a} || $a <=> $b } keys %unexpected_codepoints) {
+		    push @unexpected_codepoints, (charnames::viacode($codepoint) || '???') . " ($unexpected_codepoints{$codepoint}x)";
+		}
+		if (@unexpected_codepoints > 3) {
+		    @unexpected_codepoints = (@unexpected_codepoints[0..2], "...");
+		}
+		push @{ $encoding_result[-1] }, join(", ", @unexpected_codepoints);
+	    }
 	}
     }
 }
@@ -140,7 +154,11 @@ if ($short) {
     }
 } else {
     for my $result (@encoding_result) {
-	printf "%-30s: %4.1f%%\n", $result->[0], $result->[1];
+	printf "%-30s: %4.1f%%", $result->[0], $result->[1];
+	if ($result->[2]) {
+	    print " ", $result->[2];
+	}
+	print "\n";
     }
 }
 
