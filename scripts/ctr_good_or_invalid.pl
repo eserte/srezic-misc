@@ -1343,6 +1343,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'deprecation (Moose)' && $annotation_text_for_analysis =~ m{New Moose may break your code}i)
 		       || ($analysis_tag eq 'bare << forbidden' && $annotation_text_for_analysis =~ m{\bbare\b.*<<.*\bforbidden\b})
 		       || ($analysis_tag eq 'non-positive $/' && $annotation_text_for_analysis =~ m{setting.*\$/.*reference.*forbidden}i)
+		       || ($analysis_tag eq 'max unicode code point' && $annotation_text_for_analysis =~ m{Use of code point .* is not allowed}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
@@ -2228,6 +2229,8 @@ sub get_cached_rt_subject {
 		    }
 		    warn "ERROR: cannot parse message-header-value out of '$url'";
 		}
+	    } else {
+		warn "ERROR: can't fetch $url: " . $resp->status_line . "\n";
 	    }
 	}
     };
