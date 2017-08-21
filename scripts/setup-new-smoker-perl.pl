@@ -70,6 +70,7 @@ my $use_patchperl;
 my $patchperl_path;
 my $jobs;
 my $download_url;
+my $author;
 my $use_pthread;
 my $use_shared;
 my $extra_config_opts;
@@ -92,6 +93,7 @@ GetOptions(
 	   "patchperlpath=s" => \$patchperl_path,
 	   "j|jobs=i" => \$jobs,
 	   "downloadurl=s" => \$download_url,
+	   "author=s" => \$author,
 	   "pthread!"  => \$use_pthread,
 	   'shared!'   => \$use_shared,
 	   'extraconfigopts=s' => \$extra_config_opts,
@@ -99,6 +101,18 @@ GetOptions(
 	   'sudo-v!' => \$use_sudo_v,
 	  )
     or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
+
+if ($author) {
+    if (!$perlver) {
+	die "-perlver (or -pv) is mandatory with -author\n";
+    }
+    if ($download_url) {
+	die "Don't specify both -author and -downloadurl\n";
+    }
+    my($a2, $a1) = $author =~ m{^((.).)};
+    $download_url = "https://cpan.metacpan.org/authors/id/$a1/$a2/$author/perl-$perlver.tar.gz";
+    print "Translate to download URL $download_url\n";
+}
 
 if (!$perlver && $download_url) {
     if ($download_url =~ m{/perl-(5\.\d+\.\d+(?:-RC\d+)?)\.tar\.(?:gz|bz2)$}) {
@@ -832,6 +846,27 @@ BEGIN {
 # REPO END
 
 __END__
+
+=head1 OPTIONS
+
+Specification of built perl:
+
+=over
+
+=item -perlver X.Y.Z
+
+Works once the link on www.cpan.org is created, typically some hours after release.
+
+=item -perlver X.Y.Z -author PAUSEID
+
+Works immediately; needs knowledge of the releaser's PAUSE id (uppercase).
+
+=item -downloadurl URL
+
+Works immediately; arbitrary URL may be used, but perl version (5.Y.Z)
+has to be part of the URL.
+
+=back
 
 =head1 TROUBLESHOOTING
 
