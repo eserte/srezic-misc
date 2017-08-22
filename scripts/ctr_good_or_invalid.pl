@@ -2210,6 +2210,27 @@ sub get_cached_rt_subject {
 		# Quick'n'dirty parsing
 	    DO_PARSE: {
 		    my $content = $resp->decoded_content(charset => "none");
+		    if (eval { require HTML::TreeBuilder; require Encode; 1 }) {
+			my $tree = HTML::TreeBuilder->new;
+			$tree->parse_content(Encode::decode_utf8($content)); # assume utf-8, without checking
+			for my $element ($tree->look_down('class', 'message-header-key')) {
+			    if (join("", $element->content_list) eq 'Subject:') {
+				my $val_element = $element->right;
+				if ($val_element->attr('class') ne 'message-header-value') {
+				    die "Unexpected element after message-header-key";
+				} else {
+				    $subject = join("", $val_element->content_list);
+				    $subject =~ s{^\s+}{};
+				    $db{$url} = $subject;
+				    last DO_PARSE;
+				}
+			    }
+			}
+			warn "WARNING: Did not find anything with HTML::TreeBuilder, fallback to quick'n'dirty parsing\n";
+		    } else {
+			warn "WARNING: Cannot load HTML::TreeBuilder, fallback to quick'n'dirty parsing\n";
+		    }
+
 		    my $next_is_subject;
 		    for my $line (split /\n/, $content) {
 			if ($next_is_subject) {
