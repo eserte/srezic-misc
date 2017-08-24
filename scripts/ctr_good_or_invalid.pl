@@ -1344,6 +1344,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'bare << forbidden' && $annotation_text_for_analysis =~ m{\bbare\b.*<<.*\bforbidden\b})
 		       || ($analysis_tag eq 'non-positive $/' && $annotation_text_for_analysis =~ m{setting.*\$/.*reference.*forbidden}i)
 		       || ($analysis_tag eq 'max unicode code point' && $annotation_text_for_analysis =~ m{Use of code point .* is not allowed}i)
+		       || ($analysis_tag eq 'taint' && $annotation_text_for_analysis =~ m{\btaint\b}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
