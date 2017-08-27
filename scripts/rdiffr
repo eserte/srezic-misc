@@ -305,8 +305,8 @@ Run diff between the local system and a remote host:
 
    rdiffr __local__ user@host1.example.org /etc /usr/local/etc ...
 
-If top directories differ on both hosts, then use C<--right-dir> to
-specify the top directory on the right one. Note that in this mode
+If top directory paths differ on both hosts, then use C<--right-dir>
+to specify the top directory on the right one. Note that in this mode
 it's possible to specifiy only one directory at all:
 
    rdiffr user@host1.example.org user@host2.example.org /mnt/home --right-dir /export/home
