@@ -18,8 +18,7 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--sudo-fallback] host1 host2
-EOFdir ...
+usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--sudo-fallback] host1 host2 dir ...
 EOF
 }
 
