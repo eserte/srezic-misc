@@ -103,12 +103,17 @@ sub run_smoker ($$$) {
     my $perl_exe;
  FIND_PERL: {
 	if ($perl_version eq 'system') {
-	    my $try_perl_exe = '/usr/bin/perl';
-	    if (-x $try_perl_exe) {
-		$perl_exe = $try_perl_exe;
+	    if ($^O eq 'MSWin32') {
+		$perl_exe = 'perl';
 		last FIND_PERL;
+	    } else {
+		my $try_perl_exe = '/usr/bin/perl';
+		if (-x $try_perl_exe) {
+		    $perl_exe = $try_perl_exe;
+		    last FIND_PERL;
+		}
+		die "System perl $try_perl_exe not available";
 	    }
-	    die "System perl $try_perl_exe not available";
 	}
 	for my $prefix ('/usr/perl', '/opt/perl-') {
 	    my $try_perl_exe;
