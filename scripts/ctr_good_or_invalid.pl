@@ -354,7 +354,7 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
     $f->Label(-width => 2)->pack(-side => "left"); # Spacer
 
     # Buttons to start external applications,
-    # in the order: general information (MetaCPAN),
+    # in the order: general information (MetaCPAN and search.cpan.org),
     # report information (Matrix), analysis,
     # issue tracker
     {
@@ -367,6 +367,17 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 			   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($mc_b, -msg => 'MetaCPAN');
+    }
+    {
+	my $b =
+	    $f->Button(-text => 'search.cpan.org',
+		       -image => $images{searchcpan},
+		       -width => 24,
+		       -command => sub {
+			   require Tk::Pod::WWWBrowser;
+			   Tk::Pod::WWWBrowser::start_browser("http://search.cpan.org/dist/$currdist/");
+		       })->pack(-side => 'left', -fill => 'y');
+	$balloon->attach($b, -msg => 'search.cpan.org');
     }
     {
 	my $matrix_b =
@@ -2337,6 +2348,35 @@ KoM50fqaguTjRxZiD1rHjnRUnqKWl1pYEoxulYtUVZqqUPs8W7BQzy9B1AYrDs/fXejddbgfDKHs
 lawuwmDsT2dpEP9sMEBgAmCADYAJojVa9LBt6g1/tQYmx9vXfQx1NzrEW4OM7lRc7UMjCvrubkn2
 L/YaTg3eDn1Hqg25qyOD/QxW8bv8OM0hpVQ0SMN6u1MnDxLkq+0hwsRYbubwCyM7GWpr29cFAAAA
 AElFTkSuQmCC
+EOF
+    }
+
+    if (!defined $images{searchcpan}) {
+	# Fetched: http://st.pimg.net/tucs/img/cpan_banner.png
+	# Cropped and resized to 16x16 with Gimp
+	# base64 ....png
+	$images{searchcpan} = $mw->Photo
+	    (-format => 'png',
+	     -data => <<'EOF');
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAC/VBMVEUuLi4CAgIGBgYKCgoODg4S
+EhIWFhYaGhoeHh4iIiImJiYqKioyMjI2NjY6Ojo+Pj5CQkJGRkZKSkpOTk5SUlJWVlZaWlpeXl5i
+YmJmZmZqampubm5ycnJ2dnZ6enp+fn6CgoKGhoaKioqOjo6SkpKWlpaampqenp6ioqKmpqaqqqqu
+rq6ysrK2tra6urq+vr7CwsLGxsbKysrOzs7S0tLW1tba2tre3t7i4uLm5ubq6uru7u7y8vL29vb6
++vr+/v4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAABJLWvUAAAAAXRSTlMAQObYZgAAAAFiS0dEAIgFHUgAAAAJcEhZcwAACxMAAAsTAQCa
+nBgAAAAHdElNRQfhCBsNMDK57Q34AAAAkElEQVQY01VOywrCQAzMJLvdrou1IiIo9egDD2ItFRH6
+/5/lPlrrziWZSWYSohGgHF1zzvgTGK5/fHg1JvM8jO5lOfNWnYRN/f7xdaVbC1VNge4o8Akr2CRc
+doDy9QbE4H7PqSFfO6JPzdDTt1xGef6AwV5WXhJdWOcWmzhDACuti8N9dCJBgiHe3ZYSl4LhC9XY
+BoOuAiCuAAAAAElFTkSuQmCC
 EOF
     }
 
