@@ -162,7 +162,7 @@ sub run_smoker ($$$) {
     }
     $cmd .= $scripts_dir . q{/cpan_smoke_modules};
     $cmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
-    $cmd .= q{ -savereports -typescript -nosignalend -skiptested -r };
+    $cmd .= q{ -savereports -nosignalend -skiptested -r };
     $cmd .= $install_arg;
     $cmd .= q{ -perl } . $perl_exe;
     $cmd .= q{ -mirrorurl } . $mirror_url;
