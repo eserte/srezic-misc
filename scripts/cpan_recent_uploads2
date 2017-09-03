@@ -30,7 +30,13 @@ BEGIN {
 	$LWP_UserAgent = 'LWP::UserAgent';
     }
 }
-use YAML::Syck qw(Load);
+BEGIN {
+    if (!eval q{ use YAML::Syck qw(Load); 1 }) {
+	if (!eval q{ use YAML::XS qw(Load); 1 }) {
+	    die "Cannot load YAML::Syck or YAML:XS: $@";
+	}
+    }
+}
 
 {
     package MyCPANShell;
