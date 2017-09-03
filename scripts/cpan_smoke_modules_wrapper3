@@ -181,6 +181,9 @@ sub run_smoker ($$$) {
     }
 }
 
+######################################################################
+# "SCENARIOS"
+
 sub scenario_locale {
     my $basecmd = _scenario_basecmd();
     {
@@ -391,6 +394,8 @@ sub _scenario_cmd_expect_fail {
     }
 }
 
+######################################################################
+
 sub spec_usage (;$) {
     my $msg = shift;
     die "ERROR: " . ($msg ? "$msg\n\n" : '') .
@@ -507,7 +512,8 @@ C<-spec> options. A spec is a string with a comma-separated triple:
 
 =over
 
-=item * a perl version specified as I<5.X.Y> (for example C<5.19.11>)
+=item * a perl version specified as I<5.X.Y> (for example C<5.19.11>),
+or the special token C<system> for the "system" perl (usually C</usr/bin/perl>),
 or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>
 
 =item * the "stableness" type (C<devel> or C<stable>)
@@ -625,10 +631,24 @@ test runs based on the cpanreporter history. As a side-effect, if the
 scenario assumption is true, then a 2nd run of the test scenario
 should skip all perls.
 
+=head1 COMPATIBILITY
+
+This scripts is regularly used on various Linux (Debian, CentOS,
+Ubuntu) and FreeBSD systems. It also works on MacOSX and Windows
+(StrawberryPerl) systems.
+
 =head1 BUGS
 
 The module list is passed via command line parameters and is subject
 to operating system limits. The module list produced with "-1000d" may
 work on Linux systems, but much larger values do not.
+
+=head1 AUTHOR
+
+Slaven Rezic <srezic@cpan.org>
+
+=head1 SEE ALSO
+
+L<cpan_smoke_modules>.
 
 =cut
