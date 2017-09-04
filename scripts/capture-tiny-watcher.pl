@@ -25,14 +25,17 @@ GetOptions(
 	  )
     or die "usage: $0 [--batch] [--dry-run] [--debug]\n";
 
+my %candidate_ppid_time;
 while () {
     my %pid_to_childpid;
     my %candidate_ppid;
+    my %seen_pid;
 
     my @processes = P9Y::ProcessTable->table;
 
     for my $process (@processes) {
 	my $pid = $process->pid;
+	$seen_pid{$pid} = 1;
 	my $ppid = $process->ppid;
 	if ($ppid) {
 	    push @{ $pid_to_childpid{$ppid} }, $pid;
@@ -55,38 +58,58 @@ while () {
 	    join(",", sort                 @{ $pid_to_childpid{$ppid} || [] }) eq
 	    join(",", sort map { $_->pid } @{ $candidate_ppid{$ppid} })
 	   ) {
-	    print STDERR "Candidates to kill:\n";
-	    for my $process (@{ $candidate_ppid{$ppid} }) {
-		print STDERR "  " . $process->pid . " (duration: " . (time-$process->start) . "s)\n";
-	    }
+	    if (exists $candidate_ppid_time{$ppid}) {
+		my $candidate_duration = time - $candidate_ppid_time{$ppid};
+		if ($candidate_duration >= 10) {
+		    print STDERR "Candidates to kill (candidate duration: ${candidate_duration}s):\n";
+		    for my $process (@{ $candidate_ppid{$ppid} }) {
+			print STDERR "  " . $process->pid . " (duration: " . (time-$process->start) . "s)\n";
+		    }
 
-	    my $do_kill;
-	    if (!$batch) {
-		print STDERR "Kill processes? (y/n) ";
-		if (y_or_n) {
-		    $do_kill = 1;
-		}
-	    } else {
-		$do_kill = 1;
-	    }
-
-	    if ($do_kill) {
-		for my $process (@{ $candidate_ppid{$ppid} }) {
-		    print STDERR "Kill process " . $process->pid . "... ";
-		    if ($dry_run) {
-			print STDERR "(dry-run)\n";
+		    my $do_kill;
+		    if (!$batch) {
+			print STDERR "Kill processes? (y/n) ";
+			if (y_or_n) {
+			    $do_kill = 1;
+			}
 		    } else {
-			$process->kill(9);
-			print STDERR "done\n";
+			$do_kill = 1;
+		    }
+
+		    if ($do_kill) {
+			for my $process (@{ $candidate_ppid{$ppid} }) {
+			    print STDERR "Kill process " . $process->pid . "... ";
+			    if ($dry_run) {
+				print STDERR "(dry-run)\n";
+			    } else {
+				$process->kill(9);
+				print STDERR "done\n";
+			    }
+			}
+		    }
+		} else {
+		    if ($debug) {
+			print STDERR "Candidate duration for $ppid: ${candidate_duration}s\n";
 		    }
 		}
+	    } else {
+		# first seen
+		$candidate_ppid_time{$ppid} = time;
 	    }
 	} else {
 	    if ($debug) {
-		print STDERR "$ppid is probably still active, do not kill candidates...";
+		print STDERR "$ppid is probably still active, do not kill candidates...\n";
 	    }
 	}
     }
+
+    for my $ppid (keys %candidate_ppid_time) {
+	if (!exists $candidate_ppid{$ppid}) {
+	    # process gone or not inactive
+	    delete $candidate_ppid_time{$ppid};
+	}
+    }
+
     sleep 1;
 }
 
