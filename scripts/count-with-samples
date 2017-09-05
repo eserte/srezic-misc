@@ -1,0 +1,159 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2014,2015,2017 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use Getopt::Long;
+
+sub usage () {
+    die <<EOF;
+usage: $0 [--auto-shorten-samples] [--no-crop-samples] [--reverse | --rx regexp]
+
+Please feed input via standard input.
+EOF
+}
+
+my $auto_shorten_samples;
+my $do_reverse;
+my $rx;
+my $crop_samples = 1;
+GetOptions(
+	   "auto-shorten-samples" => \$auto_shorten_samples,
+	   'crop-samples!' => \$crop_samples,
+	   "r|reverse" => \$do_reverse,
+	   "rx=s" => \$rx,
+	  )
+    or usage;
+@ARGV and usage;
+
+my $rx_qr;
+if ($rx) {
+    $rx_qr = qr{$rx};
+}
+
+my $terminal_width;
+{
+    if (eval { require Term::ReadKey; 1 }) {
+	($terminal_width) = Term::ReadKey::GetTerminalSize();
+    }
+    if (!$terminal_width) {
+        $terminal_width = 80;
+    }
+}
+
+my %count;
+my %count_samples;
+while(<>) {
+    chomp;
+    my($k, $v);
+    if ($rx_qr) {
+	if ($_ =~ $rx_qr) {
+	    ($k, $v) = ($+{k}, $+{v});
+	} else {
+	    warn "Ignore line <$_> while matching against /$rx/...\n";
+	    next;
+	}
+    } elsif (my($first, $second) = $_ =~ m{^([^:]+):\s*(.*)}) {
+	($k, $v) = ($first, $second);
+	if ($do_reverse) { ($k, $v) = ($v, $k) }
+    } else {
+	warn "Ignore line <$_>\n";
+    }
+
+    if (!defined $k || !defined $v) {
+	warn "Cannot parse/find key and/or value, ignore line <$_>...\n";
+	next;
+    }
+
+    $count{$k}++;
+    $count_samples{$k}->{$v}++;
+}
+
+for my $row (sort { $count{$b} <=> $count{$a} } keys %count) {
+    printf "%7d ", $count{$row};
+    my $term_col = 8;
+    print $row;
+    $term_col += length($row);
+    my $this_count_samples = $count_samples{$row};
+    my $need_comma = 0;
+    my $need_open = 1;
+    my @samples = sort {
+	my $res = $this_count_samples->{$b} <=> $this_count_samples->{$a};
+	if ($res == 0) {
+	    $a cmp $b;
+	} else {
+	    $res;
+	}
+    } keys %$this_count_samples;
+    if ($auto_shorten_samples) {
+	die "NYI"; # XXX
+    }
+    for my $sample_i (0 .. $#samples) {
+	my $sample = $samples[$sample_i];
+	$term_col += 2 if $need_open;
+	$term_col += 2 if $need_comma;
+	$term_col += length $sample;
+	if ($crop_samples && $sample_i > 0 && $term_col >= $terminal_width - 4) { # place for "...)"
+	    if ($sample_i < $#samples) {
+		print "...";
+	    }
+	    last;
+	}
+	print " (" if $need_open; $need_open = 0;
+	print ", " if $need_comma;
+	print $sample;
+	$need_comma = 1;
+    }
+    print ")\n";
+}
+
+__END__
+
+=head1 NAME
+
+count-with-samples
+
+=head1 SYNOPSIS
+
+    cat something | count-with-samples [--auto-shorten-samples] [--no-crop-samples] [--reverse | --rx regexp]
+
+=head1 DESCRIPTION
+
+Do a count on the input data, which should be in the form of
+
+    location: data
+
+where I<location> is something like a file name or so, and I<data> is
+the data to be counted (but see the L</--rx> option for arbitrary
+matching of input data). A list of location samples is printed along
+the data counts.
+
+Not yet implemented: With C<--auto-shorten-samples> the common prefix
+of the location samples is determined, and the samples are shortened
+by removing this prefix.
+
+Normally the list of samples is cropped to have place in one line.
+With C<--no-crop-samples> the list is not cropped.
+
+With C<--reverse> the logic is reversed: counting is done by
+I<location>.
+
+The C<--rx> option lets you define an arbitrary regexp for matching
+the key and value field. The regexp should define two named capture
+groups: 'k' for the key and 'v' for the value. Example (assume
+space-separated fields, first contains the key, second the value):
+
+    cat input_data | count-with-samples -e '(?<k>\S+)\s+(?<v>.*)'
+
+=cut
+
