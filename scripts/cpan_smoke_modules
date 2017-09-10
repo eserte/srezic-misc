@@ -368,7 +368,11 @@ TRY_TYPESCRIPT: {
 	    if ($do_typescript) {
 		die "ERROR: $msg";
 	    } else {
-		warn "INFO: $msg, switch off usage of typescript...\n";
+		if (defined $do_typescript) {
+		    warn "INFO: $msg, switch off usage of typescript...\n";
+		} else {
+		    # switch off silently
+		}
 		$do_typescript = 0;
 		no warnings 'exiting';
 		last TRY_TYPESCRIPT;
@@ -993,8 +997,11 @@ EOF
 }
 
 (my $short_hostname = hostname) =~ s{\..*}{};
-chomp(my $tty = `tty`);
-(my $short_tty = $tty) =~ s{^.*/}{};
+my($tty, $short_tty);
+if ($^O ne 'MSWin32') {
+    chomp($tty = `tty`);
+    ($short_tty = $tty) =~ s{^.*/}{};
+}
 
 my $idletermchecker_pid;
 my @idletermchecker_cmd;
@@ -1112,7 +1119,12 @@ EOF
     if ($PERL_CPAN_REPORTER_DIR) {
 	$ENV{PERL_CPAN_REPORTER_DIR} = $PERL_CPAN_REPORTER_DIR;
     } else {
-	my $perl_prefix = `$perl -MConfig -e 'print \$Config{prefix}'`;
+	my $perl_prefix;
+	if (open my $fh, '-|', $perl, '-MConfig', '-e', 'print $Config{prefix}') {
+	    chomp($perl_prefix = <$fh>);
+	} else {
+	    warn "WARNING: error while trying to get perl_prefix for $perl...\n";
+	}
 	if ($perl_prefix && open my $fh, "$perl_prefix/.cpanreporterdir") {
 	    chomp(my $reporter_dir = <$fh>);
 	    if ($reporter_dir) {
@@ -1141,7 +1153,7 @@ EOF
 	{
 	    my $perl_info_line;
 	    open my $fh, '-|', $perl, '-MConfig', '-e',
-		'print join("\t", $Config{version}, $Config{perl_patchlevel}, $Config{archname}, $Config{osvers})'
+		'print join(qq{\t}, $Config{version}, $Config{perl_patchlevel}, $Config{archname}, $Config{osvers})'
 		or die "Can't run $perl -MConfig ...: $!";
 	    $perl_info_line = <$fh>;
 	    ($thisperlver, $thispatch, $thisarchname, $thisosvers) = split /\t/, $perl_info_line;
@@ -1299,7 +1311,7 @@ EOF
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble BEGIN\n";
 	}
 	my $std_title = POSIX::strftime("%H:%M", gmtime) . " ";
-	$std_title .= "smoke($short_hostname:$short_tty): $perl";
+	$std_title .= "smoke($short_hostname".(defined $short_tty ? ":$short_tty" : "") . "): $perl";
 	xterm_conf('-title', $std_title);
 
 	if ($use_distroprefs && $prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
