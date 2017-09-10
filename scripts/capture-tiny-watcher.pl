@@ -18,12 +18,14 @@ use P9Y::ProcessTable;
 
 sub y_or_n (;$);
 
+my $sleep = 10;
 GetOptions(
 	   "batch"   => \my $batch,
 	   "dry-run" => \my $dry_run,
 	   "debug"   => \my $debug,
+	   "sleep=i" => \$sleep,
 	  )
-    or die "usage: $0 [--batch] [--dry-run] [--debug]\n";
+    or die "usage: $0 [--batch] [--dry-run] [--debug] [--sleep seconds]\n";
 
 my %candidate_ppid_time;
 while () {
@@ -110,7 +112,7 @@ while () {
 	}
     }
 
-    sleep 1;
+    sleep $sleep;
 }
 
 # REPO BEGIN
