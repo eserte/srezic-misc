@@ -1915,7 +1915,14 @@ sub safe_version {
 sub xterm_conf {
     my(@args) = @_;
     if (!defined $has_xterm_conf) {
-	$has_xterm_conf = is_in_path("xterm-conf") ? 1 : 0;
+	if ($^O eq 'MSWin32') {
+	    # XTerm::Conf may be installed on Windows systems, but
+	    # does not seem to have any effects (tried over a
+	    # ssh connection).	    
+	    $has_xterm_conf = 0;
+	} else {
+	    $has_xterm_conf = is_in_path("xterm-conf") ? 1 : 0;
+	}
     }
     return if (!$has_xterm_conf);
     my @cmd = ("xterm-conf", "-force", @args);
