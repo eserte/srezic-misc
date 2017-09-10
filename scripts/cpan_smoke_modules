@@ -1371,7 +1371,7 @@ EOF
 
 	# perl belongs to this user -> no sudo necessary
 	my $need_sudo_keeper;
-	if (_is_install_like_action() || $do_action eq 'shell') {
+	if ($^O ne 'MSWin32' && (_is_install_like_action() || $do_action eq 'shell')) {
 	    my $perl_fullpath = is_in_path($perl);
 	    my $perl_uid = (stat($perl_fullpath))[4];
 	    if ($perl_uid == $<) {
