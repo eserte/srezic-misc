@@ -104,7 +104,7 @@ for my $row (sort { $count{$b} <=> $count{$a} } keys %count) {
 	$term_col += 2 if $need_comma;
 	$term_col += length $sample;
 	if ($crop_samples && $sample_i > 0 && $term_col >= $terminal_width - 4) { # place for "...)"
-	    if ($sample_i < $#samples) {
+	    if ($sample_i <= $#samples) {
 		print "...";
 	    }
 	    last;
