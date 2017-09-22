@@ -153,7 +153,13 @@ the key and value field. The regexp should define two named capture
 groups: 'k' for the key and 'v' for the value. Example (assume
 space-separated fields, first contains the key, second the value):
 
-    cat input_data | count-with-samples -e '(?<k>\S+)\s+(?<v>.*)'
+    cat input_data | count-with-samples -rx '(?<k>\S+)\s+(?<v>.*)'
+
+=head1 EXAMPLES
+
+Group files by their md5 checksums (linux variant):
+
+    md5sum * | count-with-samples -rx '(?<k>\S+)\s+(?<v>\S+)'
 
 =cut
 
