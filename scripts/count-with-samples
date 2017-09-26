@@ -25,7 +25,7 @@ EOF
 
 my $auto_shorten_samples;
 my $do_reverse;
-my $parse;
+my $parse = '';
 my $rx;
 my $crop_samples = 1;
 
