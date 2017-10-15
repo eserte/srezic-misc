@@ -701,6 +701,8 @@ TRY_PARTIAL_RESOLVE: {
 		    require CPAN::DistnameInfo;
 		    my $FH;
 		    if (!eval {
+			# XXX maybe https://rt.cpan.org/Ticket/Display.html?id=122722 ?
+			die "PerlIO::gzip seems to be broken on Win32" if $^O eq 'MSWin32';
 			require PerlIO::gzip;
 			open $FH, "<:gzip", $packages_file
 			    or die "Can't open $packages_file: $!";
