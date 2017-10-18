@@ -481,13 +481,17 @@ step "Symlink perl for devel perls",
 
 
 my $symlink_src = "/usr/local/bin/perl$perlver" . $perldir_suffix;
-step "Symlink in /usr/local/bin",
-    ensure => sub {
-	-l $symlink_src
-    },
-    using => sub {
-	sudo 'ln', '-s', "$perldir/bin/perl", $symlink_src;
-    };
+if ($^O ne 'freebsd' || !-f $symlink_src) {
+    step "Symlink in /usr/local/bin",
+	ensure => sub {
+	    -l $symlink_src
+	},
+	using => sub {
+	    sudo 'ln', '-s', "$perldir/bin/perl", $symlink_src;
+	};
+} else {
+    warn "Don't create symlink in /usr/local/bin, there's already a perl (system perl?)\n";
+}
 
 #- change ownership to cpansand:
 #sudo chown -R cpansand:cpansand $MYPERLDIR && sudo chmod -R ugo+r $MYPERLDIR
