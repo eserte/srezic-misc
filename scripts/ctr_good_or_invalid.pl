@@ -1339,6 +1339,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'experimental functions on references are forbidden' && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
+		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
@@ -1355,6 +1356,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'non-positive $/' && $annotation_text_for_analysis =~ m{setting.*\$/.*reference.*forbidden}i)
 		       || ($analysis_tag eq 'max unicode code point' && $annotation_text_for_analysis =~ m{Use of code point .* is not allowed}i)
 		       || ($analysis_tag eq 'taint' && $annotation_text_for_analysis =~ m{\btaint\b}i)
+		       || ($analysis_tag eq 'defined array' && $annotation_text_for_analysis =~ m{can't use.*defined.*\@array}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
