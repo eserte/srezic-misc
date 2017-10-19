@@ -76,6 +76,7 @@ my $use_shared;
 my $extra_config_opts;
 my $cf_email;
 my $use_sudo_v = 1;
+my $use_cpm;
 if ($ENV{USER} =~ m{eserte|slaven}) {
     $cf_email = 'srezic@cpan.org'; # XXX make configurable?
 }
@@ -92,6 +93,7 @@ GetOptions(
 	   "patchperl" => \$use_patchperl,
 	   "patchperlpath=s" => \$patchperl_path,
 	   "j|jobs=i" => \$jobs,
+	   'cpm!' => \$use_cpm,
 	   "downloadurl=s" => \$download_url,
 	   "author=s" => \$author,
 	   "pthread!"  => \$use_pthread,
@@ -100,7 +102,7 @@ GetOptions(
 	   'cc=s' => \$cc,
 	   'sudo-v!' => \$use_sudo_v,
 	  )
-    or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
+    or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-cpm] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
 
 if ($author) {
     if (!$perlver) {
@@ -501,6 +503,56 @@ if ($^O ne 'freebsd' || !-f $symlink_src) {
 # the plugin list is set to empty
 my @cpan_pm_plugins = qw(CPAN::Plugin::Sysdeps);
 
+# install both YAML::Syck and YAML, because it's not clear what's configured
+# for CPAN.pm (by default it's probably YAML, but on cvrsnica/biokovo it's
+# set to YAML::Syck)
+my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl Devel::Hide CPAN::Reporter);
+
+if ($use_cpm) {
+    # Add Term::ReadKey here because tests hang with cpm, but work
+    # with CPAN.pm. Reason is probably the existence of a terminal
+    # in the former (XXX need to find out the exact reason)
+    my @cpm_modules = qw(App::cpm Term::ReadKey Term::ReadLine::Perl);
+
+    step "Install cpm",
+	ensure => sub {
+	    my @missing_modules = modules_installed_check(\@cpm_modules);
+	    return @missing_modules == 0;
+	},
+	using => sub {
+	    my @missing_modules = modules_installed_check(\@cpm_modules);
+	    local $ENV{HARNESS_OPTIONS};
+	    $ENV{HARNESS_OPTIONS} = "j$jobs" if $jobs > 1;
+	    local $ENV{PERL_MM_USE_DEFAULT} = 1;
+	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
+	};
+
+    step "Install modules needed for CPAN::Reporter with cpm",
+	ensure => sub {
+	    my @missing_modules = modules_installed_check(\@toolchain_modules);
+	    return @missing_modules == 0;
+	}, 
+	using => sub {
+	    my @missing_modules = modules_installed_check(\@toolchain_modules);
+
+	    # XXX Temporary (?) hack: use the stable
+	    # RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
+	    # the latter does not always pass tests. Note that this
+	    # may actually create a downgrade of an already installed
+	    # Expect (but this should probably be unlikely)
+	    # UPDATE: Expect 1.32 has also problematic tests.
+	    my @to_install = map {
+		$_ eq 'Expect' ? 'Expect~<1.31' : $_;
+	    } @missing_modules;
+
+	    local $ENV{PERL_MM_USE_DEFAULT} = 1;
+	    my_system "$perldir/bin/cpm", "install", "--global", "--verbose", "--test", "--sudo", "--workers=$jobs", @to_install;
+	};
+
+    # The following two Install steps are hopefully no-ops, because
+    # everything should work right.
+}
+
 step "Install CPAN.pm plugins",
     ensure => sub {
 	my @missing_modules = modules_installed_check(\@cpan_pm_plugins);
@@ -511,11 +563,6 @@ step "Install CPAN.pm plugins",
 	# Start CPAN.pm with plugin_list set to empty list
 	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
     };
-
-# install both YAML::Syck and YAML, because it's not clear what's configured
-# for CPAN.pm (by default it's probably YAML, but on cvrsnica/biokovo it's
-# set to YAML::Syck)
-my @toolchain_modules = qw(YAML::Syck YAML Term::ReadKey Expect Term::ReadLine::Perl Devel::Hide CPAN::Reporter);
 
 step "Install modules needed for CPAN::Reporter",
     ensure => sub {
@@ -869,6 +916,27 @@ Works immediately; needs knowledge of the releaser's PAUSE id (uppercase).
 
 Works immediately; arbitrary URL may be used, but perl version (5.Y.Z)
 has to be part of the URL.
+
+=back
+
+Other options:
+
+=over
+
+=item -jobs NUMBER
+
+Use concurrency where possible. Currently building perl itself is done
+using C<make -j>. Running the perl and CPAN module tests is also done
+in parallel. Also see the L</-cpm> option.
+
+=item -cpm
+
+Do the initial toolchain module installing with L<App::cpm>. Number of
+workers is set to the value of the C<-jobs> option. Unfortunately it
+is far from perfect: installation of L<App::cpm> itself is done with
+L<CPAN>, so only the test suite is parallelized, and the number of
+L<App::cpm> dependencies seems to be larger than the number of the
+toolchain module dependencies. Also some interactivity may occur.
 
 =back
 
