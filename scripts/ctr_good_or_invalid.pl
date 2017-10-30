@@ -1081,6 +1081,7 @@ sub parse_test_report {
 			|| m{DEBPKG:debian/mod_paths} # Debian version
 		       ) {
 			$maybe_system_perl = 0;
+			# XXX In this case it's a normal prereq fail --- but the information is not available at this point --- would need to remember before...
 		    }
 		} elsif (m{^\s*(Test::More)\s+([\d._]+)}) {
 		    $prereq_versions{$1} = $2;
