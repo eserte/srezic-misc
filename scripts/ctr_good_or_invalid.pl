@@ -1043,7 +1043,7 @@ sub parse_test_report {
 		    if (!$program_output->{skip_collector}) {
 			if (/^-*$/) {
 				# skip newlines and dashes
-			} elsif (/^Output\s+from\s+'.*(?:make|Build)\s+test':/) {
+			} elsif (/^Output\s+from\s+'.*(?:make(\.exe)?|Build)\s+test':/) {
 				# skip
 			} elsif (defined $program_output->{content}) {
 				# collect just one line
