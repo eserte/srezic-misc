@@ -635,6 +635,10 @@ if ($prefs_dir) {
     $prefs_dir = $CPAN::Config->{prefs_dir};
 }
 
+if ($reload_index) {
+    system($perls[0], '-MCPAN', '-e', 'CPAN::Index->reload');
+}
+
 for (@dist_or_mods, @pre_dist_or_mods) {
     # to make it easy to copy'n'paste download URLs from a CPAN http mirror:
     s{^https?://.*/authors/id/./../}{};
@@ -1425,10 +1429,6 @@ EOF
 
 	if ($debug) {
 	    $cpan_shell_init .= q#use Data::Dumper; warn Dumper $CPAN::Config; #;
-	}
-
-	if ($reload_index) {
-	    $cpan_shell_init .= q{CPAN::Index->force_reload(); };
 	}
 
 	for my $def (
