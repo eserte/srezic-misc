@@ -26,13 +26,15 @@ my $use_mail;
 my $cpan_uid = 'srezic';
 my $limit;
 my $beta_test;
+my $max_retry = 5;
 GetOptions(
 	   "mail" => \$use_mail,
 	   "cpan-uid=s" => \$cpan_uid,
 	   "limit=i" => \$limit,
 	   "beta" => \$beta_test,
+	   "max-retry=i" => \$max_retry,
 	  )
-    or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number]";
+    or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number]";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -119,9 +121,8 @@ for my $file (@reports) {
     }
 
  DO_SEND: {
-	my $max_try = 5;
 	my $sleep = 60;
-	for my $try (1..$max_try) {
+	for my $try (1..$max_retry) {
 	    my $r = Test::Reporter->new(@tr_args);
 
 	    # XXX Another TR bug: should not set these two by default
@@ -149,7 +150,7 @@ for my $file (@reports) {
 
 	    last DO_SEND if $r->send;
 	    warn "[" . _ts . "] Something failed in $process_file: " . $r->errstr . ".\n";
-	    if ($try == $max_try) {
+	    if ($try == $max_retry) {
 		die "Stop.\n";
 	    }
 	    warn "Sleeping ${sleep}s before retrying...\n";
