@@ -400,6 +400,18 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 			       my $t = $mw->Toplevel(-title => "Local analysis on $currdist $currversion");
 			       my $txt = $t->Scrolled('More', -scrollbars => 'ose')->pack(-fill => 'both', -expand => 1);
 			       $txt->Load($cached_analysis_file);
+
+			       my $modtime_epoch = (stat($cached_analysis_file))[9];
+			       my $modtime = scalar localtime $modtime_epoch;
+			       my $plus_duration = '';
+			       if (eval { require DateTime::Format::Human::Duration; require DateTime; 1 }) {
+				   $plus_duration = ' (before ' . DateTime::Format::Human::Duration->new->format_duration_between
+				       (
+					DateTime->from_epoch(epoch => $modtime_epoch),
+					DateTime->now
+				       ) . ')';
+			       }
+			       $t->Label(-text => "Analysis created: $modtime$plus_duration")->pack(qw(-fill x -expand 1));
 			   } else {
 			       $mw->messageBox(-message => 'No cached analysis available');
 			   }
