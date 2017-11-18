@@ -411,7 +411,8 @@ my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2
 					DateTime->now
 				       ) . ')';
 			       }
-			       $t->Label(-text => "Analysis created: $modtime$plus_duration")->pack(qw(-fill x -expand 1));
+			       $t->Label(-text => "Analysis created: $modtime$plus_duration")->pack(qw(-fill x));
+			       $txt->focus;
 			   } else {
 			       $mw->messageBox(-message => 'No cached analysis available');
 			   }
