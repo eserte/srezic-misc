@@ -122,6 +122,7 @@ for my $file (@reports) {
 
  DO_SEND: {
 	my $sleep = 60;
+	my $sleep_jitter = 5; # +/-5s
 	for my $try (1..$max_retry) {
 	    my $r = Test::Reporter->new(@tr_args);
 
@@ -153,8 +154,9 @@ for my $file (@reports) {
 	    if ($try == $max_retry) {
 		die "Stop.\n";
 	    }
-	    warn "Sleeping ${sleep}s before retrying...\n";
-	    sleep $sleep;
+	    my $this_sleep = int($sleep + rand(2*$sleep_jitter) - $sleep_jitter);
+	    warn "Sleeping ${this_sleep}s before retrying...\n";
+	    sleep $this_sleep;
 	}
 	die "Should not happen";
     }
