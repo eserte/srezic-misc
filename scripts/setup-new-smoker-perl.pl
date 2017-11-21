@@ -625,7 +625,7 @@ step "Maybe upgrade CPAN.pm",
 	-f "$state_dir/.cpan_pm_upgrade_done"
     },
     using => sub {
-	if (!eval { my_system $^X, "-MCPAN $min_CPAN_version", '-e1'; 1 }) {
+	if (!eval { my_system "$perldir/bin/perl", "-MCPAN $min_CPAN_version", '-e1'; 1 }) {
 	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
 	}
 	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
