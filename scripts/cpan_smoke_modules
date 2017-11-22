@@ -636,6 +636,7 @@ if ($prefs_dir) {
 }
 
 if ($reload_index) {
+    # XXX does not obey $mirror_url --- probably also should work with a subset of $cpan_shell_init as below?
     system($perls[0], '-MCPAN', '-e', 'CPAN::Index->reload');
 }
 
