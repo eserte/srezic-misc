@@ -1180,6 +1180,13 @@ sub get_annotation_info {
 		    $annotation .= " ($rtticket_to_title->{$annotation})";
 		    $changed = 1;
 		} elsif ($annotation =~ m{^\d+$}) {
+		    my $subject = get_cached_cpanrt_subject($annotation);
+		    if (defined $subject) {
+			$annotation .= " ($subject)";
+			$changed = 1;
+		    }
+		} elsif ($annotation =~ m{/rt.perl.org/Ticket/Display} ||
+			 $annotation =~ m{/rt.perl.org/rt3/Ticket/Display}) {
 		    my $subject = get_cached_rt_subject($annotation);
 		    if (defined $subject) {
 			$annotation .= " ($subject)";
@@ -2212,9 +2219,14 @@ sub read_rt_information {
     \%rtticket_to_title;
 }
 
-sub get_cached_rt_subject {
+sub get_cached_cpanrt_subject {
     my($rt_number) = @_;
     my $url = 'https://rt.cpan.org/Ticket/Display.html?id=' . $rt_number;
+    get_cached_rt_subject($url);
+}
+
+sub get_cached_rt_subject {
+    my($url) = @_;
     my $subject;
     eval {
 	require DB_File;
@@ -2231,7 +2243,7 @@ sub get_cached_rt_subject {
 	    $subject = $db{$url};
 	} else {
 	    warn "INFO: Not found in cache, try to fetch from $url...\n";
-	    my $subject = get_subject_from_rt($url);
+	    $subject = get_subject_from_rt($url);
 	    if (defined $subject) {
 		$db{$url} = $subject;
 	    }
