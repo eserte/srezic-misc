@@ -27,14 +27,16 @@ my $cpan_uid = 'srezic';
 my $limit;
 my $beta_test;
 my $max_retry = 5;
+my $fails_first;
 GetOptions(
 	   "mail" => \$use_mail,
 	   "cpan-uid=s" => \$cpan_uid,
 	   "limit=i" => \$limit,
 	   "beta" => \$beta_test,
 	   "max-retry=i" => \$max_retry,
+	   "fails-first!" => \$fails_first,
 	  )
-    or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number]";
+    or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number] [-fails-first]\n";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 
@@ -62,8 +64,12 @@ my @reports = (
 	       glob("$sync_dir/pass.*.rpt"),
 	       glob("$sync_dir/na.*.rpt"),
 	       glob("$sync_dir/unknown.*.rpt"),
-	       glob("$sync_dir/fail.*.rpt"),
 	      );
+if ($fails_first) {
+    unshift @reports, glob("$sync_dir/fail.*.rpt");
+} else {
+    push    @reports, glob("$sync_dir/fail.*.rpt"),
+}
 
 if (!@reports) {
     set_term_title 'No reports to send';
