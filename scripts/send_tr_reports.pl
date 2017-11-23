@@ -82,9 +82,14 @@ if ($limit && $limit < scalar(@reports)) {
     print STDERR "to " . scalar(@reports) . ".\n";
 }
 
+my $progress = eval {
+    require Time::Progress;
+    Time::Progress->new(min => 0, max => $limit);
+};
+
 my $sending_reports_msg = sub {
     my $reports_i = shift;
-    "Sending reports (" . $reports_i . "/" . scalar(@reports) . ")" . ($beta_test ? " [-> BETA]" : "");
+    "Sending reports (" . $reports_i . "/" . scalar(@reports) . ")" . ($progress && $reports_i ? $progress->report(" (yet %Emin)", $reports_i) : '') . ($beta_test ? " [-> BETA]" : "");
 };
 
 set_term_title $sending_reports_msg->(0);
