@@ -28,6 +28,7 @@ my $limit;
 my $beta_test;
 my $max_retry = 5;
 my $fails_first;
+my $special_fail_sorting;
 GetOptions(
 	   "mail" => \$use_mail,
 	   "cpan-uid=s" => \$cpan_uid,
@@ -35,6 +36,7 @@ GetOptions(
 	   "beta" => \$beta_test,
 	   "max-retry=i" => \$max_retry,
 	   "fails-first!" => \$fails_first,
+	   "special-fail-sorting!" => \$special_fail_sorting,
 	  )
     or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number] [-fails-first]\n";
 
@@ -65,10 +67,15 @@ my @reports = (
 	       glob("$sync_dir/na.*.rpt"),
 	       glob("$sync_dir/unknown.*.rpt"),
 	      );
+my @fails = glob("$sync_dir/fail.*.rpt");
+if ($special_fail_sorting) {
+    warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
+    @fails = UnsimilaritySorter::run(@fails);
+}
 if ($fails_first) {
-    unshift @reports, glob("$sync_dir/fail.*.rpt");
+    unshift @reports, @fails;
 } else {
-    push    @reports, glob("$sync_dir/fail.*.rpt"),
+    push    @reports, @fails;
 }
 
 if (!@reports) {
@@ -204,6 +211,69 @@ set_term_title "Report sender finished";
 
 sub _ts () {
     strftime("%Y-%m-%d %H:%M:%S", localtime);
+}
+
+{
+    package UnsimilaritySorter;
+
+    {
+	my %cache;
+	sub _normalize ($) {
+	    my $f = shift;
+	    my $normalized = $cache{$f};
+	    return $normalized if defined $normalized;
+	    ($normalized = $f) =~ s{^[^.]+\.}{}; # "fail." ...
+	    $normalized =~ s{\.\d+\.\d+\.rpt$}{};
+	    $cache{$f} = $normalized;
+	}
+    }
+
+    {
+	my %cache;
+	sub _get_similarity ($$) {
+	    my($f1,$f2) = @_;
+	    my $similarity = $cache{"$f1 $f2"};
+	    return $similarity if defined $similarity;
+	    $cache{"$f1 $f2"} = $similarity = String::Similarity::similarity($f1, $f2);
+	}
+    }
+
+    sub run {
+	my(@unsorted) = @_;
+
+	require String::Similarity;
+
+	my @sorted = shift @unsorted;
+
+	# O(n^3) :-(
+	while (@unsorted) {
+	    my $min_similarity;
+	    my $min_similarity_file_i;
+	    for my $i (0 .. $#unsorted) {
+		my $f = $unsorted[$i];
+		my $f_cmp = _normalize $f;
+		my $this_max_similarity;
+		for my $f2 (@sorted) {
+		    my $f2_cmp = _normalize $f2;
+		    #my $similarity = similarity $f_cmp, $f2_cmp, (defined $this_max_similarity ? $this_max_similarity : ());
+		    my $similarity = _get_similarity $f_cmp, $f2_cmp;
+		    if (!defined $this_max_similarity || $similarity > $this_max_similarity) {
+			$this_max_similarity = $similarity;
+		    }
+		}
+		if (!defined $min_similarity || $this_max_similarity < $min_similarity) {
+		    $min_similarity = $this_max_similarity;
+		    $min_similarity_file_i = $i;
+		}
+	    }
+	    if (!defined $min_similarity_file_i) {
+		die "should not happen";
+	    }
+	    push @sorted, splice(@unsorted, $min_similarity_file_i, 1);
+	}
+
+	@sorted;
+    }
 }
 
 __END__
