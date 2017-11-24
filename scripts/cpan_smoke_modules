@@ -59,6 +59,8 @@ my $for_parallel_smoker = 0;
 my $all_perls = 1; # Usually I want them all
 my $skip_system_perl;
 my @skip_perls;
+my @regular_perls;
+my $use_regular_perls;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
 my $per_day_build_dir = 1; # currently it's really a build dir for every 3 hours, not a daily one
@@ -166,6 +168,8 @@ GetOptions("n" => \$n,
 	   'perl=s@' => \@perls,
 	   'pv=s@' => \@pv,
 	   'perlr|perl-reverse!' => \$perlr, # reverse list of perl versions
+	   'set-regular=s@' => \@regular_perls,
+	   'regular' => \$use_regular_perls,
 	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
 	   'fl|filelist=s' => \$fl,
@@ -334,6 +338,13 @@ if ($ktrace && -e $ktrace) {
 for ($strace, $truss, $ktrace) { # protect the user
     if (defined $_ && m{^-}) {
 	die "The -strace/-truss/-ktrace option takes a filename, and '$_' looks like an option!\n";
+    }
+}
+if ($use_regular_perls) {
+    if (!@regular_perls) {
+	die "--regular used, but no specification using --set-regular was set";
+    } else {
+	push @pv, @regular_perls;
     }
 }
 if ($use_vncserver && !is_in_path('vncserver')) {
@@ -2408,6 +2419,19 @@ Skip a perl in F</usr/local/bin> which is symlinked to the system perl
 
 Skip this perl if running in C<-allperls> mode. This option may be
 given multiple times.
+
+=item -set-regular I<version>,I<version>,...
+
+Set perl versions to be used with the L</-regular> option. Only useful
+to be set in the configuration file.
+
+=item -regular
+
+Use the perl versions set by L</-set-regular>.
+
+=item -perlr
+
+Reverse the list of perl versions.
 
 =item -install
 
