@@ -82,7 +82,7 @@ if ($scenario) {
     for my $spec (@specs) {
 	my($perlver, $stableness, $range) = split /,/, $spec;
 	spec_usage if !defined $range;
-	spec_usage("perl version in '$spec' does not look like expected") if $perlver !~ m{^\d+\.\d+\.} && $perlver ne 'system'; # does not look like a perl version (be not to strict here)
+	spec_usage("perl version in '$spec' does not look like expected") if $perlver !~ m{^\d+\.\d+\.} && $perlver ne 'system' && $perlver ne 'regular'; # does not look like a perl version (be not to strict here)
 	spec_usage("stableness in '$spec' must be 'stable' or 'devel'") if $stableness !~ m{^(devel|stable)$};
 	spec_usage("time range in '$spec' does not look like '-\${DAYS}d'") if $range !~ m{^-\d+.*};
     }
@@ -114,6 +114,9 @@ sub run_smoker ($$$) {
 		}
 		die "System perl $try_perl_exe not available";
 	    }
+	} elsif ($perl_version eq 'regular') {
+	    $perl_exe = \'regular';
+	    last FIND_PERL;
 	}
 	for my $prefix ('/usr/perl', '/opt/perl-') {
 	    my $try_perl_exe;
@@ -164,7 +167,11 @@ sub run_smoker ($$$) {
     $cmd .= q{ } . $cpan_smoke_modules_options if defined $cpan_smoke_modules_options;
     $cmd .= q{ -savereports -nosignalend -skiptested -r };
     $cmd .= $install_arg;
-    $cmd .= q{ -perl } . $perl_exe;
+    if (ref $perl_exe eq 'SCALAR' && $$perl_exe eq 'regular') {
+	$cmd .= q{ -regular};
+    } else {
+	$cmd .= q{ -perl } . $perl_exe;
+    }
     $cmd .= q{ -mirrorurl } . $mirror_url;
     $cmd .= _args_minbuilddiravail();
     $cmd .= _args_pv();
@@ -514,7 +521,8 @@ C<-spec> options. A spec is a string with a comma-separated triple:
 
 =item * a perl version specified as I<5.X.Y> (for example C<5.19.11>),
 or the special token C<system> for the "system" perl (usually C</usr/bin/perl>),
-or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>
+or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>,
+or the special token C<regular> for a list of regularly smoked perls (see L<cpan_smoke_modules/-set-regular>).
 
 =item * the "stableness" type (C<devel> or C<stable>)
 
