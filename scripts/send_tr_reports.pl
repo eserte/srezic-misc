@@ -65,16 +65,18 @@ check_term_title;
 my @reports = (
 	       glob("$sync_dir/pass.*.rpt"),
 	       glob("$sync_dir/na.*.rpt"),
-	       glob("$sync_dir/unknown.*.rpt"),
 	      );
-my @fails = glob("$sync_dir/fail.*.rpt");
-if ($special_fail_sorting) {
+my @fails    = glob("$sync_dir/fail.*.rpt");
+my @unknowns = glob("$sync_dir/unknown.*.rpt");
+if (@fails && $special_fail_sorting) {
     warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
     @fails = UnsimilaritySorter::run(@fails);
 }
 if ($fails_first) {
+    unshift @reports, @unknowns;
     unshift @reports, @fails;
 } else {
+    push    @reports, @unknowns;
     push    @reports, @fails;
 }
 
@@ -101,9 +103,20 @@ my $sending_reports_msg = sub {
 
 set_term_title $sending_reports_msg->(0);
 
+my $should_exit;
+local $SIG{TERM} = sub {
+    warn "INFO: SIGTERM caught, will exit as soon as possible\n";
+    $should_exit = 1;
+};
+
 my $reports_i = 0;
 my $term_title_last_changed = time;
-for my $file (@reports) {
+REPORTS_LOOP: for my $file (@reports) {
+    if ($should_exit) {
+	warn "INFO: now exiting because of signal\n";
+	last REPORTS_LOOP;
+    }
+
     $reports_i++;
     if (time - $term_title_last_changed >= 1) {
 	set_term_title $sending_reports_msg->($reports_i);
@@ -142,6 +155,11 @@ for my $file (@reports) {
 	my $sleep = 60;
 	my $sleep_jitter = 5; # +/-5s
 	for my $try (1..$max_retry) {
+	    if ($should_exit) {
+		warn "INFO: now exiting because of signal\n";
+		last REPORTS_LOOP;
+	    }
+
 	    my $r = Test::Reporter->new(@tr_args);
 
 	    # XXX Another TR bug: should not set these two by default
@@ -185,7 +203,11 @@ for my $file (@reports) {
     }
 }
 
-set_term_title "Report sender finished";
+if ($should_exit) {
+    set_term_title "Report sender terminated";
+} else {
+    set_term_title "Report sender finished";
+}
 
 {
     my $cannot_xterm_title;
