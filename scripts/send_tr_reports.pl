@@ -41,6 +41,11 @@ GetOptions(
     or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number] [-fails-first]\n";
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
+if (!-d $reportdir) {
+    die "$reportdir does not look like a directory";
+}
+
+my @reports = @ARGV;
 
 my $sync_dir = "$reportdir/sync";
 my $done_root_dir = "$reportdir/done";
@@ -60,24 +65,33 @@ if (!-d $process_dir) {
     mkdir $process_dir or die "While creating $process_dir: $!";
 }
 
+# If reports are specified on command line: check that all are below $sync_dir
+for my $report (@reports) {
+    if (index($report, "$sync_dir/") != 0) {
+	die "$report is not below $sync_dir";
+    }
+}
+
 check_term_title;
 
-my @reports = (
-	       glob("$sync_dir/pass.*.rpt"),
-	       glob("$sync_dir/na.*.rpt"),
-	      );
-my @fails    = glob("$sync_dir/fail.*.rpt");
-my @unknowns = glob("$sync_dir/unknown.*.rpt");
-if (@fails && $special_fail_sorting) {
-    warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
-    @fails = UnsimilaritySorter::run(@fails);
-}
-if ($fails_first) {
-    unshift @reports, @unknowns;
-    unshift @reports, @fails;
-} else {
-    push    @reports, @unknowns;
-    push    @reports, @fails;
+if (!@reports) {
+    @reports = (
+		glob("$sync_dir/pass.*.rpt"),
+		glob("$sync_dir/na.*.rpt"),
+	       );
+    my @fails    = glob("$sync_dir/fail.*.rpt");
+    my @unknowns = glob("$sync_dir/unknown.*.rpt");
+    if (@fails && $special_fail_sorting) {
+	warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
+	@fails = UnsimilaritySorter::run(@fails);
+    }
+    if ($fails_first) {
+	unshift @reports, @unknowns;
+	unshift @reports, @fails;
+    } else {
+	push    @reports, @unknowns;
+	push    @reports, @fails;
+    }
 }
 
 if (!@reports) {
