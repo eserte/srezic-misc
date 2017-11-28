@@ -107,7 +107,7 @@ if ($limit && $limit < scalar(@reports)) {
 
 my $progress = eval {
     require Time::Progress;
-    Time::Progress->new(min => 0, max => $limit);
+    Time::Progress->new(min => 0, max => scalar(@reports));
 };
 
 my $sending_reports_msg = sub {
