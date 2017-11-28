@@ -118,8 +118,8 @@ my $sending_reports_msg = sub {
 set_term_title $sending_reports_msg->(0);
 
 my $should_exit;
-local $SIG{TERM} = sub {
-    warn "INFO: SIGTERM caught, will exit as soon as possible\n";
+$SIG{TERM} = $SIG{INT} = sub {
+    warn "INFO: signal caught, will exit as soon as possible\n";
     $should_exit = 1;
 };
 
