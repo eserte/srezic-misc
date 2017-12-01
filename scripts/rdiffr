@@ -18,7 +18,7 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--sudo-fallback] host1 host2 dir ...
+usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] host1 host2 dir ...
 EOF
 }
 
@@ -26,15 +26,15 @@ my $debug = 0;
 my @exclude;
 my @exclude_path_rx;
 my $diffopts;
-my $sudo_fallback;
 my $right_dir;
+my $always_sudo;
 GetOptions(
 	   "debug+"       => \$debug,
 	   'x|exclude=s@' => \@exclude,
 	   'exclude-path-rx=s@' => \@exclude_path_rx,
 	   'diffopts=s'   => \$diffopts,
-	   'sudo-fallback!' => \$sudo_fallback,
 	   'right-dir=s'  => \$right_dir,
+	   'always-sudo'  => \$always_sudo,
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -77,7 +77,7 @@ if ($diffopts) {
 # ids, optionally mtime). Use preferably File::Find, maybe find+printf
 #
 # XXX use everywhere // instead of || if perl supports it (check first)
-my @cmd_without_dirs = ('perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, $exclude_path_rx);
+my @cmd_without_dirs = (($always_sudo ? 'sudo' : ()), 'perl', '-Mstrict', '-MFile::Find', "-e", <<'EOF', $exclude_rx, $exclude_path_rx);
 my $exclude_rx = shift @ARGV;
 if (length $exclude_rx) {
     $exclude_rx = qr{$exclude_rx};
