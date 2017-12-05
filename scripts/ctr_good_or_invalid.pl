@@ -462,6 +462,10 @@ set_currfile();
 
 $mw->bind("<Control-q>" => sub { $mw->destroy });
 $mw->bind("<Control-g>" => sub { $good_b->invoke }) if $good_b;
+$mw->bind("<Print>" => sub {
+    require Tk::WidgetDump;
+    $mw->WidgetDump;
+});
 $mw->bind("<F4>" => sub { $prev_b->invoke });
 $mw->bind("<F5>" => sub { $next_b->invoke });
 
