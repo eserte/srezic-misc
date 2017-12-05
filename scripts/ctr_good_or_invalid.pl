@@ -298,6 +298,7 @@ my $prev_b;
 my $next_b;
 my $good_b;
 my $all_good_b;
+my $distribution_age_l;
 my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 {
     my $f = $mw->Frame->pack(-fill => "x");
@@ -308,6 +309,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 
     $f->Label(-text => "/ " . scalar(@files))->pack(-side => "right");
     $f->Label(-textvariable => \$currfile_st)->pack(-side => "right");
+    $distribution_age_l = $f->Label(-padx => 1, -pady => 0)->pack(-side => "right");
 }
 my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
 {
@@ -1149,9 +1151,39 @@ sub parse_test_report {
 	 analysis_tags            => \%analysis_tags,
 	 prereq_fails             => \%prereq_fails,
 	 prereq_versions          => \%prereq_versions,
+	 distribution_age         => get_distribution_age($currfulldist),
 	);
     lock_keys %ret;
     return \%ret;
+}
+
+{
+    my $pcpf;
+    sub get_distribution_age {
+	my($distvname) = @_;
+	return undef if defined $pcpf && !$pcpf;
+	if (!$pcpf) {
+	    if (!eval {
+		require Parse::CPAN::Packages::Fast;
+		$pcpf = Parse::CPAN::Packages::Fast->new;
+	    }) {
+		warn "WARN: Cannot load or construct Parse::CPAN::Packages::Fast: $@";
+		$pcpf = 0; # special cached value --- cannot be loaded
+		return undef;
+	    }
+	}
+	my($dist, $version) = parse_distvname($distvname);
+	my $latest_distribution = $pcpf->latest_distribution($dist);
+	if      (!$latest_distribution) {
+	    { label => 'cannot get latest stable', color => 'red' };
+	} elsif ($latest_distribution->distvname eq $distvname) {
+	    { label => 'latest stable', color => 'black' };
+	} elsif (cmp_version($latest_distribution->version, $version) < 0) {
+	    { label => 'newer than latest stable', color => 'blue' };
+	} else {
+	    { label => 'older than latest stable', color => 'red' };
+	}
+    }
 }
 
 sub get_annotation_info {
@@ -1242,6 +1274,7 @@ sub set_currfile {
     my %analysis_tags = %{ $parsed_report->{analysis_tags} };
     my %prereq_fails = %{ $parsed_report->{prereq_fails} };
     my $test_more_version = $parsed_report->{prereq_versions}->{'Test::More'};
+    my $distribution_age = $parsed_report->{distribution_age};
     my $curr_state;
     (my $curr_short_version = $x_test_reporter_perl) =~ s{^v}{}; # e.g. 5.10.0, without a leading "v"
 
@@ -1330,6 +1363,17 @@ sub set_currfile {
 	}
     }
 
+    if (defined $distribution_age) {
+	$distribution_age_l->configure(
+				       -text => $distribution_age->{label},
+				       -fg => $distribution_age->{color},
+				      );
+    } else {
+	$distribution_age_l->configure(
+				       -text => '',
+				      );
+    }
+
     my %recent_states;
     if ($show_recent_states) {
 	%recent_states = get_recent_states();
@@ -1366,7 +1410,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
 		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
-		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependency on.*not declared|not declared as a dependency)}i)
+		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependency on.*not declared)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
 		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{(removal.*Mojolicious|Mojo::(Util|Home))})
@@ -1590,10 +1634,12 @@ sub set_currfile {
 					     require Tk::Pod::WWWBrowser;
 					     Tk::Pod::WWWBrowser::start_browser($url);
 					 })->pack;
-	} else {
+	} elsif (defined $annotation_label) {
 	    $w = $analysis_frame->Label(-text => $annotation_label)->pack;
 	}
-	$balloon->attach($w, -msg => $annotation_text);
+	if ($w) {
+	    $balloon->attach($w, -msg => $annotation_text);
+	}
     }
 
     {
