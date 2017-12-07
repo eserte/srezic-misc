@@ -1,0 +1,252 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use File::Basename qw(basename);
+use Getopt::Long;
+use Term::ANSIColor;
+
+sub check_ci ($);
+sub debug ($);
+sub guess_project_from_git ();
+
+my $debug;
+my $check_travis;
+my $check_appveyor;
+GetOptions(
+	   "d|debug" => \$debug,
+	   "travis!" => \$check_travis,
+	   "appveyor!" => \$check_appveyor,
+	  )
+    or die "usage: $0 [--debug] user/repo\n";
+my $repo = shift || guess_project_from_git
+    or die "usage: $0 [--debug] user/repo\n";
+if (!$check_travis && !$check_appveyor) {
+    # guess from script name
+    my $basename = basename($0);
+    if ($basename =~ /travis/) {
+	$check_travis = 1;
+    } elsif ($basename =~ /appveyor/) {
+	$check_appveyor = 1;
+    } else {
+	# for "check-ci" or something else: check both
+	$check_travis = 1;
+	$check_appveyor = 1;
+    }
+}
+
+my $success = check_ci $repo;
+exit($success ? 0 : 1);
+
+{
+    # initially taken from deployment.pl in CPAN-Testers-Matrix
+
+    sub check_ci ($) {
+	my($repo) = @_;
+	chomp(my $current_commit_id = `git log -1 --format=format:'%H'`);
+	if (!$current_commit_id) {
+	    die "Unexpected: cannot find a commit";
+	}
+	require LWP::UserAgent;
+	require JSON::XS;
+	my $ua = LWP::UserAgent->new(timeout => 10);
+	my $wait = sub {
+	    for (reverse(0..14)) {
+		print STDERR "\rwait $_ second" . ($_ != 1 ? "s " : "  ");
+		sleep 1 if $_ > 0;
+	    }
+	    print STDERR "\r";
+	};
+
+	my %is_active = (
+			  travis   => $check_travis,
+			  appveyor => $check_appveyor,
+			 );
+	my %is_failed;
+	my $mark_as_failed = sub ($$) {
+	    my($system, $error) = @_;
+	    $is_active{$system} = 0;
+	    $is_failed{$system} = 1;
+	    print STDERR colored($error, "red"), "\n";
+	    undef;
+	};
+	my $mark_as_finished = sub ($) {
+	    my($system) = @_;
+	    $is_active{$system} = 0;
+	};
+
+	my $appveyor_build_url = "https://ci.appveyor.com/api/projects/$repo";
+	my $get_current_appveyor_build = sub {
+	    debug "About to get from $appveyor_build_url";
+	    my $res = $ua->get($appveyor_build_url);
+	    if (!$res->is_success) {
+		$mark_as_failed->('appveyor', "Request to $appveyor_build_url failed: " . $res->status_line);
+	    }
+	    debug "Fetch from appveyor successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    if ($data->{build}->{commitId} eq $current_commit_id) {
+		return $data->{build};
+	    }
+	    debug "Build for commit $current_commit_id not found at appveyor";
+	    undef;
+	};
+
+	my $travis_build_id;
+	my $travis_builds_url = "http://api.travis-ci.org/repos/$repo/builds";
+	my $get_current_travis_build = sub {
+	    debug "About to get from $travis_builds_url";
+	    my $res = $ua->get($travis_builds_url);
+	    if (!$res->is_success) {
+		$mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line);
+	    }
+	    debug "Fetch from travis successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    for my $build (@$data) {
+		if ($build->{commit} eq $current_commit_id) {
+		    return $build;
+		}
+	    }
+	    debug "Build for commit $current_commit_id not found at travis";
+	    undef;
+	};
+	my $get_current_travis_build_by_id = sub {
+	    my $travis_build_url = "http://api.travis-ci.org/repos/$repo/builds/$travis_build_id";
+	    debug "About to get from $travis_build_url";
+	    my $res = $ua->get($travis_build_url);
+	    if (!$res->is_success) {
+		die "Request to $travis_build_url failed: " . $res->status_line;
+	    }
+	    debug "Fetch successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    return $data;
+	};
+
+	my $maybe_colored = sub {
+	    my($title, $number, $color) = @_;
+	    my $msg = "$title=$number";
+	    if ($number == 0) {
+		$msg;
+	    } else {
+		colored($msg, $color);
+	    }		    
+	};
+
+	while () {
+	DO_TRAVIS: {
+		if ($is_active{travis}) {
+		    if (!$travis_build_id) {
+			my $travis_build = $get_current_travis_build->();
+			if (!$travis_build) {
+			    if (!$is_failed{travis}) {
+				print STDERR "Status at travis:   cannot find commit $current_commit_id\n";
+			    }
+			    last DO_TRAVIS;
+			} else {
+			    $travis_build_id = $travis_build->{id};
+			    if (!defined $travis_build_id) {
+				$mark_as_failed->("Unexpected: no build id found in build data");
+				require Data::Dumper;
+				warn Data::Dumper::Dumper($travis_build);
+				last DO_TRAVIS;
+			    }
+			}
+		    }
+		    my $travis_build = $get_current_travis_build_by_id->();
+		    if ($travis_build) {
+			my $successful = 0;
+			my $failures = 0;
+			my $running = 0;
+			for my $job (@{ $travis_build->{matrix} }) {
+			    if (!defined $job->{finished_at}) {
+				$running++;
+			    } elsif (defined $job->{result} && $job->{result} == 0) {
+				$successful++;
+			    } else {
+				$failures++;
+			    }
+			}
+			print STDERR "Status at travis:   ".
+			    $maybe_colored->("running",    $running,    "yellow")." ".
+			    $maybe_colored->("successful", $successful, "green")." ".
+			    $maybe_colored->("failures",   $failures,   "red")."\n";
+			if ($failures) {
+			    $mark_as_failed->('travis', "At least one job failed. See https://travis-ci.org/$repo for more information.");
+			} elsif ($running == 0) {
+			    $mark_as_finished->('travis');
+			}
+		    }
+		}
+	    }
+
+	DO_APPVEYOR: {
+		if ($is_active{appveyor}) {
+		    my $appveyor_build = $get_current_appveyor_build->();
+		    if (!$appveyor_build) {
+			if (!$is_failed{appveyor}) {
+			    print STDERR "Status at appveyor: cannot find commit $current_commit_id\n";
+			}
+			last DO_APPVEYOR;
+		    } else {
+			my $successful = 0;
+			my $failures = 0;
+			my $running = 0;
+			for my $job (@{ $appveyor_build->{jobs} }) {
+			    if (!$job->{finished}) {
+				$running++;
+			    } elsif ($job->{status} eq 'success') {
+				$successful++;
+			    } else {
+				$failures++;
+			    }
+			}
+			print STDERR "Status at appveyor: ".
+			    $maybe_colored->("running",    $running,    "yellow")." ".
+			    $maybe_colored->("successful", $successful, "green")." ".
+			    $maybe_colored->("failures",   $failures,   "red")."\n";
+			if ($failures) {
+			    $mark_as_failed->('appveyor', "At least one job failed. See https://ci.appveyor.com/project/$repo for more information.");
+			} elsif ($running == 0) {
+			    $mark_as_finished->('appveyor');
+			}
+		    }
+		}
+	    }
+
+	    if (!$is_active{travis} && !$is_active{appveyor}) {
+		last;
+	    }
+
+	    $wait->();
+	}
+
+	if ($check_travis && !$is_failed{travis}) {
+	    print STDERR "travis-ci build was " . colored("successful", "green") . "\n";
+	}
+	if ($check_appveyor && !$is_failed{appveyor}) {
+	    print STDERR "appveyor build was " . colored("successful", "green") . "\n";
+	}
+    }
+
+    sub debug ($) {
+	my $msg = shift;
+	if ($debug) {
+	    print STDERR "$msg\n";
+	}
+    }
+}
+
+sub guess_project_from_git () {
+    chomp(my(@l) = `git remote -v 2>/dev/null`);
+    # example: origin  git://github.com/eserte/doit.git (fetch)
+    for my $l (@l) {
+	if ($l =~ m{^origin\s+(\S+)}) {
+	    my $project = $1;
+	    $project =~ s{\.git$}{};
+	    $project =~ s{^git\@github.com:}{};
+	    $project =~ s{.*/([^/]+/[^/]+)$}{$1};
+	    return $project if defined $project && length $project;
+	}
+    }
+    warn "Cannot guess project from current directory...\n";
+    undef;
+}
