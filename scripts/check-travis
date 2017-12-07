@@ -2,25 +2,49 @@
 
 use strict;
 use warnings;
+use File::Basename qw(basename);
 use Getopt::Long;
 use Term::ANSIColor;
 
-sub check_travis ($);
+sub check_ci ($);
 sub debug ($);
 sub guess_project_from_git ();
 
 my $debug;
-GetOptions("d|debug" => \$debug)
+my $check_travis;
+my $check_appveyor;
+GetOptions(
+	   "d|debug" => \$debug,
+	   "travis!" => \$check_travis,
+	   "appveyor!" => \$check_appveyor,
+	  )
     or die "usage: $0 [--debug] user/repo\n";
 my $repo = shift || guess_project_from_git
     or die "usage: $0 [--debug] user/repo\n";
-my $success = check_travis $repo;
+if (!$check_travis && !$check_appveyor) {
+    # guess from script name
+    my $basename = basename($0);
+    if ($basename =~ /travis/) {
+	$check_travis = 1;
+    } elsif ($basename =~ /appveyor/) {
+	$check_appveyor = 1;
+    } else {
+	# for "check-ci" or something else: check both
+	$check_travis = 1;
+	$check_appveyor = 1;
+    }
+}
+if ($check_appveyor) {
+    die "NYI: --appveyor checks";
+}
+
+my $success = check_ci $repo;
 exit($success ? 0 : 1);
 
 {
-    # XXX taken from deployment.pl in CPAN-Testers-Matrix
+    # initially taken from deployment.pl in CPAN-Testers-Matrix
 
-    sub check_travis ($) {
+    sub check_ci ($) {
 	my($repo) = @_;
 	chomp(my $current_commit_id = `git log -1 --format=format:'%H'`);
 	if (!$current_commit_id) {
