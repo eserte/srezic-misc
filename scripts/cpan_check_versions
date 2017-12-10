@@ -14,7 +14,7 @@
 
 use strict;
 
-use Cwd qw(cwd);
+use Cwd qw(getcwd);
 use ExtUtils::Manifest qw(maniread);
 use ExtUtils::MM_Unix;
 use File::Compare qw(compare);
@@ -22,32 +22,69 @@ use File::Spec qw();
 use Getopt::Long;
 
 my $q;
-GetOptions("q" => \$q)
-    or die "usage: $0 [-q] [olddist]";
+my $remote;
+GetOptions(
+	   "q"      => \$q,
+	   "remote" => \$remote,
+	  )
+    or die "usage: $0 [-q] [-remote | olddist]";
 
 sub save_pwd (&);
 
-my $olddistdir = shift;
-if (!$olddistdir) {
-    warn "No old distribution given, try to find one in the current directory...\n";
-    require CPAN::DistnameInfo;
-    require CPAN::Version;
-    my $max_version;
-    my $best_dist;
-    for my $f (glob("*")) {
-	next if !-f $f;
-	my $d = CPAN::DistnameInfo->new($f);
-	next if !$d;
-	if (!defined $max_version || CPAN::Version->vgt($d->version, $max_version)) {
-	    $max_version = $d->version;
-	    $best_dist = $d;
+my $olddistdir;
+if ($remote) {
+    require LWP::UserAgent;
+    require File::Basename;
+    require File::Temp;
+    require JSON::XS;
+    my $mc_url = 'https://fastapi.metacpan.org/v1';
+    my $distname = File::Basename::basename(getcwd);
+    my $tmpdir = File::Temp::tempdir("cpan_check_versions_XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
+    my $ua = LWP::UserAgent->new;
+    my $distvname = sub {
+	my $url = "$mc_url/release/versions/$distname";
+	my $resp = $ua->get($url);
+	die "Error while fetching $url: " . $resp->status_line if !$resp->is_success;
+	my $d = JSON::XS::decode_json($resp->decoded_content(charset => 'none'));
+	my $latest_rel = $d->{releases}->[0];
+	die "Cannot get latest release" if !$latest_rel;
+	$latest_rel->{author} . "/" . $latest_rel->{name};
+    }->();
+    my $download_url = sub {
+	my $url = "$mc_url/release/$distvname";
+	my $resp = $ua->get($url);
+	die "Error while fetching $url: " . $resp->status_line if !$resp->is_success;
+	my $d = JSON::XS::decode_json($resp->decoded_content(charset => 'none'));
+	$d->{release}->{download_url};
+    }->();
+    warn "INFO: fetch $download_url to $tmpdir...\n" unless $q;
+    my $download_file = File::Basename::basename($download_url);
+    my $resp = $ua->get($download_url, ':content_file' => "$tmpdir/$download_file");
+    die "Error while fetching $download_url: " . $resp->status_line if !$resp->is_success;
+    $olddistdir = "$tmpdir/$download_file";
+} else {
+    $olddistdir = shift;
+    if (!$olddistdir) {
+	warn "No old distribution given, try to find one in the current directory...\n";
+	require CPAN::DistnameInfo;
+	require CPAN::Version;
+	my $max_version;
+	my $best_dist;
+	for my $f (glob("*")) {
+	    next if !-f $f;
+	    my $d = CPAN::DistnameInfo->new($f);
+	    next if !$d;
+	    if (!defined $max_version || CPAN::Version->vgt($d->version, $max_version)) {
+		$max_version = $d->version;
+		$best_dist = $d;
+	    }
 	}
+	if (!$best_dist) {
+	    die "Could not find any distribution in the current directory.\n";
+	}
+	warn "Found " . $best_dist->filename . "\n";
+	$olddistdir = $best_dist->filename;
     }
-    if (!$best_dist) {
-	die "Could not find any distribution in the current directory.\n";
-    }
-    warn "Found " . $best_dist->filename . "\n";
-    $olddistdir = $best_dist->filename;
 }
 
 if ($olddistdir =~ m{\.(tar\.gz|tgz|tar\.bz2)$}) {
@@ -72,16 +109,16 @@ if ($olddistdir =~ m{\.(tar\.gz|tgz|tar\.bz2)$}) {
 	    die "Unexpected number of extracted files/directories: @extracted_files";
 	}
 	chdir $extracted_files[0] or die "Can't chdir to $extracted_files[0]: $!";
-	$olddistdir = cwd;
+	$olddistdir = getcwd;
     };
 }
 
 if (!-d $olddistdir) {
-    die "<$olddistdir> must be a directory";
+    die "<$olddistdir> must be a directory (or use -remote)\n";
 }
 
 my $errors = 0;
-my $distdir = shift || cwd;
+my $distdir = shift || getcwd;
 my $manifest_file = "$distdir/MANIFEST";
 my $manifest;
 if (!-r $manifest_file) {
@@ -150,7 +187,7 @@ exit $errors;
 sub save_pwd (&) {
     my $code = shift;
     require Cwd;
-    my $pwd = Cwd::cwd();
+    my $pwd = Cwd::getcwd();
     eval {
 	$code->();
     };
