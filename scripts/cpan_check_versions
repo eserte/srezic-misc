@@ -39,6 +39,7 @@ if ($remote) {
     require JSON::XS;
     my $mc_url = 'https://fastapi.metacpan.org/v1';
     my $distname = File::Basename::basename(getcwd);
+    $distname =~ s{-\d.*}{}; # strip version number, if any
     my $tmpdir = File::Temp::tempdir("cpan_check_versions_XXXXXXXX", TMPDIR => 1, CLEANUP => 1);
     my $ua = LWP::UserAgent->new;
     my $distvname = sub {
