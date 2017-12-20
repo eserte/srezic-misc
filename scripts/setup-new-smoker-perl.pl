@@ -17,6 +17,7 @@ use FindBin;
 use File::Basename qw(basename dirname);
 use File::Path qw(mkpath);
 use Getopt::Long;
+use Time::HiRes ();
 
 sub save_pwd2 ();
 sub step ($%);
@@ -170,6 +171,26 @@ my $main_pid = $$;
 
 my $sudo_validator_pid;
 sudo 'echo', 'Initialized sudo password';
+
+# Start duration measurement after the sudo call, which is possibly
+# interactive.
+my $begin = Time::HiRes::time;
+my %duration;
+if (eval { require Tie::IxHash; 1 }) {
+    tie %duration, 'Tie::IxHash';
+}
+END {
+    if ($main_pid == $$) {
+	my $end = Time::HiRes::time;
+	print STDERR "\n";
+	print STDERR "DURATIONS\n";
+	print STDERR "---------\n";
+	printf STDERR "Total:\t%.2fs\n", $end-$begin;
+	while(my($step_name, $duration) = each %duration) {
+	    printf STDERR "$step_name:\t%.2fs\n", $duration;
+	}
+    }
+}
 
 my $original_download_directory = my $download_directory = "/usr/ports/distfiles";
 if (!-d $download_directory) {
@@ -739,12 +760,15 @@ sub modules_installed_check {
 
 sub step ($%) {
     my($step_name, %doings) = @_;
+    my $t0 = Time::HiRes::time;
     my $ensure = $doings{ensure} || die "ensure => sub { ... } missing";
     my $using  = $doings{using}  || die "using => sub { ... } missing";
     return if $ensure->();
     set_term_title "$term_title_prefix: $step_name";
     $using->();
     die "Step '$step_name' failed" if !$ensure->();
+    my $t1 = Time::HiRes::time;
+    $duration{$step_name} = $t1-$t0;
 }
 
 sub sudo (@) {
@@ -981,6 +1005,32 @@ This was observed on CentOS 7 systems with sudo 1.8.6p7: the C<sudo
 -v> command asks for a password, even if the user is setup to do
 passwordless sudo. Workaround: start this command with the
 C<--no-sudo-v> option.
+
+=back
+
+=head1 DURATIONS
+
+Here are some sample durations for a full perl+toolchain build:
+
+=over
+
+=item * Debian/jessie with i7-6700T @ 2.80GHz, for threaded perl 5.27.6 with -j3:
+
+    DURATIONS
+    ---------
+    Total:  729.58s
+    Extract in /usr/local/src:      0.51s
+    Valid source directory: 0.00s
+    Build perl:     360.35s
+    Install perl:   21.39s
+    Symlink perl for devel perls:   0.01s
+    Symlink in /usr/local/bin:      0.01s
+    Install CPAN.pm plugins:        18.21s
+    Install modules needed for CPAN::Reporter:      191.37s
+    Install and report Kwalify:     5.34s
+    Report toolchain modules:       127.90s
+    Force a fail report:    4.37s
+    Maybe upgrade CPAN.pm:  0.13s
 
 =back
 
