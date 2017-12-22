@@ -358,6 +358,11 @@ The source directory '$perl_src_dir' was probably configured with a different AR
     $srcdir_argv_fingerprint
 vs.
     $argv_fingerprint
+
+Probably it's best to remove the directory:
+
+    rm -rf '$perl_src_dir'
+
 EOF
 	    }
 	} else {
@@ -1014,7 +1019,7 @@ Here are some sample durations for a full perl+toolchain build:
 
 =over
 
-=item * Debian/jessie with i7-6700T @ 2.80GHz, for threaded perl 5.27.6 with -j3:
+=item * Debian/jessie with i7-6700T @ 2.80GHz, for threaded perl 5.25.6 with -j3:
 
     DURATIONS
     ---------
@@ -1031,6 +1036,110 @@ Here are some sample durations for a full perl+toolchain build:
     Report toolchain modules:       127.90s
     Force a fail report:    4.37s
     Maybe upgrade CPAN.pm:  0.13s
+
+=item * Debian/jessie with i7-6700T @ 2.80GHz, for unthreaded perl 5.27.7 with -j3:
+
+    DURATIONS
+    ---------
+    Total:  711.05s
+    Download perl 5.27.7:   12.97s
+    Extract in /usr/local/src:      0.55s
+    Valid source directory: 0.00s
+    Build perl:     333.56s
+    Install perl:   22.20s
+    Symlink perl for devel perls:   0.01s
+    Symlink in /usr/local/bin:      0.01s
+    Install CPAN.pm plugins:        14.39s
+    Install modules needed for CPAN::Reporter:      190.08s
+    Install and report Kwalify:     4.61s
+    Report toolchain modules:       128.33s
+    Force a fail report:    4.23s
+    Maybe upgrade CPAN.pm:  0.13s
+
+=item * CentOS6 on a VM with 4 CPUs, for unthreaded perl 5.27.7 with
+-j3, script aborted during the CPAN phase, so two starts were
+necessary:
+
+    DURATIONS
+    ---------
+    (no total time, two starts were necessary)
+    Build perl:     428.60s
+    Extract in /tmp:        0.79s
+    Download perl 5.27.7:   0.35s
+    Symlink perl for devel perls:   0.01s
+    Install perl:   25.06s
+    Symlink in /usr/local/bin:      0.01s
+    Valid source directory: 0.00s
+    ---
+    Install and report Kwalify:     1.86s
+    Install CPAN.pm plugins:        8.94s
+    chown for cpansand:     0.03s
+    Report toolchain modules:       139.75s
+    Maybe upgrade CPAN.pm:  0.15s
+    Force a fail report:    5.00s
+    Install modules needed for CPAN::Reporter:      184.05s
+
+=item * Debian/stretch on a VM with 4 CPUs, for unthreaded perl 5.27.7 with -j3:
+
+    DURATIONS
+    ---------
+    Total:  893.45s
+    Download perl 5.27.7:   0.43s
+    Extract in /tmp:        0.52s
+    Valid source directory: 0.00s
+    Build perl:     440.09s
+    Install perl:   25.72s
+    Symlink perl for devel perls:   0.01s
+    Symlink in /usr/local/bin:      0.01s
+    Install CPAN.pm plugins:        14.95s
+    Install modules needed for CPAN::Reporter:      249.09s
+    Install and report Kwalify:     5.75s
+    Report toolchain modules:       151.56s
+    Force a fail report:    5.13s
+    Maybe upgrade CPAN.pm:  0.14s
+    chown for cpansand:     0.03s
+
+=item * FreeBSD 12.0-CURRENT on a VM with 1 CPU, for unthreaded perl 5.27.7 with -j3
+
+    DURATIONS
+    ---------
+    Total:  2528.25s
+    Install and report Kwalify:     8.98s
+    Valid source directory: 0.00s
+    Force a fail report:    7.59s
+    Enable pthread: 0.01s
+    chown for cpansand:     0.28s
+    Build perl:     1224.12s
+    Symlink perl for devel perls:   0.03s
+    Download perl 5.27.7:   3.60s
+    Symlink in /usr/local/bin:      0.05s
+    Install perl:   68.84s
+    Report toolchain modules:       374.52s
+    Extract in /tmp:        5.07s
+    Maybe upgrade CPAN.pm:  0.27s
+    Install CPAN.pm plugins:        62.34s
+    Install modules needed for CPAN::Reporter:      772.53s
+
+=item * FreeBSD 11.1-RELEASE on a VM with 1 CPU, for unthreaded perl 5.27.7 with -j3
+
+    DURATIONS
+    ---------
+    Total:  1938.84s
+    Install modules needed for CPAN::Reporter:      453.14s
+    Valid source directory: 0.00s
+    Symlink in /usr/local/bin:      0.01s
+    Maybe upgrade CPAN.pm:  0.19s
+    Install perl:   34.87s
+    Report toolchain modules:       328.01s
+    Force a fail report:    5.95s
+    Install CPAN.pm plugins:        20.11s
+    Download perl 5.27.7:   2.50s
+    chown for cpansand:     0.21s
+    Build perl:     1084.11s
+    Extract in /tmp:        2.77s
+    Install and report Kwalify:     6.49s
+    Symlink perl for devel perls:   0.01s
+    Enable pthread: 0.47s
 
 =back
 
