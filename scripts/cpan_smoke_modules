@@ -105,7 +105,7 @@ my $signal_end = 1;
 my $module_printused;
 my $unkind = 0;
 my $mirror_url = 'http://cpan.cpantesters.org/';
-#my $mirror_url = 'https://cpan.metacpan.org/'; # may be problematic if no https-capable client is available
+#my $mirror_url = 'http://cpan.metacpan.org/';
 my @hidemod;
 my $time_fake;
 my $use_vncserver;
@@ -203,7 +203,7 @@ GetOptions("n" => \$n,
 	   'mirrorurlfunet' => sub { $mirror_url = 'ftp://ftp.funet.fi/pub/CPAN' },
 	   'mirrorurlperl'  => sub { $mirror_url = 'http://www.perl.com/CPAN/' },
 	   'mirrorurldevelooper' => sub { $mirror_url = 'http://cpan.develooper.com/' },
-	   'mirrorurlmetacpan' => sub { $mirror_url = 'https://cpan.metacpan.org/' }, # contains also backpan
+	   'mirrorurlmetacpan' => sub { $mirror_url = 'http://cpan.metacpan.org/' }, # contains also backpan
 	   'mirrorurlfastftp|mirrorurlftpfast' => sub { $mirror_url = 'ftp://ftp.hawo.stw.uni-erlangen.de/CPAN' },
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
