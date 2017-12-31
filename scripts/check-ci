@@ -6,21 +6,29 @@ use File::Basename qw(basename);
 use Getopt::Long;
 use Term::ANSIColor;
 
-sub check_ci ($);
+sub check_ci ($@);
 sub debug ($);
 sub guess_project_from_git ();
+
+sub usage () {
+    die "usage: $0 [--debug] [--travis] [--appveyor] [--commit SHA1] [--wait seconds] user/repo\n";
+}
 
 my $debug;
 my $check_travis;
 my $check_appveyor;
+my $commit;
+my $wait_seconds = 15;
 GetOptions(
 	   "d|debug" => \$debug,
 	   "travis!" => \$check_travis,
 	   "appveyor!" => \$check_appveyor,
+	   "commit=s" => \$commit,
+	   "wait=i" => \$wait_seconds,
 	  )
-    or die "usage: $0 [--debug] user/repo\n";
+    or usage;
 my $repo = shift || guess_project_from_git
-    or die "usage: $0 [--debug] user/repo\n";
+    or usage;
 if (!$check_travis && !$check_appveyor) {
     # guess from script name
     my $basename = basename($0);
@@ -35,23 +43,30 @@ if (!$check_travis && !$check_appveyor) {
     }
 }
 
-my $success = check_ci $repo;
+my $success = check_ci $repo, commit => $commit, wait => $wait_seconds;
 exit($success ? 0 : 1);
 
 {
     # initially taken from deployment.pl in CPAN-Testers-Matrix
 
-    sub check_ci ($) {
-	my($repo) = @_;
-	chomp(my $current_commit_id = `git log -1 --format=format:'%H'`);
-	if (!$current_commit_id) {
-	    die "Unexpected: cannot find a commit";
+    sub check_ci ($@) {
+	my($repo,%opts) = @_;
+	my $current_commit_id = delete $opts{commit};
+	my $wait_seconds      = delete $opts{wait} || 15;
+	die "Unhandled options: " . join(" ", %opts) if %opts;
+
+	if (!defined $current_commit_id) {
+	    chomp($current_commit_id = `git log -1 --format=format:'%H'`);
+	    if (!$current_commit_id) {
+		die "Unexpected: cannot find a commit";
+	    }
 	}
+
 	require LWP::UserAgent;
 	require JSON::XS;
 	my $ua = LWP::UserAgent->new(timeout => 10);
 	my $wait = sub {
-	    for (reverse(0..14)) {
+	    for (reverse(0..$wait_seconds-1)) {
 		print STDERR "\rwait $_ second" . ($_ != 1 ? "s " : "  ");
 		sleep 1 if $_ > 0;
 	    }
