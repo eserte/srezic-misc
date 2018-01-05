@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014,2015,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015,2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -26,6 +26,7 @@ my $use_mail;
 my $cpan_uid = 'srezic';
 my $limit;
 my $beta_test;
+my $delay_retry = 60;
 my $max_retry = 5;
 my $fails_first;
 my $special_fail_sorting;
@@ -35,6 +36,7 @@ GetOptions(
 	   "limit=i" => \$limit,
 	   "beta" => \$beta_test,
 	   "max-retry=i" => \$max_retry,
+	   "delay-retry=i" => \$delay_retry,
 	   "fails-first!" => \$fails_first,
 	   "special-fail-sorting!" => \$special_fail_sorting,
 	  )
@@ -166,7 +168,6 @@ REPORTS_LOOP: for my $file (@reports) {
     }
 
  DO_SEND: {
-	my $sleep = 60;
 	my $sleep_jitter = 5; # +/-5s
 	for my $try (1..$max_retry) {
 	    if ($should_exit) {
@@ -204,7 +205,8 @@ REPORTS_LOOP: for my $file (@reports) {
 	    if ($try == $max_retry) {
 		die "Stop.\n";
 	    }
-	    my $this_sleep = int($sleep + rand(2*$sleep_jitter) - $sleep_jitter);
+	    my $this_sleep = int($delay_retry + rand(2*$sleep_jitter) - $sleep_jitter);
+	    $this_sleep = 1 if $this_sleep < 1;
 	    warn "Sleeping ${this_sleep}s before retrying...\n";
 	    sleep $this_sleep;
 	}
