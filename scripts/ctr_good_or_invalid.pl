@@ -1042,6 +1042,7 @@ sub parse_test_report {
 			 /Fatal error: .*: No space left on device/ # from gcc
 			 || /ERROR: .*: No space left on device/ # from EUMM
 			 || /mkdir .*: No space left on device $at_source_qr/ # from EU::Command
+			 || m{/usr/bin/ld:.*: No space left on device} # seen in Alien::MuPDF
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
