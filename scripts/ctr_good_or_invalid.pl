@@ -1220,15 +1220,14 @@ sub get_annotation_info {
 			$annotation .= " ($subject)";
 			$changed = 1;
 		    }
-		} elsif ($annotation =~ m{/rt.perl.org/Ticket/Display} ||
-			 $annotation =~ m{/rt.perl.org/rt3/Ticket/Display}) {
-		    my $subject = get_cached_rt_subject($annotation);
+		} elsif ($annotation =~ m{(http\S+/rt.perl.org(?:/rt3)?/Ticket/Display\S+)}) {
+		    my $subject = get_cached_rt_subject($1);
 		    if (defined $subject) {
 			$annotation .= " ($subject)";
 			$changed = 1;
 		    }
-		} elsif ($annotation =~ m{/github.com/.*/issues/}) {
-		    my $title = get_cached_github_issue_title($annotation);
+		} elsif ($annotation =~ m{(http\S+/github.com/\S+/issues/\S+)}) {
+		    my $title = get_cached_github_issue_title($1);
 		    if (defined $title) {
 			$annotation .= " ($title)";
 			$changed = 1;
