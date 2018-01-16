@@ -42,6 +42,8 @@ GetOptions(
 	  )
     or die "usage: $0 [-mail] [-cpan-uid ...] [-limit number] [-max-retry number] [-fails-first]\n";
 
+#more_metabase_diagnostics(); # XXX maybe run conditionally
+
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 if (!-d $reportdir) {
     die "$reportdir does not look like a directory";
@@ -312,6 +314,59 @@ sub _ts () {
 
 	@sorted;
     }
+}
+
+# XXX monkey patch for more diagnostics
+sub more_metabase_diagnostics {
+    require Metabase::Client::Simple;
+    no warnings 'once'; # but keep the redefine warning
+    *Metabase::Client::Simple::submit_fact = sub {
+    my ( $self, $fact ) = @_;
+
+    my $path = sprintf 'submit/%s', $fact->type;
+
+    $fact->set_creator( $self->profile->resource )
+      unless $fact->creator;
+
+    my $req_uri = $self->_abs_uri($path);
+
+    my $auth = $self->_ua->_uri_escape(
+        join( ":", $self->profile->resource->guid, $self->secret->content ) );
+
+    $req_uri->userinfo($auth);
+
+    my @req = (
+        $req_uri,
+        {
+            headers => {
+                Content_Type => 'application/json',
+                Accept       => 'application/json',
+            },
+            content => JSON::MaybeXS->new( { ascii => 1 } )->encode( $fact->as_struct ),
+        },
+    );
+
+    my $res = $self->_ua->post(@req);
+
+    if ( $res->{status} == 401 ) {
+        if ( $self->guid_exists( $self->profile->guid ) ) {
+            Carp::confess($self->_error( $res => "authentication failed" ));
+        }
+        $self->register; # dies on failure
+        # should now be registered so try again
+        $res = $self->_ua->post(@req);
+    }
+
+    unless ( $res->{success} ) {
+require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([$res],[qw()])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump; # XXX
+        Carp::confess($self->_error( $res => "fact submission failed" ));
+    }
+
+    # This will be something more informational later, like "accepted" or
+    # "queued," maybe. -- rjbs, 2009-03-30
+    return 1;
+};
+
 }
 
 __END__
