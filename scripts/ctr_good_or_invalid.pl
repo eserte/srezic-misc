@@ -1418,6 +1418,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'c compile error' && $annotation_text_for_analysis =~ m{(compilation|compile) (error|fail)}i)
 		       || ($analysis_tag eq 'out of memory' && $annotation_text_for_analysis =~ m{out of memory}i)
 		       || ($analysis_tag eq 'signal SEGV' && $annotation_text_for_analysis =~ m{(segmentation fault|segfault)}i)
+		       || ($analysis_tag eq 'signal BUS' && $annotation_text_for_analysis =~ m{\bbus error\b}i)
 		       || ($analysis_tag eq 'system perl used' && $annotation_text_for_analysis =~ m{system\s+perl}i)
 		       || ($analysis_tag eq 'code points over 0xFF' && $annotation_text_for_analysis =~ m{code.points.over.0xFF}i)
 		       || ($analysis_tag eq 'inherited AUTOLOAD forbidden' && $annotation_text_for_analysis =~ m{inherited AUTOLOAD.*(forbidden|no longer allowed)}i)
