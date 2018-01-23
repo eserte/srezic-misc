@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -82,6 +82,7 @@ my $do_scenario_buttons;
 my @annotate_files;
 my $show_only;
 my $fast_forward;
+my @match_pvs;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -106,6 +107,7 @@ GetOptions("good" => \$only_good,
 	   'annotate-file=s@' => \@annotate_files,
 	   'show-only' => \$show_only,
 	   'fast-forward' => \$fast_forward,
+	   'match-pv=s@' => \@match_pvs,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
@@ -144,6 +146,49 @@ if (@files == 1 && -d $files[0]) {
 }
 if (!@files) {
     @files = glob("$new_directory/*.rpt");
+}
+if (@match_pvs) {
+    my(@new_files, @ignored_files);
+    for my $match_pv (@match_pvs) {
+	if ($match_pv =~ m{^(<|<=|>|>=|==)?(\d+\.\d+\.\d+)$}) { # XXX RCs?
+	    my($op, $pv) = ($1, $2);
+	    if (!defined $op) { $op = '==' }
+	    require version;
+	    $pv = version->new($pv);
+	    my $code =  q<
+		sub {
+		    my $given_pv = shift;
+		    $given_pv >.$op.q< $pv;
+		};
+	    >;
+	    my $matcher = eval $code;
+	    die "ERROR: can't evaluate '$code': $@" if !$matcher;
+	    for my $file (@files) {
+		open my $fh, $file
+		    or die "ERROR: can't open file $file: $!\n";
+	    CHECK_VERSION: {
+		    while(<$fh>) {
+			last if /^$/;
+			if (/^X-Test-Reporter-Perl:\s+v([\d\.]+)/) { # XXX RCs?
+			    my $this_pv = version->new($1);
+			    if ($matcher->($this_pv)) {
+				push @new_files, $file;
+				last CHECK_VERSION;
+			    }
+			    last;
+			}
+		    }
+		    push @ignored_files, $file;
+		}
+	    }
+	    @files = @new_files;
+	} else {
+	    die "ERROR: Invalid --match-pv value '$match_pv'\n";
+	}
+    }
+    if (@ignored_files) {
+	warn "INFO: " . scalar(@ignored_files) . " ignored file(s), kept " . scalar(@files) . " file(s)\n";
+    }
 }
 if (!@files) {
     my $msg = "No files given or found";
@@ -2574,6 +2619,15 @@ Path to the C<annotate.txt> file from
 L<http://repo.or.cz/r/andk-cpan-tools.git>, or a compatible file. If
 defined, then show a link to the annotation (usually a RT or other
 ticket) if the tested distribution has one.
+
+=item C<< -match-pv I<op>I<perl-version> >>
+
+Only handle reports which match the given operators against a perl
+version. Allowed operations are C<==> (default if omitted), and all
+other numeric comparators. This option may be given multiple times;
+the expressions will be ANDed. Examples:
+
+    -match-pv '<5.27.0' -match-pv '>=5.10.0'
 
 =back
 
