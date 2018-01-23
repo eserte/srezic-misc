@@ -12,6 +12,89 @@
 # WWW:  http://www.rezic.de/eserte/
 #
 
+=head1 NAME
+
+cpan_recent_uploads2 - return list of recent CPAN uploads
+
+=head1 SYNOPSIS
+
+    cpan_recent_uploads2 [options]
+
+=head1 DESCRIPTION
+
+This script downloads the RECENT* files from a CPAN mirror and returns
+the most recent CPAN distributions, one per line. The distributions
+are returned in the long form, e.g. C<S/SR/SREZIC/Tk-804.034.tar.gz>.
+
+It is assumed that L<CPAN.pm|CPAN> is configured, i.e. one or more
+already mirrors specified. If this is not the case, then run
+
+    perl -MCPAN -eshell
+    quit
+
+once.
+
+If L<LWP::UserAgent::WithCache> is installed, then the fetched RECENT*
+files are cached for 10 minutes.
+
+=head2 OPTIONS
+
+=over
+
+=item C<< -from I<reltime> >>
+
+=item C<< -to I<reltime> >>
+
+Limit the filtered distributions for the specified period, e.g.
+
+   -from -2d -to -1d
+
+If not given, then the distributions from the last 24 hours are
+returned.
+
+=item C<< -url I<url> >>
+
+Specify a mirror url instead of using the configured from
+L<CPAN.pm|CPAN>.
+
+=item C<< -onlystable >>
+
+Only return stable releases, that is, remove TRIAL or underline
+versions from the return list.
+
+=item C<< -onlydists >>
+
+Only return files which look like a proper CPAN distribution
+(currently this is just a check for supported archive formats).
+
+=item C<< -onlyindexed >>
+
+Only return distributions which are also in the PAUSE index.
+
+=item C<< -skipperl6 >>
+
+Skip Perl6 distributions.
+
+=item C<< -v >>
+
+Be more verbose. This option may given multiple times to increase
+verbosity.
+
+=item C<< -warnold >>
+
+Warn (using a L<Tk> dialog>) if the fetched RECENT* files look old
+(older than six hours). This may happen if the used mirror is broken
+and stopped syncing, or if there was really no upload to PAUSE for
+more than six hours (which is quite unlikely).
+
+=back
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=cut
+
 use strict;
 use CPAN;
 use Getopt::Long;
@@ -302,15 +385,15 @@ sub maybe_refresh_packages_index {
 # REPO NAME standalone_message_box /home/e/eserte/src/srezic-repository 
 # REPO MD5 c4592f93ed4afa4f6a93d9ff38d2e905
 
-=head2 standalone_message_box
-
-=for category Tk
-
-A message box which can be invoked without Tk being loaded before. It
-uses the same arguments as messageBox from Tk, but is always invoked
-as a function. Return the messageBox answer.
-
-=cut
+#=head2 standalone_message_box
+#
+#=for category Tk
+#
+#A message box which can be invoked without Tk being loaded before. It
+#uses the same arguments as messageBox from Tk, but is always invoked
+#as a function. Return the messageBox answer.
+#
+#=cut
 
 sub standalone_message_box {
     my %args = @_;
