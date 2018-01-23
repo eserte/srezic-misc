@@ -150,82 +150,6 @@ if (@files == 1 && -d $files[0]) {
 if (!@files) {
     @files = glob("$new_directory/*.rpt");
 }
-my @ignored_files;
-if (@match_pvs) {
-    my(@new_files);
-    for my $match_pv (@match_pvs) {
-	if ($match_pv =~ m{^(<|<=|>|>=|==)?(\d+\.\d+\.\d+)$}) { # XXX RCs?
-	    my($op, $pv) = ($1, $2);
-	    if (!defined $op) { $op = '==' }
-	    require version;
-	    $pv = version->new($pv);
-	    my $code =  q<
-		sub {
-		    my $given_pv = shift;
-		    $given_pv >.$op.q< $pv;
-		};
-	    >;
-	    my $matcher = eval $code;
-	    die "ERROR: can't evaluate '$code': $@" if !$matcher;
-	    for my $file (@files) {
-		open my $fh, $file
-		    or die "ERROR: can't open file $file: $!\n";
-	    CHECK_VERSION: {
-		    while(<$fh>) {
-			last if /^$/;
-			if (/^X-Test-Reporter-Perl:\s+v([\d\.]+)/) { # XXX RCs?
-			    my $this_pv = version->new($1);
-			    if ($matcher->($this_pv)) {
-				push @new_files, $file;
-				last CHECK_VERSION;
-			    }
-			    last;
-			}
-		    }
-		    push @ignored_files, $file;
-		}
-	    }
-	    @files = @new_files;
-	} else {
-	    die "ERROR: Invalid --match-pv value '$match_pv'\n";
-	}
-    }
-}
-if ($only_recent) {
-    my %is_recent;
-    my @cmd = ($^X, "$FindBin::RealBin/cpan_recent_uploads2", "-from", "-$only_recent");
-    open my $fh, '-|', @cmd
-	or die "ERROR: problem running '@cmd': $!";
-    while(<$fh>) {
-	chomp;
-	s{^./../}{};
-	$is_recent{$_} = 1;
-    }
-    close $fh
-	or die "ERROR: problem running '@cmd': $!";
-    my @new_files;
-    for my $file (@files) {
-	open my $fh, $file
-	    or die "ERROR: can't open file $file: $!\n";
-    CHECK_DIST: {
-	    while(<$fh>) {
-		last if /^$/;
-		if (/^X-Test-Reporter-Distfile:\s+(.+)/) {
-		    if ($is_recent{$1}) {
-			push @new_files, $file;
-			last CHECK_DIST;
-		    }
-		    last;
-		}
-	    }
-	    push @ignored_files, $file;
-	}
-    }
-    @files = @new_files;
-}
-if (@ignored_files) {
-    warn "INFO: " . scalar(@ignored_files) . " ignored file(s), kept " . scalar(@files) . " file(s)\n";
-}
 if (!@files) {
     my $msg = "No files given or found";
     set_term_title("report sender: $msg");
@@ -323,6 +247,88 @@ for my $file (@files) {
     }
 }
 @files = @new_files;
+
+## Apply filter
+my @ignored_files;
+## Apply perl version filter
+if (@match_pvs) {
+    my(@new_files);
+    for my $match_pv (@match_pvs) {
+	if ($match_pv =~ m{^(<|<=|>|>=|==)?(\d+\.\d+\.\d+)$}) { # XXX RCs?
+	    my($op, $pv) = ($1, $2);
+	    if (!defined $op) { $op = '==' }
+	    require version;
+	    $pv = version->new($pv);
+	    my $code =  q<
+		sub {
+		    my $given_pv = shift;
+		    $given_pv >.$op.q< $pv;
+		};
+	    >;
+	    my $matcher = eval $code;
+	    die "ERROR: can't evaluate '$code': $@" if !$matcher;
+	    for my $file (@files) {
+		open my $fh, $file
+		    or die "ERROR: can't open file $file: $!\n";
+	    CHECK_VERSION: {
+		    while(<$fh>) {
+			last if /^$/;
+			if (/^X-Test-Reporter-Perl:\s+v([\d\.]+)/) { # XXX RCs?
+			    my $this_pv = version->new($1);
+			    if ($matcher->($this_pv)) {
+				push @new_files, $file;
+				last CHECK_VERSION;
+			    }
+			    last;
+			}
+		    }
+		    push @ignored_files, $file;
+		}
+	    }
+	    @files = @new_files;
+	} else {
+	    die "ERROR: Invalid --match-pv value '$match_pv'\n";
+	}
+    }
+}
+## Apply recent distributions filter
+if ($only_recent) {
+    my %is_recent;
+    my @cmd = ($^X, "$FindBin::RealBin/cpan_recent_uploads2", "-from", "-$only_recent");
+    open my $fh, '-|', @cmd
+	or die "ERROR: problem running '@cmd': $!";
+    while(<$fh>) {
+	chomp;
+	s{^./../}{};
+	$is_recent{$_} = 1;
+    }
+    close $fh
+	or die "ERROR: problem running '@cmd': $!";
+    my @new_files;
+    for my $file (@files) {
+	open my $fh, $file
+	    or die "ERROR: can't open file $file: $!\n";
+    CHECK_DIST: {
+	    while(<$fh>) {
+		last if /^$/;
+		if (/^X-Test-Reporter-Distfile:\s+(.+)/) {
+		    if ($is_recent{$1}) {
+			push @new_files, $file;
+			last CHECK_DIST;
+		    }
+		    last;
+		}
+	    }
+	    push @ignored_files, $file;
+	}
+    }
+    @files = @new_files;
+}
+## Filter summary
+if (@ignored_files) {
+    warn "INFO: " . scalar(@ignored_files) . " ignored file(s), kept " . scalar(@files) . " file(s)\n";
+}
+
 if (!@files) {
     my $msg = "No file needs to be checked manually";
     warn "$msg, finishing.\n";
