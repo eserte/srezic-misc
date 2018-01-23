@@ -83,6 +83,7 @@ my @annotate_files;
 my $show_only;
 my $fast_forward;
 my @match_pvs;
+my $only_recent;
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -108,11 +109,13 @@ GetOptions("good" => \$only_good,
 	   'show-only' => \$show_only,
 	   'fast-forward' => \$fast_forward,
 	   'match-pv=s@' => \@match_pvs,
+	   'only-recent=s' => \$only_recent,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
           [-noquit-at-end] [-[no]xterm-title]
-          [-[no]recent-states] [-[no]check-screesaver] [-show-only] [directory [file ...]]
+          [-[no]recent-states] [-[no]check-screesaver] [-show-only]
+          [-match-pv opperlver ...] [-only-recent period] [directory [file ...]]
 EOF
 
 my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
@@ -147,8 +150,9 @@ if (@files == 1 && -d $files[0]) {
 if (!@files) {
     @files = glob("$new_directory/*.rpt");
 }
+my @ignored_files;
 if (@match_pvs) {
-    my(@new_files, @ignored_files);
+    my(@new_files);
     for my $match_pv (@match_pvs) {
 	if ($match_pv =~ m{^(<|<=|>|>=|==)?(\d+\.\d+\.\d+)$}) { # XXX RCs?
 	    my($op, $pv) = ($1, $2);
@@ -186,9 +190,41 @@ if (@match_pvs) {
 	    die "ERROR: Invalid --match-pv value '$match_pv'\n";
 	}
     }
-    if (@ignored_files) {
-	warn "INFO: " . scalar(@ignored_files) . " ignored file(s), kept " . scalar(@files) . " file(s)\n";
+}
+if ($only_recent) {
+    my %is_recent;
+    my @cmd = ($^X, "$FindBin::RealBin/cpan_recent_uploads2", "-from", "-$only_recent");
+    open my $fh, '-|', @cmd
+	or die "ERROR: problem running '@cmd': $!";
+    while(<$fh>) {
+	chomp;
+	s{^./../}{};
+	$is_recent{$_} = 1;
     }
+    close $fh
+	or die "ERROR: problem running '@cmd': $!";
+    my @new_files;
+    for my $file (@files) {
+	open my $fh, $file
+	    or die "ERROR: can't open file $file: $!\n";
+    CHECK_DIST: {
+	    while(<$fh>) {
+		last if /^$/;
+		if (/^X-Test-Reporter-Distfile:\s+(.+)/) {
+		    if ($is_recent{$1}) {
+			push @new_files, $file;
+			last CHECK_DIST;
+		    }
+		    last;
+		}
+	    }
+	    push @ignored_files, $file;
+	}
+    }
+    @files = @new_files;
+}
+if (@ignored_files) {
+    warn "INFO: " . scalar(@ignored_files) . " ignored file(s), kept " . scalar(@files) . " file(s)\n";
 }
 if (!@files) {
     my $msg = "No files given or found";
@@ -2628,6 +2664,15 @@ other numeric comparators. This option may be given multiple times;
 the expressions will be ANDed. Examples:
 
     -match-pv '<5.27.0' -match-pv '>=5.10.0'
+
+=item C<< -only-recent I<period> >>
+
+Only handle recent reports which were released in the specified
+period. The filtering is done with L<cpan_recent_uploads2>. The period
+specification may use forms handled by this script, e.g.
+
+    4d
+    24h
 
 =back
 
