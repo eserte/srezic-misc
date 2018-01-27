@@ -159,6 +159,7 @@ if ($method eq 'direct-cache-capture') {
         }
         open my $fh, '-|', @cmd or die "Error running @cmd: $!";
         my $l = <$fh>;
+        next if !defined $l; # empty file
         if ($l =~ /^This file maps each file available/) {
             while (defined($l = <$fh>)) {
                 if ($l =~ /^FILE\s+LOCATION$/) {
