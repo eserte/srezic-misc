@@ -1620,6 +1620,7 @@ sub set_currfile {
     }
 
     # Possible regression on the beforemaintrelease page?
+    my %beforemaintrelease_pair_rechecks;
     for my $beforemaintrelease_pair (@current_beforemaintrelease_pairs) {
 	my %check_v; @check_v{qw(old new)} = split /:/, $beforemaintrelease_pair;
 	my %count;
@@ -1646,11 +1647,42 @@ sub set_currfile {
 				       @common_analysis_button_config,
 				       -bg => 'lightblue',
 				      )->pack;
+		for my $age (qw(old new)) {
+		    for my $state (qw(fail pass)) {
+			if (!$count{$state}->{$age}) {
+			    $beforemaintrelease_pair_rechecks{$state}{$check_v{$age}} = 1;
+			}
+		    }
+		}
 	    }
 	}
     }
 
     if ($do_scenario_buttons) {
+	if (%beforemaintrelease_pair_rechecks) {
+	    my @cmds;
+	    if ($beforemaintrelease_pair_rechecks{fail}) {
+		push @cmds, "cpan_smoke_modules $currfulldist -skiptestedfail " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{fail} });
+	    }
+	    if ($beforemaintrelease_pair_rechecks{pass}) {
+		push @cmds, "cpan_smoke_modules $currfulldist -skiptestedpass " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{pass} });
+	    }
+	    my $cmd = join("; ", @cmds);
+	    my $f = $analysis_frame->Frame->pack;
+	    $f->Button(-text => 'pairs',
+		       @common_analysis_button_config,
+		       -command => sub {
+			   schedule_recheck($cmd);
+		       })->pack(-side => 'left');
+	    $f->Button(-text => 'Sel',
+		       @common_analysis_button_config,
+		       -command => sub {
+			   $mw->SelectionOwn;
+			   $mw->SelectionHandle; # do we have a closure problem here, too?
+			   $mw->SelectionHandle(sub { return $cmd });
+		       })->pack(-side => 'left');
+	}
+
 	my %map_to_scenario = (
 			       'pod test' => 'testpod',
 			       'pod coverage test' => 'testpodcoverage',
@@ -1739,6 +1771,18 @@ sub set_currfile {
 				   -bg => '#008000',
 				   -fg => '#ffffff',
 				  )->pack;
+	}
+    }
+
+    {
+	if (@ignored_files) {
+	    my $bottom_frame = $more->Frame->place(-relx => 1, -rely => 1, -x => -2, -y => -2, -anchor => 'se');
+	    $bottom_frame->Label(
+				 -text => scalar(@ignored_files) . " ignored file(s)",
+				 @common_analysis_button_config,
+				 -bg => '#800000',
+				 -fg => '#ffffff',
+				)->pack;
 	}
     }
 
