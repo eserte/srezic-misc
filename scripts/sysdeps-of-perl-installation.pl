@@ -4,15 +4,23 @@ use strict;
 use warnings;
 use Cwd qw(realpath);
 use File::Find;
+use Getopt::Long;
+
+my $libdir;
+my $debug;
+
+sub debug ($) { warn "DEBUG: $_[0]\n" if $debug }
 
 sub apt_file_find ($;$) {
     my $file = shift;
     my $for = shift;
     my @packages;
+    (my $qr = $file) =~ s{\+}{\\+}g;
     my @cmd = (
-	'apt-file', 'search', '--package-only', '--regexp', '^'.$file.'$',
+	'apt-file', 'search', '--package-only', '--regexp', '^'.$qr.'$',
 	#'^'.quotemeta($file).'$' # XXX does not work; backslash before / disturbs
     );
+    debug "@cmd...";
     open my $fh, '-|', @cmd
 	or die $!;
     while(<$fh>) {
@@ -29,14 +37,22 @@ sub apt_file_find ($;$) {
     @packages;
 }
 
-my $perldir = shift
-    or die "perldir?";
-my $libdir = realpath "$perldir/lib";
+GetOptions(
+    "libdir=s" => \$libdir,
+    "debug"    => \$debug,
+)
+    or die "usage: $0 [--debug] [--libdir libdir] [perldir]\n";
+if (!$libdir) {
+    my $perldir = shift
+	or die "perldir?";
+    $libdir = realpath "$perldir/lib";
+}
 
 my %sodeps;
 my %sorevdeps;
 find(sub {
 	 if (-f $_ && m{\.so$}) {
+	     debug "Check .so $File::Find::name...";
 	     open my $fh, '-|', 'ldd', $File::Find::name
 		 or die $!;
 	     while(<$fh>) {
@@ -67,6 +83,7 @@ for my $so (keys %sorevdeps) {
 	    $seen_package{$package} = 1;
 	}
     };
+    debug "Check dependent library $so...";
     my @so_packages = apt_file_find $so, $sorevdeps{$so};
     if (!@so_packages) {
 	## already warned
