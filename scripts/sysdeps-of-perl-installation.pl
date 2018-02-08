@@ -8,6 +8,7 @@ use Getopt::Long;
 
 my $libdir;
 my $debug;
+my $with_cache;
 
 sub debug ($) { warn "DEBUG: $_[0]\n" if $debug }
 
@@ -71,14 +72,33 @@ sub brew_file_find ($;$) {
 GetOptions(
     "libdir=s" => \$libdir,
     "debug"    => \$debug,
+    "with-cache" => \$with_cache,
 )
-    or die "usage: $0 [--debug] [--libdir libdir] [perldir]\n";
+    or die "usage: $0 [--debug] [--with-cache] [--libdir libdir] [perldir]\n";
 if (!$libdir) {
     my $perldir = shift
 	or die "perldir?";
     $libdir = realpath "$perldir/lib";
 }
 my $real_libdir = realpath $libdir;
+
+if ($with_cache) {
+    if ($^O eq 'linux') { # apt-file is very slow, caching is worth here
+	require Memoize;
+	require Memoize::Storable;
+	my $cache_dir = "$ENV{HOME}/.cache";
+	mkdir $cache_dir if !-d $cache_dir;
+	tie my %cache => 'Memoize::Storable', "$cache_dir/apt_file_find.cache.st";
+	Memoize::memoize(
+	    'apt_file_find',
+	    LIST_CACHE => ['HASH' => \%cache],
+	    NORMALIZER => sub {
+		my($file, $for) = @_;
+		join ' ', $file, (sort @{ $for || [] });
+	    },
+	);
+    }
+}
 
 my %sodeps;
 my %sorevdeps;
