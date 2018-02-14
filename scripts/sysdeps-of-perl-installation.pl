@@ -82,13 +82,18 @@ if (!$libdir) {
 }
 my $real_libdir = realpath $libdir;
 
+my @do_unmemoize;
 if ($with_cache) {
     if ($^O eq 'linux') { # apt-file is very slow, caching is worth here
 	require Memoize;
 	require Memoize::Storable;
 	my $cache_dir = "$ENV{HOME}/.cache";
 	mkdir $cache_dir if !-d $cache_dir;
-	tie my %cache => 'Memoize::Storable', "$cache_dir/apt_file_find.cache.st";
+	my $cache_file = "$cache_dir/apt_file_find.cache.st";
+	if (-e $cache_file && -z $cache_file) { # may happen if Memoize::Storable crashes while writing
+	    unlink $cache_file;
+	}
+	tie my %cache => 'Memoize::Storable', $cache_file;
 	Memoize::memoize(
 	    'apt_file_find',
 	    LIST_CACHE => ['HASH' => \%cache],
@@ -97,6 +102,7 @@ if ($with_cache) {
 		join ' ', $file, (sort @{ $for || [] });
 	    },
 	);
+	push @do_unmemoize, 'apt_file_find';
     }
 }
 
@@ -184,6 +190,12 @@ for my $so (keys %sorevdeps) {
 	    $output_package->($so_packages[0]);
 	}
     }
+}
+
+# Hack suggested in http://www.perlmonks.org/?node_id=802002
+# Otherwise segfaults are possible (e.g. with debian/wheezy's system perl 5.14.2)
+for (@do_unmemoize) {
+    Memoize::unmemoize($_);
 }
 
 __END__
