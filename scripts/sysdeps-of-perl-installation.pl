@@ -9,6 +9,7 @@ use Getopt::Long;
 my $libdir;
 my $debug;
 my $with_cache;
+my $debian_method = 'dpkg_query';
 
 sub debug ($) { warn "DEBUG: $_[0]\n" if $debug }
 
@@ -27,6 +28,34 @@ sub apt_file_find ($;$) {
     while(<$fh>) {
 	chomp;
 	push @packages, $_;
+    }
+    if (!@packages) {
+	my $msg = "WARN: cannot find anything while running '@cmd'...";
+	if ($for) {
+	    $msg .= " (required for $for->[0] ...)";
+	}
+	warn "$msg\n";
+    }
+    @packages;
+}
+
+sub dpkg_query ($;$) {
+    my $file = shift;
+    my $for = shift;
+    my @packages;
+    my @cmd = (
+	'dpkg-query', '-S', $file,
+    );
+    debug "@cmd...";
+    open my $fh, '-|', @cmd
+	or die $!;
+    while(<$fh>) {
+	chomp;
+	if (my($package) = $_ =~ m{^([^:]+)}) {
+	    push @packages, $package;
+	} else {
+	    warn "WARN: cannot parse line <$_>";
+	}
     }
     if (!@packages) {
 	my $msg = "WARN: cannot find anything while running '@cmd'...";
@@ -73,8 +102,9 @@ GetOptions(
     "libdir=s" => \$libdir,
     "debug"    => \$debug,
     "with-cache" => \$with_cache,
+    "debian-method=s" => \$debian_method,
 )
-    or die "usage: $0 [--debug] [--with-cache] [--libdir libdir] [perldir]\n";
+    or die "usage: $0 [--debug] [--with-cache] [--libdir libdir] [--debian-method apt_file_find|dpkg_query] [perldir]\n";
 if (!$libdir) {
     my $perldir = shift
 	or die "perldir?";
@@ -84,7 +114,7 @@ my $real_libdir = realpath $libdir;
 
 my @do_unmemoize;
 if ($with_cache) {
-    if ($^O eq 'linux') { # apt-file is very slow, caching is worth here
+    if ($^O eq 'linux' && $debian_method eq 'apt_file_find') { # apt-file is very slow, caching is worth here
 	require Memoize;
 	require Memoize::Storable;
 	my $cache_dir = "$ENV{HOME}/.cache";
@@ -97,10 +127,7 @@ if ($with_cache) {
 	Memoize::memoize(
 	    'apt_file_find',
 	    LIST_CACHE => ['HASH' => \%cache],
-	    NORMALIZER => sub {
-		my($file, $for) = @_;
-		join ' ', $file, (sort @{ $for || [] });
-	    },
+	    NORMALIZER => sub { $_[0] }, # ignore optional $for argument
 	);
 	push @do_unmemoize, 'apt_file_find';
     }
@@ -176,7 +203,13 @@ for my $so (keys %sorevdeps) {
     if ($^O eq 'darwin') {
 	@so_packages = brew_file_find $so, $sorevdeps{$so};
     } else { # XXX actually only Debian
-	@so_packages = apt_file_find $so, $sorevdeps{$so};
+	if      ($debian_method eq 'apt_file_find') {
+	    @so_packages = apt_file_find $so, $sorevdeps{$so};
+	} elsif ($debian_method eq 'dpkg_query') {
+	    @so_packages = dpkg_query $so, $sorevdeps{$so};
+	} else {
+	    die "Invalid debian method '$debian_method'";
+	}
     }
     if (!@so_packages) {
 	## already warned
