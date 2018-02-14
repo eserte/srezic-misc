@@ -873,8 +873,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('linker error');
 		} elsif (
-			 /Out of memory!/ ||
-			 /out of memory allocating \d+ bytes after a total of \d+ bytes/ # gcc
+			    /Out of memory!/
+			 || /out of memory allocating \d+ bytes after a total of \d+ bytes/ # gcc
+			 || /\Qjava.lang.OutOfMemoryError/ # java
+			 || /\QCould not allocate metaspace: \E\d+ bytes/ # java
 			) {
 		    $add_analysis_tag->('out of memory');
 		} elsif (
