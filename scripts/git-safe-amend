@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+# -*- perl -*-
+
+use if !$ENV{DOIT_IN_REMOTE}, lib => "$ENV{HOME}/src/Doit/lib";
+use Doit; # get from CPAN, or do "git clone git://github.com/eserte/doit.git ~/src/Doit"
+use Doit::Log;
+use Doit::Util qw(in_directory);
+
+return 1 if caller;
+
+my $doit = Doit->init;
+$doit->add_component('git');
+
+in_directory {
+    my @files = sort $doit->git_get_changed_files;
+    if (!@files) {
+	info "No changed files";
+	exit;
+    }
+
+    my %files_in_last_commit = map { ($_,1) } split /\n/, $doit->info_qx({quiet=>1}, qw(git diff-tree --no-commit-id --name-only -r HEAD));
+
+    my @changed_files_not_in_last_commit;
+    my @changed_files_in_last_commit = grep {
+	if ($files_in_last_commit{$_}) {
+	    1;
+	} else {
+	    push @changed_files_not_in_last_commit, $_;
+	    0;
+	}
+    } @files;
+    if (@changed_files_not_in_last_commit) {
+	error "Some files were changed which are not in the last commit: @changed_files_not_in_last_commit";
+	# XXX maybe the user could be asked if continue with the rest?
+    }
+
+    $doit->system('git', 'add', @changed_files_in_last_commit);
+    $doit->system('git', 'commit', '--amend', '--no-edit');
+} $doit->git_root;
+
+__END__
