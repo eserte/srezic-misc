@@ -39,9 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = (
-					'5.26.1:5.27.6',
-					'5.27.7:5.27.8',
-					'5.26.1:5.27.8',
+					'5.27.8:5.27.9',
+					'5.26.1:5.27.9',
 					'5.26.0:5.26.1',
 					'5.22.3:5.22.4',
 					'5.24.2:5.24.3',
@@ -1495,11 +1494,14 @@ sub set_currfile {
 	my $do_tick = (
 		          ($analysis_tag eq 'encoding pragma' && $annotation_text_for_analysis =~ m{encoding\s+pragma}i)
 		       || ($analysis_tag eq 'new regexp deprecation' && $annotation_text_for_analysis =~ m{unescaped\s+left\s+brace}i)
-		       || ($analysis_tag eq 'experimental functions on references are forbidden' && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
+		       || ((
+			    $analysis_tag eq 'experimental functions on references are forbidden' ||
+			    $analysis_tag eq 'experimental functions on references'
+			   ) && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
-		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{pod test.*fail}i)
+		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail)}i)
 		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
-		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependency on.*not declared|can't locate )}i)
+		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependency on.*not declared|can't locate |not specified in configure_requires)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
 		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{(removal.*Mojolicious|Mojo::(Util|Home))})
@@ -1518,6 +1520,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'taint' && $annotation_text_for_analysis =~ m{\btaint\b}i)
 		       || ($analysis_tag eq 'defined array' && $annotation_text_for_analysis =~ m{can't use.*defined.*\@array}i)
 		       || ($analysis_tag eq 'defined hash' && $annotation_text_for_analysis =~ m{defined\b.*\bhash})
+		       || ($analysis_tag eq 'ssl certificate problem' && $annotation_text_for_analysis =~ m{certificate\s+not\s+valid}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
