@@ -19,6 +19,7 @@ my $check_travis;
 my $check_appveyor;
 my $commit;
 my $wait_seconds = 15;
+my $use_travis_v3 = 1;
 GetOptions(
 	   "d|debug" => \$debug,
 	   "travis!" => \$check_travis,
@@ -64,7 +65,8 @@ exit($success ? 0 : 1);
 
 	require LWP::UserAgent;
 	require JSON::XS;
-	my $ua = LWP::UserAgent->new(timeout => 10);
+	require URI::Escape;
+	my $ua = LWP::UserAgent->new(timeout => 10, keep_alive => 1);
 	my $wait = sub {
 	    for (reverse(0..$wait_seconds-1)) {
 		print STDERR "\rwait $_ second" . ($_ != 1 ? "s " : "  ");
@@ -107,8 +109,26 @@ exit($success ? 0 : 1);
 	};
 
 	my $travis_build_id;
-	my $travis_builds_url = "http://api.travis-ci.org/repos/$repo/builds";
-	my $get_current_travis_build = sub {
+	my $get_current_travis_build_v3 = sub {
+	    my $repo_escaped = URI::Escape::uri_escape($repo);
+	    my $travis_builds_url = "https://api.travis-ci.org/repo/$repo_escaped/builds";
+	    debug "About to get from $travis_builds_url";
+	    my $res = $ua->get($travis_builds_url, 'Travis-API-Version' => 3);
+	    if (!$res->is_success) {
+		$mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line);
+	    }
+	    debug "Fetch from travis successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    for my $build (@{ $data->{builds} }) {
+		if ($build->{commit}->{sha} eq $current_commit_id) {
+		    return $build;
+		}
+	    }
+	    debug "Build for commit $current_commit_id not found at travis";
+	    undef;
+	};
+	my $get_current_travis_build_v2 = sub {
+	    my $travis_builds_url = "http://api.travis-ci.org/repos/$repo/builds";
 	    debug "About to get from $travis_builds_url";
 	    my $res = $ua->get($travis_builds_url);
 	    if (!$res->is_success) {
@@ -124,12 +144,35 @@ exit($success ? 0 : 1);
 	    debug "Build for commit $current_commit_id not found at travis";
 	    undef;
 	};
-	my $get_current_travis_build_by_id = sub {
+	my $get_current_travis_build_by_id_v3 = sub {
+	    my $travis_build_url = "https://api.travis-ci.org/build/$travis_build_id";
+	    debug "About to get from $travis_build_url";
+	    my $res = $ua->get($travis_build_url, 'Travis-API-Version' => 3);
+	    if (!$res->is_success) {
+		die "Request to $travis_build_url failed: " . $res->status_line;
+	    }
+	    debug "Fetch successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    return $data;
+	};
+	my $get_current_travis_build_by_id_v2 = sub {
 	    my $travis_build_url = "http://api.travis-ci.org/repos/$repo/builds/$travis_build_id";
 	    debug "About to get from $travis_build_url";
 	    my $res = $ua->get($travis_build_url);
 	    if (!$res->is_success) {
 		die "Request to $travis_build_url failed: " . $res->status_line;
+	    }
+	    debug "Fetch successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    return $data;
+	};
+	my $get_travis_job_v3 = sub {
+	    my($job_id) = @_;
+	    my $travis_job_url = "https://api.travis-ci.org/job/$job_id";
+	    debug "About to get from $travis_job_url";
+	    my $res = $ua->get($travis_job_url, 'Travis-API-Version' => 3);
+	    if (!$res->is_success) {
+		die "Request to $travis_job_url failed: " . $res->status_line;
 	    }
 	    debug "Fetch successful";
 	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
@@ -150,7 +193,7 @@ exit($success ? 0 : 1);
 	DO_TRAVIS: {
 		if ($is_active{travis}) {
 		    if (!$travis_build_id) {
-			my $travis_build = $get_current_travis_build->();
+			my $travis_build = $use_travis_v3 ? $get_current_travis_build_v3->() : $get_current_travis_build_v2->();
 			if (!$travis_build) {
 			    if (!$is_failed{travis}) {
 				print STDERR "Status at travis:   cannot find commit $current_commit_id\n";
@@ -166,18 +209,31 @@ exit($success ? 0 : 1);
 			    }
 			}
 		    }
-		    my $travis_build = $get_current_travis_build_by_id->();
+		    my $travis_build = $use_travis_v3 ? $get_current_travis_build_by_id_v3->() : $get_current_travis_build_by_id_v3->();
 		    if ($travis_build) {
 			my $successful = 0;
 			my $failures = 0;
 			my $running = 0;
-			for my $job (@{ $travis_build->{matrix} }) {
-			    if (!defined $job->{finished_at}) {
-				$running++;
-			    } elsif (defined $job->{result} && $job->{result} == 0) {
-				$successful++;
-			    } else {
-				$failures++;
+			if ($use_travis_v3) {
+			    for my $job (@{ $travis_build->{jobs} }) {
+				my $job_data = $get_travis_job_v3->($job->{id});
+				if (!defined $job_data->{finished_at}) {
+				    $running++;
+				} elsif (defined $job_data->{state} && $job_data->{state} eq 'passed') {
+				    $successful++;
+				} else {
+				    $failures++;
+				}
+			    }
+			} else {
+			    for my $job (@{ $travis_build->{matrix} }) {
+				if (!defined $job->{finished_at}) {
+				    $running++;
+				} elsif (defined $job->{result} && $job->{result} == 0) {
+				    $successful++;
+				} else {
+				    $failures++;
+				}
 			    }
 			}
 			print STDERR "Status at travis:   ".
@@ -251,6 +307,11 @@ exit($success ? 0 : 1);
 }
 
 sub guess_project_from_git () {
+    # Alternatives:
+    # - all git versions:
+    #     git config remote.origin.url
+    # - newer git only (e.g. 2.11.x):
+    #     git remote get-url origin
     chomp(my(@l) = `git remote -v 2>/dev/null`);
     # example: origin  git://github.com/eserte/doit.git (fetch)
     for my $l (@l) {
