@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = (
-					'5.27.8:5.27.9',
-					'5.26.1:5.27.9',
+					'5.27.9:5.27.10',
+					'5.26.1:5.27.10',
 					'5.26.0:5.26.1',
 					'5.22.3:5.22.4',
 					'5.24.2:5.24.3',
