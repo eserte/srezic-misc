@@ -624,29 +624,6 @@ step "Install and report Kwalify",
 	my_system "touch", "$state_dir/.reported_kwalify";
     };
 
-step "Report toolchain modules",
-    ensure => sub {
-	-f "$state_dir/.reported_toolchain"
-    },
-    using => sub {
-	local $ENV{HARNESS_OPTIONS};
-	$ENV{HARNESS_OPTIONS} = "j$jobs" if $jobs > 1;
-	# note: as this is the last step (currently), explicitely use -signalend
-	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
-	# XXX unfortunately, won't fail if reporting did not work for some reason
-	my_system "touch", "$state_dir/.reported_toolchain";
-    };
-
-step "Force a fail report",
-    ensure => sub {
-	-f "$state_dir/.reported_fail"
-    },
-    using => sub {
-	eval { my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
-	# XXX unfortunately, won't fail if reporting did not work for some reason
-	my_system "touch", "$state_dir/.reported_fail";
-    };
-
 step "Maybe upgrade CPAN.pm",
     ensure => sub {
 	-f "$state_dir/.cpan_pm_upgrade_done"
@@ -688,6 +665,29 @@ if ($for_cpansand) {
 	    }
 	};
 }
+
+step "Report toolchain modules",
+    ensure => sub {
+	-f "$state_dir/.reported_toolchain"
+    },
+    using => sub {
+	local $ENV{HARNESS_OPTIONS};
+	$ENV{HARNESS_OPTIONS} = "j$jobs" if $jobs > 1;
+	# note: as this is the last step (currently), explicitely use -signalend
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
+	# XXX unfortunately, won't fail if reporting did not work for some reason
+	my_system "touch", "$state_dir/.reported_toolchain";
+    };
+
+step "Force a fail report",
+    ensure => sub {
+	-f "$state_dir/.reported_fail"
+    },
+    using => sub {
+	eval { my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
+	# XXX unfortunately, won't fail if reporting did not work for some reason
+	my_system "touch", "$state_dir/.reported_fail";
+    };
 
 #- ImageMagick manuell installieren (von CPAN geht nicht) und zwar
 #gegen die Version, die schon mit FreeBSD kommt (does not work
