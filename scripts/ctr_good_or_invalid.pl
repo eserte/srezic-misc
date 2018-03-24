@@ -1498,7 +1498,7 @@ sub set_currfile {
 			    $analysis_tag eq 'experimental functions on references are forbidden' ||
 			    $analysis_tag eq 'experimental functions on references'
 			   ) && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
-		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*test.*fail}i)
+		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail)}i)
 		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependency on.*not declared|can't locate |not specified in configure_requires)}i)
