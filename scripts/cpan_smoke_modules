@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -127,6 +127,7 @@ my $fail_if_nothing_done;
 my $old_cpan_pm_hack;
 my $sysdeps = ''; # '', 'verbose', 'batch'
 my $do_rt121665_hack = 0;
+my %term_title_options;
 
 # prepend extra options from rc file
 if (-r $rc_file) {
@@ -267,6 +268,15 @@ GetOptions("n" => \$n,
 	   'sysdeps-batch'        => sub { $sysdeps = 'batch' },
 	   'no-sysdeps|nosysdeps' => sub { $sysdeps = '' },
 	   'rt121665-hack!' => \$do_rt121665_hack,
+	   'term-title=s' => sub {
+	       for my $opt (split /,/, $_[1]) {
+		   if ($opt =~ m{^(minperl|nohost)$}) {
+		       $term_title_options{$opt} = 1;
+		   } else {
+		       die "Invalid value '$opt' for --term-title";
+		   }
+	       }
+	   },
 	  )
     or die <<EOF;
 usage: $0
@@ -1329,8 +1339,24 @@ EOF
 	if ($logfh) {
 	    print $logfh "[" . scalar(localtime) . "] $log_preamble BEGIN\n";
 	}
+
 	my $std_title = POSIX::strftime("%H:%M", gmtime) . " ";
-	$std_title .= "smoke($short_hostname".(defined $short_tty ? ":$short_tty" : "") . "): $perl";
+	$std_title .= "smoke";
+	if (!$term_title_options{nohost}) {
+	    $std_title .= "($short_hostname".(defined $short_tty ? ":$short_tty" : "") . ")";
+	}
+	$std_title .= ": ";
+	if ($term_title_options{minperl}) {
+	    if ($perl =~ m{perl-?(5\..*?)/}) { # perl version in directory
+		$std_title .= $1;
+	    } elsif ($perl =~ m{perl-?(5\..*)}) { # perl version probably in basename
+		$std_title .= $1;
+	    } else { # fall back to $perl, which may be the full path
+		$std_title .= $perl;
+	    }
+	} else {
+	    $std_title .= $perl;
+	}
 	xterm_conf('-title', $std_title);
 
 	if ($use_distroprefs && $prefs_dir && -d $prefs_dir && -r "$prefs_dir/SlayMakefile") {
@@ -2623,6 +2649,29 @@ cleanup process will start if not enough is available, and possibly
 the smoker can get stopped.
 
 The default value is 5%.
+
+=item -term-title I<...>
+
+If L<XTerm::Conf> is installed, and the current terminal understands
+the XTerm configuration protocol, then the terminal title is set to
+something containing the currently tested perl and module and more.
+This can be adjusted by using the C<-term-title> option and a comma
+separated list of the following values:
+
+=over
+
+=item minperl
+
+Minimize the perl specification. Usually this is the full path, but if
+this option is set and a perl version is detected within the path,
+then only the perl version is used.
+
+=item nohost
+
+Normally the short hostname and short tty number is part of the
+terminal title. With this option these two things are omitted.
+
+=back
 
 =back
 
