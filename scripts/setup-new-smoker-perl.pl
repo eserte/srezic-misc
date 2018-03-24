@@ -635,6 +635,7 @@ step "Maybe upgrade CPAN.pm",
 	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
     };
 
+my @maybe_sudo; # after this step, some commands have to be run as sudo
 if ($for_cpansand) {
     step "chown for cpansand",
 	ensure => sub {
@@ -664,6 +665,9 @@ if ($for_cpansand) {
 		sudo 'chown', 'root:root', $perldir; # just to signal the wrong permission for next run
 	    }
 	};
+    @maybe_sudo = ('sudo');
+} else {
+    @maybe_sudo = ();
 }
 
 step "Report toolchain modules",
@@ -676,7 +680,7 @@ step "Report toolchain modules",
 	# note: as this is the last step (currently), explicitely use -signalend
 	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-signalend", @cpan_pm_plugins, @toolchain_modules, "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
-	my_system "touch", "$state_dir/.reported_toolchain";
+	my_system @maybe_sudo, "touch", "$state_dir/.reported_toolchain";
     };
 
 step "Force a fail report",
@@ -686,7 +690,7 @@ step "Force a fail report",
     using => sub {
 	eval { my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, "-nosignalend", qw(Devel::Fail::MakeTest), "-perl", "$perldir/bin/perl"; };
 	# XXX unfortunately, won't fail if reporting did not work for some reason
-	my_system "touch", "$state_dir/.reported_fail";
+	my_system @maybe_sudo, "touch", "$state_dir/.reported_fail";
     };
 
 #- ImageMagick manuell installieren (von CPAN geht nicht) und zwar
