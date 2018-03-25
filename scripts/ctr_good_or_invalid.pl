@@ -41,8 +41,8 @@ use constant USE_BETA_MATRIX => 0;
 my @current_beforemaintrelease_pairs = (
 					'5.27.9:5.27.10',
 					'5.26.1:5.27.10',
-					'5.26.1:5.26.2-RC1',
-					'5.24.3:5.24.4-RC1',
+					'5.26.1:5.26.2 RC1',
+					'5.24.3:5.24.4 RC1',
 				       );
 
 # Patterns for report analysis
@@ -1654,7 +1654,8 @@ sub set_currfile {
 		for my $age (qw(old new)) {
 		    for my $state (qw(fail pass)) {
 			if (!$count{$state}->{$age}) {
-			    $beforemaintrelease_pair_rechecks{$state}{$check_v{$age}} = 1;
+			    (my $perl_v = $check_v{$age}) =~ s/ RC/-RC/g; # normalize "5.24.1 RC1" -> "5.24.1-RC1"
+			    $beforemaintrelease_pair_rechecks{$state}{$perl_v} = 1;
 			}
 		    }
 		}
