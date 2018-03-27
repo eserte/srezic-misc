@@ -86,8 +86,9 @@ if (!@reports) {
     my @fails    = glob("$sync_dir/fail.*.rpt");
     my @unknowns = glob("$sync_dir/unknown.*.rpt");
     if (@fails && $special_fail_sorting) {
-	warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
-	@fails = UnsimilaritySorter::run(@fails);
+	#warn qq{INFO: running special "unsimilarity" sorter, which is somewhat slow...\n};
+	#@fails = UnsimilaritySorter::run(@fails);
+	@fails = simple_unsimilarity_sorter(@fails);
     }
     if ($fails_first) {
 	unshift @reports, @unknowns;
@@ -251,6 +252,30 @@ if ($should_exit) {
 
 sub _ts () {
     strftime("%Y-%m-%d %H:%M:%S", localtime);
+}
+
+sub simple_unsimilarity_sorter {
+    my(@files) = @_;
+    my @out;
+    my $letters = 0;
+    while (@files) {
+	$letters++;
+	if ($letters > 1000) {
+	    die "Possible problem, too many iterations (letters=$letters)";
+	}
+	my %seen;
+	for(my $file_i=0; $file_i<=$#files; $file_i++) {
+	    my $file = $files[$file_i];
+	    my $base = basename $file;
+	    $base =~ s{^[^.]+\.}{};
+	    my $prefix = substr($base, 0, $letters);
+	    if (!$seen{$prefix}++) {
+		push @out, splice @files, $file_i, 1;
+		$file_i--;
+	    }
+	}
+    }
+    @out;
 }
 
 {
