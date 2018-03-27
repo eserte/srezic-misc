@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2014 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2018 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 use strict;
 use warnings;
-our $VERSION = 0.001;
+our $VERSION = 0.002;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
@@ -20,7 +20,9 @@ my @files = @ARGV;
 my $principal_file = shift @files;
 print "="x70, "\n";
 print "=== $principal_file is principal file\n";
+my %seen_file = ($principal_file => 1);
 for my $file (@files) {
+    next if $seen_file{$file}++;
     print "="x70, "\n";
     print "=== $file\n";
     my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', "-u", $principal_file, $file);
@@ -31,6 +33,15 @@ __END__
 =head1 NAME
 
 multi-diff - make a diff over multiple files
+
+=head1 SYNOPSIS
+
+    multi-diff file ...
+
+=head1 DESCRIPTION
+
+Run a series of L<diff(1)> calls with the first file in the argument
+list against all other files.
 
 =head1 AUTHOR
 
