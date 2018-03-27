@@ -469,10 +469,20 @@ sub get_dangerous_dual_life_dists_for_perl {
 		    $cpan_mod_to_object{$mod} = $cpan_mod_obj;
 		}
 	    }
+	    # CPAN::Distribution::containsmods is quite slow when
+	    # called repeatedly --- create a dist-to-mods cache.
+	    my %dist_to_mods;
+	    for my $cpan_mod_obj ($CPAN::META->all_objects("CPAN::Module")) {
+		my $dist_id = $cpan_mod_obj->cpan_file;
+		if ($dist_id) {
+		    push @{ $dist_to_mods{$dist_id} }, $cpan_mod_obj;
+		}
+	    }
 	    for my $cpan_dist_obj (values %cpan_dist_to_object) {
-		for my $mod ($cpan_dist_obj->containsmods) {
-		    my $cpan_mod_obj = $cpan_mod_to_object{$mod};
+		my $dist_id = $cpan_dist_obj->id;
+		for my $cpan_mod_obj (@{ $dist_to_mods{$dist_id} || [] }) {
 		    if ($cpan_mod_obj) {
+			my $mod = $cpan_mod_obj->{ID};
 			my $cpan_mod_version = $cpan_mod_obj->cpan_version;
 			if ($mod_to_version{$mod} && CPAN::Version->vgt($mod_to_version{$mod}, $cpan_mod_version)) {
 			    $dangerous_dists{$cpan_dist_obj->base_id} = 1;
