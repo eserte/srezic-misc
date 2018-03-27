@@ -10,7 +10,6 @@ our $VERSION = 0.002;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
-use IPC::Run qw(run);
 
 GetOptions()
     or die "usage?";
@@ -26,7 +25,7 @@ for my $file (@files) {
     print "="x70, "\n";
     print "=== $file\n";
     my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', "-u", $principal_file, $file);
-    my $success = run [@cmd], "<", $principal_file;
+    system @cmd;
 }    
 __END__
 
