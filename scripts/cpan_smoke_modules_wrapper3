@@ -150,8 +150,8 @@ sub run_smoker ($$$) {
     } else { # checking the CPAN index to decide whether it's stable
              # or not (but the index is sometimes somewhat slow)
 	$get_dist_cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } .
-	    #($stability eq 'stable' ? qq{-indexed -no-downgrades-for "$perl_exe"} : '');
-	    ($stability eq 'stable' ? qq{-indexed} : '');
+	    ($stability eq 'stable' ? qq{-indexed -no-downgrades-for "$perl_exe"} : '');
+	    #($stability eq 'stable' ? qq{-indexed} : '');
     }
     if ($^O eq 'MSWin32') {
 	$get_dist_cmd = "perl $get_dist_cmd";
