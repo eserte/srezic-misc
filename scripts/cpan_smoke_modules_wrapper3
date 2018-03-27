@@ -144,15 +144,11 @@ sub run_smoker ($$$) {
     my $install_arg = ($stability eq 'stable' && $maybe_install ? '-install' : '');
 
     my $get_dist_cmd;
-    if (0) { # just looking at the distribution name to decide whether
-             # it's stable or not
-	$get_dist_cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -to -2m -v } . ($stability eq 'stable' ? '-stable' : '') . q{ | grep -v '\.pl$'};
-    } else { # checking the CPAN index to decide whether it's stable
-             # or not (but the index is sometimes somewhat slow)
-	$get_dist_cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } .
-	    ($stability eq 'stable' ? qq{-indexed -no-downgrades-for "$perl_exe"} : '');
-	    #($stability eq 'stable' ? qq{-indexed} : '');
-    }
+    # checking the CPAN index to decide whether it's stable
+    # or not (but the index is sometimes somewhat slow)
+    $get_dist_cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } .
+	($stability eq 'stable' ? q{-indexed } : '') .
+	($stability eq 'stable' && ref $perl_exe ne 'SCALAR' ? qq{-no-downgrades-for "$perl_exe" } : '');
     if ($^O eq 'MSWin32') {
 	$get_dist_cmd = "perl $get_dist_cmd";
     }
