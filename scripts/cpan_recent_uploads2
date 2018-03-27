@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2013,2014,2015,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2013,2014,2015,2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -75,6 +75,12 @@ Only return distributions which are also in the PAUSE index.
 
 Skip Perl6 distributions.
 
+=item C<< -no-downgrades-for I<perlexe> >>
+
+Avoid downgrades of dual life modules. Distributions containing such
+modules won't be listed. Need perl executable as an option value to
+call its version of L<Module::CoreList>.
+
 =item C<< -v >>
 
 Be more verbose. This option may given multiple times to increase
@@ -142,6 +148,7 @@ my $warn_old;
 my $only_stable;
 my $only_dists;
 my $only_indexed;
+my $no_downgrades_for_perl;
 my $skip_perl6;
 
 GetOptions("from=s" => \$from,
@@ -151,6 +158,7 @@ GetOptions("from=s" => \$from,
 	   "onlydists!" => \$only_dists,
 	   "onlyindexed|indexed!" => \$only_indexed,
 	   "skipperl6!" => \$skip_perl6,
+	   "no-downgrades-for=s" => \$no_downgrades_for_perl,
 	   "v+"     => \$v,
 	   "warnold" => \$warn_old,
 	  ) or die <<EOF;
@@ -266,6 +274,11 @@ my %deleted_dist;
 if ($only_indexed) {
     maybe_refresh_packages_index();
 }
+
+my $dangerous_dists;
+if ($no_downgrades_for_perl) {
+    $dangerous_dists = get_dangerous_dual_life_dists_for_perl($no_downgrades_for_perl);
+}
  
 GATHER_DATA: {
     my $last_epoch;
@@ -310,9 +323,28 @@ GATHER_DATA: {
 		my $distinfo = CPAN::DistnameInfo->new($path);
 		debug("developer version"), next if $distinfo->maturity ne 'released';
 	    }
+	    my $get_distribution_object = do {
+		my $do;
+		sub {
+		    return $do if defined $do;
+		    $do = eval { CPAN::Shell->expand('Distribution', $path) };
+		    if (!$do) { $do = 0 } # explicitly set to !undef
+		    return $do;
+		};
+	    };
 	    if ($only_indexed) {
-		my $do = eval { CPAN::Shell->expand('Distribution', $path) };
+		my $do = $get_distribution_object->();
 		debug('not indexed'), next if !$do;
+	    }
+	    if ($no_downgrades_for_perl) {
+		my $do = $get_distribution_object->();
+		if ($do) {
+		    my $base_dist = $do->base_id;
+		    if ($dangerous_dists->{$base_dist}) {
+			debug("$base_dist could cause a downgrade, skipping");
+			next;
+		    }
+		}
 	    }
 	    debug('dist only in RECENT, not on CPAN'), next if $path =~ m{\QF/FZ/FZAKER/booking/appsec/Bookings-Security-CVSS-0.03.tar.gz\E$};
 	    print $path, "\n";
@@ -379,6 +411,56 @@ sub maybe_refresh_packages_index {
 	$CPAN::Config->{index_expire} = 99999;
 	debug("no forced reload of CPAN indexes necessary");
     }
+}
+
+sub get_dangerous_dual_life_dists_for_perl {
+    my($perl_exe) = @_;
+    my %mod_to_version;
+    my @cmd = ($perl_exe, '-MModule::CoreList', '-e', '$mclv = $Module::CoreList::version{$]}; for my $mod (sort keys %$mclv) { print $mod, "\t", $mclv->{$mod}, "\n" }');
+    open my $fh, '-|', @cmd
+	or do {
+	    warn "ERROR: can't execute '@cmd': $!\n";
+	    warn "ERROR: dual life modules which would cause a downgrade will be listed!\n";
+	    return {};
+	};
+    while(<$fh>) {
+	chomp;
+	my($mod, $version) = split /\s+/, $_;
+	$mod_to_version{$mod} = $version;
+    }
+
+    require Parse::CPAN::Packages::Fast;
+    require CPAN::Version;
+    my %cpan_dist_to_object;
+    my $pcpf = Parse::CPAN::Packages::Fast->new;
+    for my $mod (keys %mod_to_version) {
+	my $cpan_mod_obj = $pcpf->package($mod);
+	if ($cpan_mod_obj) {
+	    my $cpan_dist_obj = $cpan_mod_obj->distribution;
+	    my $cpan_dist = $cpan_dist_obj->dist;
+	    next if $cpan_dist_to_object{$cpan_dist};
+	    next if $cpan_dist eq 'perl';
+	    $cpan_dist_to_object{$cpan_dist} = $cpan_dist_obj;
+	}
+    }
+    my %dangerous_dists;
+    for my $cpan_dist_obj (values %cpan_dist_to_object) {
+	for my $cpan_mod_obj ($cpan_dist_obj->contains) {
+	    my $mod = $cpan_mod_obj->package;
+	    my $cpan_mod_version = $cpan_mod_obj->version;
+	    if ($mod_to_version{$mod} && CPAN::Version->vgt($mod_to_version{$mod}, $cpan_mod_version)) {
+		#debug("$mod is dangerous: thisperl=$mod_to_version{$mod} > cpan=$cpan_mod_version");
+		$dangerous_dists{$cpan_dist_obj->distvname} = 1;
+	    }	    
+	}
+    }
+    debug_code(sub {
+		   warn "DEBUG: dangerous distributions:\n";
+		   for my $dist (sort keys %dangerous_dists) {
+		       warn "  $dist\n";
+		   }
+	       });
+    \%dangerous_dists;
 }
 
 # REPO BEGIN
