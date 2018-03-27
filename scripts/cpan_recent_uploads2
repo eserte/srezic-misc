@@ -429,37 +429,65 @@ sub get_dangerous_dual_life_dists_for_perl {
 	$mod_to_version{$mod} = $version;
     }
 
-    require Parse::CPAN::Packages::Fast;
-    require CPAN::Version;
-    my %cpan_dist_to_object;
-    my $pcpf = Parse::CPAN::Packages::Fast->new;
-    for my $mod (keys %mod_to_version) {
-	my $cpan_mod_obj = $pcpf->package($mod);
-	if ($cpan_mod_obj) {
-	    my $cpan_dist_obj = $cpan_mod_obj->distribution;
-	    my $cpan_dist = $cpan_dist_obj->dist;
-	    next if $cpan_dist_to_object{$cpan_dist};
-	    next if $cpan_dist eq 'perl';
-	    $cpan_dist_to_object{$cpan_dist} = $cpan_dist_obj;
-	}
-    }
     my %dangerous_dists;
-    for my $cpan_dist_obj (values %cpan_dist_to_object) {
-	for my $cpan_mod_obj ($cpan_dist_obj->contains) {
-	    my $mod = $cpan_mod_obj->package;
-	    my $cpan_mod_version = $cpan_mod_obj->version;
-	    if ($mod_to_version{$mod} && CPAN::Version->vgt($mod_to_version{$mod}, $cpan_mod_version)) {
-		#debug("$mod is dangerous: thisperl=$mod_to_version{$mod} > cpan=$cpan_mod_version");
-		$dangerous_dists{$cpan_dist_obj->distvname} = 1;
-	    }	    
+    {
+	require CPAN::Version;
+	if (eval { require Parse::CPAN::Packages::Fast; 1 }) {
+	    my %cpan_dist_to_object;
+	    my $pcpf = Parse::CPAN::Packages::Fast->new;
+	    for my $mod (keys %mod_to_version) {
+		my $cpan_mod_obj = $pcpf->package($mod);
+		if ($cpan_mod_obj) {
+		    my $cpan_dist_obj = $cpan_mod_obj->distribution;
+		    my $cpan_dist = $cpan_dist_obj->dist;
+		    next if $cpan_dist_to_object{$cpan_dist};
+		    next if $cpan_dist eq 'perl';
+		    $cpan_dist_to_object{$cpan_dist} = $cpan_dist_obj;
+		}
+	    }
+	    for my $cpan_dist_obj (values %cpan_dist_to_object) {
+		for my $cpan_mod_obj ($cpan_dist_obj->contains) {
+		    my $mod = $cpan_mod_obj->package;
+		    my $cpan_mod_version = $cpan_mod_obj->version;
+		    if ($mod_to_version{$mod} && CPAN::Version->vgt($mod_to_version{$mod}, $cpan_mod_version)) {
+			#debug("$mod is dangerous: thisperl=$mod_to_version{$mod} > cpan=$cpan_mod_version");
+			$dangerous_dists{$cpan_dist_obj->distvname} = 1;
+		    }
+		}
+	    }
+	} else {
+	    my %cpan_dist_to_object;
+	    my %cpan_mod_to_object;
+	    for my $mod (keys %mod_to_version) {
+		my $cpan_mod_obj = CPAN::Shell->expand('Module', $mod);
+		if ($cpan_mod_obj) {
+		    my $cpan_dist_obj = $cpan_mod_obj->distribution;
+		    (my $cpan_dist = $cpan_dist_obj->base_id) =~ s{-[\d._]+$}{};
+		    next if $cpan_dist_to_object{$cpan_dist};
+		    next if $cpan_dist eq 'perl';
+		    $cpan_dist_to_object{$cpan_dist} = $cpan_dist_obj;
+		    $cpan_mod_to_object{$mod} = $cpan_mod_obj;
+		}
+	    }
+	    for my $cpan_dist_obj (values %cpan_dist_to_object) {
+		for my $mod ($cpan_dist_obj->containsmods) {
+		    my $cpan_mod_obj = $cpan_mod_to_object{$mod};
+		    if ($cpan_mod_obj) {
+			my $cpan_mod_version = $cpan_mod_obj->cpan_version;
+			if ($mod_to_version{$mod} && CPAN::Version->vgt($mod_to_version{$mod}, $cpan_mod_version)) {
+			    $dangerous_dists{$cpan_dist_obj->base_id} = 1;
+			}
+		    }
+		}
+	    }
 	}
+	debug_code(sub {
+		       warn "DEBUG: dangerous distributions:\n";
+		       for my $dist (sort keys %dangerous_dists) {
+			   warn "  $dist\n";
+		       }
+		   });
     }
-    debug_code(sub {
-		   warn "DEBUG: dangerous distributions:\n";
-		   for my $dist (sort keys %dangerous_dists) {
-		       warn "  $dist\n";
-		   }
-	       });
     \%dangerous_dists;
 }
 
