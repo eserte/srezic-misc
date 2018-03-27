@@ -12,7 +12,7 @@ my $doit = Doit->init;
 $doit->add_component('git');
 
 in_directory {
-    my @files = sort $doit->git_get_changed_files;
+    my @files = sort $doit->git_get_changed_files($Doit::Git::VERSION >= 0.026 ? ('ignore_untracked' => 1) : ());
     if (!@files) {
 	info "No changed files";
 	exit;
