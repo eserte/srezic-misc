@@ -52,7 +52,7 @@ my $n;
 my $r;
 my $rr; # reverse a working set (-splitdists) only
 my $use_sqlite = 0; # not default anymore --- sometimes there are locking problems
-my $fl;
+my @fl;
 my $wait;
 my $batch = 1;
 my $for_parallel_smoker = 0;
@@ -173,7 +173,7 @@ GetOptions("n" => \$n,
 	   'regular' => \$use_regular_perls,
 	   'thisperl' => \$do_this_perl,
 	   'sqlite!' => \$use_sqlite,
-	   'fl|filelist=s' => \$fl,
+	   'fl|filelist=s@' => \@fl,
 	   'unkind' => \$unkind,
 	   'wait!' => \$wait,
 	   'batch!' => \$batch,
@@ -466,7 +466,7 @@ my @dist_or_mods = @ARGV;
 if ($do_action eq 'shell' && !@dist_or_mods) {
     @dist_or_mods = "This_is_just_a_dummy";
 }
-if ($fl) {
+for my $fl (@fl) {
     open my $fh, $fl
 	or die "Cannot open filelist $fl: $!";
     while(<$fh>) {
@@ -2481,7 +2481,7 @@ used.
 
 =item -fl I<file>
 
-Specify a file with the listed distributions/modules.
+Specify a file with the listed distributions/modules. May be specified multiple times.
 
 =item -builddirreuse
 
