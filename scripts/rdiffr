@@ -1,0 +1,320 @@
+#!/usr/bin/perl -w
+# -*- perl -*-
+
+#
+# Author: Slaven Rezic
+#
+# Copyright (C) 2017 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+#
+# Mail: slaven@rezic.de
+# WWW:  http://www.rezic.de/eserte/
+#
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Net::OpenSSH;
+
+sub usage () {
+    die <<EOF;
+usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] host1 host2 dir ...
+EOF
+}
+
+my $debug = 0;
+my @exclude;
+my @exclude_path_rx;
+my $diffopts;
+my $right_dir;
+my $always_sudo;
+GetOptions(
+	   "debug+"       => \$debug,
+	   'x|exclude=s@' => \@exclude,
+	   'exclude-path-rx=s@' => \@exclude_path_rx,
+	   'diffopts=s'   => \$diffopts,
+	   'right-dir=s'  => \$right_dir,
+	   'always-sudo'  => \$always_sudo,
+	  ) or usage;
+my $left_host = shift or usage;
+my $right_host = shift or usage;
+my @dirs = @ARGV;
+if (!@dirs) {
+    warn "Please specify directories to compare.\n";
+    usage;
+}
+if (defined $right_dir && @dirs > 1) {
+    die "Only one directory to compare supported if --right-dir is specified.\n";
+}
+my $exclude_rx = '';
+if (@exclude) {
+    $exclude_rx = '^(' . join("|", map { quotemeta } @exclude) . ')$';
+    if ($debug) {
+	warn "exclude_rx=$exclude_rx\n";
+    }
+}
+my $exclude_path_rx = '';
+if (@exclude_path_rx) {
+    for (@exclude_path_rx) { qr{$_} } # regexp syntax check
+    $exclude_path_rx = '^(' . join("|", @exclude_path_rx) . ')$';
+    if ($debug) {
+	warn "exclude_path_rx=$exclude_path_rx\n";
+    }
+}
+
+if ($debug >= 2) {
+    require Data::Dumper;
+}
+
+my @diffopts = ('-u');
+if ($diffopts) {
+    require Text::ParseWords;
+    push @diffopts, Text::ParseWords::shellwords($diffopts);
+}
+
+# First pass: transfer file names, together with some stat
+# information, especially size, but also mode, user/group (names, not
+# ids, optionally mtime). Use preferably File::Find, maybe find+printf
+#
+# XXX use everywhere // instead of || if perl supports it (check first)
+my @cmd_without_dirs = (($always_sudo ? 'sudo' : ()), 'perl', '-Mstrict', '-Mwarnings', '-MFile::Find', "-e", <<'EOF', $exclude_rx, $exclude_path_rx);
+my $exclude_rx = shift @ARGV;
+if (length $exclude_rx) {
+    $exclude_rx = qr{$exclude_rx};
+}
+my $exclude_path_rx = shift @ARGV;
+if (length $exclude_path_rx) {
+    $exclude_path_rx = qr{$exclude_path_rx};
+}
+my(%uid2name, %gid2name);
+find(sub {
+    if (length $exclude_rx && $_ =~ $exclude_rx) {
+        $File::Find::prune = 1;
+        return;
+    }
+    if (length $exclude_path_rx && $File::Find::name =~ $exclude_path_rx) {
+        $File::Find::prune = 1;
+        return;
+    }
+    my($dev,undef,$mode,undef,$uid,$gid,undef,$size) = lstat($_);
+    $File::Find::prune |= ($dev != $File::Find::topdev);
+    my $user = ($uid2name{$uid} ||= ((getpwuid($uid))[0] || "#$uid"));
+    my $group = ($gid2name{$gid} ||= ((getgrgid($gid))[0] || "#$gid"));
+    my $symlinkval = -l $_ ? readlink($_) : '-';
+    $size = 0 if !-f $_;
+    print join("\0", $mode, $user, $group, $size, $symlinkval, $File::Find::name), "\0\0";
+}, @ARGV)
+EOF
+
+my($left_fname2info, $right_fname2info);
+
+sub get_fname2info {
+    my($fh, $right_dir_mapping) = @_;
+    my %fname2info;
+    local $/ = "\0\0";
+    while(<$fh>) {
+	my($mode,$user,$group,$size,$symlinkval,$fname) = split /\0/, $_;
+	if ($right_dir_mapping) {
+	    substr($fname, 0, length($right_dir_mapping->[1]), $right_dir_mapping->[0]);
+	}
+	$fname2info{$fname} = {mode => $mode, user => $user, group => $group, size => $size, symlinkval => $symlinkval};
+    }
+    \%fname2info;
+}
+
+my %ssh;
+for my $host ($left_host, $right_host) {
+    if ($host ne '__local__') {
+	my $ssh = Net::OpenSSH->new($host);
+	$ssh->error and die $ssh->error;
+	$ssh{$host} = $ssh;
+    }
+}
+
+for my $def (
+	     [$left_host,  \$left_fname2info,  0],
+	     [$right_host, \$right_fname2info, defined $right_dir],
+	    ) {
+    my($host, $fname2info_ref, $need_right_dir_mapping) = @$def;
+    my $ssh = $ssh{$host};
+    my @extra_fname2info_args = $need_right_dir_mapping ? [$dirs[0], $right_dir] : ();
+    my @use_dirs              = $need_right_dir_mapping ? ($right_dir) : @dirs;
+    if (!$ssh) {
+	open my $fh, '-|', @cmd_without_dirs, @use_dirs or die $!;
+	$$fname2info_ref = get_fname2info($fh, @extra_fname2info_args);
+	close $fh or die $!;
+    } else {
+	my($rout, $pid) = $ssh->pipe_out(@cmd_without_dirs, @use_dirs);
+	$$fname2info_ref = get_fname2info($rout, @extra_fname2info_args);
+	close $rout or die $!;
+    }
+    if ($debug) {
+	warn "Found " . scalar(keys %$$fname2info_ref) . " file(s) on $host\n";
+    }
+}
+
+my($left_tmp, $right_tmp);
+sub get_tmp {
+    require File::Temp;
+    my(undef,$tmpfile) = File::Temp::tempfile(UNLINK => 1, SUFFIX => "rdiffr_XXXXXXXX");
+    $tmpfile;
+}
+
+my @left_fnames  = sort keys %$left_fname2info;
+my @right_fnames = sort keys %$right_fname2info;
+my $left_fnames_i = my $right_fnames_i = 0;
+while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
+    if ($debug >= 2) {
+	warn "$left_fnames[$left_fnames_i] <=> $right_fnames[$right_fnames_i]\n";
+    }
+    if      ($left_fnames_i > $#left_fnames) {
+	print "Only on $right_host: $right_fnames[$right_fnames_i]\n";
+	$right_fnames_i++;
+    } elsif ($right_fnames_i > $#right_fnames) {
+	print "Only on $left_host: $left_fnames[$left_fnames_i]\n";
+	$left_fnames_i++;
+    } else {
+	my $left_fname = $left_fnames[$left_fnames_i];
+	my $right_fname = $right_fnames[$right_fnames_i];
+	my $cmp = $left_fname cmp $right_fname;
+	if ($cmp < 0) {
+	    print "Only on $left_host: $left_fname\n";
+	    $left_fnames_i++;
+	} elsif ($cmp > 0) {
+	    print "Only on $right_host: $right_fname\n";
+	    $right_fnames_i++;
+	} else {
+	    my @diffs;
+	    my $content_diff;
+	    my $left_info = $left_fname2info->{$left_fname};
+	    my $right_info = $right_fname2info->{$right_fname};
+	    if ($debug >= 2) {
+		print STDERR Data::Dumper->new([$left_info, $right_info],[qw(left_info right_info)])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump;
+	    }
+	    if      ($left_info->{mode} != $right_info->{mode}) {
+		push @diffs, sprintf "mode: %o vs. %o", $left_info->{mode}, $right_info->{mode};
+	    } elsif ($left_info->{user} ne $right_info->{user}) {
+		push @diffs, "user: $left_info->{user} vs. $right_info->{user}";
+	    } elsif ($left_info->{group} ne $right_info->{group}) {
+		push @diffs, "group: $left_info->{group} vs. $right_info->{group}";
+	    } elsif ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
+		push @diffs, "symlink target: $left_info->{symlinkval} vs. $right_info->{symlinkval}";
+	    } elsif ($left_info->{size} != $right_info->{size}) {
+		push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
+		my($left_cmp_file, $right_cmp_file);
+		for my $def (
+			     [$left_host, \$left_tmp, \$left_cmp_file],
+			     [$right_host, \$right_tmp, \$right_cmp_file],
+			    ) {
+		    my($host, $tmp_ref, $cmp_file_ref) = @$def;
+		    if ($ssh{$host}) {
+			if (!defined $$tmp_ref) {
+			    $$tmp_ref = get_tmp();
+			}
+			my @cmd = ("cat", $left_fname);
+			$ssh{$host}->system('test', '-r', $left_fname);
+			if ($? != 0) {
+			    unshift @cmd, 'sudo';
+			}
+			warn "Read on $host: @cmd...\n" if $debug;
+			my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
+			local $/ = \4096;
+			open my $ofh, ">", $$tmp_ref
+			    or die $!;
+			while(<$rout>) {
+			    print $ofh $_;
+			}
+			if (!close $rout) {
+			    print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
+			}
+			close $ofh
+			    or die $!;
+			$$cmp_file_ref = $$tmp_ref;
+		    } else {
+			$$cmp_file_ref = $left_fname;
+		    }
+		}
+		{
+		    open my $fh, '-|', 'diff', @diffopts, $left_cmp_file, $right_cmp_file
+			or die $!;
+		    if (eof $fh) {
+			# no diffs --- may happen if e.g. -b -B is specified
+		    } else {
+			my $first_line = <$fh>;
+			if ($first_line =~ m{^---}) {
+			    scalar <$fh>; # overread also 2nd line
+			    $content_diff .= "--- $left_host: $left_fname\n";
+			    $content_diff .= "+++ $right_host: $right_fname\n";
+			} else {
+			    $content_diff .= $first_line; # XXX can this happen? binary files?
+			}
+			local $/ = \4096;
+			while(<$fh>) {
+			    $content_diff .= $_;
+			}
+		    }
+		}
+	    }
+	    if (@diffs) {
+		# XXX formatting?
+		print "$left_fname\n";
+		for my $diff (@diffs) {
+		    print "  $diff\n";
+		}
+		if (defined $content_diff) {
+		    print $content_diff;
+		}
+	    }
+	    $left_fnames_i++;
+	    $right_fnames_i++;
+	}
+    }
+}
+print "Finished.\n" if $debug; # not to stderr, so it's printed last
+
+# Second pass: for all files which have same size: run md5 (with
+# Digest::MD5 or md5sum/md5) on the file contents
+
+# Third pass: output differences. Sort files alphabetically. Output
+# also stat diffs, maybe git-like. Fetch contents for files with
+# different content, and run this through diff -u. Maybe don't fetch
+# for binary content.
+
+# Questions: optionally cache things?
+
+# XXX There should also be a mode where directories are differently
+# named on left and right system. In this case, maybe work only with
+# relative filenames; also maybe don't support multiple directories.
+
+# XXX make it possible to use sudo, additionally
+
+__END__
+
+=head1 NAME
+
+rdiffr - remote diff, recursive
+
+=head1 SYNOPSIS
+
+Run diff between two remote hosts, using ssh, on a number of
+directories:
+
+   rdiffr user@host1.example.org user@host2.example.org /etc /usr/local/etc ...
+
+Run diff between the local system and a remote host:
+
+   rdiffr __local__ user@host1.example.org /etc /usr/local/etc ...
+
+If top directory paths differ on both hosts, then use C<--right-dir>
+to specify the top directory on the right one. Note that in this mode
+it's possible to specifiy only one directory at all:
+
+   rdiffr user@host1.example.org user@host2.example.org /mnt/home --right-dir /export/home
+
+To exclude files or paths from comparisons it's possible to use
+C<--exclude> or C<--exclude-rx-path>. C<--exclude> expects a full file
+basename, while C<--exclude-rx-path> does regexp matches on the whole
+path. Both options may be combined and used multiple times.
+
+=cut
