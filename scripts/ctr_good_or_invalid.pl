@@ -41,8 +41,8 @@ use constant USE_BETA_MATRIX => 0;
 my @current_beforemaintrelease_pairs = (
 					'5.27.9:5.27.10',
 					'5.26.1:5.27.10',
-					'5.26.1:5.26.2 RC1',
-					'5.24.3:5.24.4 RC1',
+					'5.26.1:5.26.2',
+					'5.24.3:5.24.4',
 				       );
 
 # Patterns for report analysis
@@ -1520,6 +1520,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'defined array' && $annotation_text_for_analysis =~ m{can't use.*defined.*\@array}i)
 		       || ($analysis_tag eq 'defined hash' && $annotation_text_for_analysis =~ m{defined\b.*\bhash})
 		       || ($analysis_tag eq 'ssl certificate problem' && $annotation_text_for_analysis =~ m{certificate\s+not\s+valid}i)
+		       || ($analysis_tag eq 'UNIVERSAL export' && $annotation_text_for_analysis =~ m{UNIVERSAL does not export}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
