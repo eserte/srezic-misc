@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -316,5 +316,16 @@ To exclude files or paths from comparisons it's possible to use
 C<--exclude> or C<--exclude-rx-path>. C<--exclude> expects a full file
 basename, while C<--exclude-rx-path> does regexp matches on the whole
 path. Both options may be combined and used multiple times.
+
+=head1 REQUIREMENTS
+
+This script needs perl and the CPAN module L<Net::OpenSSH>. The latter
+may be installed on Debian-like systems using
+
+    apt-get install libnet-openssh-perl
+
+=head1 AUTHOR
+
+Slaven Rezic
 
 =cut
