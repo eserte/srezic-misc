@@ -45,13 +45,13 @@ if (!@dirs) {
     usage;
 }
 if (defined $right_dir && @dirs > 1) {
-    die "Only one directory to compare supported if --right-dir is specified.\n";
+    die "ERROR: Only one directory to compare supported if --right-dir is specified.\n";
 }
 my $exclude_rx = '';
 if (@exclude) {
     $exclude_rx = '^(' . join("|", map { quotemeta } @exclude) . ')$';
     if ($debug) {
-	warn "exclude_rx=$exclude_rx\n";
+	warn "DEBUG: exclude_rx=$exclude_rx\n";
     }
 }
 my $exclude_path_rx = '';
@@ -59,7 +59,7 @@ if (@exclude_path_rx) {
     for (@exclude_path_rx) { qr{$_} } # regexp syntax check
     $exclude_path_rx = '^(' . join("|", @exclude_path_rx) . ')$';
     if ($debug) {
-	warn "exclude_path_rx=$exclude_path_rx\n";
+	warn "DEBUG: exclude_path_rx=$exclude_path_rx\n";
     }
 }
 
@@ -127,7 +127,7 @@ my %ssh;
 for my $host ($left_host, $right_host) {
     if ($host ne '__local__') {
 	my $ssh = Net::OpenSSH->new($host);
-	$ssh->error and die $ssh->error;
+	$ssh->error and die "ERROR: while trying to ssh-connect to $host: " . $ssh->error;
 	$ssh{$host} = $ssh;
     }
 }
@@ -141,16 +141,18 @@ for my $def (
     my @extra_fname2info_args = $need_right_dir_mapping ? [$dirs[0], $right_dir] : ();
     my @use_dirs              = $need_right_dir_mapping ? ($right_dir) : @dirs;
     if (!$ssh) {
-	open my $fh, '-|', @cmd_without_dirs, @use_dirs or die $!;
+	my @cmd = (@cmd_without_dirs, @use_dirs);
+	open my $fh, '-|', @cmd or die "ERROR: running '@cmd' failed: $!";
 	$$fname2info_ref = get_fname2info($fh, @extra_fname2info_args);
-	close $fh or die $!;
+	close $fh or die "ERROR: running (or closing) '@cmd' on localhost failed: $!";
     } else {
-	my($rout, $pid) = $ssh->pipe_out(@cmd_without_dirs, @use_dirs);
+	my @cmd = (@cmd_without_dirs, @use_dirs);
+	my($rout, $pid) = $ssh->pipe_out(@cmd);
 	$$fname2info_ref = get_fname2info($rout, @extra_fname2info_args);
-	close $rout or die $!;
+	close $rout or die "ERROR: running (or closing) '@cmd' on $host failed: $!";
     }
     if ($debug) {
-	warn "Found " . scalar(keys %$$fname2info_ref) . " file(s) on $host\n";
+	warn "DEBUG: Found " . scalar(keys %$$fname2info_ref) . " file(s) on $host\n";
     }
 }
 
@@ -166,7 +168,7 @@ my @right_fnames = sort keys %$right_fname2info;
 my $left_fnames_i = my $right_fnames_i = 0;
 while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
     if ($debug >= 2) {
-	warn "$left_fnames[$left_fnames_i] <=> $right_fnames[$right_fnames_i]\n";
+	warn "DEBUG: $left_fnames[$left_fnames_i] <=> $right_fnames[$right_fnames_i]\n";
     }
     if      ($left_fnames_i > $#left_fnames) {
 	print "Only on $right_host: $right_fnames[$right_fnames_i]\n";
@@ -190,7 +192,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	    my $left_info = $left_fname2info->{$left_fname};
 	    my $right_info = $right_fname2info->{$right_fname};
 	    if ($debug >= 2) {
-		print STDERR Data::Dumper->new([$left_info, $right_info],[qw(left_info right_info)])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump;
+		print STDERR "DEBUG: " . Data::Dumper->new([$left_info, $right_info],[qw(left_info right_info)])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump;
 	    }
 	    if      ($left_info->{mode} != $right_info->{mode}) {
 		push @diffs, sprintf "mode: %o vs. %o", $left_info->{mode}, $right_info->{mode};
@@ -217,11 +219,11 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			if ($? != 0) {
 			    unshift @cmd, 'sudo';
 			}
-			warn "Read on $host: @cmd...\n" if $debug;
+			warn "DEBUG: Read on $host: @cmd...\n" if $debug;
 			my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
 			local $/ = \4096;
 			open my $ofh, ">", $$tmp_ref
-			    or die $!;
+			    or die "ERROR: can't write to $$tmp_ref: $!";
 			while(<$rout>) {
 			    print $ofh $_;
 			}
@@ -229,15 +231,16 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			    print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
 			}
 			close $ofh
-			    or die $!;
+			    or die "ERROR: closing $$tmp_ref failed: $!";
 			$$cmp_file_ref = $$tmp_ref;
 		    } else {
 			$$cmp_file_ref = $left_fname;
 		    }
 		}
 		{
-		    open my $fh, '-|', 'diff', @diffopts, $left_cmp_file, $right_cmp_file
-			or die $!;
+		    my @cmd = ('diff', @diffopts, $left_cmp_file, $right_cmp_file);
+		    open my $fh, '-|', @cmd
+			or die "ERROR: running '@cmd' failed: $!";
 		    if (eof $fh) {
 			# no diffs --- may happen if e.g. -b -B is specified
 		    } else {
@@ -271,7 +274,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	}
     }
 }
-print "Finished.\n" if $debug; # not to stderr, so it's printed last
+print "\nDEBUG: Finished.\n" if $debug; # not to stderr, so it's printed last
 
 # Second pass: for all files which have same size: run md5 (with
 # Digest::MD5 or md5sum/md5) on the file contents
