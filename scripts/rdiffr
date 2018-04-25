@@ -281,7 +281,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		    {
 			use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
 			my $flags = fcntl(STDOUT, F_GETFL, 0) or die $!;
-		    fcntl(STDOUT, F_SETFL, $flags & ~O_NONBLOCK) or die $!;
+			fcntl(STDOUT, F_SETFL, $flags & ~O_NONBLOCK) or die $!;
 		    }
 		    print $content_diff
 			or warn "ERROR: while printing diff content: $!";
