@@ -221,11 +221,13 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			}
 			warn "DEBUG: Read on $host: @cmd...\n" if $debug;
 			my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
-			local $/ = \4096;
 			open my $ofh, ">", $$tmp_ref
 			    or die "ERROR: can't write to $$tmp_ref: $!";
-			while(<$rout>) {
-			    print $ofh $_;
+			{
+			    local $/ = \4096;
+			    while(<$rout>) {
+				print $ofh $_;
+			    }
 			}
 			if (!close $rout) {
 			    print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
@@ -252,9 +254,14 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			} else {
 			    $content_diff .= $first_line; # XXX can this happen? binary files?
 			}
-			local $/ = \4096;
-			while(<$fh>) {
-			    $content_diff .= $_;
+			{
+			    local $/ = \4096;
+			    while(<$fh>) {
+				$content_diff .= $_;
+			    }
+			}
+			if ($content_diff !~ /\n\z/) { # XXX can this ever happen?
+			    $content_diff .= "\n";
 			}
 		    }
 		}
@@ -266,7 +273,18 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		    print "  $diff\n";
 		}
 		if (defined $content_diff) {
-		    print $content_diff;
+		    # XXX Fix STDOUT: it got a O_NONBLOCK flag
+		    # during one of the pipe_out() handlings
+		    # above. This must be undone, otherwise
+		    # the next print() may fail with an (for
+		    # perl) unexpected EAGAIN
+		    {
+			use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
+			my $flags = fcntl(STDOUT, F_GETFL, 0) or die $!;
+		    fcntl(STDOUT, F_SETFL, $flags & ~O_NONBLOCK) or die $!;
+		    }
+		    print $content_diff
+			or warn "ERROR: while printing diff content: $!";
 		}
 	    }
 	    $left_fnames_i++;
@@ -274,7 +292,14 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	}
     }
 }
-print "\nDEBUG: Finished.\n" if $debug; # not to stderr, so it's printed last
+print "DEBUG: Finished.\n" if $debug; # not to stderr, so it's printed last
+my $clean_finish = 1;
+
+END {
+    if (!$clean_finish) {
+	warn "ERROR: rdiffr crashed somewhere; output may be cropped!\n";
+    }
+}
 
 # Second pass: for all files which have same size: run md5 (with
 # Digest::MD5 or md5sum/md5) on the file contents
