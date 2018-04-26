@@ -19,7 +19,7 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] host1 host2 dir ...
+usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] host1 host2 dir ...
 EOF
 }
 
@@ -30,7 +30,7 @@ my $diffopts;
 my $right_dir;
 my $always_sudo;
 GetOptions(
-	   "debug+"       => \$debug,
+	   "d|debug+"     => \$debug,
 	   'x|exclude=s@' => \@exclude,
 	   'exclude-path-rx=s@' => \@exclude_path_rx,
 	   'diffopts=s'   => \$diffopts,
