@@ -39,7 +39,9 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = (
+					'5.27.10:5.27.11',
 					'5.27.9:5.27.10',
+					'5.26.1:5.27.11',
 					'5.26.1:5.27.10',
 					'5.26.1:5.26.2',
 					'5.24.3:5.24.4',
@@ -1668,10 +1670,10 @@ sub set_currfile {
 	if (%beforemaintrelease_pair_rechecks) {
 	    my @cmds;
 	    if ($beforemaintrelease_pair_rechecks{fail}) {
-		push @cmds, "cpan_smoke_modules $currfulldist -skiptestedfail " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{fail} });
+		push @cmds, "cpan_smoke_modules $x_test_reporter_distfile -skiptestedfail " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{fail} });
 	    }
 	    if ($beforemaintrelease_pair_rechecks{pass}) {
-		push @cmds, "cpan_smoke_modules $currfulldist -skiptestedpass " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{pass} });
+		push @cmds, "cpan_smoke_modules $x_test_reporter_distfile -skiptestedpass " . join(" ", map { "-pv $_" } sort keys %{ $beforemaintrelease_pair_rechecks{pass} });
 	    }
 	    my $cmd = join("; ", @cmds);
 	    my $f = $analysis_frame->Frame->pack;
