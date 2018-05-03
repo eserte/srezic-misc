@@ -19,7 +19,7 @@ use Net::OpenSSH;
 
 sub usage () {
     die <<EOF;
-usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] host1 host2 dir ...
+usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] [--no-md5-check] host1 host2 dir ...
 EOF
 }
 
@@ -29,6 +29,7 @@ my @exclude_path_rx;
 my $diffopts;
 my $right_dir;
 my $always_sudo;
+my $md5_check = 1;
 GetOptions(
 	   "d|debug+"     => \$debug,
 	   'x|exclude=s@' => \@exclude,
@@ -36,6 +37,7 @@ GetOptions(
 	   'diffopts=s'   => \$diffopts,
 	   'right-dir=s'  => \$right_dir,
 	   'always-sudo'  => \$always_sudo,
+	   'md5-check!'   => \$md5_check,
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -163,6 +165,8 @@ sub get_tmp {
     $tmpfile;
 }
 
+my($left_md5_method, $right_md5_method);
+
 my @left_fnames  = sort keys %$left_fname2info;
 my @right_fnames = sort keys %$right_fname2info;
 my $left_fnames_i = my $right_fnames_i = 0;
@@ -202,66 +206,131 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		push @diffs, "group: $left_info->{group} vs. $right_info->{group}";
 	    } elsif ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
 		push @diffs, "symlink target: $left_info->{symlinkval} vs. $right_info->{symlinkval}";
-	    } elsif ($left_info->{size} != $right_info->{size}) {
-		push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
-		my($left_cmp_file, $right_cmp_file);
-		for my $def (
-			     [$left_host, \$left_tmp, \$left_cmp_file],
-			     [$right_host, \$right_tmp, \$right_cmp_file],
-			    ) {
-		    my($host, $tmp_ref, $cmp_file_ref) = @$def;
-		    if ($ssh{$host}) {
-			if (!defined $$tmp_ref) {
-			    $$tmp_ref = get_tmp();
-			}
-			my @cmd = ("cat", $left_fname);
-			$ssh{$host}->system('test', '-r', $left_fname);
-			if ($? != 0) {
-			    unshift @cmd, 'sudo';
-			}
-			warn "DEBUG: Read on $host: @cmd...\n" if $debug;
-			my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
-			open my $ofh, ">", $$tmp_ref
-			    or die "ERROR: can't write to $$tmp_ref: $!";
-			{
-			    local $/ = \4096;
-			    while(<$rout>) {
-				print $ofh $_;
+	    } else {
+		my $has_diffs = $left_info->{size} != $right_info->{size};
+		if ($has_diffs) {
+		    push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
+		} else {
+		    if ($md5_check) {
+			my($left_md5, $right_md5);
+			for my $def (
+			             [$left_host,  \$left_md5_method,  $left_fname,  \$left_md5],
+				     [$right_host, \$right_md5_method, $right_fname, \$right_md5],
+				    ) {
+			    my($host, $md5_method_ref, $fname, $md5_ref) = @$def;
+
+			    # Find a suitable md5 command
+			    if (!$$md5_method_ref) {
+				$ssh{$host}->system({stderr_discard=>1,stdout_discard=>1}, 'which', 'md5sum'); # e.g. linux
+				if ($? == 0) {
+				    $$md5_method_ref = sub {
+					my($ssh, $file) = @_;
+					my $res = $ssh->capture(($always_sudo ? 'sudo' : ()), 'md5sum', $file);
+					die "Error while getting MD5 for '$file' using md5sum" if $? != 0;
+					(split / /, $res)[0];
+				    };
+				    if ($debug) {
+					warn "DEBUG: use md5sum on $host for MD5 fingerprints\n";
+				    }
+				}
 			    }
+			    if (!$$md5_method_ref) {
+				$ssh{$host}->system({stderr_discard=>1,stdout_discard=>1}, 'which', 'md5'); # e.g. freebsd
+				if ($? == 0) {
+				    $$md5_method_ref = sub {
+					my($ssh, $file) = @_;
+					my $res = $ssh->capture(($always_sudo ? 'sudo' : ()), 'md5', '-q', $file);
+					die "Error while getting MD5 for '$file' using md5" if $? != 0;
+					chomp $res;
+					$res;
+				    };
+				    if ($debug) {
+					warn "DEBUG: use md5 on $host for MD5 fingerprints\n";
+				    }
+				}
+			    }
+			    if (!$$md5_method_ref) {
+				# last fallback; we assume that perl and standard perl modules (Digest::MD5) are installed
+				$$md5_method_ref = sub {
+				    my($ssh, $file) = @_;
+				    my $res = $ssh->capture(($always_sudo ? 'sudo' : ()), 'perl', '-MDigest::MD5', '-e', 'open $fh, "<", shift or die $!; $ctx = Digest::MD5->new; $ctx->addfile($fh); print $ctx->hexdigest', $file);
+				    die "Error while getting MD5 for '$file' using perl and Digest::MD5" if $? != 0;
+				    $res;
+				};
+				if ($debug) {
+				    warn "DEBUG: use perl + Digest::MD5 on $host for MD5 fingerprints\n";
+				}
+			    }
+
+			    $$md5_ref = $$md5_method_ref->($ssh{$host}, $fname);
 			}
-			if (!close $rout) {
-			    print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
+
+			$has_diffs = $left_md5 ne $right_md5;
+			if ($has_diffs) {
+			    push @diffs, "MD5: $left_md5 vs. $right_md5";
 			}
-			close $ofh
-			    or die "ERROR: closing $$tmp_ref failed: $!";
-			$$cmp_file_ref = $$tmp_ref;
-		    } else {
-			$$cmp_file_ref = $left_fname;
 		    }
 		}
-		{
-		    my @cmd = ('diff', @diffopts, $left_cmp_file, $right_cmp_file);
-		    open my $fh, '-|', @cmd
-			or die "ERROR: running '@cmd' failed: $!";
-		    if (eof $fh) {
-			# no diffs --- may happen if e.g. -b -B is specified
-		    } else {
-			my $first_line = <$fh>;
-			if ($first_line =~ m{^---}) {
-			    scalar <$fh>; # overread also 2nd line
-			    $content_diff .= "--- $left_host: $left_fname\n";
-			    $content_diff .= "+++ $right_host: $right_fname\n";
-			} else {
-			    $content_diff .= $first_line; # XXX can this happen? binary files?
-			}
-			{
-			    local $/ = \4096;
-			    while(<$fh>) {
-				$content_diff .= $_;
+		if ($has_diffs) {
+		    my($left_cmp_file, $right_cmp_file);
+		    for my $def (
+			         [$left_host, \$left_tmp, \$left_cmp_file],
+				 [$right_host, \$right_tmp, \$right_cmp_file],
+			        ) {
+			my($host, $tmp_ref, $cmp_file_ref) = @$def;
+			if ($ssh{$host}) {
+			    if (!defined $$tmp_ref) {
+				$$tmp_ref = get_tmp();
 			    }
+			    my @cmd = ("cat", $left_fname);
+			    $ssh{$host}->system('test', '-r', $left_fname);
+			    if ($? != 0) {
+				unshift @cmd, 'sudo';
+			    }
+			    warn "DEBUG: Read on $host: @cmd...\n" if $debug;
+			    my($rout, $pid) = $ssh{$host}->pipe_out(@cmd);
+			    open my $ofh, ">", $$tmp_ref
+				or die "ERROR: can't write to $$tmp_ref: $!";
+			    {
+				local $/ = \4096;
+				while(<$rout>) {
+				    print $ofh $_;
+				}
+			    }
+			    if (!close $rout) {
+				print $ofh "ERROR: while closing 'cat $left_fname' pipe on '$host': $!\n";
+			    }
+			    close $ofh
+				or die "ERROR: closing $$tmp_ref failed: $!";
+			    $$cmp_file_ref = $$tmp_ref;
+			} else {
+			    $$cmp_file_ref = $left_fname;
 			}
-			if ($content_diff !~ /\n\z/) { # XXX can this ever happen?
-			    $content_diff .= "\n";
+		    }
+		    {
+			my @cmd = ('diff', @diffopts, $left_cmp_file, $right_cmp_file);
+			open my $fh, '-|', @cmd
+			    or die "ERROR: running '@cmd' failed: $!";
+			if (eof $fh) {
+			    # no diffs --- may happen if e.g. -b -B is specified
+			} else {
+			    my $first_line = <$fh>;
+			    if ($first_line =~ m{^---}) {
+				scalar <$fh>; # overread also 2nd line
+				$content_diff .= "--- $left_host: $left_fname\n";
+				$content_diff .= "+++ $right_host: $right_fname\n";
+			    } else {
+				$content_diff .= $first_line; # XXX can this happen? binary files?
+			    }
+			    {
+				local $/ = \4096;
+				while(<$fh>) {
+				    $content_diff .= $_;
+				}
+			    }
+			    if ($content_diff !~ /\n\z/) { # XXX can this ever happen?
+				$content_diff .= "\n";
+			    }
 			}
 		    }
 		}
@@ -303,9 +372,6 @@ END {
     }
 }
 
-# Second pass: for all files which have same size: run md5 (with
-# Digest::MD5 or md5sum/md5) on the file contents
-
 # Third pass: output differences. Sort files alphabetically. Output
 # also stat diffs, maybe git-like. Fetch contents for files with
 # different content, and run this through diff -u. Maybe don't fetch
@@ -346,6 +412,27 @@ To exclude files or paths from comparisons it's possible to use
 C<--exclude> or C<--exclude-rx-path>. C<--exclude> expects a full file
 basename, while C<--exclude-rx-path> does regexp matches on the whole
 path. Both options may be combined and used multiple times.
+
+=head2 OPTIONS
+
+Further options:
+
+=over
+
+=item C<--debug|-d>
+
+Enable debugging. May be given multiple times for more debugging.
+
+=item C<--always-sudo>
+
+Run all remote commands with sudo, especially the initial find call.
+
+=item C<--no-md5-check>
+
+As an optimization, don't do any MD5 checks, but rely only on file
+size. Obviously this could go wrong.
+
+=back
 
 =head1 REQUIREMENTS
 
