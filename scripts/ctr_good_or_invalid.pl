@@ -776,13 +776,15 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (   # this should come before the generic 'prereq fail' test
-			    m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /etc/perl} # Debian version
-			 || m{^\s*or make that module available in \@INC \(\@INC contains.* /etc/perl} # base class error, Debian version
-			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/lib64/perl5/vendor_perl} # CentOS/RedHat/Fedora version
-			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD version, old
-			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/site_perl/mach/} # FreeBSD version, new
-			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/mach} # FreeBSD version, even newer
-			 || m{Undefined symbol ".*" at /usr/local/lib/perl5/5.\d+/mach/}, # wrong linking, FreeBSD version, new
+			    m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /etc/perl} # Debian variant
+			 || m{^\s*or make that module available in \@INC \(\@INC contains.* /etc/perl} # base class error, Debian variant
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/lib64/perl5/vendor_perl} # CentOS/RedHat/Fedora variant
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/BSDPAN} # FreeBSD variant, old
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/site_perl/mach/} # FreeBSD variant, new
+			 || m{^(?:#\s+Error:\s+)?Can't locate \S+ in \@INC .*\(\@INC contains.* /usr/local/lib/perl5/5.\d+/mach} # FreeBSD variant, even newer
+			 || m{^\S+ version [\d.]+ required--this is only version [\d.]+ at /usr/share/perl/5\.\d+/\S+ line \d+} # too low version of system perl module, Debian variant
+			 || m{^\S+ version [\d.]+ required--this is only version [\d.]+ at /usr/local/lib/perl5/5\.\d+/\S+ line \d+} # too low version of system perl module, FreeBSD variant
+			 || m{Undefined symbol ".*" at /usr/local/lib/perl5/5.\d+/mach/}, # wrong linking, FreeBSD variant, new
 			) {
 		    if (!defined $maybe_system_perl) {
 			$maybe_system_perl = $.; # decide later, remember line number
@@ -807,8 +809,13 @@ sub parse_test_report {
 		} elsif (
 			 /^(?:#\s+Error:\s+)?(\S+) version \d\S* required--this is only version \d\S* $at_source_qr/
 			) {
-		    $prereq_fails{$1} = 1;
-		    $add_analysis_tag->('prereq version fail');
+		    if ($maybe_system_perl) {
+			# At this point we don't know for sure XXX it would be better to remember these alternatives, and "commit" later
+			$add_analysis_tag->('prereq version fail or system perl used');
+		    } else {
+			$prereq_fails{$1} = 1;
+			$add_analysis_tag->('prereq version fail');
+		    }
 		} elsif (
 			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array)|subroutine entry)\)/ ||
 			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/ ||
