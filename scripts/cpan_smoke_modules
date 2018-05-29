@@ -2041,11 +2041,7 @@ EOF
 	}
     }
     if (_can_df()) {
-	# Note: addperday=>1 is necessary only for the build_dir,
-	# because the per-day directory might not exist yet, so we
-	# have to operate on the parent. In the tmpdir case the
-	# per-day directory is already created.
-	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1, addperday => 1, minbuilddircleanup => $min_build_dir_cleanup);
+	check_disk_free_directory($build_dir, $min_build_dir_avail, $min_dir_inodes_percent, autoclean => 1, minbuilddircleanup => $min_build_dir_cleanup);
 	require File::Spec;
 	check_disk_free_directory(File::Spec->tmpdir, $min_tmp_dir_avail, $min_dir_inodes_percent, autoclean => 1);
     } else {
@@ -2111,7 +2107,6 @@ sub _df {
 sub check_disk_free_directory {
     my($dir, $min_space_free_bytes, $min_inode_free_percent, %opts) = @_;
     my $autoclean = delete $opts{autoclean};
-    my $addperday = delete $opts{addperday};
     my $min_build_dir_cleanup_bytes = delete $opts{minbuilddircleanup};
     die 'Unhandled options: ' . join(' ', %opts) if %opts;
 
