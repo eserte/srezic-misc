@@ -2086,7 +2086,6 @@ sub _df {
 	open my $fh, '-|', @cmd
 	    or die "Error while running '@cmd': $!";
 	<$fh>; # header
-	chomp;
 	my($bavail, $blocks, $iavail, $itotal) = split /\s+/, scalar <$fh>;
 	$bavail =~ s{K$}{};
 	$bavail *= 1024;
