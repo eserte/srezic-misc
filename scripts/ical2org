@@ -2,10 +2,9 @@
 # -*- perl -*-
 
 #
-# $Id: ical2org,v 1.21 2012/09/14 11:01:16 eserte Exp $
 # Author: Slaven Rezic
 #
-# Copyright (C) 2009,2010 Slaven Rezic. All rights reserved.
+# Copyright (C) 2009,2010,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -26,11 +25,14 @@ use Time::Local  qw(timelocal timegm);
 my $itemdepth = 2;
 my $do_alarm_handling = 1;
 my $add_to_file;
+my $only_future;
+my $encoding_hack = 1;
 GetOptions("itemdepth=i" => \$itemdepth,
 	   "alarm!"      => \$do_alarm_handling,
 	   "add=s"       => \$add_to_file,
+	   "only-future" => \$only_future,
 	  )
-    or die "usage: $0 [-itemdepth ...] [-noalarm] [-add /path/to/file/orgsection]";
+    or die "usage: $0 [-itemdepth ...] [-noalarm] [-add /path/to/file/orgsection] [-only-future]\n";
 
 my $itemstart = "*" x $itemdepth . " ";
 my $propstart = " " x ($itemdepth+1);
@@ -81,29 +83,40 @@ if (!@ARGV) {
     @ARGV = "-";
 }
 
+my $today_orgdate_prefix = strftime("<%Y-%m-%d", localtime time);
+
 my @result; # { id => ..., orgstring => ... }
 for my $file (@ARGV) {
-    if ($file eq '-') {
-	my($tmpfh, $tmpfile)=tempfile(UNLINK => 1, SUFFIX => ".vcs");
-	binmode STDIN, ':utf8';
-	while(<STDIN>) {
-	    print $tmpfh $_
-		or die $!;
-	}
-	close $tmpfh or die $!;
-	$file = $tmpfile;
-    }
     my $ical;
-    for my $val10_flag (0, 1) {
-	# Data::ICal::parse is too noisy for real-existing ical files
-	# (e.g. from the N95, or from org-mode), and I did not find
-	# another way to quieten the carp() there.
-	open my $OLDERR, ">&", \*STDERR or die $!;
-	open(STDERR, ">", File::Spec->devnull) or die $!;
-	$ical = Data::ICal->new(filename => $file, vcal10 => $val10_flag);
-	close STDERR;
-	open(STDERR, ">&", $OLDERR) or die $!;
-	last if $ical;
+    if ($encoding_hack) {
+	# Data::Ical does not seem to handle encodings in any way. A
+	# possible solution is to read the file and do the encoding
+	# ourselves. Assume utf-8 in all cases
+	my $data;
+	my $fh;
+	if ($file eq '-') {
+	    $fh = \*STDIN;
+	} else {
+	    open $fh, '<', $file
+		or die "Can't open $file: $!";
+	}
+	binmode $fh, ':utf8';
+	local $/ = undef;
+	$data = <$fh>;
+	$ical = _try_parse_ical(data => $data);
+    } else {
+	if ($file eq '-') {
+	    my($tmpfh, $tmpfile)=tempfile(UNLINK => 1, SUFFIX => ".vcs");
+	    binmode STDIN, ':utf8';
+	    binmode $tmpfh, ':utf8';
+	    while(<STDIN>) {
+		print $tmpfh $_
+		    or die $!;
+	    }
+	    close $tmpfh or die $!;
+	    $file = $tmpfile;
+	}
+	$ical = _try_parse_ical(filename => $file);
     }
     if (!$ical) {
 	warn "Cannot recognize file $file as ical file '" . $ical->error_message . "', skipping...\n";
@@ -116,6 +129,9 @@ for my $file (@ARGV) {
 	my $dtstart  = eval { $props->{dtstart}->[0]->value };
 	my $begin    = icaldate_to_orgdate($dtstart);
 	$begin = alarm_handling($begin, $entry) if $begin && $do_alarm_handling;
+	if ($only_future) {
+	    next if !$begin || $begin lt $today_orgdate_prefix;
+	}
 	my $end      = icaldate_to_orgdate(eval { $props->{dtend}->[0]->value });
 	my $id       = icaluid_to_orgid(eval { $props->{uid}->[0]->value });
 	my $location = eval { $props->{location}->[0]->value };
@@ -309,6 +325,23 @@ sub emacs_file_locked {
 	$lock_file = '.#' . $file;
     }
     -l $lock_file;
+}
+
+sub _try_parse_ical {
+    my(%args) = @_;
+    my $ical;
+    for my $val10_flag (0, 1) {
+	# Data::ICal::parse is too noisy for real-existing ical files
+	# (e.g. from the N95, or from org-mode), and I did not find
+	# another way to quieten the carp() there.
+	open my $OLDERR, ">&", \*STDERR or die $!;
+	open(STDERR, ">", File::Spec->devnull) or die $!;
+	$ical = Data::ICal->new(%args, vcal10 => $val10_flag);
+	close STDERR;
+	open(STDERR, ">&", $OLDERR) or die $!;
+	return $ical;
+    }
+    undef;
 }
 
 __END__
