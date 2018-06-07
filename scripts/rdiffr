@@ -432,9 +432,13 @@ it's possible to specifiy only one directory at all:
    rdiffr user@host1.example.org user@host2.example.org /mnt/home --right-dir /export/home
 
 To exclude files or paths from comparisons it's possible to use
-C<--exclude> or C<--exclude-rx-path>. C<--exclude> expects a full file
-basename, while C<--exclude-rx-path> does regexp matches on the whole
-path. Both options may be combined and used multiple times.
+C<--exclude> or C<--exclude-path-rx>. C<--exclude> expects a full file
+basename, while C<--exclude-path-rx> does anchored regexp matches on
+the whole path. "Anchored regexp" means that C<^> and C<$> are
+implicitly added to the regexp to the front resp. the end. Both
+exclude options may be combined and used multiple times.
+
+   rdiffr user@host1.example.org user@host2.example.org /dir --exclude-path-rx '.*/logs/.*'
 
 =head2 OPTIONS
 
