@@ -23,6 +23,8 @@ usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--al
 EOF
 }
 
+our $VERSION = '0.20';
+
 my $debug = 0;
 my @exclude;
 my @exclude_path_rx;
@@ -38,6 +40,11 @@ GetOptions(
 	   'right-dir=s'  => \$right_dir,
 	   'always-sudo'  => \$always_sudo,
 	   'md5-check!'   => \$md5_check,
+	   'v|version'    => sub {
+	       require File::Basename;
+	       print File::Basename::basename($0) . " " . $VERSION . "\n";
+	       clean_finish();
+	   },
 	  ) or usage;
 my $left_host = shift or usage;
 my $right_host = shift or usage;
@@ -104,8 +111,18 @@ find(sub {
     my $user = ($uid2name{$uid} ||= ((getpwuid($uid))[0] || "#$uid"));
     my $group = ($gid2name{$gid} ||= ((getgrgid($gid))[0] || "#$gid"));
     my $symlinkval = -l $_ ? readlink($_) : '-';
-    $size = 0 if !-f $_;
-    print join("\0", $mode, $user, $group, $size, $symlinkval, $File::Find::name), "\0\0";
+    my $type;
+    if (-f $_) {
+        $type = 'f';
+    } else {
+        if (-d $_) {
+            $type = 'd';
+        } else {
+            $type = '?';
+        }
+        $size = 0;
+    }
+    print join("\0", $mode, $user, $group, $size, $symlinkval, $type, $File::Find::name), "\0\0";
 }, @ARGV)
 EOF
 
@@ -116,11 +133,11 @@ sub get_fname2info {
     my %fname2info;
     local $/ = "\0\0";
     while(<$fh>) {
-	my($mode,$user,$group,$size,$symlinkval,$fname) = split /\0/, $_;
+	my($mode,$user,$group,$size,$symlinkval,$type,$fname) = split /\0/, $_;
 	if ($right_dir_mapping) {
 	    substr($fname, 0, length($right_dir_mapping->[1]), $right_dir_mapping->[0]);
 	}
-	$fname2info{$fname} = {mode => $mode, user => $user, group => $group, size => $size, symlinkval => $symlinkval};
+	$fname2info{$fname} = {mode => $mode, type => $type, user => $user, group => $group, size => $size, symlinkval => $symlinkval};
     }
     \%fname2info;
 }
@@ -211,7 +228,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 		if ($has_diffs) {
 		    push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
 		} else {
-		    if ($md5_check) {
+		    if ($md5_check && $left_info->{type} eq 'f' && $right_info->{type} eq 'f') {
 			my($left_md5, $right_md5);
 			for my $def (
 			             [$left_host,  \$left_md5_method,  $left_fname,  \$left_md5],
@@ -364,7 +381,13 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
     }
 }
 print "DEBUG: Finished.\n" if $debug; # not to stderr, so it's printed last
-my $clean_finish = 1;
+clean_finish();
+
+my $clean_finish;
+sub clean_finish {
+    $clean_finish = 1;
+    exit;
+}
 
 END {
     if (!$clean_finish) {
@@ -431,6 +454,10 @@ Run all remote commands with sudo, especially the initial find call.
 
 As an optimization, don't do any MD5 checks, but rely only on file
 size. Obviously this could go wrong.
+
+=item C<--version|-v>
+
+Output version of script.
 
 =back
 
