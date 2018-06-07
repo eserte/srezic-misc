@@ -375,7 +375,7 @@ other encoding is supported.
 
 =head1 PREREQUISITES
 
-Data::ICal
+Data::ICal (debian package: libdata-ical-perl)
 
 =head1 AUTHOR
 
