@@ -40,7 +40,6 @@ use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
 					'5.26.2:5.28.0 RC2',
-					'5.26.2:5.28.0 RC1',
 					'5.27.10:5.27.11',
 					'5.26.1:5.27.11',
 					'5.26.1:5.27.10',
