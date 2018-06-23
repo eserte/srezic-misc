@@ -84,6 +84,8 @@ my $show_only;
 my $fast_forward;
 my @match_pvs;
 my $only_recent;
+my $display_os_analysis = 'os_version'; # or 'os'
+
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
 	   "only-pass-is-good" => \$only_pass_is_good,
@@ -1618,7 +1620,7 @@ sub set_currfile {
 			       $load_current_file->();
 			   },
 			  )->pack(-side => 'left');
-	for my $type (qw(pv os datetime threaded)) {
+	for my $type ('pv', $display_os_analysis, 'datetime', 'threaded') {
 	    if ($pv_os_analysis{$type}->{$recent_state}) {
 		$f->Label(-text => $pv_os_analysis{$type}->{$recent_state},
 			  -bg => $color,
@@ -2041,9 +2043,11 @@ sub rough_pv_os_analysis {
 
     @all_recent_states = sort { $a->{archname} cmp $b->{archname} } @all_recent_states;
     my %state_os_analysis;
+    my %state_os_version_analysis;
     my %state_threaded_analysis;
     {
 	my %os_state_count;
+	my %os_version_state_count; # os versions and os distributions
 	my %threaded_state_count;
 	for my $entry (@all_recent_states) {
 	    my $arch_os;
@@ -2053,6 +2057,32 @@ sub rough_pv_os_analysis {
 		($arch_os) = $entry->{archname} =~ m{^[^- ]+-([^- ]+)};
 	    }
 	    $os_state_count{$arch_os}->{$entry->{state}}++;
+
+	    my $arch_os_version;
+	    if ($arch_os eq 'linux') {
+		if ($entry->{archname} =~ m{ 2\.6\.32-.*\.el6\.}) {
+		    $arch_os_version = 'centos6'; # 'CentOS6';
+		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
+		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
+		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
+		    $arch_os_version = 'jessie'; # 'Debian/jessie?';
+		} elsif ($entry->{archname} =~ m{ 4\.4\.0-}) {
+		    $arch_os_version = 'xenial'; # 'Ubuntu 16.04?';
+		} elsif ($entry->{archname} =~ m{ 4\.9\.0-}) {
+		    $arch_os_version = 'stretch'; # 'Debian/stretch?';
+		} else {
+		    $arch_os_version = 'linux';
+		}
+	    } elsif ($arch_os eq 'freebsd') {
+		if ($entry->{archname} =~ m{ (8|9|10|11|12)\.}) {
+		    $arch_os_version = "fbsd $1";
+		} else {
+		    $arch_os_version = 'freebsd';
+		}
+	    } else {
+		$arch_os_version = $arch_os;
+	    }
+	    $os_version_state_count{$arch_os_version}->{$entry->{state}}++;
 
 	    my $is_threaded = $entry->{archname} =~ m{-thread[- ]} ? 'threaded' : 'unthreaded';
 	    $threaded_state_count{$is_threaded}->{$entry->{state}}++;
@@ -2066,6 +2096,16 @@ sub rough_pv_os_analysis {
 	}
 	for my $state (keys %state_os_analysis) {
 	    $state_os_analysis{$state} = join(',', sort @{ $state_os_analysis{$state} });
+	}
+
+	for my $arch_os_version (keys %os_version_state_count) {
+	    if (keys %{ $os_version_state_count{$arch_os_version} } == 1) {
+		my $state = (keys %{ $os_version_state_count{$arch_os_version} })[0];
+		push @{ $state_os_version_analysis{$state} }, $arch_os_version;
+	    }
+	}
+	for my $state (keys %state_os_version_analysis) {
+	    $state_os_version_analysis{$state} = join(',', sort @{ $state_os_version_analysis{$state} });
 	}
 
 	for my $is_threaded (keys %threaded_state_count) {
@@ -2127,7 +2167,13 @@ sub rough_pv_os_analysis {
 	}
     }
 
-    (pv => \%state_pv_analysis, os => \%state_os_analysis, datetime => \%state_datetime_analysis, threaded => \%state_threaded_analysis);
+    (
+     pv => \%state_pv_analysis,
+     os => \%state_os_analysis,
+     os_version => \%state_os_version_analysis,
+     datetime => \%state_datetime_analysis,
+     threaded => \%state_threaded_analysis,
+    );
 }
 
 sub get_recent_reports_from_cache {
