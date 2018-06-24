@@ -1529,6 +1529,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'defined hash' && $annotation_text_for_analysis =~ m{defined\b.*\bhash})
 		       || ($analysis_tag eq 'ssl certificate problem' && $annotation_text_for_analysis =~ m{certificate\s+not\s+valid}i)
 		       || ($analysis_tag eq 'UNIVERSAL export' && $annotation_text_for_analysis =~ m{UNIVERSAL does not export}i)
+		       || ($analysis_tag eq 'possible file temp locking issue' && $annotation_text_for_analysis =~ m{database is locked}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
