@@ -104,9 +104,9 @@ test-compile:
 		diag("pistachio-perl not found in PATH, fallback to standard perl");
 		$perl = $^X;
 	    }
-	    system('perl', '-e', 'exit($^V ge v5.10.0)'); # must not use the older version variable,
-							  # because slaymake miscalculates matching
-							  # parens then and interprets actions as shell actions
+	    system('perl', '-e', 'use 5.010;'); # cannot use $^V (does not work with 5.8) and the newer version variable,
+						# because slaymake miscalculates matching
+						# parens then and interprets actions as shell actions
 	    my $perl_5010_or_better = $? == 0;
 	    for my $script (<scripts/*>) {
 		next if $script =~ m{/00MIGRATED$};
