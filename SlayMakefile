@@ -58,7 +58,7 @@
 
 {
     use vars '$CPAN_PREREQS';
-    $CPAN_PREREQS = q(VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk Tk::More MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter YAML Date::Parse Config::Perl::V List::MoreUtils LWP::UserAgent);
+    $CPAN_PREREQS = q(VCS Date::ICal Data::ICal Text::vCard PerlIO::gzip Email::MIME Tk Tk::More MLDBM DB_File HTML::TreeBuilder::XPath CPAN::DistnameInfo Archive::Zip Test::Reporter YAML Date::Parse Config::Perl::V List::MoreUtils LWP::UserAgent Net::OpenSSH);
 }
 
 all: permissions
@@ -104,9 +104,9 @@ test-compile:
 		diag("pistachio-perl not found in PATH, fallback to standard perl");
 		$perl = $^X;
 	    }
-	    system('perl', '-e', 'exit($^V ge 5.010)'); # must not use the older version variable,
-							# because slaymake miscalculates matching
-							# parens then and interprets actions as shell actions
+	    system('perl', '-e', 'exit($^V ge v5.10.0)'); # must not use the older version variable,
+							  # because slaymake miscalculates matching
+							  # parens then and interprets actions as shell actions
 	    my $perl_5010_or_better = $? == 0;
 	    for my $script (<scripts/*>) {
 		next if $script =~ m{/00MIGRATED$};
