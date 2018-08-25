@@ -2069,6 +2069,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'xenial'; # 'Ubuntu 16.04?';
 		} elsif ($entry->{archname} =~ m{ 4\.9\.0-}) {
 		    $arch_os_version = 'stretch'; # 'Debian/stretch?';
+		} elsif ($entry->{archname} =~ m{ 4\.15\.0-}) {
+		    $arch_os_version = 'bionic'; # 'Ubuntu 18.04?';
 		} else {
 		    $arch_os_version = 'linux';
 		}
