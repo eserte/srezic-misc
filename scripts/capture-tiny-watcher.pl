@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -119,17 +119,17 @@ while () {
 # REPO NAME y_or_n /home/eserte/src/srezic-repository 
 # REPO MD5 146cfcf8f954555fe0117a55b0ddc9b1
 
-=head2 y_or_n
-
-Accept user input. Return true on 'y', return false on 'n', otherwise
-ask again.
-
-A default may be supplied as an optional argument:
-
-    y_or_n 'y';
-    y_or_n 'n';
-
-=cut
+#=head2 y_or_n
+#
+#Accept user input. Return true on 'y', return false on 'n', otherwise
+#ask again.
+#
+#A default may be supplied as an optional argument:
+#
+#    y_or_n 'y';
+#    y_or_n 'n';
+#
+#=cut
 
 sub y_or_n (;$) {
     my $default = shift;
