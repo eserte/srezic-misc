@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 # -*- perl -*-
 
 #
@@ -102,6 +102,7 @@ Slaven Rezic
 =cut
 
 use strict;
+use warnings;
 use CPAN;
 use Getopt::Long;
 my $LWP_UserAgent;
