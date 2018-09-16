@@ -85,7 +85,7 @@ Or for another perl:
 
 Or systematically for all perls:
 
-    for i in /usr/perl5.*/bin/perl;  do echo $i; $i ~eserte/devel/modrm Perl::Critic::Policy::ProhibitSmartmatch | tee /dev/tty | sh -; done
-    for i in /opt/perl-5.*/bin/perl; do echo $i; $i ~eserte/devel/modrm Perl::Critic::Policy::ProhibitSmartmatch | tee /dev/tty | sh -; done
+    for i in /usr/perl5.*/bin/perl;  do echo $i; $i ~eserte/src/srezic-misc/scripts/modrm Perl::Critic::Policy::ProhibitSmartmatch | tee /dev/tty | sh -; done
+    for i in /opt/perl-5.*/bin/perl; do echo $i; $i ~eserte/src/srezic-misc/scripts/modrm Perl::Critic::Policy::ProhibitSmartmatch | tee /dev/tty | sh -; done
 
 =cut
