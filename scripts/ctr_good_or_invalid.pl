@@ -717,6 +717,10 @@ sub parse_test_report {
 			 /(Cannot open .* as a dirhandle: it is already open as a filehandle|Cannot open .* as a filehandle: it is already open as a dirhandle) $at_source_qr$/
 			) {
 		    $add_analysis_tag->('same symbol for dirfh and filefh'); # https://perl5.git.perl.org/perl.git/blob/HEAD:/pod/perl5271delta.pod#l71
+		} elsif (
+			 /sys(read|write)\(\) isn't allowed on :utf8 handles/
+			) {
+		    $add_analysis_tag->('sysread+syswrite on utf8');
 		} elsif ( # should be before pod coverage and maybe pod tests
 			 /Unrecognized character .* at \._\S+ line \d+\./ ||
 			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
@@ -1103,6 +1107,10 @@ sub parse_test_report {
 			 m{needs to be recompiled against the newly installed PDL at}
 			) {
 		    $add_analysis_tag->('!!!recompile PDL module!!!');
+		} elsif (
+			 m{\QProtocol scheme 'https' is not supported (LWP::Protocol::https not installed)}
+			) {
+		    $add_analysis_tag->('LWP::Protocol::https missing');
 		} elsif (
 			 m{Error processing template: .*, message: file error - INCLUDE_PATH exceeds \d+ directories}
 			) {
@@ -1531,6 +1539,8 @@ sub set_currfile {
 		       || ($analysis_tag eq 'ssl certificate problem' && $annotation_text_for_analysis =~ m{certificate\s+not\s+valid}i)
 		       || ($analysis_tag eq 'UNIVERSAL export' && $annotation_text_for_analysis =~ m{UNIVERSAL does not export}i)
 		       || ($analysis_tag eq 'possible file temp locking issue' && $annotation_text_for_analysis =~ m{database is locked}i)
+		       || ($analysis_tag eq 'sysread+syswrite on utf8' && $annotation_text_for_analysis =~ m{sys(read|write).*utf8}i)
+		       || ($analysis_tag eq 'LWP::Protocol::https missing' && $annotation_text_for_analysis =~ m{LWP::Protocol::https}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
 		      );
