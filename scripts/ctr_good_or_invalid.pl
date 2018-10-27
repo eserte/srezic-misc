@@ -1404,7 +1404,7 @@ sub set_currfile {
 	    my $file = shift;
 	    (my $dist_os = $file) =~ s{.*/}{};
 	    $dist_os =~ s{-thread-multi}{}; # normalize threaded vs. non-threaded
-	    $dist_os =~ s{(-freebsd\.[\d\.]+)-release(-p\d+)?}{$1}; # normalize freebsd patch levels
+	    $dist_os =~ s{(-freebsd\.[\d\.]+)-(?:alpha\d+|beta\d+|current|release(?:-p\d+)?)}{$1}; # normalize freebsd patch levels
 	    $dist_os =~ s{\.\d+\.\d+\.rpt$}{};
 	    $dist_os;
 	};
@@ -2085,7 +2085,7 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'linux';
 		}
 	    } elsif ($arch_os eq 'freebsd') {
-		if ($entry->{archname} =~ m{ (8|9|10|11|12)\.}) {
+		if ($entry->{archname} =~ m{ (8|9|1\d)\.}) {
 		    $arch_os_version = "fbsd $1";
 		} else {
 		    $arch_os_version = 'freebsd';
