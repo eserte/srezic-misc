@@ -1148,6 +1148,7 @@ sub parse_test_report {
 			 || /ERROR: .*: No space left on device/ # from EUMM
 			 || /mkdir .*: No space left on device $at_source_qr/ # from EU::Command
 			 || m{/usr/bin/ld:.*: No space left on device} # seen in Alien::MuPDF
+			 || /\Qout of disk space?/ # seen in Gtk2 test suite
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
@@ -2069,8 +2070,10 @@ sub rough_pv_os_analysis {
 
 	    my $arch_os_version;
 	    if ($arch_os eq 'linux') {
-		if ($entry->{archname} =~ m{ 2\.6\.32-.*\.el6\.}) {
+		if      ($entry->{archname} =~ m{ 2\.6\.32-.*\.el6\.}) {
 		    $arch_os_version = 'centos6'; # 'CentOS6';
+		} elsif ($entry->{archname} =~ m{ 3\.10\.0-.*\.el7\.}) {
+		    $arch_os_version = 'centos7'; # 'CentOS7';
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
 		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
 		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
@@ -2079,15 +2082,19 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'xenial'; # 'Ubuntu 16.04?';
 		} elsif ($entry->{archname} =~ m{ 4\.9\.0-}) {
 		    $arch_os_version = 'stretch'; # 'Debian/stretch?';
+		} elsif ($entry->{archname} =~ m{ 4\.9\.0$}) {
+		    $arch_os_version = 'buster'; # 'Debian/buster? (system perl)';
 		} elsif ($entry->{archname} =~ m{ 4\.15\.0-}) {
 		    $arch_os_version = 'bionic'; # 'Ubuntu 18.04?';
 		} else {
+		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
 		}
 	    } elsif ($arch_os eq 'freebsd') {
 		if ($entry->{archname} =~ m{ (8|9|1\d)\.}) {
 		    $arch_os_version = "fbsd $1";
 		} else {
+		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'freebsd'\n";
 		    $arch_os_version = 'freebsd';
 		}
 	    } else {
