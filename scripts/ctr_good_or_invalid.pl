@@ -2074,6 +2074,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'centos6'; # 'CentOS6';
 		} elsif ($entry->{archname} =~ m{ 3\.10\.0-.*\.el7\.}) {
 		    $arch_os_version = 'centos7'; # 'CentOS7';
+		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
+		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
 		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
 		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
