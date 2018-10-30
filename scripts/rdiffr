@@ -23,7 +23,7 @@ usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--al
 EOF
 }
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 my $debug = 0;
 my @exclude;
@@ -192,20 +192,20 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	warn "DEBUG: $left_fnames[$left_fnames_i] <=> $right_fnames[$right_fnames_i]\n";
     }
     if      ($left_fnames_i > $#left_fnames) {
-	print "Only on $right_host: $right_fnames[$right_fnames_i]\n";
+	print "$right_fnames[$right_fnames_i]: only on $right_host\n";
 	$right_fnames_i++;
     } elsif ($right_fnames_i > $#right_fnames) {
-	print "Only on $left_host: $left_fnames[$left_fnames_i]\n";
+	print "$left_fnames[$left_fnames_i]: only on $left_host\n";
 	$left_fnames_i++;
     } else {
 	my $left_fname = $left_fnames[$left_fnames_i];
 	my $right_fname = $right_fnames[$right_fnames_i];
 	my $cmp = $left_fname cmp $right_fname;
 	if ($cmp < 0) {
-	    print "Only on $left_host: $left_fname\n";
+	    print "$left_fname: only on $left_host\n";
 	    $left_fnames_i++;
 	} elsif ($cmp > 0) {
-	    print "Only on $right_host: $right_fname\n";
+	    print "$right_fname: only on $right_host\n";
 	    $right_fnames_i++;
 	} else {
 	    my @diffs;
