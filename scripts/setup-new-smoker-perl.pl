@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017,2018 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -1011,9 +1011,9 @@ Problem seen with perl-5.16.3 and perl-5.8.8.
 
 =item sudo unexpectedly asks for a password
 
-This was observed on CentOS 7 systems with sudo 1.8.6p7: the C<sudo
--v> command asks for a password, even if the user is setup to do
-passwordless sudo. Workaround: start this command with the
+This was observed on CentOS 7 systems with sudo 1.8.6p7 or 1.8.19p2:
+the C<sudo -v> command asks for a password, even if the user is setup
+to do passwordless sudo. Workaround: start this command with the
 C<--no-sudo-v> option.
 
 =back
