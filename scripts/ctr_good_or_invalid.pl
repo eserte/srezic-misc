@@ -831,6 +831,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('unthreaded perl');
 		} elsif (
+			 /^configure: error:/
+			) {
+		    $add_analysis_tag->('configure error');
+		} elsif (
 			 /error: .*?\.h: No such file or directory/ ||
 			 /error: .*?\.h: Datei oder Verzeichnis nicht gefunden/ ||
 			 /^.*?$c_ext_qr:\d+:\d+:\s+fatal error:\s+'.*?\.h' file not found/ ||
