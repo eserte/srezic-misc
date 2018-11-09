@@ -1204,6 +1204,8 @@ sub parse_test_report {
 		    if (   m{config_args=.*/BSDPAN}   # FreeBSD version, old, with BSDPAN
 			|| m{config_args=.*-Dsitearch=/usr/local/lib/perl5/site_perl/mach} # FreeBSD version, new, "mach"
 			|| m{DEBPKG:debian/mod_paths} # Debian version
+			|| m{uname=.*\.centos\.org} # CentOS7 version
+			|| m{(Fedora|RHEL) Patch\d+:} # RH/Fedora/CentOS version
 		       ) {
 			$maybe_system_perl = 0;
 			# XXX In this case it's a normal prereq fail --- but the information is not available at this point --- would need to remember before...
