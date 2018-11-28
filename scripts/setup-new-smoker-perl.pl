@@ -76,6 +76,7 @@ my $use_pthread;
 my $use_shared;
 my $extra_config_opts;
 my $cf_email;
+my $use_sudo = 1;
 my $use_sudo_v = 1;
 my $use_cpm;
 if ($ENV{USER} =~ m{eserte|slaven}) {
@@ -101,6 +102,7 @@ GetOptions(
 	   'shared!'   => \$use_shared,
 	   'extraconfigopts=s' => \$extra_config_opts,
 	   'cc=s' => \$cc,
+	   'sudo!' => \$use_sudo,
 	   'sudo-v!' => \$use_sudo_v,
 	  )
     or die "usage: $0 [-debug] [-threads] [-pthread] [-shared] [-morebits] [-longdouble] [-cpansand] [-jobs ...] [-cpm] [-patchperl | -patchperlpath /path/to/patchperl] [-extraconfigopts ...] -downloadurl ... | -perlver 5.X.Y\n";
@@ -783,6 +785,10 @@ sub step ($%) {
 
 sub sudo (@) {
     my(@cmd) = @_;
+    if (!$use_sudo) {
+	my_system @cmd;
+	return;
+    }
     if ($use_sudo_v) {
 	my_system 'sudo', '-v';
     }
