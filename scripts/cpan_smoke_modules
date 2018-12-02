@@ -1688,6 +1688,8 @@ EOF
 		$ENV{PERL_PERTURB_KEYS} = $perl_perturb_keys;
 	    }
 	}
+	$ENV{CPAN_SMOKE_MODULES_ACTION} = $do_action;
+
 	local $SIG{WINCH} = sub { warn "IGNORE SIGWINCH" };
 
 	local $ENV{PATH} = $ENV{PATH};
@@ -2703,6 +2705,21 @@ terminal title. With this option these two things are omitted.
 =back
 
 =back
+
+=head2 ENVIRONMENT
+
+While running the build and test, some environment variables are set:
+
+=over
+
+=item C<CPAN_SMOKE_MODULES_ACTION>
+
+Set to the current "action" (e.g. C<test>, C<install> ...). Typically
+used in distroprefs files.
+
+=back
+
+(More environment variables need to be documented)
 
 =head1 DEFAULT CONFIGURATION
 
