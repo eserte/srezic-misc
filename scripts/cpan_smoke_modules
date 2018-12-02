@@ -1418,7 +1418,7 @@ EOF
 	}
 	$cpan_shell_init .= q{eval { require Expect; 1 } or $ENV{PERL_EXTUTILS_AUTOINSTALL}=q{--defaultdeps}; };
 	if ($use_sqlite) {
-	    $cpan_shell_init .= q#if (eval { require CPAN::SQLite; 1; }) { $CPAN::Config->{use_sqlite}=1; } else { $CPAN::Config->{cache_metadata}=1; } #;
+	    $cpan_shell_init .= q#if (eval { require CPAN::SQLite; 1; }) { $CPAN::Config->{use_sqlite}=1; } else { warn qq{WARN: -sqlite specified, but CPAN::SQLite is not available --- continue without CPAN::SQLite.\n}; $CPAN::Config->{cache_metadata}=1; } #;
 	} else {
 	    $cpan_shell_init .= q#$CPAN::Config->{use_sqlite}=0; $CPAN::Config->{cache_metadata}=1; #;
 	}
