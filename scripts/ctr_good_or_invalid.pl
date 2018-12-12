@@ -53,7 +53,9 @@ my $at_source_qr = qr{$at_source_without_dot_qr\.};
 
 my $the_ct_states_rx = qr{(?:pass|unknown|na|fail)};
 
-my $c_ext_qr = qr{\.(?:h|c|hh|cc|xs|cpp|hpp|cxx)};
+my $c_ext_qr = qr{(?:\.(?:h|c|hh|cc|xs|cpp|hpp|cxx)
+		  |  const-c\.inc
+		  )}x;
 
 my @common_analysis_button_config =
     (
@@ -1525,7 +1527,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail)}i)
 		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
-		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependenc(y|ies) .*not declared|can't locate |not specified in configure_requires)}i)
+		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependenc(y|ies) .*not declared|can't locate |not specified (in|as) configure_requires)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
 		       || ($analysis_tag eq 'mojolicious regression' && $annotation_text_for_analysis =~ m{(removal.*Mojolicious|Mojo::(Util|Home))})
