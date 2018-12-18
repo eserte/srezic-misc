@@ -62,6 +62,7 @@ my $skip_system_perl;
 my @skip_perls;
 my @regular_perls;
 my $use_regular_perls;
+my $include_old_bleads = 0;
 my $do_this_perl;
 my $build_dir_reuse = 0; # not default - startup is tooo slow
 my($lock_build_dir, $lock_tmp_dir);
@@ -161,6 +162,7 @@ GetOptions("n" => \$n,
 	   "a|allperls!" => \$all_perls,
 	   "skipsystemperl|skip-system-perl" => \$skip_system_perl,
 	   'skipperl|skip-perl=s@' => \@skip_perls,
+	   'includeoldbleads|include-old-bleads!' => \$include_old_bleads,
 	   "i|install" => sub { $do_action = "install" },
 	   'reinstall' => sub { $do_action = 'reinstall' },
 	   "shell" => sub {
@@ -603,9 +605,9 @@ if (!@perls) {
 	    }
 	}
 
-	# Test blead only if it's newer than the newest stable perl
+	# Test blead only if it's newer than the newest stable perl, or if --include-old-bleads is specified
 	for my $latest_blead_type (sort keys %latest_blead) {
-	    if ($max_stable_perl_ver && $max_stable_perl_ver > $latest_blead{$latest_blead_type}->[1]) {
+	    if (!$include_old_bleads && ($max_stable_perl_ver && $max_stable_perl_ver > $latest_blead{$latest_blead_type}->[1])) {
 		warn "Don't test $latest_blead{$latest_blead_type}->[0] --- $latest_blead{$latest_blead_type}->[1] < $max_stable_perl_ver...";
 	    } else {
 		push @all_perl_defs, $latest_blead{$latest_blead_type};
