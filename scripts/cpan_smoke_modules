@@ -2508,7 +2508,7 @@ Reverse the list of modules/distributions to test.
 
 =item -[no]sqlite
 
-Use/do not use L<C<CPAN::SQLite>>. On by default. If C<CPAN::SQLite> is
+Use/do not use L<C<CPAN::SQLite>>. Off by default. If C<CPAN::SQLite> is
 not available, then the normal non-sqlite internal storage will be
 used.
 
