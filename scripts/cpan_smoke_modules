@@ -662,7 +662,12 @@ if ($prefs_dir) {
 }
 
 if ($reload_index) {
-    system($perls[0], '-MCPAN', '-e', 'CPAN::HandleConfig->load; $CPAN::Config->{urllist}=[qw(' . $mirror_url . ')]; CPAN::Index->force_reload');
+    # note: when using -sqlite together with -reloadindex, then existence of
+    # CPAN::SQLite is not checked here (below it is checked)
+    system($perls[0], '-MCPAN', '-e',
+	   'CPAN::HandleConfig->load; $CPAN::Config->{urllist}=[qw(' . $mirror_url . ')]; ' .
+	   ($use_sqlite ? '$CPAN::Config->{use_sqlite}=1; ' : '') .
+	   'CPAN::Index->force_reload');
 }
 
 for (@dist_or_mods, @pre_dist_or_mods) {
