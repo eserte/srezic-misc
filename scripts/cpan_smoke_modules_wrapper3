@@ -8,6 +8,7 @@ use Getopt::Long;
 sub run_smoker ($$$);
 sub spec_usage (;$);
 sub maybe_xterm_conf ($);
+sub _get_system_perl ();
 
 my @specs;
 my $mirror_url = "http://cpan.cpantesters.org/";
@@ -108,7 +109,7 @@ sub run_smoker ($$$) {
 		$perl_exe = 'perl';
 		last FIND_PERL;
 	    } else {
-		my $try_perl_exe = '/usr/bin/perl';
+		my $try_perl_exe = _get_system_perl;
 		if (-x $try_perl_exe) {
 		    $perl_exe = $try_perl_exe;
 		    last FIND_PERL;
@@ -185,6 +186,14 @@ sub run_smoker ($$$) {
     if ($? == 2) {
 	die "SIGINT";
     }
+}
+
+sub _get_system_perl () {
+    if ($^O eq 'freebsd') { # XXX maybe also other BSDs?
+	'/usr/local/bin/perl';
+    } else {
+	'/usr/bin/perl';
+    } # XXX missing handling for Windows
 }
 
 ######################################################################
@@ -272,7 +281,7 @@ sub scenario_systemperl {
 	die "SIGINT" if ($? == 2);
     }
     {
-	my $cmd = $basecmd . ' -perl /usr/bin/perl';
+	my $cmd = $basecmd . ' -perl ' . _get_system_perl;
 	warn "(run with system perl) $basecmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
@@ -519,7 +528,7 @@ C<-spec> options. A spec is a string with a comma-separated triple:
 =over
 
 =item * a perl version specified as I<5.X.Y> (for example C<5.19.11>),
-or the special token C<system> for the "system" perl (usually C</usr/bin/perl>),
+or the special token C<system> for the "system" perl (usually C</usr/bin/perl> or C</usr/local/bin/perl>),
 or a list of perl versions specified like this: C<{5.X.Y,5.A.B,5.C.D}>,
 or the special token C<regular> for a list of regularly smoked perls (see L<cpan_smoke_modules/-set-regular>).
 
@@ -574,7 +583,7 @@ C<hashrandomization,good,I<goodseed>,bad,I<badseed>>
 
 =item * C<systemperl>
 
-Run tests with the system perl (C</usr/bin/perl>) for the good case
+Run tests with the system perl (C</usr/bin/perl> or C</usr/local/bin/perl>) for the good case
 and try to make the system perl completely unusable (see
 C<-destroyperl> option of L<cpan_smoker_modules>) for the bad case.
 
