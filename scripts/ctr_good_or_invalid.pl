@@ -1159,7 +1159,8 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
-			 m{Could not execute .* open3: exec of .* failed: Argument list too long at .*TAP/Parser/Iterator/Process.pm}
+			 m{Could not execute .* open3: exec of .* failed: Argument list too long at .*TAP/Parser/Iterator/Process.pm} ||
+			 m{Can't exec ".*": Argument list too long at }
 			) {
 		    $add_analysis_tag->('!!!cmdline limits exceeded!!!');
 		} elsif (
