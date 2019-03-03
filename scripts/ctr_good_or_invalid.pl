@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -2215,7 +2215,7 @@ sub get_recent_reports_from_cache {
     no warnings 'once';
     local $MLDBM::UseDB = 'DB_File';
     local $MLDBM::Serializer = 'Storable';
-    my $cache_file = "$directory/.reports_cache";
+    my $cache_file = _db_file_filename("$directory/.reports_cache");
     if (!-s $cache_file) {
 	warn "INFO: build cache file $cache_file...\n";
 	my %local_db;
@@ -2507,7 +2507,7 @@ sub get_cached_rt_subject {
     eval {
 	require DB_File;
 	require Fcntl;
-	my $cache_file = "$ENV{HOME}/.cache/ctr_good_or_invalid/rt_subjects.db";
+	my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/rt_subjects.db");
 	if (!-d dirname($cache_file)) {
 	    require File::Path;
 	    File::Path::mkpath(dirname($cache_file));
@@ -2593,7 +2593,7 @@ sub get_cached_github_issue_title {
 	eval {
 	    require DB_File;
 	    require Fcntl;
-	    my $cache_file = "$ENV{HOME}/.cache/ctr_good_or_invalid/github_issue_titles.db";
+	    my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/github_issue_titles.db");
 	    if (!-d dirname($cache_file)) {
 		require File::Path;
 		File::Path::mkpath(dirname($cache_file));
@@ -2731,6 +2731,14 @@ MjA6MjM6MTYrMDI6MDBJV8hkAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDEyLTA3LTEyVDIwOjIzOjE2
 KzAyOjAwOApw2AAAAABJRU5ErkJggg==
 EOF
     }
+}
+
+sub _db_file_filename {
+    my $filename = shift;
+    if (!defined $DB_File::db_version) {
+	require DB_File;
+    }
+    $filename . ($DB_File::db_version eq '' || $DB_File::db_version <= 1 ? '' : int($DB_File::db_version));
 }
 
 # REPO BEGIN
