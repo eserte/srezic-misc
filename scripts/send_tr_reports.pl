@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014,2015,2017,2018 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015,2017,2018,2019 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -16,6 +16,7 @@ use strict;
 use Getopt::Long;
 use Test::Reporter;
 use File::Basename;
+use File::Copy qw(move);
 use POSIX qw(strftime);
 
 sub check_term_title ();
@@ -217,7 +218,7 @@ REPORTS_LOOP: for my $file (@reports) {
     }
     if (!$beta_test) {
 	my $done_file = $done_dir . "/" . basename($file);
-	rename $process_file, $done_file
+	move $process_file, $done_file
 	    or die "Cannot move $process_file to $done_file: $!";
     }
 }
