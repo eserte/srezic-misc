@@ -39,6 +39,7 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
+					'5.28.1:5.28.2 RC1',
 					'5.28.1:5.29.9',
 					'5.29.8:5.29.9',
 					'5.28.0:5.28.1',
