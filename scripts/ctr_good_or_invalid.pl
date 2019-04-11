@@ -836,6 +836,10 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('unthreaded perl');
 		} elsif (
+			 /Package .* was not found in the pkg-config search path/
+			) {
+		    $add_analysis_tag->('unsatisfied pkg-config dependency');
+		} elsif (
 			 /^configure: error:/
 			) {
 		    $add_analysis_tag->('configure error');
@@ -856,10 +860,11 @@ sub parse_test_report {
 		} elsif ($currarchname =~ m{freebsd} && /g\+\+: not found/) { # XXX actually should also check for osvers>=10
 		    $add_analysis_tag->('clang++ vs. g++');
 		} elsif (
-			 /^.*?$c_ext_qr:\d+:\s+error:\s+/     || # gcc
-			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/ || # gcc or clang
+			 /^.*?$c_ext_qr:\d+:\s+error:\s+/      || # gcc
+			 /^.*?$c_ext_qr:\d+:\d+:\s+error:\s+/  || # gcc or clang
+			 /^.*?$c_ext_qr:\d+:\s+Fehler:\s+/     || # gcc, localized (seen on CentOS7)
 			 /^.*?$c_ext_qr:\d+:\d+:\s+Fehler:\s+/ || # localized (seen on CentOS7)
-			 /^cc: acomp failed for .*\.c/           # solaris cc, unspecific
+			 /^cc: acomp failed for .*\.c/            # solaris cc, unspecific
 			) {
 		    $add_analysis_tag->('c compile error');
 		} elsif (
@@ -877,9 +882,17 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('other c compiler error');
 		} elsif (
+			 /cc: error: no such file or directory:/
+			) {
+		    $add_analysis_tag->('missing c file (make dependency problem?)');
+		} elsif (
 			 m{^/usr/include/c\+\+/[^:]+:\d+:\d+: fatal error: } # g++
 			) {
 		    $add_analysis_tag->('c++ compile error');
+		} elsif (
+			 m{\Qcc1plus: error: unrecognized command line option "-std=c++0x"}
+			) {
+		    $add_analysis_tag->('old c++ compiler');
 		} elsif (
 			 /^\s*(#\s+Error:\s+)?Can't load '.*?\.so' for module .*: Undefined symbol ".*?" $at_source_qr/ || # freebsd variant
 			 /^\s*(#\s+Error:\s+)?Can't load '.*?\.so' for module .*: .*?\.so: undefined symbol: \S+ $at_source_qr/ || # linux variant
