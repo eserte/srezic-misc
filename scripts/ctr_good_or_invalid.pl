@@ -39,13 +39,13 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					'5.28.1:5.28.2 RC1',
-					'5.28.1:5.29.9',
-					'5.29.8:5.29.9',
-					'5.28.0:5.28.1',
-					'5.26.3:5.28.1',
-					'5.26.2:5.26.3',
-					'5.24.3:5.24.4',
+					{ pair => '5.28.1:5.28.2 RC1', important => 1 },
+					{ pair => '5.28.1:5.29.9',     important => 1 },
+					{ pair => '5.29.8:5.29.9',     important => 0 },
+					{ pair => '5.28.0:5.28.1',     important => 0 },
+					{ pair => '5.26.3:5.28.1',     important => 0 },
+					{ pair => '5.26.2:5.26.3',     important => 0 },
+					{ pair => '5.24.3:5.24.4',     important => 0 },
 				       );
 
 # Patterns for report analysis
@@ -1674,7 +1674,8 @@ sub set_currfile {
     # Possible regression on the beforemaintrelease page?
     my %beforemaintrelease_pair_rechecks;
     for my $beforemaintrelease_pair (@current_beforemaintrelease_pairs) {
-	my %check_v; @check_v{qw(old new)} = split /:/, $beforemaintrelease_pair;
+	my($pair, $important) = @{$beforemaintrelease_pair}{qw(pair important)};
+	my %check_v; @check_v{qw(old new)} = split /:/, $pair;
 	my %count;
 	for my $age (qw(old new)) {
 	    for my $state (qw(fail pass)) {
@@ -1695,9 +1696,9 @@ sub set_currfile {
 		(!$count{pass}->{new} && $count{pass}->{old})    # 1 1 0 1
 	       ) {
 		$analysis_frame->Label(
-				       -text => "$beforemaintrelease_pair: $count{pass}{old}/$count{fail}{old} $count{pass}{new}/$count{fail}{new}",
+				       -text => "$pair: $count{pass}{old}/$count{fail}{old} $count{pass}{new}/$count{fail}{new}".($important?' !':''),
 				       @common_analysis_button_config,
-				       -bg => 'lightblue',
+				       -bg => ($important ? '#add8ff' : 'lightblue'),
 				      )->pack;
 		for my $age (qw(old new)) {
 		    for my $state (qw(fail pass)) {
