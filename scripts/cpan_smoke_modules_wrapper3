@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use FindBin;
 use Getopt::Long;
+use POSIX qw(sysconf _SC_ARG_MAX strftime);
 
 sub run_smoker ($$$);
 sub spec_usage (;$);
@@ -155,11 +156,12 @@ sub run_smoker ($$$) {
 	$get_dist_cmd = "perl $get_dist_cmd";
     }
 
-    my $cmd = '';
     my @list_of_dists;
+    chomp(@list_of_dists = `$get_dist_cmd`);
+
+    my $cmd = '';
     if ($^O eq 'MSWin32') {
 	$cmd .= q{perl };
-	chomp(@list_of_dists = `$get_dist_cmd`);
     } else {
 	$cmd .= q{env PERL_BATCH=yes };
     }
@@ -175,11 +177,31 @@ sub run_smoker ($$$) {
     $cmd .= q{ -mirrorurl } . $mirror_url;
     $cmd .= _args_minbuilddiravail();
     $cmd .= _args_pv();
-    $cmd .= q{ -- };
-    if ($^O eq 'MSWin32') {
+    if ($^O eq 'MSWin32' || do {
+	my $argmax = eval { POSIX::sysconf(_SC_ARG_MAX) };
+	if ($@ || !$argmax) {
+	    $argmax = 4096;
+	    warn "Cannot get _SC_ARG_MAX ($@), assume a low default ($argmax)...\n";
+	}
+	# cmdline length: arguments + space for separators + assumed length of rest of cmdline
+	my $assumed_cmdline_length = length("@list_of_dists") + @list_of_dists + 200;
+	my $fits = $assumed_cmdline_length < $argmax;
+	if (!$fits) {
+	    warn "cmdline probably too long: assumed length=$assumed_cmdline_length, _SC_ARG_MAX=$argmax\n";
+	}
+	$fits;
+    }) {
+	$cmd .= q{ -- };
 	$cmd .= "@list_of_dists";
     } else {
-	$cmd .= q{`} . $get_dist_cmd . q{`};
+	warn "Need to use a temporary file...\n";
+	require File::Temp;
+	my($tmpfh,$tmpfile) = File::Temp::tempfile("csmw3_" . strftime("%Y%m%d_%H%M%S", localtime) . '_XXXXXXXX', UNLINK => 1);
+	print $tmpfh join("\n", @list_of_dists), "\n";
+	close $tmpfh
+	    or die "Can't write temporary file: $!";
+	$cmd .= qq{ -fl $tmpfile };
+	$cmd .= q{ -- };
     }
     warn "$cmd ...\n";
     system $cmd;
