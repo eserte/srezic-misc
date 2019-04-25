@@ -405,7 +405,10 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
     $f->Label(-textvariable => \$currfile_st)->pack(-side => "right");
     $distribution_age_l = $f->Label(-padx => 1, -pady => 0)->pack(-side => "right");
 }
-my $analysis_frame = $mw->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
+{
+    my $analysis_frame = $more->Frame->place(-relx => 1, -rely => 0, -x => -2, -y => 2, -anchor => 'ne');
+    $more->Advertise(AnalysisFrame => $analysis_frame);
+}
 {
     _create_images();
 
@@ -1385,6 +1388,7 @@ sub set_currfile {
     $currfile = $files[$currfile_i];
     $mw->title("Loading " . basename($currfile) . "...");
     $currfile_st = $currfile_i + 1;
+    my $analysis_frame = $more->Subwidget('AnalysisFrame');
     $_->destroy for $analysis_frame->children; # remove as early as possible
     $more->Load($currfile);
     my $textw = $more->Subwidget("scrolled");
