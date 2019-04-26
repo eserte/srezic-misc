@@ -565,8 +565,12 @@ $mw->bind("<Print>" => sub {
     require Tk::WidgetDump;
     $mw->WidgetDump;
 });
-$mw->bind("<F4>" => sub { $prev_b->invoke });
-$mw->bind("<F5>" => sub { $next_b->invoke });
+for my $key ('F4', 'M-Left') {
+    $mw->bind("<$key>" => sub { $prev_b->invoke });
+}
+for my $key ('F5', 'M-Right') {
+    $mw->bind("<$key>" => sub { $next_b->invoke });
+}
 
 if ($auto_good) {
     $mw->repeat(2*1000, sub {
