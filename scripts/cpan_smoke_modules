@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -196,7 +196,7 @@ GetOptions("n" => \$n,
 	   'skiptestedunknown' => sub {
 	       $skip_tested_unknown = $skip_tested = 1;
 	   },
-	   'usereportssentcache' => \$use_reports_sent_cache_file,
+	   'usereportssentcache!' => \$use_reports_sent_cache_file,
 	   'testunpatched' => \$test_unpatched,
 	   'report!' => \$do_report,
 	   'savereports!' => \$save_reports,
@@ -1204,7 +1204,9 @@ EOF
 	}
 
 	my @new_dist_or_mods;
-	if ($use_reports_sent_cache_file) {
+	if ($use_reports_sent_cache_file &&
+	    !$ignore_history # in this mode there's no reports-sent.db file at all, so no need to work with caches, and reports-sent-cache.pl may even fail in this situation
+	   ) {
 	    if (!$reports_sent_cache_pl_called++) {
 		# Calling this once per cpan_smoke_modules run should be sufficient
 		# --- theoretically other cpan_smoke_modules may cause changes here
