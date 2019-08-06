@@ -18,7 +18,7 @@ in_directory {
 	exit;
     }
 
-    my %files_in_last_commit = map { ($_,1) } split /\n/, $doit->info_qx({quiet=>1}, qw(git diff-tree --no-commit-id --name-only -r HEAD));
+    my %files_in_last_commit = map { ($_,1) } split /\n/, $doit->info_qx({quiet=>1}, qw(git diff-tree --no-commit-id --name-only -r HEAD --root));
 
     my @changed_files_not_in_last_commit;
     my @changed_files_in_last_commit = grep {
