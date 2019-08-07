@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016,2017,2018 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017,2018,2019 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -593,6 +593,17 @@ step "Install CPAN.pm plugins",
 	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
     };
 
+step "Maybe upgrade CPAN.pm",
+    ensure => sub {
+	-f "$state_dir/.cpan_pm_upgrade_done"
+    },
+    using => sub {
+	if (!eval { my_system "$perldir/bin/perl", "-MCPAN $min_CPAN_version", '-e1'; 1 }) {
+	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
+	}
+	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
+    };
+
 step "Install modules needed for CPAN::Reporter",
     ensure => sub {
 	my @missing_modules = modules_installed_check(\@toolchain_modules);
@@ -624,17 +635,6 @@ step "Install and report Kwalify",
 	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_install_opts, "-nosignalend", qw(Kwalify), "-perl", "$perldir/bin/perl";
 	# XXX unfortunately, won't fail if reporting did not work for some reason
 	my_system "touch", "$state_dir/.reported_kwalify";
-    };
-
-step "Maybe upgrade CPAN.pm",
-    ensure => sub {
-	-f "$state_dir/.cpan_pm_upgrade_done"
-    },
-    using => sub {
-	if (!eval { my_system "$perldir/bin/perl", "-MCPAN $min_CPAN_version", '-e1'; 1 }) {
-	    my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", @cpan_smoke_modules_common_opts, '-signalend', 'CPAN', '-perl', "$perldir/bin/perl";
-	}
-	my_system "touch", "$state_dir/.cpan_pm_upgrade_done";
     };
 
 my @maybe_sudo; # after this step, some commands have to be run as sudo
