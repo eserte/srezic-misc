@@ -1022,6 +1022,12 @@ the C<sudo -v> command asks for a password, even if the user is setup
 to do passwordless sudo. Workaround: start this command with the
 C<--no-sudo-v> option.
 
+=item File::Copy::Recursive cannot be installed on older perls (5.16.3 and older)
+
+Problem exists with version 0.45, see
+L<https://github.com/drmuey/p5-File-Copy-Recursive/issues/27>. Current
+workaround is to upgrade C<ExtUtils::MakeMaer> manually.
+
 =back
 
 =head1 DURATIONS
