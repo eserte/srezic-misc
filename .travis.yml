@@ -52,7 +52,8 @@ install:
   - slaymake install-prereqs-with-cpan
 
 before_script:
-  - if [ "$WITH_APT_FILE" = "1" ]; then apt-file update; fi
+  # remove possibly broken travis apt proxy, and try to refresh apt-file lists
+  - if [ "$WITH_APT_FILE" = "1" ]; then sudo rm -f /etc/apt/apt.conf.d/99-travis-apt-proxy; apt-file update; fi
 
 script:
   - slaymake test-t
