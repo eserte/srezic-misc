@@ -39,7 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.30.0:5.31.1',     important => 0 },
+					{ pair => '5.30.0:5.31.3',     important => 0 },
+					{ pair => '5.31.2:5.31.3',     important => 0 },
 					{ pair => '5.28.2:5.30.0',     important => 0 },
 					{ pair => '5.28.1:5.28.2',     important => 0 },
 					{ pair => '5.26.3:5.28.2',     important => 0 },
@@ -2123,6 +2124,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'buster'; # 'Debian/buster? (system perl)';
 		} elsif ($entry->{archname} =~ m{ 4\.15\.0-}) {
 		    $arch_os_version = 'bionic'; # 'Ubuntu 18.04?';
+		} elsif ($entry->{archname} =~ m{ 4\.19\.0-}) {
+		    $arch_os_version = 'buster'; # 'Debian/buster?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
