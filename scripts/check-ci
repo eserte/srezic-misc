@@ -296,6 +296,8 @@ exit($success ? 0 : 1);
 	if ($check_appveyor && !$is_failed{appveyor}) {
 	    print STDERR "appveyor build was " . colored("successful", "green") . "\n";
 	}
+
+	return !$is_failed{travis} && !$is_failed{appveyor};
     }
 
     sub debug ($) {
