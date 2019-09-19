@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2017,2018 Slaven Rezic. All rights reserved.
+# Copyright (C) 2017,2018,2019 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -17,10 +17,13 @@ use warnings;
 use Getopt::Long;
 use Net::OpenSSH;
 
+sub clean_finish (;$);
+
 sub usage () {
-    die <<EOF;
+    warn <<EOF;
 usage: $0 [--debug|-d ...] [-x|--exclude=file] [--exclude-path-rx=path-rx] [--always-sudo] [--no-md5-check] host1 host2 dir ...
 EOF
+    clean_finish(1);
 }
 
 our $VERSION = '0.21';
@@ -384,9 +387,10 @@ print "DEBUG: Finished.\n" if $debug; # not to stderr, so it's printed last
 clean_finish();
 
 my $clean_finish;
-sub clean_finish {
+sub clean_finish (;$) {
+    my $exit_code = $_[0]; $exit_code = 0 if !defined $exit_code;
     $clean_finish = 1;
-    exit;
+    exit $exit_code;
 }
 
 END {
