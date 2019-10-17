@@ -88,6 +88,7 @@ my $fast_forward;
 my @match_pvs;
 my $only_recent;
 my $display_os_analysis = 'os_version'; # or 'os'
+my $report_encoding = 'utf8'; # 'Guess'; use Encode::Guess qw/iso-8859-1 utf8 ascii/;
 
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
@@ -1393,7 +1394,7 @@ sub set_currfile {
     $currfile_st = $currfile_i + 1;
     my $analysis_frame = $more->Subwidget('AnalysisFrame');
     $_->destroy for $analysis_frame->children; # remove as early as possible
-    $more->Load($currfile);
+    $more->Load($currfile, -encoding => $report_encoding);
     my $textw = $more->Subwidget("scrolled");
     $textw->SearchText(-searchterm => qr{PROGRAM OUTPUT});
     $textw->yviewScroll(30, 'units'); # actually a hack, I would like to have PROGRAM OUTPUT at top
@@ -1627,7 +1628,7 @@ sub set_currfile {
 			       my $rcl = $t->Label(-anchor => 'w')->pack(qw(-fill x));
 			       my $load_current_file = sub {
 				   my $sample_recent_file = $sample_recent_files[$sample_recent_file_counter];
-				   $more->Load($sample_recent_file);
+				   $more->Load($sample_recent_file, -encoding => $report_encoding);
 				   $t->title($sample_recent_file);
 				   my $modtime_epoch = (stat($sample_recent_file))[9];
 				   my $modtime = scalar localtime $modtime_epoch;
