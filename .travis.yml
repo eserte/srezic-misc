@@ -30,9 +30,6 @@ matrix:
       dist: trusty
     - perl: "5.10"
       dist: trusty
-  allow_failures:
-    # Archive::Zip currently broken with 5.8: rt.cpan.org/Public/Bug/Display.html?id=130523
-    - perl: "5.8"
 
 addons:
   apt:
