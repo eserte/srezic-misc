@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ sub debug ($);
 sub guess_project_from_git ();
 
 sub usage () {
-    die "usage: $0 [--debug] [--travis] [--appveyor] [--commit SHA1] [--wait seconds] user/repo\n";
+    die "usage: $0 [--debug] [--travis] [--appveyor] [--commit SHA1] [--wait seconds] [--timeout seconds] user/repo\n";
 }
 
 my $debug;
@@ -19,6 +19,7 @@ my $check_travis;
 my $check_appveyor;
 my $commit;
 my $wait_seconds = 15;
+my $timeout = 10;
 my $use_travis_v3 = 1;
 GetOptions(
 	   "d|debug" => \$debug,
@@ -26,6 +27,7 @@ GetOptions(
 	   "appveyor!" => \$check_appveyor,
 	   "commit=s" => \$commit,
 	   "wait=i" => \$wait_seconds,
+	   "t|timeout=i" => \$timeout,
 	  )
     or usage;
 my $repo = shift || guess_project_from_git
@@ -66,7 +68,7 @@ exit($success ? 0 : 1);
 	require LWP::UserAgent;
 	require JSON::XS;
 	require URI::Escape;
-	my $ua = LWP::UserAgent->new(timeout => 10, keep_alive => 1);
+	my $ua = LWP::UserAgent->new(timeout => $timeout, keep_alive => 1);
 	my $wait = sub {
 	    for (reverse(0..$wait_seconds-1)) {
 		print STDERR "\rwait $_ second" . ($_ != 1 ? "s " : "  ");
