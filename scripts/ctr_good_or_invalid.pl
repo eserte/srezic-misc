@@ -2563,7 +2563,7 @@ sub get_subject_from_rt {
 
     require LWP::UserAgent;
     require HTML::Entities;
-    my $resp = LWP::UserAgent->new->get($url);
+    my $resp = LWP::UserAgent->new(timeout => 20)->get($url);
     if ($resp->is_success) {
 	# Quick'n'dirty parsing
     DO_PARSE: {
@@ -2634,10 +2634,12 @@ sub get_cached_github_issue_title {
 		warn "INFO: Not found in cache, try to fetch from $url...\n";
 		require LWP::UserAgent;
 		require JSON::XS;
-		my $resp = LWP::UserAgent->new->get($url);
+		my $resp = LWP::UserAgent->new(timeout => 20)->get($url);
 		if ($resp->is_success) {
 		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
 		    $db{$url} = $title;
+		} else {
+		    die "Cannot get URL $url: " . $resp->status_message . "\n";
 		}
 	    }
 	};
