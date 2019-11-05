@@ -330,3 +330,17 @@ sub guess_project_from_git () {
     warn "Cannot guess project from current directory...\n";
     undef;
 }
+
+=head1 BUGS
+
+=over
+
+=item Does not handle travis-ci's allow_failures section
+
+Entries in the optional C<allow_failures> are not handled. If a
+matching test case fails, then C<check-ci> (or C<check-travis>) marks
+the whole build as a failure.
+
+=back
+
+=cut
