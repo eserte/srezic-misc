@@ -41,6 +41,8 @@ my $argv_fingerprint;
 	    } else {
 		$i++;
 	    }
+	} elsif ($arg =~ m{^--?cpansand$}) {
+	    # ignore for fingerprint
 	} else {
 	    push @argv_fingerprint, $arg;
 	}
