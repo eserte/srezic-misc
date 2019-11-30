@@ -121,9 +121,11 @@ BEGIN {
     }
 }
 BEGIN {
-    if (!eval q{ use YAML::Syck qw(Load); 1 }) {
-	if (!eval q{ use YAML::XS qw(Load); 1 }) {
-	    die "Cannot load YAML::Syck or YAML:XS: $@";
+    if (!eval q{ use YAML::XS qw(Load); 1 }) {
+	if (!eval q{ use YAML::Syck qw(Load); 1 }) {
+	    if (!eval q{ use YAML qw(Load); 1 }) {
+		die "Cannot load YAML::XS or YAML:Syck or YAML: $@";
+	    }
 	}
     }
 }
