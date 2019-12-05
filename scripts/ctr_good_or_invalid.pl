@@ -2112,6 +2112,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'centos6'; # 'CentOS6';
 		} elsif ($entry->{archname} =~ m{ 3\.10\.0-.*\.el7\.}) {
 		    $arch_os_version = 'centos7'; # 'CentOS7';
+		} elsif ($entry->{archname} =~ m{ 4\.18\.0-.*\.el8[._]}) {
+		    $arch_os_version = 'centos8'; # 'CentOS8';
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
@@ -2128,6 +2130,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'bionic'; # 'Ubuntu 18.04?';
 		} elsif ($entry->{archname} =~ m{ 4\.19\.0-}) {
 		    $arch_os_version = 'buster'; # 'Debian/buster?';
+		} elsif ($entry->{archname} =~ m{ 5\.3\.0-}) {
+		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
