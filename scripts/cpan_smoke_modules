@@ -74,6 +74,7 @@ my $skip_tested;
 my $skip_tested_fail;
 my $skip_tested_pass;
 my $skip_tested_unknown;
+my $skip_tested_nondiscard;
 my $use_reports_sent_cache_file;
 my $reports_sent_cache_pl_called;
 my $test_unpatched;
@@ -195,6 +196,9 @@ GetOptions("n" => \$n,
 	   },
 	   'skiptestedunknown' => sub {
 	       $skip_tested_unknown = $skip_tested = 1;
+	   },
+	   'skiptestednondiscard' => sub {
+	       $skip_tested_nondiscard = $skip_tested = 1;
 	   },
 	   'usereportssentcache!' => \$use_reports_sent_cache_file,
 	   'testunpatched' => \$test_unpatched,
@@ -1245,7 +1249,7 @@ EOF
 		my $d = CPAN::DistnameInfo->new($dist);
 		my $has_entries = eval { $cache{$d->distvname}->{$thisperlver}->{$thisarchname} };
 		if ($has_entries) {
-		    if (!$skip_tested_fail && !$skip_tested_pass && !$skip_tested_unknown) {
+		    if (!$skip_tested_fail && !$skip_tested_pass && !$skip_tested_unknown && !$skip_tested_nondiscard) {
 			warn "Skipping already tested $dist\n" if $debug;
 			next;
 		    } elsif ($skip_tested_fail && $skip_tested_pass) {
@@ -1264,13 +1268,25 @@ EOF
 		    } elsif ($skip_tested_unknown && $has_entries->{UNKNOWN}) {
 			warn "Skipping already tested $dist (UNKNOWN seen)\n" if $debug;
 			next;
+		    } elsif ($skip_tested_nondiscard && do {
+			my $has_nondiscard;
+			for my $type (keys %$has_entries) {
+			    if ($type ne 'DISCARD') {
+				$has_nondiscard = 1;
+				last;
+			    }
+			}
+			$has_nondiscard;
+		    }) {
+			warn "Skipping already tested $dist (non-DISCARD seen)\n" if $debug;
+			next;
 		    }
 		}
 		push @new_dist_or_mods, $dist;
 	    }
 	} else {
 	    warn "About to parse sent reports...\n";
-	    my %stdopts = (skiptestedfail => $skip_tested_fail, skiptestedpass => $skip_tested_pass, skiptestedunknown => $skip_tested_unknown);
+	    my %stdopts = (skiptestedfail => $skip_tested_fail, skiptestedpass => $skip_tested_pass, skiptestedunknown => $skip_tested_unknown, skiptestednondiscard => $skip_tested_nondiscard);
 	    if (@perls == 1) {
 		# optimization: just parse results for this perl only
 		parse_reports_sent(onlyperl => $thisperl, onlyarch => $thisarch, %stdopts);
@@ -1919,6 +1935,7 @@ sub parse_reports_sent { # takes ~3 seconds
     my $skip_tested_fail = delete $args{skiptestedfail};
     my $skip_tested_pass = delete $args{skiptestedpass};
     my $skip_tested_unknown = delete $args{skiptestedunknown};
+    my $skip_tested_nondiscard = delete $args{skiptestednondiscard};
     die "Unhandled arguments: " . join(' ', %args) if %args;
 
     my $cpan_reporter_dir = $ENV{PERL_CPAN_REPORTER_DIR} || "$ENV{HOME}/.cpanreporter";
@@ -1950,6 +1967,7 @@ sub parse_reports_sent { # takes ~3 seconds
 	    next if $skip_tested_fail && $action ne 'FAIL';
 	    next if $skip_tested_pass && $action ne 'PASS';
 	    next if $skip_tested_unknown && $action ne 'UNKNOWN';
+	    next if $skip_tested_nondiscard && $action eq 'DISCARD';
 	    my $d = CPAN::DistnameInfo->new($dist.".tar.gz");
 	    if (my $old_d = $dists->{$d->dist}->{$perl}->{$arch}) {
 		if (safe_version($d->version) <= safe_version($old_d->{dist}->version)) {
