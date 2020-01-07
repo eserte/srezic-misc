@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -1746,6 +1746,19 @@ sub set_currfile {
 			   $mw->SelectionHandle; # do we have a closure problem here, too?
 			   $mw->SelectionHandle(sub { return $cmd });
 		       })->pack(-side => 'left');
+	    {
+		# XXX Maybe make this button into an own frame with a proper non-Sel button along?
+		my %combined = map { ($_=>1) } keys(%{ $beforemaintrelease_pair_rechecks{fail} }), keys(%{ $beforemaintrelease_pair_rechecks{pass} });
+		my $combined_cmd = "cpan_smoke_modules $x_test_reporter_distfile -skiptested " . join(" ", map { "-pv $_" } sort keys %combined);
+		$f->Button(-text => 'Sel comb.',
+			   @common_analysis_button_config,
+			   -command => sub {
+			       $mw->SelectionOwn;
+			       $mw->SelectionHandle; # do we have a closure problem here, too?
+			       $mw->SelectionHandle(sub { return $combined_cmd });
+			   })->pack(-side => 'left');
+	    }
+	    
 	}
 
 	my %map_to_scenario = (
