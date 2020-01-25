@@ -1160,6 +1160,10 @@ sub parse_test_report {
 			 m{^Makefile:\d+: recipe for target '(.*?)' failed$} && $1 !~ m{^(?:test|test_dynamic|all)$}
 			) {
 		    $add_analysis_tag->('make problem (failed target)');
+		} elsif(
+			m{^CMake Error}
+		       ) {
+		    $add_analysis_tag->('cmake problem');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
