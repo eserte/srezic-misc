@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use FindBin;
+use File::Glob qw(bsd_glob);
 use Getopt::Long;
 use POSIX qw(sysconf _SC_ARG_MAX strftime);
 
@@ -369,6 +370,22 @@ sub scenario_nolimits {
     }
 }
 
+sub scenario_blead {
+    my $basecmd = _scenario_basecmd();
+    my $blead_ver = "5.31"; # XXX do not hardcode!
+    my @extra_args;
+    for my $perl_exe (
+		      bsd_glob("/opt/perl-$blead_ver*/bin/perl"),
+		      bsd_glob("/usr/perl$blead_ver*/bin/perl"),
+		     ) {
+	push @extra_args, "-perl", $perl_exe;
+    }
+    my $cmd = $basecmd . q{ -skiptested } . join(' ', @extra_args);
+    warn "$cmd ...\n";
+    system $cmd;
+    die "SIGINT" if ($? == 2);
+}
+
 sub _scenario_hidemod {
     my $hidemod = shift;
     my $basecmd = _scenario_basecmd();
@@ -661,6 +678,10 @@ L<cpan_smoke_modules> call, so no resource limits like maximum CPU
 time, maximum memory usage etc. is set. For the bad case, run the
 tests unaltered, with L<cpan_smoke_modules>' default set of resource
 limits.
+
+=item * C<blead>
+
+Run tests with all versions of the current bleadperl series.
 
 =back
 
