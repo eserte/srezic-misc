@@ -987,7 +987,8 @@ sub parse_test_report {
 			 /^\s*#\s+Failed test \d+ in .* at line \d+$/ ||
 			 m{^Failed\s+\d+/\d+\s+subtests\s*$} ||
 			 /^# Looks like your test exited with \d+ just after / ||
-			 /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/
+			 /^Dubious, test returned \d+ \(wstat \d+, 0x[0-9a-f]+\)/ ||
+			 /^\[\s*FAIL\s*\]/ # Test2::Harness
 			) {
 		    $add_analysis_tag->('__GENERIC_TEST_FAILURE__'); # lower prio than other failures, special handling needed
 		} elsif (
