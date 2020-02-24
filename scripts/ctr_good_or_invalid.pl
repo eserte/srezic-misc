@@ -2482,6 +2482,7 @@ sub read_annotate_txt {
 	    next if /^#/;
 	    my($distvname, $annotation) = split /\s+/, $_, 2;
 	    my($distname, $distversion) = parse_distvname($distvname);
+	    next if !defined $distname; # may happen for invalid distnames like "font_ft2_0.1.0"
 
 	    $add_annotation->(\$distvname2annotation{$distvname}, $annotation);
 	    if (exists $distname2annotation{$distname}) {
