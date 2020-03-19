@@ -232,3 +232,60 @@ for (@do_unmemoize) {
 }
 
 __END__
+
+=head1 NAME
+
+sysdeps-of-perl-installation.pl - list system packages needed for a perl installation
+
+=head1 SYNOPSIS
+
+    sysdeps-of-perl-installation.pl [--debug] [--with-cache] [--libdir libdir] [--debian-method apt_file_find|dpkg_query] [perldir]
+
+=head1 DESCRIPTION
+
+Scan C<@INC> of the given perl directory or libdir, try to find all
+system dependencies and print the associated package names.
+
+Currently, system dependencies are only determined by scanning shared
+object files. Other runtime dependencies, especially required external
+programs or scripts, are not detected.
+
+Supported OSs are Debian and Mac OS X.
+
+=head2 OPTIONS
+
+=over
+
+=item C<--debug>
+
+Print some debugging to STDERR.
+
+=item C<--with-cache>
+
+Use a persistent cache for found module -> package mappings. This is
+currently used only if C<apt_file_find> is used on Debian systems. The
+cache file is stored below F<~/.cache>.
+
+=item C<< --libdir I<path> >>
+
+Use an alternative library path than a given perl directory.
+
+=item C<--debian-method apt_file_find|dpkg_query>
+
+Define the method for finding suitable packages for shared objects:
+either C<dpkg_query> for using L<dpkg-query(1)> (default), or
+C<apt_file_find> for using L<apt-file(1)>.
+
+=back
+
+=head1 TODO
+
+Some perl modules have also non-shared objects, which are not
+supported. One possibility would be to maintain a static mapping
+(module -> package).
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=cut
