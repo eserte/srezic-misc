@@ -2150,9 +2150,9 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye? (system perl)';
 		} elsif ($entry->{archname} =~ m{ 4\.19\.0-}) {
 		    $arch_os_version = 'buster'; # 'Debian/buster?';
-		} elsif ($entry->{archname} =~ m{ 5\.3\.0-24-}) {
+		} elsif ($entry->{archname} =~ m{ 5\.3\.0-(24|40)-}) {
 		    $arch_os_version = 'eoan'; # 'Ubuntu 19.10?';
-		} elsif ($entry->{archname} =~ m{ 5\.3\.0-}) {
+		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0)-}) {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
