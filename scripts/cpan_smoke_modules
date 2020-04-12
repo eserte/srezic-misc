@@ -1620,6 +1620,7 @@ EOF
 		    }
 		};
 		# linux does not honor RLIMIT_DATA, but RLIMIT_AS
+		# See also https://lwn.net/Articles/428100/ for further discussion on limits.
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_AS(), $data_limit);
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
 		$set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
