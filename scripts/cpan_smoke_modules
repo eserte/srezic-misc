@@ -105,6 +105,7 @@ my $do_filemon;
 my $typescript_file;
 my $use_distroprefs = 1;
 my $use_limits = 1;
+my $memlimit;
 my $prefs_dir;
 my $signal_end = 1;
 my $module_printused;
@@ -232,6 +233,7 @@ GetOptions("n" => \$n,
 	   'distroprefs!' => \$use_distroprefs,
 	   'prefsdir=s' => \$prefs_dir,
 	   'limits!' => \$use_limits,
+	   'memlimit=s' => \$memlimit,
 	   'signalend!' => \$signal_end,
 	   'moduleprintused|module-printused!' => \$module_printused,
 	   'minbuilddiravail=s' => \$min_build_dir_avail,
@@ -379,6 +381,10 @@ if ($deterministic_hashes && defined $perl_hash_seed) {
 }
 if ($deterministic_hashes) {
     $perl_hash_seed = 0;
+}
+
+if ($memlimit) {
+    normalize_bytes(\$memlimit, '-memlimit');
 }
 
 if ($sysdeps ne '') {
@@ -1590,20 +1596,19 @@ EOF
 	    unshift @cmd, 'ionice', '-c2', '-n6';
 	}
 
-	if ($use_limits) {
-	    my $data_limit = 1024*1024*1024;
-	    # Out of memory problems seen on various debian (>=jessie)
-	    # systems and CentOS7, so use a higher limit here
-	    if ($^O eq 'linux') {
-		warn "INFO: higher memory limit on linux hosts...\n";
-		$data_limit = 3*1024*1024*1024;
+	if ($use_limits || $memlimit) {
+	    my($cputime_limit, $openfiles_limit);
+	    if ($use_limits) {
+		$cputime_limit = 3600*1;
+		$openfiles_limit = 2048; # the freebsd default differs, probably depending on kern.maxfiles; seen values between 11095 (freebsd 9) and 114111 (freebsd 13)
 	    }
-	    my $cputime_limit = 3600*1;
-	    my $openfiles_limit = 2048; # the freebsd default is at 22500
 	    if (is_in_path("limits") && $^O ne 'MSWin32') {
-		# on my FreeBSD system, kern.maxfiles is ~ 12000
-		# -v is needed for FreeBSD 7.x
-		unshift @cmd, "limits", "-t", $cputime_limit, "-d", $data_limit, "-v", $data_limit, "-n", $openfiles_limit;
+		unshift @cmd, "limits", "-S",
+		    ($cputime_limit   ? ("-t", $cputime_limit) : ()),
+		    ($openfiles_limit ? ("-n", $openfiles_limit) : ()),
+		    # -v is needed for FreeBSD 7.x (and later?)
+		    ($memlimit        ? ("-d", $memlimit, "-v", $memlimit) : ()),
+		    ;
 	    } elsif (eval { require BSD::Resource; 1 }) {
 		# Note that limiting in THIS process is not what is
 		# "correct", but resource limits are inherited by the
@@ -1612,18 +1617,24 @@ EOF
 		#
 		my $set_limit_if_higher = sub {
 		    my($limit, $value, $label) = @_;
-		    my $old_limit = BSD::Resource::getrlimit($limit);
-		    if (!defined $old_limit || $old_limit == -1) {
-			if (!BSD::Resource::setrlimit($limit, $value, $value)) {
+		    my($old_softlimit, $old_hardlimit) = BSD::Resource::getrlimit($limit);
+		    if (!defined $old_softlimit || $old_softlimit == -1) {
+			if (!BSD::Resource::setrlimit($limit, $value, BSD::Resource::RLIM_INFINITY())) {
 			    warn "*** WARNING: Could not set resource limit of $label to $value.\n";
 			}
 		    }
 		};
 		# linux does not honor RLIMIT_DATA, but RLIMIT_AS
 		# See also https://lwn.net/Articles/428100/ for further discussion on limits.
-		$set_limit_if_higher->(BSD::Resource::RLIMIT_AS(), $data_limit);
-		$set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
-		$set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
+		if ($memlimit) {
+		    $set_limit_if_higher->(BSD::Resource::RLIMIT_AS(), $memlimit);
+		}
+		if ($cputime_limit) {
+		    $set_limit_if_higher->(BSD::Resource::RLIMIT_CPU(), $cputime_limit);
+		}
+		if ($openfiles_limit) {
+		    $set_limit_if_higher->(BSD::Resource::RLIMIT_NOFILE(), $openfiles_limit);
+		}
 	    } else {
 		warn <<EOF;
 *** WARNING: Neither limits(1) nor BSD::Resource available, resource limits
@@ -2576,11 +2587,22 @@ called first time.
 
 =item -[no]limits
 
-Run the smoker with resource limits. Limits are currently set to 1GB
-data size, 1h CPU runtime, and 2048 open file descriptors.
+Run the smoker with resource soft limits for max. CPU runtime (1h) and
+max. open file descriptors (2048). See L</-memlimit> for memory
+limits.
 
 Requires that either L<limits(1)> (BSD systems) or L<BSD::Resource> is
 installed. This option is on by default.
+
+=item -memlimit I<sizespec>
+
+Specify a soft memory limit, e.g. C<-memlimit 4G>. Limiting memory is
+implemented using RLIMIT_AS (virtual address space) on most systems.
+
+I<sizespec> is either bytes, maybe suffixed with a unit (k, M, G).
+
+Requires that either L<limits(1)> (BSD systems) or L<BSD::Resource> is
+installed.
 
 =item -[no]typescript
 
