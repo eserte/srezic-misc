@@ -642,6 +642,7 @@ sub parse_test_report {
 	my $maybe_harness_killed;
 	my %signalled; # test script -> signal
 	my %testfile_to_linenumber;
+	my $last_line_in_program_output;
 
 	while(<$fh>) {
 	    s{\r$}{}; # for Windows reports
@@ -1222,6 +1223,9 @@ sub parse_test_report {
 			$testfile_to_linenumber{$testfile} = $.;
 		    }
 		}
+		if (m{\S}) { # a non-empty line
+		    $last_line_in_program_output = $.;
+		}
 	    } elsif ($section eq 'PREREQUISITES') {
 		if (my($perl_need, $perl_have) = $_ =~ /^\s*!\s*perl\s*(v?[\d\.]+)\s+(v?[\d\.]+)\s*$/) {
 		    require version;
@@ -1284,6 +1288,9 @@ sub parse_test_report {
 		    $add_analysis_tag->("signal $signal", $line_number);
 		}
 	    }
+	}
+	if (!%analysis_tags && defined $last_line_in_program_output) {
+	    $add_analysis_tag->('end of program output', $last_line_in_program_output);
 	}
     }
 
