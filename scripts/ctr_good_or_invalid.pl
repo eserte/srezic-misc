@@ -1223,7 +1223,7 @@ sub parse_test_report {
 			$testfile_to_linenumber{$testfile} = $.;
 		    }
 		}
-		if (m{\S}) { # a non-empty line
+		if (m{\S} && !m{^-+$}) { # a non-empty line, and not a section decorator
 		    $last_line_in_program_output = $.;
 		}
 	    } elsif ($section eq 'PREREQUISITES') {
