@@ -1129,6 +1129,11 @@ sub parse_test_report {
 			) {
 		    $add_analysis_tag->('GNU make required');
 		} elsif (
+			 m{^"Makefile", line \d+: Inconsistent operator for fulltest$} || # FreeBSD 9
+			 m{^make(\[\d+\])?: ".*Makefile" line \d+: Inconsistent operator for fulltest$} # FreeBSD 10
+			) {
+		    $add_analysis_tag->('BSD make incompatibility'); # mixing ":" and "::" in rules is not allowed
+		} elsif (
 			 m{\QCan't use global \E\$_\Q in "my" }
 			) {
 		    $add_analysis_tag->('lexical $_');
