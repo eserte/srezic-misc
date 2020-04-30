@@ -44,11 +44,6 @@ my %so_not_found;
 
 my $ext = $^O eq 'darwin' ? 'bundle' : 'so';
 
-if ($^O eq 'darwin') {
-    print STDERR "Completely untested for MacOSX. Press RETURN to continue. ";
-    <STDIN>;    
-}
-
 for my $search_lib (@search_libs) {
     if (!-d $search_lib) {
 	print STDERR "INFO: skipping non-existent search lib path '$search_lib'\n" if $v >= 0;
@@ -139,21 +134,28 @@ sub wanted {
     }
 }
 
-# XXX completely untested, probably does not work!
 sub wanted_darwin {
     if (-f $_ && m{\.bundle\z} && !$seen{$File::Find::name}) {
-	my $res = `otool -L $File::Find::name 2>&1`;
-	if ($res =~ m{not found}) {
+	open my $fh, qq{otool -L "$File::Find::name" |} or die $!;
+	<$fh>; # header
+	my @dylib_not_found;
+	while(<$fh>) {
+	    chomp;
+	    my($file) = $_ =~ /^\s+(\S+)/;
+	    if (defined $file && !-e $file) {
+		push @dylib_not_found, $file;
+	    }
+	}
+	if (@dylib_not_found) {
 	    (my $module = $File::Find::name) =~ s{/[^/]+$}{};
 	    $module =~ s{.*/auto/}{};
 	    $module =~ s{/}{::}g;
 	    $broken_module{$module} = 1;
 	    if ($v >= 1) {
-		while ($res =~ m{^\s+(.*?)\s+=>.*not found}gm) {
-		    $so_not_found{$1}->{$File::Find::name} = 1;
+		for my $dylib_not_found (@dylib_not_found) {
+		    $so_not_found{$dylib_not_found}->{$File::Find::name} = 1;
 		}
 	    }
-	    warn "$module -> $res"; # XXX
 	}
 	$seen{$File::Find::name} = 1;
     }
