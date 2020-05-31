@@ -1160,6 +1160,24 @@ necessary:
     Symlink perl for devel perls:   0.01s
     Enable pthread: 0.47s
 
+=item * Ubuntu 20.04 on a VM with 2 CPUs (AMD EPYC 2.5GHz), for perl 5.20.3 with -j4
+
+    DURATIONS
+    ---------
+    Total:  720.98s
+    Download perl 5.30.2:   0.33s
+    Extract in /tmp:        0.49s
+    Valid source directory: 0.00s
+    Build perl:     362.69s
+    Install perl:   20.75s
+    Install CPAN.pm plugins:        13.85s
+    Maybe upgrade CPAN.pm:  0.11s
+    Install modules needed for CPAN::Reporter:      183.04s
+    Install and report Kwalify:     4.19s
+    chown for cpansand:     0.02s
+    Report toolchain modules:       131.84s
+    Force a fail report:    3.66s
+
 =back
 
 =cut
