@@ -69,7 +69,7 @@ for my $mod (
 	     'Judy', # libJudy is in .../Alien/Judy/libJudy.so.1, LD_LIBRARY_PATH tricks?
 	     'Vmprobe::Cache', 'Vmprobe::Cache::Snapshot', # deleted from CPAN, only at BackPAN: https://metacpan.org/release/FRACTAL/Vmprobe-v0.1.5
 	     # XXX scheinen doch "echte" Fehler zu sein --- qw(SVN::_Client SVN::_Core SVN::_Delta SVN::_Fs SVN::_Ra SVN::_Repos SVN::_Wc), # also LD_LIBRARY_PATH tricks?
-	     'CSS::Sass::plugins::glob', 'CSS::Sass::plugins::math', # belong to CSS::Sass
+	     'CSS::Sass::plugins::glob', 'CSS::Sass::plugins::math', 'CSS::Sass::plugins::img-size', # belong to CSS::Sass
 	    ) {
     if (exists $broken_module{$mod}) {
 	print STDERR "INFO: removing false positive $mod from list\n" if $v >= 0;
