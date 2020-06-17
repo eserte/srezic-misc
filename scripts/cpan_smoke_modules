@@ -528,11 +528,16 @@ if (!@perls) {
 	my $system_perl; # if symlinked
 	my $system_perl_id; # if hardlinked, then use dev+ino for stat()
 	if ($^O eq 'freebsd') {
-	    if (-l "/usr/local/bin/perl5") {
-		$system_perl = readlink "/usr/local/bin/perl5";
-	    } else {
-		if (my(@stat) = stat "/usr/local/bin/perl5") {
-		    $system_perl_id = join(",", @stat[0,1]);
+	    my @candidates = ("/usr/local/bin/perl5", "/usr/local/bin/perl");
+	    for my $candidate (@candidates) {
+		if (-l $candidate) {
+		    $system_perl = readlink $candidate;
+		    last;
+		} else {
+		    if (my(@stat) = stat $candidate) {
+			$system_perl_id = join(",", @stat[0,1]);
+			last;
+		    }
 		}
 	    }
 	}
