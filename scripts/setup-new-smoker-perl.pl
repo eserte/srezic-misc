@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016,2017,2018,2019 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017,2018,2019,2020 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -592,7 +592,8 @@ step "Install CPAN.pm plugins",
     using => sub {
 	my @missing_modules = modules_installed_check(\@cpan_pm_plugins);
 	# Start CPAN.pm with plugin_list set to empty list
-	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
+	# use -nosysdeps to override possible existing contrary setting in .cpansmokemodulesrc
+	my_system $^X, "$srezic_misc/scripts/cpan_smoke_modules", '-cpanconf-unchecked', 'plugin_list=', @cpan_smoke_modules_common_install_opts, "-nosysdeps", "-nosignalend", @missing_modules, "-perl", "$perldir/bin/perl";
     };
 
 step "Maybe upgrade CPAN.pm",
