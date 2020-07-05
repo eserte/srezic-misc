@@ -13,34 +13,36 @@
 #
 
 use strict;
-use File::Temp ();
+use File::Temp qw(tempdir);
 
 my $url = shift
     or die "Please specify URL or something else\n";
 
-my $temp = File::Temp->new(SUFFIX => '.png');
+my $tempdir = tempdir("qrcode_XXXXXXXX", TMPDIR =>1, CLEANUP => 1);
+my $tempfile = "$tempdir/qrcode.png";
+open my $tempfh, ">", $tempfile or die $!;
 
 if (eval { require Imager::QRCode; 1 }) {
     my $qrcode = Imager::QRCode->new(
 				     casesensitive => 1,
 				    );
     my $img = $qrcode->plot($url);
-    $img->write(file => "$temp")
+    $img->write(file => $tempfile)
 	or die $img->errstr;
 } else {
     require GD::Barcode::QRCode;
 
-    print $temp GD::Barcode::QRcode->new($url,
-					 { Ecc => 'L', Version=>12, ModuleSize => 4},
-					)->plot->png;
-    close $temp
+    print $tempfh GD::Barcode::QRcode->new($url,
+					   { Ecc => 'L', Version=>12, ModuleSize => 4},
+					  )->plot->png;
+    close $tempfh
 	or die $!;
 }
 
 if ($^O eq 'darwin') {
-    system 'open', '-W', $temp;
+    system 'open', '-W', $tempfile;
 } else {
-    system 'eog', '--new-instance', $temp;
+    system 'eog', '--new-instance', $tempfile;
 }
 
 __END__
