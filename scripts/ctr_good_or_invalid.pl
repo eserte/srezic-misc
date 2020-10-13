@@ -1281,6 +1281,7 @@ sub parse_test_report {
 		    elsif ($signal == 9)  { $signal = 'KILL' }
 		    elsif ($signal == 14) { $signal = 'ALRM' }
 		    elsif ($signal == 13) { $signal = 'PIPE' }
+		    elsif ($signal == 24) { $signal = 'XCPU' }
 		    elsif (($signal == 30 && $currarchname =~ m{freebsd|darwin}) ||
 			   ($signal == 10 && $currarchname =~ m{linux})) { $signal = 'USR1' }
 		    elsif (($signal == 10 && $currarchname =~ m{freebsd|darwin}) ||
