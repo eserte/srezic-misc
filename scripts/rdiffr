@@ -218,15 +218,19 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 	    if ($debug >= 2) {
 		print STDERR "DEBUG: " . Data::Dumper->new([$left_info, $right_info],[qw(left_info right_info)])->Indent(1)->Useqq(1)->Sortkeys(1)->Terse(1)->Dump;
 	    }
-	    if      ($left_info->{mode} != $right_info->{mode}) {
+	    if ($left_info->{mode} != $right_info->{mode}) {
 		push @diffs, sprintf "mode: %o vs. %o", $left_info->{mode}, $right_info->{mode};
-	    } elsif ($left_info->{user} ne $right_info->{user}) {
+	    }
+	    if ($left_info->{user} ne $right_info->{user}) {
 		push @diffs, "user: $left_info->{user} vs. $right_info->{user}";
-	    } elsif ($left_info->{group} ne $right_info->{group}) {
+	    }
+	    if ($left_info->{group} ne $right_info->{group}) {
 		push @diffs, "group: $left_info->{group} vs. $right_info->{group}";
-	    } elsif ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
+	    }
+	    if ($left_info->{symlinkval} ne $right_info->{symlinkval}) {
 		push @diffs, "symlink target: $left_info->{symlinkval} vs. $right_info->{symlinkval}";
-	    } else {
+	    }
+	    {
 		my $has_diffs = $left_info->{size} != $right_info->{size};
 		if ($has_diffs) {
 		    push @diffs, "size: $left_info->{size} vs. $right_info->{size}";
