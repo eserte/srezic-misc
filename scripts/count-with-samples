@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2015,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2015,2017,2020 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -184,6 +184,11 @@ Group files by their md5 checksums (BSD variant):
     md5 * | count-with-samples -rx 'MD5 \((?<v>[^)]+)\) = (?<k>.*)'
 
 (But actually you would use simple the C<--md5> option instead)
+
+Check whether a debian package (here: C<perl>) has the same version
+across all machines listed in a L<dsh(1)> group file:
+
+    dsh -M -c -g machine_group 'dpkg -l perl | grep "^ii"' | count-with-samples -r
 
 =head1 AUTHOR
 
