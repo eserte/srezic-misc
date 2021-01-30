@@ -1,6 +1,8 @@
 branches:
  except:
   - /appveyor/
+  - /github-actions/
+  - /doozer/
 
 language: perl
 matrix:
