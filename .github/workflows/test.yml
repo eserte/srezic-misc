@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+      - '*travis*'
+      - '*appveyor*'
+      - '*doozer*'
+
+jobs:
+
+  test_on_host:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+     matrix:
+       include:
+         - os: 'ubuntu-20.04'
+         - os: 'ubuntu-18.04'
+         - os: 'ubuntu-16.04'
+    steps:
+    - name: apt hacks
+      # /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
+      run: |
+        sudo rm -f /etc/apt/sources.list.d/*.list
+        sudo apt-get update -qq
+      if: "startsWith(matrix.os, 'ubuntu-')"
+    - uses: actions/checkout@v2
+    - name: Build and test
+      run: |
+        set -e
+        sudo apt-get install -q --no-install-recommends \
+            libdb-dev \
+            apt-file \
+            cvs \
+            rcs \
+            libyaml-libyaml-perl libmodule-build-perl libipc-run-perl libfile-copy-recursive-perl libclass-std-perl
+
+        git clone https://github.com/eserte/travis-helper-cpan-pm.git
+        ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
+
+        which cpan
+        # has to be patched
+        cpan Slay::Makefile
+
+        slaymake -d install-prereqs-with-cpan
+        echo completed slaymake run
+        slaymake -d test-t
+        slaymake -d test-compile
+      if: "!startsWith(matrix.os,'windows-')"
