@@ -40,10 +40,15 @@ if (!$check_travis && !$check_appveyor) {
     } elsif ($basename =~ /appveyor/) {
 	$check_appveyor = 1;
     } else {
-	# for "check-ci" or something else: check both
-	$check_travis = 1;
-	$check_appveyor = 1;
+	# for "check-ci" or something else: check both if appropriate files exist
+	chomp(my $rootdir = `git rev-parse --show-toplevel`);
+	$check_travis   = -f "$rootdir/.travis.yml";
+	$check_appveyor = -f "$rootdir/appveyor.yml" || -f "$rootdir/.appveyor.yml";
     }
+}
+
+if (!$check_travis && !$check_appveyor) {
+    die "No CI system detected.\n";
 }
 
 my $success = check_ci $repo, commit => $commit, wait => $wait_seconds;
