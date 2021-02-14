@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use File::Basename qw(basename);
+use File::Glob qw(bsd_glob);
 use Getopt::Long;
 use Term::ANSIColor;
 
@@ -11,12 +12,13 @@ sub debug ($);
 sub guess_project_from_git ();
 
 sub usage () {
-    die "usage: $0 [--debug] [--travis] [--appveyor] [--commit SHA1] [--wait seconds] [--timeout seconds] user/repo\n";
+    die "usage: $0 [--debug] [--travis] [--appveyor] [--github-actions] [--commit SHA1] [--wait seconds] [--timeout seconds] user/repo\n";
 }
 
 my $debug;
 my $check_travis;
 my $check_appveyor;
+my $check_github_actions;
 my $commit;
 my $wait_seconds = 15;
 my $timeout = 10;
@@ -25,6 +27,7 @@ GetOptions(
 	   "d|debug" => \$debug,
 	   "travis!" => \$check_travis,
 	   "appveyor!" => \$check_appveyor,
+	   "github-actions!" => \$check_github_actions,
 	   "commit=s" => \$commit,
 	   "wait=i" => \$wait_seconds,
 	   "t|timeout=i" => \$timeout,
@@ -32,22 +35,25 @@ GetOptions(
     or usage;
 my $repo = shift || guess_project_from_git
     or usage;
-if (!$check_travis && !$check_appveyor) {
+if (!$check_travis && !$check_appveyor && !$check_github_actions) {
     # guess from script name
     my $basename = basename($0);
     if ($basename =~ /travis/) {
 	$check_travis = 1;
     } elsif ($basename =~ /appveyor/) {
 	$check_appveyor = 1;
+    } elsif ($basename =~ /github.actions/) {
+	$check_github_actions = 1;
     } else {
 	# for "check-ci" or something else: check both if appropriate files exist
 	chomp(my $rootdir = `git rev-parse --show-toplevel`);
 	$check_travis   = -f "$rootdir/.travis.yml";
 	$check_appveyor = -f "$rootdir/appveyor.yml" || -f "$rootdir/.appveyor.yml";
+	$check_github_actions = -d "$rootdir/.github/workflows" && bsd_glob("$rootdir/.github/workflows/*");
     }
 }
 
-if (!$check_travis && !$check_appveyor) {
+if (!$check_travis && !$check_appveyor && !$check_github_actions) {
     die "No CI system detected.\n";
 }
 
@@ -83,9 +89,10 @@ exit($success ? 0 : 1);
 	};
 
 	my %is_active = (
-			  travis   => $check_travis,
-			  appveyor => $check_appveyor,
-			 );
+			 "travis"         => $check_travis,
+			 "appveyor"       => $check_appveyor,
+			 "github actions" => $check_github_actions,
+			);
 	my %is_failed;
 	my $mark_as_failed = sub ($$) {
 	    my($system, $error) = @_;
@@ -99,6 +106,41 @@ exit($success ? 0 : 1);
 	    $is_active{$system} = 0;
 	};
 
+	######################################################################
+	# Github Actions
+	my $github_actions_rooturl = "https://api.github.com/repos/$repo/actions";
+	my $get_current_github_actions_run_id = sub {
+	    my $github_actions_runs_url = "$github_actions_rooturl/runs";
+	    debug "About to get from $github_actions_runs_url";
+	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
+	    if (!$res->is_success) {
+		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
+	    }
+	    debug "Fetch from github actions successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
+		if ($workflow_run->{'head_sha'} eq $current_commit_id) {
+		    return $workflow_run->{'id'};
+		}
+	    }
+	    debug "Workflow run for commit $current_commit_id not found at github actions";
+	    undef;
+	};
+	my $get_current_github_actions_jobs = sub {
+	    my($run_id) = @_;
+	    my $github_actions_runs_url = "$github_actions_rooturl/runs/$run_id/jobs";
+	    debug "About to get from $github_actions_runs_url";
+	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
+	    if (!$res->is_success) {
+		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
+	    }
+	    debug "Fetch from github actions successful";
+	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    return $data;
+	};
+
+	######################################################################
+	# Appveyor
 	my $appveyor_build_url = "https://ci.appveyor.com/api/projects/$repo";
 	my $get_current_appveyor_build = sub {
 	    debug "About to get from $appveyor_build_url";
@@ -115,6 +157,8 @@ exit($success ? 0 : 1);
 	    undef;
 	};
 
+	######################################################################
+	# Travis CI
 	my $travis_build_id;
 	my $get_current_travis_build_v3 = sub {
 	    my $repo_escaped = URI::Escape::uri_escape($repo);
@@ -186,6 +230,8 @@ exit($success ? 0 : 1);
 	    return $data;
 	};
 
+	######################################################################
+
 	my $maybe_colored = sub {
 	    my($title, $number, $color) = @_;
 	    my $msg = "$title=$number";
@@ -196,6 +242,8 @@ exit($success ? 0 : 1);
 	    }		    
 	};
 
+	my $github_actions_run_id;
+
 	while () {
 	DO_TRAVIS: {
 		if ($is_active{travis}) {
@@ -203,7 +251,7 @@ exit($success ? 0 : 1);
 			my $travis_build = $use_travis_v3 ? $get_current_travis_build_v3->() : $get_current_travis_build_v2->();
 			if (!$travis_build) {
 			    if (!$is_failed{travis}) {
-				print STDERR "Status at travis:   cannot find commit $current_commit_id\n";
+				print STDERR "Status at travis:         cannot find commit $current_commit_id\n";
 			    }
 			    last DO_TRAVIS;
 			} else {
@@ -243,7 +291,7 @@ exit($success ? 0 : 1);
 				}
 			    }
 			}
-			print STDERR "Status at travis:   ".
+			print STDERR "Status at travis:         ".
 			    $maybe_colored->("running",    $running,    "yellow")." ".
 			    $maybe_colored->("successful", $successful, "green")." ".
 			    $maybe_colored->("failures",   $failures,   "red")."\n";
@@ -261,7 +309,7 @@ exit($success ? 0 : 1);
 		    my $appveyor_build = $get_current_appveyor_build->();
 		    if (!$appveyor_build) {
 			if (!$is_failed{appveyor}) {
-			    print STDERR "Status at appveyor: cannot find commit $current_commit_id\n";
+			    print STDERR "Status at appveyor:       cannot find commit $current_commit_id\n";
 			}
 			last DO_APPVEYOR;
 		    } else {
@@ -277,7 +325,7 @@ exit($success ? 0 : 1);
 				$failures++;
 			    }
 			}
-			print STDERR "Status at appveyor: ".
+			print STDERR "Status at appveyor:       ".
 			    $maybe_colored->("running",    $running,    "yellow")." ".
 			    $maybe_colored->("successful", $successful, "green")." ".
 			    $maybe_colored->("failures",   $failures,   "red")."\n";
@@ -290,7 +338,48 @@ exit($success ? 0 : 1);
 		}
 	    }
 
-	    if (!$is_active{travis} && !$is_active{appveyor}) {
+	DO_GITHUB_ACTIONS: {
+		if ($is_active{"github actions"}) {
+		    if (!$github_actions_run_id) {
+			$github_actions_run_id = $get_current_github_actions_run_id->();
+		    }
+		    if (!$github_actions_run_id) {
+			if (!$is_failed{"github actions"}) {
+			    print STDERR "Status at github actions: cannot find $current_commit_id\n";
+			}
+			last DO_GITHUB_ACTIONS;
+		    } else {
+			my $jobs_data = $get_current_github_actions_jobs->($github_actions_run_id);
+			if (!$jobs_data) {
+			    print STDERR "Unexpected error: got a run id ($github_actions_run_id), but getting jobs failed\n";
+			    last DO_GITHUB_ACTIONS;
+			}
+			my $successful = 0;
+			my $failures = 0;
+			my $running = 0;
+			for my $job (@{ $jobs_data->{jobs} || [] }) {
+			    if ($job->{status} ne 'completed') {
+				$running++;
+			    } elsif ($job->{conclusion} eq 'success') {
+				$successful++;
+			    } else {
+				$failures++;
+			    }
+			}
+			print STDERR "Status at github actions: " .
+			    $maybe_colored->("running",    $running,    "yellow")." ".
+			    $maybe_colored->("successful", $successful, "green")." ".
+			    $maybe_colored->("failures",   $failures,   "red")."\n";
+			if ($failures) {
+			    $mark_as_failed->('github actions', "At least one job failed. See https://github.com/$repo/actions for more information.");
+			} elsif ($running == 0) {
+			    $mark_as_finished->('github actions');
+			}
+		    }
+		}
+	    }
+
+	    if (!$is_active{travis} && !$is_active{appveyor} && !$is_active{'github actions'}) {
 		last;
 	    }
 
@@ -303,8 +392,11 @@ exit($success ? 0 : 1);
 	if ($check_appveyor && !$is_failed{appveyor}) {
 	    print STDERR "appveyor build was " . colored("successful", "green") . "\n";
 	}
+	if ($check_github_actions && !$is_failed{'github actions'}) {
+	    print STDERR "github actions build was " . colored("successful", "green") . "\n";
+	}
 
-	return !$is_failed{travis} && !$is_failed{appveyor};
+	return !$is_failed{travis} && !$is_failed{appveyor} && !$is_failed{'github actions'};
     }
 
     sub debug ($) {
