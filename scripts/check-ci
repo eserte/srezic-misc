@@ -22,6 +22,7 @@ my $check_github_actions;
 my $commit;
 my $wait_seconds = 15;
 my $timeout = 10;
+my $github_api_limit_seconds = 60; # do at most one request per minute because of rate limiting
 my $use_travis_v3 = 1;
 GetOptions(
 	   "d|debug" => \$debug,
@@ -109,10 +110,12 @@ exit($success ? 0 : 1);
 	######################################################################
 	# Github Actions
 	my $github_actions_rooturl = "https://api.github.com/repos/$repo/actions";
+	my $last_github_api_access;
 	my $get_current_github_actions_run_id = sub {
 	    my $github_actions_runs_url = "$github_actions_rooturl/runs";
 	    debug "About to get from $github_actions_runs_url";
 	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
+	    # Theoretically, this request should also be used to set $last_github_api_access, but it's called only once per script run...
 	    if (!$res->is_success) {
 		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
 	    }
@@ -128,10 +131,18 @@ exit($success ? 0 : 1);
 	};
 	my $get_current_github_actions_jobs = sub {
 	    my($run_id) = @_;
+	    if (defined $last_github_api_access && time < $last_github_api_access + $github_api_limit_seconds) {
+		debug "Limit accesses against github API to avoid rate limit errors";
+		return undef;
+	    }
 	    my $github_actions_runs_url = "$github_actions_rooturl/runs/$run_id/jobs";
 	    debug "About to get from $github_actions_runs_url";
 	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
-	    if (!$res->is_success) {
+	    $last_github_api_access = time;
+	    if ($res->code == 403 && $res->status_line =~ /rate limit exceeded/i) {
+		debug "Rate limit exceeded while fetching from github actions";
+		return undef;
+	    } elsif (!$res->is_success) {
 		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
 	    }
 	    debug "Fetch from github actions successful";
@@ -351,7 +362,7 @@ exit($success ? 0 : 1);
 		    } else {
 			my $jobs_data = $get_current_github_actions_jobs->($github_actions_run_id);
 			if (!$jobs_data) {
-			    print STDERR "Unexpected error: got a run id ($github_actions_run_id), but getting jobs failed\n";
+			    print STDERR "Status at github actions: unknown\n"; # maybe 403 rate limit exceeded
 			    last DO_GITHUB_ACTIONS;
 			}
 			my $successful = 0;
