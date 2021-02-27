@@ -2613,14 +2613,28 @@ sub get_subject_from_rt {
 	# Quick'n'dirty parsing
     DO_PARSE: {
 	    my $content = $resp->decoded_content(charset => "none");
+
+	    if ($url =~ m{^https:?//rt\.perl\.org}) { # nowadays redirected to github
+		for my $line (map { Encode::decode_utf8($_) } split /\n/, $content) { # assume utf-8, without checking
+		    if ($line =~ m{<title>(.*)\s·\sIssue\s#\d+\s·\sPerl/perl5\s·\sGitHub</title>}) {
+			my $subject = HTML::Entities::decode_entities($1);
+			return $subject;
+		    } elsif ($line =~ m{<title>}) {
+			warn "DEBUG: found a non-matching <title> line: '$line'\n";
+		    }
+		}
+		warn "WARNING: Assumed rt.perl.org -> github.com redirect: Cannot find and parse <title>\n";
+	    }
+
 	    if (eval { require HTML::TreeBuilder; require Encode; 1 }) {
 		my $tree = HTML::TreeBuilder->new;
 		$tree->parse_content(Encode::decode_utf8($content)); # assume utf-8, without checking
 		for my $element ($tree->look_down('class', 'message-header-key')) {
 		    if (join("", $element->content_list) eq 'Subject:') {
 			my $val_element = $element->right;
-			if ($val_element->attr('class') ne 'message-header-value') {
-			    die "Unexpected element after message-header-key";
+			my $class = $val_element->attr('class');
+			if ($class !~ m{(^|\s)message-header-value($|\s)}) {
+			    die "Unexpected element after message-header-key, got '$class' (full element html is '" . $val_element->as_HTML . "')";
 			} else {
 			    my $subject = join("", $val_element->content_list);
 			    $subject =~ s{^\s+}{};
@@ -2632,24 +2646,26 @@ sub get_subject_from_rt {
 	    } else {
 		warn "WARNING: Cannot load HTML::TreeBuilder, fallback to quick'n'dirty parsing\n";
 	    }
-	    
-	    my $next_is_subject;
-	    for my $line (split /\n/, $content) {
-		if ($next_is_subject) {
-		    if ($line =~ m{<td class="message-header-value">\s*(.+)</td>}) {
-			my $subject = HTML::Entities::decode_entities($1);
-			return $subject;
+
+	    {
+		my $next_is_subject;
+		for my $line (split /\n/, $content) {
+		    if ($next_is_subject) {
+			if ($line =~ m{<td class="message-header-value">\s*(.+)</td>}) {
+			    my $subject = HTML::Entities::decode_entities($1);
+			    return $subject;
+			} else {
+			    warn "ERROR: expected Subject value, but cannot parse it";
+			    $next_is_subject = 0;
+			}
 		    } else {
-			warn "ERROR: expected Subject value, but cannot parse it";
-			$next_is_subject = 0;
-		    }
-		} else {
-		    if ($line =~ m{class="message-header-key">Subject:}) {
-			$next_is_subject = 1;
+			if ($line =~ m{class="message-header-key">Subject:}) {
+			    $next_is_subject = 1;
+			}
 		    }
 		}
+		warn "WARNING: cannot parse message-header-value out of '$url'";
 	    }
-	    warn "ERROR: cannot parse message-header-value out of '$url'";
 	}
     } else {
 	warn "ERROR: can't fetch $url: " . $resp->status_line . "\n";

@@ -25,7 +25,12 @@ my $scripts_dir = "$FindBin::RealBin/../../scripts";
 is
     get_subject_from_rt('https://rt.cpan.org/Ticket/Display.html?id=123073'),
     'Tests fail (with older Exception::DB and/or QBit::Application::Model::DB?)',
-    'rt.cpan ticket';
+    'rt.cpan ticket (older)';
+
+is
+    get_subject_from_rt('https://rt.cpan.org/Ticket/Display.html?id=134444'),
+    't/Catalans.t and t/NoughtsAndCrosses.t fail (Graph-Maker-Other-16)',
+    'rt.cpan ticket (newer, from 2021)';
 
 is
     get_subject_from_rt('https://rt.perl.org/Ticket/Display.html?id=132142'),
