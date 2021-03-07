@@ -1394,6 +1394,12 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
+		} elsif ($annotation =~ m{(http\S+/gitlab.com/\S+/issues/\S+)}) {
+		    my $title = get_cached_gitlab_issue_title($1);
+		    if (defined $title) {
+			$annotation .= " ($title)";
+			$changed = 1;
+		    }
 		}
 	    }
 	    if ($changed) {
@@ -2709,6 +2715,49 @@ sub get_cached_github_issue_title {
 	}
     } else {
 	warn "WARN: Unexpected github URL '$url'";
+    }
+    $title;
+}
+
+sub get_cached_gitlab_issue_title {
+    my($url) = @_;
+    my $title;
+    if (my($project, $issue) = $url =~ m{^https?://gitlab.com/(.+?/.+?)/(?:-/)?issues/(\d+)}) {
+	eval {
+	    require URI::Escape;
+	    my $enc_project = URI::Escape::uri_escape($project);
+	    my $api_url = "https://gitlab.com/api/v4/projects/$enc_project/issues/$issue";
+
+	    require DB_File;
+	    require Fcntl;
+	    my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/gitlab_issue_titles.db");
+	    if (!-d dirname($cache_file)) {
+		require File::Path;
+		File::Path::mkpath(dirname($cache_file));
+	    }
+	    # XXX implement locking for all!
+	    tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+		or die "ERROR: Can't tie cache file $cache_file: $!";
+	    if (exists $db{$url}) {
+		$title = $db{$url};
+	    } else {
+		warn "INFO: Not found in cache, try to fetch from $url...\n";
+		require LWP::UserAgent;
+		require JSON::XS;
+		my $resp = LWP::UserAgent->new(timeout => 20)->get($api_url);
+		if ($resp->is_success) {
+		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
+		    $db{$url} = $title;
+		} else {
+		    die "Cannot get URL $url: " . $resp->status_message . "\n";
+		}
+	    }
+	};
+	if ($@) {
+	    warn "ERROR: $@";
+	}
+    } else {
+	warn "WARN: Unexpected gitlab URL '$url'";
     }
     $title;
 }
