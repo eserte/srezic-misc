@@ -315,7 +315,7 @@ sub scenario_mojolicious {
     my $min_perl_version = '5.16.0';
     my $basecmd = _scenario_basecmd() . ' -pv ">=' .$min_perl_version.'" ';
     {
-	my $cmd = $basecmd . ' -skiptested';
+	my $cmd = $basecmd . ' -skiptestedfail';
 	warn "(run normally) $basecmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
