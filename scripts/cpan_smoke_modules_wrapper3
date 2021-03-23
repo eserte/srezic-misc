@@ -311,6 +311,25 @@ sub scenario_systemperl {
     }
 }
 
+sub scenario_mojolicious {
+    my $min_perl_version = '5.16.0';
+    my $basecmd = _scenario_basecmd() . ' -pv ">=' .$min_perl_version.'" ';
+    {
+	my $cmd = $basecmd;
+	_scenario_cmd_expect_pass(\$cmd);
+	warn "(run normally) $basecmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+    {
+	my $cmd = $basecmd . ' -pre Mojo ';
+	_scenario_cmd_expect_fail(\$cmd);
+	warn "(run with newest Mojo) $basecmd ...\n";
+	system $cmd;
+	die "SIGINT" if ($? == 2);
+    }
+}
+
 sub scenario_prereq {
     my $scenario_args = shift;
     if (!defined $scenario_args || !length $scenario_args) {

@@ -1239,6 +1239,8 @@ sub parse_test_report {
 		    if (eval { version->new($perl_need) } > eval { version->new($perl_have) }) {
 			$add_analysis_tag->('low perl');
 		    }
+		} elsif (/\b(Mojolicious|Mojo::Base)\b/) {
+		    $add_analysis_tag->('mojolicious');
 		}
 	    } elsif ($section eq 'ENVIRONMENT') {
 		if (m{^\s+PERL5LIB = (.*)}) {
@@ -1799,6 +1801,7 @@ sub set_currfile {
 			       'system perl used' => 'systemperl',
 			       'out of memory' => 'nolimits',
 			       'Test-Simple problem' => 'testsimple',
+			       'mojolicious' => 'mojolicious',
 			      );
 	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
 	push @scenarios, qw(locale hashrandomization generic);
