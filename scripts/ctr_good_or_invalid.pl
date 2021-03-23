@@ -1608,7 +1608,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'sysread+syswrite on utf8' && $annotation_text_for_analysis =~ m{sys(read|write).*utf8}i)
 		       || ($analysis_tag eq 'LWP::Protocol::https missing' && $annotation_text_for_analysis =~ m{(LWP::Protocol::https|Protocol scheme 'https' is not supported)}i)
 		       ### generic match
-		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}
+		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}i
 		      );
 	if ($do_tick) {
 	    $f->Label(
