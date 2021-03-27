@@ -311,21 +311,34 @@ sub scenario_systemperl {
     }
 }
 
-sub scenario_mojolicious {
-    my $min_perl_version = '5.16.0';
+sub _scenario_mojolicious ($) {
+    my($newer_state) = @_;
+    my $min_perl_version = '5.16.0'; # set to minimum perl version for most recent Mojolicious
     my $basecmd = _scenario_basecmd() . ' -pv ">=' .$min_perl_version.'" ';
     {
-	my $cmd = $basecmd . ' -skiptestedfail';
+	my $cmd = $basecmd . " -skiptested${newer_state}";
 	warn "(run normally) $basecmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
     {
-	my $cmd = $basecmd . ' -skiptestedfail -pre Mojo ';
+	my $cmd = $basecmd . " -skiptested${newer_state} -pre Mojo ";
 	warn "(run with newest Mojo) $basecmd ...\n";
 	system $cmd;
 	die "SIGINT" if ($? == 2);
     }
+}
+
+sub scenario_mojoliciousfail {
+    _scenario_mojolicious 'fail';
+}
+{
+    no warnings 'once';
+    *scenario_mojolicious = \&scenario_mojoliciousfail;
+}
+
+sub scenario_mojoliciouspass {
+    _scenario_mojolicious 'pass';
 }
 
 sub scenario_prereq {
