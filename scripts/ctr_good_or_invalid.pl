@@ -1557,6 +1557,7 @@ sub set_currfile {
 	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
     }
     my $annotation_text_for_analysis = $annotation_info{text} || '';
+    $annotation_text_for_analysis =~ s{^https?://\S+}{}; # strip issue URL
     for my $analysis_tag (sort keys %analysis_tags) {
 	my @lines = @{ $analysis_tags{$analysis_tag}->{lines} || [] };
 	my $bgcolor = $analysis_tags{$analysis_tag}->{__bgcolor__} || 'yellow';
