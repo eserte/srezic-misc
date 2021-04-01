@@ -332,7 +332,7 @@ sub _scenario_mojolicious ($) {
 sub scenario_mojoliciousfail {
     _scenario_mojolicious 'fail';
 }
-{
+BEGIN {
     no warnings 'once';
     *scenario_mojolicious = \&scenario_mojoliciousfail;
 }
