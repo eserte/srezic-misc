@@ -522,7 +522,7 @@ sub get_dangerous_dual_life_dists_for_perl {
 
 sub filter_cpu_intensive_at_night {
     my(%opt) = @_;
-    my $path = delete $opt{path} // die "path is mandatory";
+    my $path = delete $opt{path}; die "path is mandatory" if !defined $path;
     die "Unhandled options: " . join(" ", %opt) if %opt;
 
     my @l = localtime;
