@@ -26,6 +26,8 @@ my $scenario;
 my @scenario_modules;
 my $minimize_work;
 my $maybe_install = 1;
+my @module_filters;
+my $debug;
 
 sub usage () {
     die <<EOF;
@@ -42,6 +44,8 @@ GetOptions(
 	   "scenario=s" => \$scenario,
 	   'minimize-work!' => \$minimize_work,
 	   'install!' => \$maybe_install,
+	   'mod-filter|module-filter=s' => \@module_filters,
+	   'debug!' => \$debug,
 	  )
     or usage;
 if ($scenario) {
@@ -142,7 +146,7 @@ sub run_smoker ($$$) {
 	}
     }
     if (!$perl_exe) {
-	die "Cannot find a perl $perl_version, tried in /usr/perlXXX, /opt/perl-XXX and $perl_exe";
+	die "Cannot find a perl $perl_version, tried in /usr/perlXXX, /opt/perl-XXX and more";
     }
 
     my $install_arg = ($stability eq 'stable' && $maybe_install ? '-install' : '');
@@ -151,6 +155,7 @@ sub run_smoker ($$$) {
     # checking the CPAN index to decide whether it's stable
     # or not (but the index is sometimes somewhat slow)
     $get_dist_cmd .= $scripts_dir . q{/cpan_recent_uploads2 -onlydists -skipperl6 -warnold -url } . $recent_url . q{ -from } . $interval . q{ -v } .
+	join('', map { "-filter $_ " } @module_filters) .
 	($stability eq 'stable' ? q{-indexed } : '') .
 	($stability eq 'stable' && ref $perl_exe ne 'SCALAR' ? qq{-no-downgrades-for "$perl_exe" } : '');
     if ($^O eq 'MSWin32') {
@@ -158,6 +163,7 @@ sub run_smoker ($$$) {
     }
 
     my @list_of_dists;
+    if ($debug) { warn "INFO: run '$get_dist_cmd'...\n" }
     chomp(@list_of_dists = `$get_dist_cmd`);
 
     my $cmd = '';
