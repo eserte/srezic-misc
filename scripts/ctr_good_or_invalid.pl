@@ -1552,7 +1552,8 @@ sub set_currfile {
 
     # Create the "analysis tags"
     my $generic_analysis_tag_value = delete $analysis_tags{__GENERIC_TEST_FAILURE__};
-    if (!%analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
+    my $have_high_prio_analysis_tags = grep { $_ !~ m{^(mojolicious)$} } keys %analysis_tags;
+    if (!$have_high_prio_analysis_tags && $generic_analysis_tag_value) { # show generic test fails only if there's nothing else
 	$generic_analysis_tag_value->{__bgcolor__} = 'white'; # different color than the other analysis tags
 	$analysis_tags{'generic test failure'} = $generic_analysis_tag_value;
     }
