@@ -534,6 +534,7 @@ sub filter_cpu_intensive_at_night {
 		   |   Test2-Plugin-Feature-v?\d  # -"-
 		   |   App-PerlNitpick-v?\d       # -"-
 		   |   Test2-Harness-Renderer-JUnit-v?\d # -"-
+		   |   Alien-libsdl2-v?\d         # CPU intensive build of C library
 		   )}x && $hour >= 7) {
 	return 0;
     }
