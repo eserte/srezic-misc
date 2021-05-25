@@ -170,10 +170,11 @@ exit($success ? 0 : 1);
 
 	######################################################################
 	# Travis CI
+	my $travis_domain = 'travis-ci.com'; # was travis-ci.org
 	my $travis_build_id;
 	my $get_current_travis_build_v3 = sub {
 	    my $repo_escaped = URI::Escape::uri_escape($repo);
-	    my $travis_builds_url = "https://api.travis-ci.org/repo/$repo_escaped/builds";
+	    my $travis_builds_url = "https://api.$travis_domain/repo/$repo_escaped/builds";
 	    debug "About to get from $travis_builds_url";
 	    my $res = $ua->get($travis_builds_url, 'Travis-API-Version' => 3);
 	    if (!$res->is_success) {
@@ -190,7 +191,7 @@ exit($success ? 0 : 1);
 	    undef;
 	};
 	my $get_current_travis_build_v2 = sub {
-	    my $travis_builds_url = "http://api.travis-ci.org/repos/$repo/builds";
+	    my $travis_builds_url = "http://api.$travis_domain/repos/$repo/builds";
 	    debug "About to get from $travis_builds_url";
 	    my $res = $ua->get($travis_builds_url);
 	    if (!$res->is_success) {
@@ -207,7 +208,7 @@ exit($success ? 0 : 1);
 	    undef;
 	};
 	my $get_current_travis_build_by_id_v3 = sub {
-	    my $travis_build_url = "https://api.travis-ci.org/build/$travis_build_id";
+	    my $travis_build_url = "https://api.$travis_domain/build/$travis_build_id";
 	    debug "About to get from $travis_build_url";
 	    my $res = $ua->get($travis_build_url, 'Travis-API-Version' => 3);
 	    if (!$res->is_success) {
@@ -218,7 +219,7 @@ exit($success ? 0 : 1);
 	    return $data;
 	};
 	my $get_current_travis_build_by_id_v2 = sub {
-	    my $travis_build_url = "http://api.travis-ci.org/repos/$repo/builds/$travis_build_id";
+	    my $travis_build_url = "http://api.$travis_domain/repos/$repo/builds/$travis_build_id";
 	    debug "About to get from $travis_build_url";
 	    my $res = $ua->get($travis_build_url);
 	    if (!$res->is_success) {
@@ -230,7 +231,7 @@ exit($success ? 0 : 1);
 	};
 	my $get_travis_job_v3 = sub {
 	    my($job_id) = @_;
-	    my $travis_job_url = "https://api.travis-ci.org/job/$job_id";
+	    my $travis_job_url = "https://api.$travis_domain/job/$job_id";
 	    debug "About to get from $travis_job_url";
 	    my $res = $ua->get($travis_job_url, 'Travis-API-Version' => 3);
 	    if (!$res->is_success) {
@@ -307,7 +308,7 @@ exit($success ? 0 : 1);
 			    $maybe_colored->("successful", $successful, "green")." ".
 			    $maybe_colored->("failures",   $failures,   "red")."\n";
 			if ($failures) {
-			    $mark_as_failed->('travis', "At least one job failed. See https://travis-ci.org/$repo for more information.");
+			    $mark_as_failed->('travis', "At least one job failed. See https://$travis_domain/$repo for more information.");
 			} elsif ($running == 0) {
 			    $mark_as_finished->('travis');
 			}
