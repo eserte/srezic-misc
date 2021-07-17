@@ -5,31 +5,41 @@ branches:
   - /doozer/
 
 language: perl
+arch:
+  - arm64
 matrix:
   include:
-# newest without the need to download
-    - perl: "5.20"
-      dist: trusty
-# oldest
-    - perl: "5.8"
-      dist: trusty
-# newest
-    - perl: "5.30"
-      dist: xenial
-# actual apt-file test (with something resembling to system perl)
-    - perl: "5.26"
+    - dist: xenial
+      perl: 5.24
       env: WITH_APT_FILE=1
-      dist: xenial
-# and the others
-    - perl: "5.22"
-      dist: xenial
-# 2nd group (5 parallel jobs @ travis)
-    - perl: "5.18"
-      dist: trusty
-    - perl: "5.12"
-      dist: trusty
-    - perl: "5.10"
-      dist: trusty
+    - dist: bionic
+      perl: 5.26
+    - dist: focal
+      perl: 5.32
+
+## newest without the need to download
+#    - perl: "5.20"
+#      dist: trusty
+## oldest
+#    - perl: "5.8"
+#      dist: trusty
+## newest
+#    - perl: "5.30"
+#      dist: xenial
+## actual apt-file test (with something resembling to system perl)
+#    - perl: "5.26"
+#      env: WITH_APT_FILE=1
+#      dist: xenial
+## and the others
+#    - perl: "5.22"
+#      dist: xenial
+## 2nd group (5 parallel jobs @ travis)
+#    - perl: "5.18"
+#      dist: trusty
+#    - perl: "5.12"
+#      dist: trusty
+#    - perl: "5.10"
+#      dist: trusty
 
 addons:
   apt:
