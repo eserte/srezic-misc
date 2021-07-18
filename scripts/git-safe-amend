@@ -11,6 +11,8 @@ return 1 if caller;
 my $doit = Doit->init;
 $doit->add_component('git');
 
+@ARGV and error "No arguments expected";
+
 in_directory {
     my @files = sort $doit->git_get_changed_files($Doit::Git::VERSION >= 0.026 ? ('ignore_untracked' => 1) : ());
     if (!@files) {
