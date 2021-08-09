@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Cwd qw(realpath);
 use File::Find;
+use File::Spec;
 use Getopt::Long;
 
 my $libdir;
@@ -42,23 +43,47 @@ sub apt_file_find ($;$) {
 sub dpkg_query ($;$) {
     my $file = shift;
     my $for = shift;
-    my @packages;
-    my @cmd = (
-	'dpkg-query', '-S', $file,
-    );
-    debug "@cmd...";
-    open my $fh, '-|', @cmd
-	or die $!;
-    while(<$fh>) {
-	chomp;
-	if (my($package) = $_ =~ m{^([^:]+)}) {
-	    push @packages, $package;
-	} else {
-	    warn "WARN: cannot parse line <$_>";
+
+    my @tried_cmds;
+
+    my $raw_dpkg_query = sub ($) {
+	my($file) = @_;
+	my @cmd = (
+	    'dpkg-query', '-S', $file,
+	);
+	debug "@cmd...";
+	open my $olderr, ">&", \*STDERR or die $!;
+	open STDERR, ">", File::Spec->devnull or die $!;
+	open my $fh, '-|', @cmd or die $!;
+	push @tried_cmds, \@cmd;
+	my @packages;
+	while(<$fh>) {
+	    chomp;
+	    if (my($package) = $_ =~ m{^([^:]+)}) {
+		push @packages, $package;
+	    } else {
+		warn "WARN: cannot parse line <$_>";
+	    }
 	}
+	open STDERR, ">&", $olderr or die $!;
+	@packages;
+    };
+
+    my @packages = $raw_dpkg_query->($file);
+    if (!@packages && $file =~ m{^(/(lib|usr/lib)(|32|64|x32)/)}) {
+	# On some systems (e.g. Ubuntu 20.04) there are symlinks /lib
+	# -> /usr/lib etc. which also needs to be checked
+	my $try_file;
+	if ($file =~ m{^/lib}) {
+	    ($try_file = $file) =~ s{^/lib}{/usr/lib};
+	} else {
+	    ($try_file = $file) =~ s{^/usr/lib}{/lib};
+	}
+	@packages = $raw_dpkg_query->($try_file);
     }
+
     if (!@packages) {
-	my $msg = "WARN: cannot find anything while running '@cmd'...";
+	my $msg = "WARN: cannot find anything while running " . join(", ", map { qq{'@$_'} } @tried_cmds) . "...";
 	if ($for) {
 	    $msg .= " (required for $for->[0] ...)";
 	}
