@@ -244,7 +244,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 			    my($host, $md5_method_ref, $fname, $md5_ref) = @$def;
 
 			    # Find a suitable md5 command
-			    if (!$$md5_method_ref) {
+			    if (!$$md5_method_ref && $ssh{$host}) {
 				$ssh{$host}->system({stderr_discard=>1,stdout_discard=>1}, 'which', 'md5sum'); # e.g. linux
 				if ($? == 0) {
 				    $$md5_method_ref = sub {
@@ -258,7 +258,7 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 				    }
 				}
 			    }
-			    if (!$$md5_method_ref) {
+			    if (!$$md5_method_ref && $ssh{$host}) {
 				$ssh{$host}->system({stderr_discard=>1,stdout_discard=>1}, 'which', 'md5'); # e.g. freebsd
 				if ($? == 0) {
 				    $$md5_method_ref = sub {
@@ -277,7 +277,13 @@ while($left_fnames_i <= $#left_fnames || $right_fnames_i <= $#right_fnames) {
 				# last fallback; we assume that perl and standard perl modules (Digest::MD5) are installed
 				$$md5_method_ref = sub {
 				    my($ssh, $file) = @_;
-				    my $res = $ssh->capture(($always_sudo ? 'sudo' : ()), 'perl', '-MDigest::MD5', '-e', 'open $fh, "<", shift or die $!; $ctx = Digest::MD5->new; $ctx->addfile($fh); print $ctx->hexdigest', $file);
+				    my @cmd = (($always_sudo ? 'sudo' : ()), 'perl', '-MDigest::MD5', '-e', 'open $fh, "<", shift or die $!; $ctx = Digest::MD5->new; $ctx->addfile($fh); print $ctx->hexdigest', $file);
+				    my $res;
+				    if ($ssh) {
+					$res = $ssh->capture(@cmd);
+				    } else {
+					$res = do { open my $fh, "-|", @cmd; local $/; <$fh> };
+				    }
 				    die "Error while getting MD5 for '$file' using perl and Digest::MD5" if $? != 0;
 				    $res;
 				};
