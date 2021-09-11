@@ -2180,7 +2180,7 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'eoan'; # 'Ubuntu 19.10?';
 		} elsif ($entry->{archname} =~ m{ 5\.4\.0-33-}) {
 		    $arch_os_version = 'focal'; # 'Ubuntu 20.04?';
-		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0|5\.6\.0)-}) {
+		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0|5\.6\.0|5\.10\.0)-}) {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
