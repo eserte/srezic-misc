@@ -1,5 +1,9 @@
 #!/usr/bin/env perl
 
+# Copyright (C) 2022 Slaven Rezic. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
+
 use strict;
 use warnings;
 use Getopt::Long;
@@ -40,3 +44,49 @@ if ($debug) {
 
 exec @ARGV;
 die "Error when exeuting '@ARGV': $!";
+
+=head1 NAME
+
+dst-wrapper - run command only if daylight savings time or standard time is active
+
+=head1 SYNOPSIS
+
+    dst-wrapper --is-std command ...
+    dst-wrapper --is-dst command ...
+
+=head1 DESCRIPTION
+
+Run the specified command only if daylight savings time is active (if
+C<--is-dst> is specified) or if standard time is active (if
+C<--is-std> is specified, or if none of the C<--is-...> options is
+specified).
+
+A possible use case: run cronjobs at fixed UTC times, but your default
+timezone is non-UTC. Just calculating the offset yourself is not
+enough, because the offset changes during the year if DST is in
+effect. In some cron implementations it is possible to set the crontab
+timezone using a special environment variable (C<CRON_TZ>), but some
+do not (notably on Debian and Ubuntu systems). And even if C<CRON_TZ>
+handling exists, it is usually not possible to have multiple
+C<CRON_TZ> entries with different values within the same crontab. In
+these situations one could create two crontab entries, one for
+standard time and one for DST, and use C<dst-wrapper> to make sure
+that only the correct one is running. For example, if you're in a
+CET/CEST timezone (offset to UTC is +01:00 or +02:00) and want to run
+a job at 12:00 UTC, create the following two crontab entries:
+
+    0 13 * * * dst-wrapper --is-std command_to_run ...
+    0 14 * * * dst-wrapper --is-dst command_to_run ...
+
+For additional debugging use C<--debug>, which will show if and why
+the command is or is not running.
+
+=head1 AUTHOR
+
+Slaven Rezic
+
+=head1 SEE ALSO
+
+L<crontab(5)>.
+
+=cut
