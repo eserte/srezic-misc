@@ -1,0 +1,42 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+my $run_on_dst = 0;
+
+sub usage (;$) {
+    if ($_[0]) {
+	warn "$_[0]\n";
+    }
+    die "usage: $0 [--on-dst|--on-std] command options ...\n";
+}
+
+Getopt::Long::Configure('pass_through', 'require_order');
+GetOptions(
+    "on-dst" => sub { $run_on_dst = 1 },
+    "on-std" => sub { $run_on_dst = 0 },
+    "debug"  => \my $debug,
+)
+    or usage;
+if (@ARGV && $ARGV[0] eq '--') { shift @ARGV }
+usage "Command is missing" if !@ARGV;
+usage "Found unrecognized option: $ARGV[0]" if $ARGV[0] =~ /^-/;
+
+my $is_dst = (localtime)[8];
+
+if (( $is_dst && !$run_on_dst) ||
+    (!$is_dst &&  $run_on_dst)) {
+    if ($debug) {
+	print STDERR "$0: command '@ARGV' should not run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+    }
+    exit;
+}
+
+if ($debug) {
+    print STDERR "$0: command '@ARGV' will now run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+}
+
+exec @ARGV;
+die "Error when exeuting '@ARGV': $!";
