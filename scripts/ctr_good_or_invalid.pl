@@ -1336,15 +1336,19 @@ sub parse_test_report {
 	    }
 	}
 	my($dist, $version) = parse_distvname($distvname);
-	my $latest_distribution = $pcpf->latest_distribution($dist);
-	if      (!$latest_distribution) {
-	    { label => 'cannot get latest stable', color => 'red' };
-	} elsif ($latest_distribution->distvname eq $distvname) {
-	    { label => 'latest stable', color => 'black' };
-	} elsif (cmp_version($latest_distribution->version, $version) < 0) {
-	    { label => 'newer than latest stable', color => 'blue' };
+	if (!defined $dist || !defined $version) {
+	    { label => 'cannot parse distvname', color => 'red' };
 	} else {
-	    { label => 'older than latest stable', color => 'red' };
+	    my $latest_distribution = $pcpf->latest_distribution($dist);
+	    if      (!$latest_distribution) {
+		{ label => 'cannot get latest stable', color => 'red' };
+	    } elsif ($latest_distribution->distvname eq $distvname) {
+		{ label => 'latest stable', color => 'black' };
+	    } elsif (cmp_version($latest_distribution->version, $version) < 0) {
+		{ label => 'newer than latest stable', color => 'blue' };
+	    } else {
+		{ label => 'older than latest stable', color => 'red' };
+	    }
 	}
     }
 }
