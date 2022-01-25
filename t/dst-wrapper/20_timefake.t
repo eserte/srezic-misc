@@ -41,6 +41,13 @@ my @portable_cmd = ($^X, '-e', 'print "hello, world\n"');
 	ok IPC::Run::run([$^X, $script, '--on-dst', @portable_cmd], '>', \my $output), 'simulate standard time, and it should not run';
 	is $output, '';
     }
+
+    {
+	alarm 60; # just in case
+	ok IPC::Run::run([$^X, $script, '--sleep-if-dst', @portable_cmd], '>', \my $output), 'simulate standard time, using --sleep-if-dst';
+	alarm 0;
+	is $output, "hello, world\n";
+    }
 }
 
 {
@@ -57,8 +64,19 @@ my @portable_cmd = ($^X, '-e', 'print "hello, world\n"');
     }
 
     {
-	ok IPC::Run::run([$^X, $script, '--on-dst', @portable_cmd], '>', \my $output), 'simulate standard time, and it should run';
+	ok IPC::Run::run([$^X, $script, '--on-dst', @portable_cmd], '>', \my $output), 'simulate DST, and it should run';
 	is $output, "hello, world\n";
+    }
+
+    {
+	alarm 60; # just in case
+	my $h = IPC::Run::start([$^X, $script, '--sleep-if-dst', '--debug', @portable_cmd], '>', \my $output, '2>', \my $stderr, IPC::Run::timeout(30));
+	ok $h, "simulate DST, using --sleep-if-dst";
+	$h->pump until $stderr =~ /sleep.*because of DST/;
+	$h->kill_kill;
+	alarm 0;
+	like $stderr, qr{sleep 3600s because of DST};
+	is $output, '';
     }
 }
 

@@ -21,6 +21,7 @@ Getopt::Long::Configure('pass_through', 'require_order');
 GetOptions(
     "on-dst" => sub { $run_on_dst = 1 },
     "on-std" => sub { $run_on_dst = 0 },
+    "sleep-if-dst" => \my $sleep_if_dst,
     "debug"  => \my $debug,
 )
     or usage;
@@ -30,16 +31,30 @@ usage "Found unrecognized option: $ARGV[0]" if $ARGV[0] =~ /^-/;
 
 my $is_dst = (localtime)[8];
 
-if (( $is_dst && !$run_on_dst) ||
-    (!$is_dst &&  $run_on_dst)) {
-    if ($debug) {
-	print STDERR "$0: command '@ARGV' should not run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+if ($sleep_if_dst) {
+    if ($is_dst) {
+	my $sleep_time = 3600;
+	if ($debug) {
+	    print STDERR "$0: sleep ${sleep_time}s because of DST...\n";
+	}
+	sleep $sleep_time;
     }
-    exit;
-}
 
-if ($debug) {
-    print STDERR "$0: command '@ARGV' will now run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+    if ($debug) {
+	print STDERR "$0: command '@ARGV' will now run (is_dst=$is_dst, date=@{[ scalar localtime ]})\n";
+    }
+} else {
+    if (( $is_dst && !$run_on_dst) ||
+	    (!$is_dst &&  $run_on_dst)) {
+	if ($debug) {
+	    print STDERR "$0: command '@ARGV' should not run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+	}
+	exit;
+    }
+
+    if ($debug) {
+	print STDERR "$0: command '@ARGV' will now run (is_dst=$is_dst run_on_dst=$run_on_dst)\n";
+    }
 }
 
 exec @ARGV;
@@ -53,6 +68,10 @@ dst-wrapper - run command only if daylight savings time or standard time is acti
 
     dst-wrapper --is-std command ...
     dst-wrapper --is-dst command ...
+
+Alternatively:
+
+    dst-wrapper --sleep-if-dst command ...
 
 =head1 DESCRIPTION
 
@@ -77,6 +96,15 @@ a job at 12:00 UTC, create the following two crontab entries:
 
     0 13 * * * dst-wrapper --is-std command_to_run ...
     0 14 * * * dst-wrapper --is-dst command_to_run ...
+
+An alternative approach is to use the C<--sleep-if-dst> option. In
+this case only one crontab entry is needed, the one for standard time:
+
+    0 13 * * * dst-wrapper --sleep-if-dst command_to_run ...
+
+If DST is in effect, then C<dst-wrapper> will sleep for an hour. Note
+that a reboot during the sleep time or a accident kill of the wrapper
+script would cause the cron job to not run.
 
 For additional debugging use C<--debug>, which will show if and why
 the command is or is not running.
