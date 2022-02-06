@@ -1256,6 +1256,7 @@ sub parse_test_report {
 			|| m{config_args=.*-Dsitearch=/usr/local/lib/perl5/site_perl/mach} # FreeBSD version, new, "mach"
 			|| m{DEBPKG:debian/mod_paths} # Debian version
 			|| m{uname=.*\.centos\.org} # CentOS7 version
+			|| m{uname=.*\.rockylinux\.org} # Rocky 8.5 version
 			|| m{(Fedora|RHEL) Patch\d+:} # RH/Fedora/CentOS version
 		       ) {
 			$maybe_system_perl = 0;
@@ -2161,7 +2162,7 @@ sub rough_pv_os_analysis {
 		} elsif ($entry->{archname} =~ m{ 3\.10\.0-.*\.el7\.}) {
 		    $arch_os_version = 'centos7'; # 'CentOS7';
 		} elsif ($entry->{archname} =~ m{ 4\.18\.0-.*\.el8[._]}) {
-		    $arch_os_version = 'centos8'; # 'CentOS8';
+		    $arch_os_version = 'centos8'; # 'CentOS8'; --- but may be also rocky 8.5
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
