@@ -1192,7 +1192,7 @@ sub parse_test_report {
 			 || /mkdir .*: No space left on device $at_source_qr/ # from EU::Command
 			 || m{/usr/bin/ld:.*: No space left on device} # seen in Alien::MuPDF
 			 || /\Qout of disk space?/ # seen in Gtk2 test suite
-			 || m{can't copy.*: No space left on device} # seen in a Module::Build::Base using module
+			 || m{can't copy.*: No space left on device}i # seen in a Module::Build::Base using module; also in Slovo-Plugin-Prodan
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
