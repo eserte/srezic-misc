@@ -2183,7 +2183,7 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'buster'; # 'Debian/buster?';
 		} elsif ($entry->{archname} =~ m{ 5\.3\.0-(24|40)-}) {
 		    $arch_os_version = 'eoan'; # 'Ubuntu 19.10?';
-		} elsif ($entry->{archname} =~ m{ 5\.4\.0-33-}) {
+		} elsif ($entry->{archname} =~ m{ 5\.4\.0-(33|37|73|88|90|96)-}) {
 		    $arch_os_version = 'focal'; # 'Ubuntu 20.04?';
 		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0|5\.6\.0|5\.10\.0)-}) {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
