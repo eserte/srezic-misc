@@ -486,7 +486,7 @@ for my $fl (@fl) {
 	or die "Cannot open filelist $fl: $!";
     while(<$fh>) {
 	chomp;
-	push @dist_or_mods, split / /;
+	push @dist_or_mods, $_;
     }
 }
 if (!@dist_or_mods) {
@@ -2560,7 +2560,7 @@ used.
 
 =item -fl I<file>
 
-Specify a file with the listed distributions/modules. May be specified multiple times.
+Specify a file with the listed distributions/modules, one per line. May be specified multiple times.
 
 =item -builddirreuse
 
