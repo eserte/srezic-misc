@@ -204,7 +204,7 @@ sub run_smoker ($$$) {
     } else {
 	warn "Need to use a temporary file...\n";
 	require File::Temp;
-	my($tmpfh,$tmpfile) = File::Temp::tempfile("csmw3_" . strftime("%Y%m%d_%H%M%S", localtime) . '_XXXXXXXX', UNLINK => 1);
+	my($tmpfh,$tmpfile) = File::Temp::tempfile("csmw3_" . strftime("%Y%m%d_%H%M%S", localtime) . '_XXXXXXXX', TMPDIR => 1, UNLINK => 1);
 	print $tmpfh join("\n", @list_of_dists), "\n";
 	close $tmpfh
 	    or die "Can't write temporary file: $!";
