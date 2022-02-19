@@ -184,7 +184,7 @@ sub run_smoker ($$$) {
     $cmd .= q{ -mirrorurl } . $mirror_url;
     $cmd .= _args_minbuilddiravail();
     $cmd .= _args_pv();
-    if ($^O eq 'MSWin32' || do {
+    if (($^O eq 'MSWin32' || do {
 	my $argmax = eval { POSIX::sysconf(_SC_ARG_MAX) };
 	if ($@ || !$argmax) {
 	    $argmax = 4096;
@@ -197,9 +197,10 @@ sub run_smoker ($$$) {
 	    warn "cmdline probably too long: assumed length=$assumed_cmdline_length, _SC_ARG_MAX=$argmax\n";
 	}
 	$fits;
-    }) {
+    }) && eval { require String::ShellQuote; 1 }) {
 	$cmd .= q{ -- };
-	$cmd .= "@list_of_dists";
+	my $list_of_dists_quoted = String::ShellQuote::shell_quote(@list_of_dists);
+	$cmd .= $list_of_dists_quoted;
     } else {
 	warn "Need to use a temporary file...\n";
 	require File::Temp;
