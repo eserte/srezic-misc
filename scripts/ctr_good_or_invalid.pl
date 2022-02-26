@@ -2716,7 +2716,7 @@ sub get_cached_github_issue_title {
 		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
 		    $db{$url} = $title;
 		} else {
-		    die "Cannot get URL $url: " . $resp->status_message . "\n";
+		    die "Cannot get URL $url: " . $resp->dump . "\n";
 		}
 	    }
 	};
@@ -2759,7 +2759,7 @@ sub get_cached_gitlab_issue_title {
 		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
 		    $db{$url} = $title;
 		} else {
-		    die "Cannot get URL $url: " . $resp->status_message . "\n";
+		    die "Cannot get URL $url: " . $resp->dump . "\n";
 		}
 	    }
 	};
