@@ -48,7 +48,6 @@ my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", no
 					{ pair => '5.28.2:5.30.3',     important => 0 },
 					{ pair => '5.28.1:5.28.2',     important => 0 },
 					{ pair => '5.26.3:5.28.2',     important => 0 },
-					{ pair => '5.26.2:5.26.3',     important => 0 },
 				       );
 
 # Patterns for report analysis
