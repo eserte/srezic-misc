@@ -40,6 +40,7 @@ use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
 					{ pair => '5.34.1:5.35.10',    important => 1 },
+					{ pair => '5.34.0:5.35.10',    important => 1 },
 					{ pair => '5.35.9:5.35.10',    important => 1 },
 					{ pair => '5.34.0:5.34.1',     important => 1 },
 					{ pair => '5.32.1:5.34.0',     important => 0 },
