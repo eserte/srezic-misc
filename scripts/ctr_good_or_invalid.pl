@@ -142,6 +142,9 @@ if (0 && @annotate_files) {
 }
 
 if ($auto_good) {
+    if ($show_only) {
+	die "--auto-good cannot be used together with --show-only";
+    }
     # just to check if X11::Protocol etc. is available
     is_user_at_computer();
 }
@@ -212,7 +215,7 @@ my $maybe_good_rx = $only_pass_is_good ? qr{/(unknown|na)\.} : undef;
 
 my $auto_good_rx;
 my $confirmed_failure_rx;
-if ($auto_good_file) {
+if ($auto_good && $auto_good_file) {
     $auto_good_rx = read_auto_good_file($auto_good_file);
     #if ($auto_good_rx) { warn "DEBUG: auto_good_rx=$auto_good_rx\n" }
 } elsif ($confirmed_failure_file) {
