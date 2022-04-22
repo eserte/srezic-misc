@@ -39,9 +39,9 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.34.1:5.35.10',    important => 1 },
-					{ pair => '5.34.0:5.35.10',    important => 1 },
-					{ pair => '5.35.9:5.35.10',    important => 1 },
+					{ pair => '5.34.1:5.35.11',    important => 1 },
+					{ pair => '5.34.0:5.35.11',    important => 1 },
+					{ pair => '5.35.10:5.35.11',   important => 1 },
 					{ pair => '5.34.0:5.34.1',     important => 1 },
 					{ pair => '5.32.1:5.34.0',     important => 0 },
 					{ pair => '5.32.0:5.32.1',     important => 0 },
@@ -252,7 +252,7 @@ for my $file (@files) {
 	$is_good = 1;
     }
 
-    if ($is_good) {
+    if ($is_good && !$show_only) {
 	move $file, $good_directory
 	    or die "Cannot move $file to $good_directory: $!";
     } else {
