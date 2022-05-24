@@ -12,7 +12,7 @@ sub debug ($);
 sub guess_project_from_git ();
 
 sub usage () {
-    die "usage: $0 [--debug] [--travis] [--appveyor] [--github-actions] [--commit SHA1] [--wait seconds] [--timeout seconds] user/repo\n";
+    die "usage: $0 [--debug] [--travis] [--appveyor] [--github-actions [--use-gh|--no-use-gh]] [--commit SHA1] [--wait seconds] [--timeout seconds] user/repo\n";
 }
 
 my $debug;
@@ -24,6 +24,7 @@ my $wait_seconds = 15;
 my $timeout = 10;
 my $github_api_limit_seconds = 60; # do at most one request per minute because of rate limiting
 my $use_travis_v3 = 1;
+my $use_gh = undef; # undef mean: maybe
 GetOptions(
 	   "d|debug" => \$debug,
 	   "travis!" => \$check_travis,
@@ -32,6 +33,7 @@ GetOptions(
 	   "commit=s" => \$commit,
 	   "wait=i" => \$wait_seconds,
 	   "t|timeout=i" => \$timeout,
+	   "use-gh!" => \$use_gh,
 	  )
     or usage;
 my $repo = shift || guess_project_from_git
@@ -56,6 +58,10 @@ if (!$check_travis && !$check_appveyor && !$check_github_actions) {
 
 if (!$check_travis && !$check_appveyor && !$check_github_actions) {
     die "No CI system detected.\n";
+}
+
+if ($check_github_actions && !defined $use_gh) {
+    $use_gh = is_in_path('gh') ? 1 : 0;
 }
 
 my $success = check_ci $repo, commit => $commit, wait => $wait_seconds;
@@ -109,18 +115,51 @@ exit($success ? 0 : 1);
 
 	######################################################################
 	# Github Actions
-	my $github_actions_rooturl = "https://api.github.com/repos/$repo/actions";
 	my $last_github_api_access;
-	my $get_current_github_actions_run_id = sub {
-	    my $github_actions_runs_url = "$github_actions_rooturl/runs";
-	    debug "About to get from $github_actions_runs_url";
-	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
-	    # Theoretically, this request should also be used to set $last_github_api_access, but it's called only once per script run...
-	    if (!$res->is_success) {
-		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
+	my $do_github_api_call = sub ($@) {
+	    my($rel_api_url, %opts) = @_;
+	    my $do_rate_check = delete $opts{do_rate_check};
+	    die "Unhandled options: " . join(" ", %opts) if %opts;
+
+	    my $json;
+	    if ($use_gh) {
+		my @cmd = ('gh', 'api', $rel_api_url);
+		debug "About to run '@cmd'";
+		open my $fh, '-|', @cmd
+		    or do {
+			$mark_as_failed->('github actions', "Error running '@cmd': $!");
+			return;
+		    };
+		local $/;
+		$json = <$fh>;
+		close $fh
+		    or do {
+			$mark_as_failed->('github actions', "Error running '@cmd': $!");
+			return;
+		    };
+		debug "Fetch from github actions via gh successful";
+	    } else {
+		if (defined $last_github_api_access && time < $last_github_api_access + $github_api_limit_seconds) {
+		    debug "Limit accesses against github API to avoid rate limit errors";
+		    return undef;
+		}
+		my $url = "https://api.github.com/$rel_api_url";
+		debug "About to get from $url";
+		my $res = $ua->get($url, Accept => 'application/vnd.github.v3+json');
+		# Theoretically, this request should also be used to set $last_github_api_access, but it's called only once per script run...
+		if ($do_rate_check && $res->code == 403 && $res->status_line =~ /rate limit exceeded/i) {
+		    debug "Rate limit exceeded while fetching from github actions";
+		    return undef;
+		} elsif (!$res->is_success) {
+		    $mark_as_failed->('github actions', "Request to $url failed: " . $res->status_line);
+		}
+		debug "Fetch from github actions successful";
+		$json = $res->decoded_content(charset => 'none');
 	    }
-	    debug "Fetch from github actions successful";
-	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    return JSON::XS::decode_json($json);
+	};
+	my $get_current_github_actions_run_id = sub {
+	    my $data = $do_github_api_call->("repos/$repo/actions/runs");
 	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
 		if ($workflow_run->{'head_sha'} eq $current_commit_id) {
 		    return $workflow_run->{'id'};
@@ -131,22 +170,7 @@ exit($success ? 0 : 1);
 	};
 	my $get_current_github_actions_jobs = sub {
 	    my($run_id) = @_;
-	    if (defined $last_github_api_access && time < $last_github_api_access + $github_api_limit_seconds) {
-		debug "Limit accesses against github API to avoid rate limit errors";
-		return undef;
-	    }
-	    my $github_actions_runs_url = "$github_actions_rooturl/runs/$run_id/jobs";
-	    debug "About to get from $github_actions_runs_url";
-	    my $res = $ua->get($github_actions_runs_url, Accept => 'application/vnd.github.v3+json');
-	    $last_github_api_access = time;
-	    if ($res->code == 403 && $res->status_line =~ /rate limit exceeded/i) {
-		debug "Rate limit exceeded while fetching from github actions";
-		return undef;
-	    } elsif (!$res->is_success) {
-		$mark_as_failed->('github actions', "Request to $github_actions_runs_url failed: " . $res->status_line);
-	    }
-	    debug "Fetch from github actions successful";
-	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
+	    my $data = $do_github_api_call->("repos/$repo/actions/runs/$run_id/jobs", do_rate_check => 1);
 	    return $data;
 	};
 
@@ -439,6 +463,42 @@ sub guess_project_from_git () {
     warn "Cannot guess project from current directory...\n";
     undef;
 }
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/slaven_rezic/src/srezic-repository 
+# REPO MD5 4be1e368fea0fa9af4e89256a9878820
+sub is_in_path {
+    my($prog) = @_;
+    require File::Spec;
+    if (File::Spec->file_name_is_absolute($prog)) {
+	if ($^O eq 'MSWin32') {
+	    return $prog       if (-f $prog && -x $prog);
+	    return "$prog.bat" if (-f "$prog.bat" && -x "$prog.bat");
+	    return "$prog.com" if (-f "$prog.com" && -x "$prog.com");
+	    return "$prog.exe" if (-f "$prog.exe" && -x "$prog.exe");
+	    return "$prog.cmd" if (-f "$prog.cmd" && -x "$prog.cmd");
+	} else {
+	    return $prog if -f $prog and -x $prog;
+	}
+    }
+    require Config;
+    %Config::Config = %Config::Config if 0; # cease -w
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"     if (-f "$_\\$prog" && -x "$_\\$prog");
+	    return "$_\\$prog.bat" if (-f "$_\\$prog.bat" && -x "$_\\$prog.bat");
+	    return "$_\\$prog.com" if (-f "$_\\$prog.com" && -x "$_\\$prog.com");
+	    return "$_\\$prog.exe" if (-f "$_\\$prog.exe" && -x "$_\\$prog.exe");
+	    return "$_\\$prog.cmd" if (-f "$_\\$prog.cmd" && -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
 
 =head1 BUGS
 
