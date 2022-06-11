@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2016,2017,2020 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016,2017,2020,2022 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -16,8 +16,9 @@
 #
 #     sudo apt-get install libmagickcore-dev
 #
-# Note that on some systems (e.g. seen on Ubuntu 20.04) the test
-# suite might popup windows which are required to close manually.
+# Note that on some systems (e.g. seen on Ubuntu 20.04,
+# debian:stretch...) the test suite might popup windows which are
+# required to close manually.
 
 use strict;
 use File::Basename qw(dirname);
@@ -36,6 +37,8 @@ my %accepted_test_failures = (
 			      '6.9.7.4+dfsg' => {
 						 't/tiff/read.t' => 2,
 						 't/tiff/write.t' => 4,
+						 't/read.t'       => 1,
+						 't/write.t'      => 2,
 						},
 			      '6.9.10.23+dfsg' => {
 						   't/tiff/read.t'  => 2,
