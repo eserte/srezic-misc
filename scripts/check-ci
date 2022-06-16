@@ -408,6 +408,8 @@ exit($success ? 0 : 1);
 			    for my $job (@{ $jobs_data->{jobs} || [] }) {
 				if ($job->{status} ne 'completed') {
 				    $running++;
+				} elsif ($job->{conclusion} eq 'skipped') {
+				    # ignore skipped jobs
 				} elsif ($job->{conclusion} eq 'success') {
 				    $successful++;
 				} else {
