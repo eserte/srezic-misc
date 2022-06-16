@@ -174,8 +174,10 @@ exit($success ? 0 : 1);
 	    return $run_data;
 	};
 	my $get_current_github_actions_jobs = sub {
-	    my($run_id) = @_;
-	    my $jobs_data = $do_github_api_call->("repos/$repo/actions/runs/$run_id/jobs", do_rate_check => 1);
+	    my($run_id, %opts) = @_;
+	    my $do_rate_check = delete $opts{do_rate_check};
+	    die "Unhandled options: " . join(" ", %opts) if %opts;
+	    my $jobs_data = $do_github_api_call->("repos/$repo/actions/runs/$run_id/jobs", do_rate_check => $do_rate_check);
 	    return $jobs_data;
 	};
 
@@ -390,23 +392,36 @@ exit($success ? 0 : 1);
 			}
 			last DO_GITHUB_ACTIONS;
 		    } else {
-			my $jobs_data = $get_current_github_actions_jobs->($github_actions_run_id);
-			if (!$jobs_data) {
+			my $get_job_statuses = sub {
+			    my(%opts) = @_;
+			    my $do_rate_check = delete $opts{do_rate_check};
+			    die "Unhandled options: " . join(" ", %opts) if %opts;
+
+			    my $jobs_data = $get_current_github_actions_jobs->($github_actions_run_id, do_rate_check => $do_rate_check);
+			    if (!$jobs_data) {
+				return (undef, undef, undef);
+			    }
+
+			    my $successful = 0;
+			    my $failures = 0;
+			    my $running = 0;
+			    for my $job (@{ $jobs_data->{jobs} || [] }) {
+				if ($job->{status} ne 'completed') {
+				    $running++;
+				} elsif ($job->{conclusion} eq 'success') {
+				    $successful++;
+				} else {
+				    $failures++;
+				}
+			    }
+			    ($successful, $failures, $running);
+			};
+			my($successful, $failures, $running) = $get_job_statuses->(do_rate_check => 1);
+			if (!defined $successful) {
 			    print STDERR "Status at github actions: unknown\n"; # maybe 403 rate limit exceeded
 			    last DO_GITHUB_ACTIONS;
 			}
-			my $successful = 0;
-			my $failures = 0;
-			my $running = 0;
-			for my $job (@{ $jobs_data->{jobs} || [] }) {
-			    if ($job->{status} ne 'completed') {
-				$running++;
-			    } elsif ($job->{conclusion} eq 'success') {
-				$successful++;
-			    } else {
-				$failures++;
-			    }
-			}
+
 			my $run_completed;
 			if ($running) {
 			    $run_completed = 0;
@@ -426,6 +441,10 @@ exit($success ? 0 : 1);
 				    $run_completed = 1;
 				}
 			    }
+			}
+			if ($run_completed) {
+			    # to prevent a possible race condition it's necessary to check the job statuses again (and now without rate check because we're interested in the outcome)
+			    ($successful, $failures, $running) = $get_job_statuses->(do_rate_check => 0);
 			}
 			print STDERR "Status at github actions: " .
 			    $maybe_colored->("running",    $running,    "yellow")." ".
