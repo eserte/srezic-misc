@@ -419,7 +419,7 @@ exit($success ? 0 : 1);
 				my $run_status = $run_data->{status}||'';
 				if ($run_status eq 'completed') {
 				    $run_completed = 1;
-				} elsif ($run_status eq 'in_progress') {
+				} elsif ($run_status =~ m{^(?:in_progress|queued)$}) {
 				    $run_completed = 0;
 				} else {
 				    warn "Unknown run status '$run_data->{status}', assume completed.\n";
