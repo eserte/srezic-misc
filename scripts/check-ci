@@ -168,10 +168,15 @@ exit($success ? 0 : 1);
 	    debug "Workflow run for commit $current_commit_id not found at github actions";
 	    undef;
 	};
+	my $get_current_github_actions_run = sub {
+	    my($run_id) = @_;
+	    my $run_data = $do_github_api_call->("repos/$repo/actions/runs/$run_id");
+	    return $run_data;
+	};
 	my $get_current_github_actions_jobs = sub {
 	    my($run_id) = @_;
-	    my $data = $do_github_api_call->("repos/$repo/actions/runs/$run_id/jobs", do_rate_check => 1);
-	    return $data;
+	    my $jobs_data = $do_github_api_call->("repos/$repo/actions/runs/$run_id/jobs", do_rate_check => 1);
+	    return $jobs_data;
 	};
 
 	######################################################################
@@ -402,13 +407,33 @@ exit($success ? 0 : 1);
 				$failures++;
 			    }
 			}
+			my $run_completed;
+			if ($running) {
+			    $run_completed = 0;
+			} else {
+			    my $run_data = $get_current_github_actions_run->($github_actions_run_id);
+			    if (!$run_data) {
+				# Don't know, maybe 403 rate limit exceeded, assume not completed
+				$run_completed = 0;
+			    } else {
+				my $run_status = $run_data->{status}||'';
+				if ($run_status eq 'completed') {
+				    $run_completed = 1;
+				} elsif ($run_status eq 'in_progress') {
+				    $run_completed = 0;
+				} else {
+				    warn "Unknown run status '$run_data->{status}', assume completed.\n";
+				    $run_completed = 1;
+				}
+			    }
+			}
 			print STDERR "Status at github actions: " .
 			    $maybe_colored->("running",    $running,    "yellow")." ".
 			    $maybe_colored->("successful", $successful, "green")." ".
 			    $maybe_colored->("failures",   $failures,   "red")."\n";
 			if ($failures) {
 			    $mark_as_failed->('github actions', "At least one job failed. See https://github.com/$repo/actions for more information.");
-			} elsif ($running == 0) {
+			} elsif ($run_completed) {
 			    $mark_as_finished->('github actions');
 			}
 		    }
