@@ -854,6 +854,11 @@ sub parse_test_report {
 			$add_analysis_tag->('prereq version fail');
 		    }
 		} elsif (
+			 /Can't locate object method ".*?" via package "(.*?)" $at_source_qr/
+			) {
+		    $prereq_fails{$1} = 1;
+		    $add_analysis_tag->('prereq version fail');
+		} elsif (
 			 /Type of arg \d+ to (?:keys|each) must be hash(?: or array)? \(not (?:hash element|private (?:variable|array)|subroutine entry)\)/ ||
 			 /Type of arg \d+ to (?:push|unshift) must be array \(not (?:array|hash) element\)/ ||
 			 /Type of arg \d+ to (?:splice) must be array \(not null operation\)/
@@ -1827,7 +1832,12 @@ sub set_currfile {
 			       'Test-Simple problem' => 'testsimple',
 			       'mojolicious' => 'mojolicious',
 			      );
-	my @scenarios = map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () } keys %analysis_tags;
+	my @scenarios = do {
+	    my %seen;
+	    grep { !$seen{$_}++ }
+	    map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () }
+	    keys %analysis_tags
+	};
 	push @scenarios, qw(locale hashrandomization generic);
 
 	my $get_scenario_cmd = sub {
