@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2015,2016,2017 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2015,2016,2017,2022 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,6 +14,7 @@
 
 use strict;
 use Config;
+use FindBin;
 use File::Find;
 use Getopt::Long;
 
@@ -166,7 +167,7 @@ sub has_cpan_smoke_modules_cmd {
     if (is_in_path('cpan_smoke_modules')) {
 	$cpan_smoke_modules_cmd = 'cpan_smoke_modules';
     } else {
-	my $candidate = "$ENV{HOME}/src/srezic-misc/scripts/cpan_smoke_modules";
+	my $candidate = "$FindBin::RealBin/cpan_smoke_modules";
 	if (-x $candidate) {
 	    $cpan_smoke_modules_cmd = $candidate;
 	}
