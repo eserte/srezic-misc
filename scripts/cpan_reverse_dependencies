@@ -80,10 +80,10 @@ Possible use cases:
 
 * Just list reverse dependencies:
 
-    ~/src/perl/CPAN-Testers-ParallelSmoker/utils/cpan_dist_to_mod.pl $(cpan-reverse-dependencies.pl Test::Prereq)
+    ~/src/perl/CPAN-Testers-ParallelSmoker/utils/cpan_dist_to_mod.pl $(cpan_reverse_dependencies Test::Prereq)
 
 * Smoke them:
 
-    cpan_smoke_modules $(~/src/perl/CPAN-Testers-ParallelSmoker/utils/cpan_dist_to_mod.pl $(cpan-reverse-dependencies.pl Test::Prereq))
+    cpan_smoke_modules $(~/src/perl/CPAN-Testers-ParallelSmoker/utils/cpan_dist_to_mod.pl $(cpan_reverse_dependencies Test::Prereq))
 
 =cut
