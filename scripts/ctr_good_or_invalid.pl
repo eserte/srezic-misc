@@ -1248,6 +1248,8 @@ sub parse_test_report {
 				# skip newlines and dashes
 			} elsif (/^Output\s+from\s+'.*(?:make(\.exe)?|Build)\s+test':/) {
 				# skip
+			} elsif (/.* -MAlien::Build::MM=cmd -e test/) {
+				# skip
 			} elsif (defined $program_output->{content}) {
 				# collect just one line
 			    $program_output->{skip_collector} = 1;
