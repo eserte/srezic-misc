@@ -39,7 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.36.0:5.37.4',     important => 1 },
+					{ pair => '5.36.0:5.37.5',     important => 1 },
+					{ pair => '5.37.4:5.37.5',     important => 1 },
 					{ pair => '5.34.1:5.36.0',     important => 1 },
 					{ pair => '5.34.0:5.34.1',     important => 1 },
 					{ pair => '5.32.1:5.34.0',     important => 0 },
@@ -1005,6 +1006,14 @@ sub parse_test_report {
 			 /\Q# Error: The META.yml file of this distribution could not be parsed by the version of CPAN::Meta::YAML.pm CPANTS is using./
 			) {
 		    $add_analysis_tag->('meta.yml spec');
+		} elsif (
+			 m{^no matching files in listing at .*/Alien/Build/}
+			) {
+		    $add_analysis_tag->('alien download failed');
+		} elsif (
+			 m{^external command failed at .*/Alien/Build/}
+			) {
+		    $add_analysis_tag->('alien build failed');
 		} elsif (
 			 /^\s*#\s+Failed test '.*'$/ ||
 			 /^\s*#\s+Failed test at .* line \d+\.$/ ||
