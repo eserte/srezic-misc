@@ -1220,9 +1220,13 @@ sub parse_test_report {
 		    $add_analysis_tag->('killed harness');
 		} elsif (
 			 /Fatal error: .*: No space left on device/ # from gcc
+		         || /\branlib: .*: No space left on device/ # from ranlib; seen in Alien::ffmpeg
+			 || /\bar: .*: No space left on device/ # from ar; seen in Alien::ffmpeg
 			 || /ERROR: .*: No space left on device/ # from EUMM
 			 || /mkdir .*: No space left on device $at_source_qr/ # from EU::Command
 			 || m{/usr/bin/ld:.*: No space left on device} # seen in Alien::MuPDF
+			 || /fatal error: error writing to .*: No space left on device/ # seen in Alien::ffmpeg
+		         || /\binstall: error writing .*: No space left on device/ # from install; seen in Alien::ffmpeg
 			 || /\Qout of disk space?/ # seen in Gtk2 test suite
 			 || m{can't copy.*: No space left on device}i # seen in a Module::Build::Base using module; also in Slovo-Plugin-Prodan
 			) {
