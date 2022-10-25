@@ -1433,7 +1433,7 @@ sub get_annotation_info {
 			$annotation .= " ($subject)";
 			$changed = 1;
 		    }
-		} elsif ($annotation =~ m{(http\S+/github.com/\S+/issues/\S+)}) {
+		} elsif ($annotation =~ m{(http\S+/github.com/\S+/(?:issues|pull)/\S+)}) {
 		    my $title = get_cached_github_issue_title($1);
 		    if (defined $title) {
 			$annotation .= " ($title)";
@@ -2737,10 +2737,12 @@ sub get_subject_from_rt {
     undef;
 }
 
+# note: works also for GitHub pulls
 sub get_cached_github_issue_title {
     my($url) = @_;
     my $title;
     if ($url =~ s{/github.com/}{/api.github.com/repos/}) {
+	$url =~ s{(/api.github.com/repos/[^/]+/[^/]+/pull)/}{$1s/}; # pull -> pulls
 	eval {
 	    require DB_File;
 	    require Fcntl;
