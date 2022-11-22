@@ -1226,6 +1226,7 @@ sub parse_test_report {
 		         || /\binstall: error writing .*: No space left on device/ # from install; seen in Alien::ffmpeg
 			 || /\Qout of disk space?/ # seen in Gtk2 test suite
 			 || m{can't copy.*: No space left on device}i # seen in a Module::Build::Base using module; also in Slovo-Plugin-Prodan
+		         || /\bcp: error copying .* to .*: No space left on device/ # seen in Kephra
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
