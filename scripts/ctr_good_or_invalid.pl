@@ -1460,6 +1460,8 @@ sub get_annotation_info {
 }
 
 sub set_currfile {
+    clear_ui();
+
     $currfile = $files[$currfile_i];
     $mw->title("Loading " . basename($currfile) . "...");
     $currfile_st = $currfile_i + 1;
@@ -1957,6 +1959,13 @@ sub set_currfile {
 	warn "$delta $title...\n";
 	$next_b->invoke;
     }
+}
+
+# Unset some display elements, as set_currfile() may take long.
+sub clear_ui {
+    $distribution_age_l->configure(-text => '...', -fg => 'black');
+    $modtime = '...';
+    $mw->update;
 }
 
 {
