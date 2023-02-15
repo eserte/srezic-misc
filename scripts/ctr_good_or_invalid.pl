@@ -1229,6 +1229,7 @@ sub parse_test_report {
 		         || /\bcp: error copying .* to .*: No space left on device/ # seen in Kephra
 		         || /\bcp: cannot create directory .*: No space left on device/ # seen in Alien-Libtensorflow
 			 || m{Error close on '.*': No space left on device} # seen during an alien build of Alien-Boost-Headers
+			 || m{\QError in tempdir() using \E.*: Could not create directory .*: No space left on device} # seen in Alien-Nodejs
 			) {
 		    $add_analysis_tag->('!!!no space left on device!!!');
 		} elsif (
