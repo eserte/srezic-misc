@@ -556,7 +556,12 @@ sub filter_cpu_intensive_at_night {
 	    if (!open my $fh, $filter_file) {
 		warn "WARNING: --filter by_file specified, but $filter_file cannot be loaded.\n";
 	    } else {
-		chomp(my @dists = <$fh>);
+		my @dists;
+		while(<$fh>) {
+		    chomp;
+		    s/\s+#.*//; # ignore comments
+		    push @dists, $_;
+		}
 		if (@dists) {
 		    $filter_rx = '/(?:' . join('|', @dists) . ')';
 		    $filter_rx = qr{$filter_rx};
