@@ -560,6 +560,7 @@ sub filter_cpu_intensive_at_night {
 		while(<$fh>) {
 		    chomp;
 		    s/\s+#.*//; # ignore comments
+		    next if $_ eq '';
 		    push @dists, $_;
 		}
 		if (@dists) {
