@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2013,2014,2015,2017,2018,2021 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2013,2014,2015,2017,2018,2021,2023 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -540,6 +540,39 @@ sub filter_cpu_intensive_at_night {
 	return 0;
     }
     return 1;
+}
+
+{
+    my $filter_config_checked;
+    my $filter_rx;
+
+    sub filter_by_file {
+	my(%opt) = @_;
+	my $path = delete $opt{path}; die "path is mandatory" if !defined $path;
+	die "Unhandled options: " . join(" ", %opt) if %opt;
+
+	if (!$filter_config_checked) {
+	    my $filter_file = "$ENV{HOME}/.config/cpan_recent_uploads2_filter";
+	    if (!open my $fh, $filter_file) {
+		warn "WARNING: --filter by_file specified, but $filter_file cannot be loaded.\n";
+	    } else {
+		chomp(my @dists = <$fh>);
+		if (@dists) {
+		    $filter_rx = '/(?:' . join('|', @dists) . ')';
+		    $filter_rx = qr{$filter_rx};
+		} else {
+		    warn "INFO: no dists found in $filter_file.\n";
+		}
+	    }
+	    $filter_config_checked = 1;
+	}
+
+	return 1 if !defined $filter_rx;
+
+	return 0 if $path =~ $filter_rx;
+
+	return 1;
+    }
 }
 
 # REPO BEGIN
