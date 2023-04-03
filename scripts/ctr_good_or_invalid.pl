@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.36.0:5.37.9',     important => 1 },
-					{ pair => '5.37.8:5.37.9',     important => 1 },
+					{ pair => '5.36.0:5.37.10',    important => 1 },
+					{ pair => '5.37.9:5.37.10',    important => 1 },
 					{ pair => '5.34.1:5.36.0',     important => 1 },
 					{ pair => '5.32.1:5.34.1',     important => 0 },
 					{ pair => '5.30.3:5.32.1',     important => 0 },
