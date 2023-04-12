@@ -161,7 +161,9 @@ exit($success ? 0 : 1);
 	my $get_current_github_actions_run_id = sub {
 	    my $data = $do_github_api_call->("repos/$repo/actions/runs");
 	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
-		if ($workflow_run->{'head_sha'} eq $current_commit_id) {
+		if ($workflow_run->{'head_sha'} eq $current_commit_id ||
+		    $workflow_run->{'head_branch'} eq $current_commit_id
+		   ) {
 		    return $workflow_run->{'id'};
 		}
 	    }
