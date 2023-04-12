@@ -12,7 +12,12 @@ sub debug ($);
 sub guess_project_from_git ();
 
 sub usage () {
-    die "usage: $0 [--debug] [--travis] [--appveyor] [--github-actions [--use-gh|--no-use-gh]] [--commit SHA1] [--wait seconds] [--timeout seconds] [--no-loop] user/repo\n";
+    die "usage: $0
+                   [--travis] [--appveyor] [--github-actions [--use-gh|--no-use-gh] [--filter-github-workflow-rx regexp]]
+                   [--commit SHA1]
+                   [--wait seconds] [--no-loop] [--timeout seconds]
+                   [--debug]
+                   [user/repo]\n";
 }
 
 my $debug;
@@ -26,6 +31,7 @@ my $github_api_limit_seconds = 60; # do at most one request per minute because o
 my $use_travis_v3 = 1;
 my $use_gh = undef; # undef mean: maybe
 my $do_loop = 1;
+my $filter_github_workflow_rx;
 GetOptions(
 	   "d|debug" => \$debug,
 	   "travis!" => \$check_travis,
@@ -36,6 +42,7 @@ GetOptions(
 	   "t|timeout=i" => \$timeout,
 	   "use-gh!" => \$use_gh,
 	   "loop!" => \$do_loop,
+	   "filter-github-workflow-rx=s" => \$filter_github_workflow_rx,
 	  )
     or usage;
 my $repo = shift || guess_project_from_git
@@ -64,6 +71,10 @@ if (!$check_travis && !$check_appveyor && !$check_github_actions) {
 
 if ($check_github_actions && !defined $use_gh) {
     $use_gh = is_in_path('gh') ? 1 : 0;
+}
+
+if (defined $filter_github_workflow_rx) {
+    $filter_github_workflow_rx = qr{$filter_github_workflow_rx};
 }
 
 my $success = check_ci $repo, commit => $commit, wait => $wait_seconds;
@@ -163,6 +174,9 @@ exit($success ? 0 : 1);
 	my $get_current_github_actions_run_id = sub {
 	    my $data = $do_github_api_call->("repos/$repo/actions/runs");
 	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
+		if ($filter_github_workflow_rx) {
+		    next if $workflow_run->{path} !~ $filter_github_workflow_rx;
+		}
 		if ($workflow_run->{'head_sha'} eq $current_commit_id ||
 		    $workflow_run->{'head_branch'} eq $current_commit_id
 		   ) {
