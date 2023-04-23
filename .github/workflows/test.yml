@@ -34,6 +34,7 @@ jobs:
             cvs \
             rcs \
             libyaml-libyaml-perl libmodule-build-perl libipc-run-perl libfile-copy-recursive-perl libclass-std-perl
+        sudo apt-file update
 
         git clone https://github.com/eserte/travis-helper-cpan-pm.git
         ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
