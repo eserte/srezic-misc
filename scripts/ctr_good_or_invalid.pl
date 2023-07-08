@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.36.0:5.37.11',    important => 1 },
-					{ pair => '5.37.10:5.37.11',   important => 1 },
+					{ pair => '5.36.0:5.38.0',     important => 1 },
+					{ pair => '5.37.11:5.38.0',    important => 1 },
 					{ pair => '5.34.1:5.36.0',     important => 1 },
 					{ pair => '5.32.1:5.34.1',     important => 0 },
 					{ pair => '5.30.3:5.32.1',     important => 0 },
