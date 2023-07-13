@@ -36,11 +36,6 @@ in_directory {
 	# XXX maybe the user could be asked if continue with the rest?
     }
 
-    my $status = $doit->git_short_status(untracked_files => 'no');
-    if ($status ne '<') {
-	error "git-short-status suggests that a change is not safe anymore (git-short-status=$status)";
-    }
-
     $doit->system('git', 'add', @changed_files_in_last_commit);
     $doit->system('git', 'commit', '--amend', '--no-edit');
 } $doit->git_root;
