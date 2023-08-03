@@ -245,7 +245,7 @@ sub scenario_locale {
 	# (no message catalog for libc)
 	#
 	# LANGUAGE has even precedence over LC_ALL, it seems, so unset it.
-	my $non_en_locale = $^O eq 'freebsd' ? 'de_DE.ISO8859-1' : 'de_DE.UTF-8';
+	my $non_en_locale = $^O eq 'freebsd' && do { no warnings 'numeric', 'once'; require Config; $Config::Config{osvers} < 11 } ? 'de_DE.ISO8859-1' : 'de_DE.UTF-8';
 	my $cmd = $basecmd;
 	_scenario_cmd_expect_fail(\$cmd);
 	warn "env LC_ALL=$non_en_locale LANGUAGE= $cmd ...\n";
