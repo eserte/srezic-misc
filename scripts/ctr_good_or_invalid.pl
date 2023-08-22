@@ -39,7 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.38.0:5.39.1',     important => 1 },
+					{ pair => '5.38.0:5.39.2',     important => 1 },
+					{ pair => '5.39.1:5.39.2',     important => 1 },
 					{ pair => '5.36.0:5.38.0',     important => 1 },
 					{ pair => '5.34.1:5.36.0',     important => 1 },
 					{ pair => '5.32.1:5.34.1',     important => 0 },
@@ -390,9 +391,9 @@ my $currfile_i = 0;
 my $currfile_st = '';
 my $currfile;
 my($currdist, $currversion);
-my $modtime;
 my $following_dists_text;
 
+my $modtime_l;
 my $prev_b;
 my $next_b;
 my $good_b;
@@ -402,7 +403,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 {
     my $f = $mw->Frame->pack(-fill => "x");
     $f->Label(-text => "Report created:")->pack(-side => "left");
-    $f->Label(-textvariable => \$modtime)->pack(-side => "left");
+    $modtime_l = $f->Label(-text => '...')->pack(-side => "left");
     $f->Label(-textvariable => \$following_dists_text)->pack(-side => "left");
     $all_good_b = $f->Button(-padx => 0, -pady => 0, -borderwidth => 1, -state => 'disabled', -text => "All good")->pack(-side => "left");
 
@@ -1478,7 +1479,7 @@ sub set_currfile {
     if ($parsed_report->{error}) {
 	$mw->messageBox(-icon => 'error', -message => "Can't open $currfile: $parsed_report->{error}");
 	warn "Can't open $currfile: $!";
-	$modtime = "N/A";
+	set_modtime_l(undef);
 	return;
     }
 
@@ -1506,7 +1507,7 @@ sub set_currfile {
 	$title = " (subject not parseable)";
     }
 
-    $modtime = scalar localtime ((stat($currfile))[9]);
+    set_modtime_l((stat($currfile))[9]);
 
     {
 	# fill "$following_dists_text" label
@@ -1966,8 +1967,27 @@ sub set_currfile {
 # Unset some display elements, as set_currfile() may take long.
 sub clear_ui {
     $distribution_age_l->configure(-text => '...', -fg => 'black');
-    $modtime = '...';
+    set_modtime_l(undef);
     $mw->update;
+}
+
+sub set_modtime_l {
+    my $modtime_epoch = shift;
+    my $text;
+    my $color;
+    if (defined $modtime_epoch) {
+	my $age = time - $modtime_epoch;
+	my $age_human = $age < 86400 ? sprintf("%.1fd", $age/86400) : int($age/86400).'d';
+	$text = POSIX::strftime("%F %T", localtime $modtime_epoch) . " ($age_human)";
+	$color = $age >= 14*86400 ? '#800000' :
+	         $age >=  7*86400 ? 'brown' :
+		 $age >=  3*86400 ? 'DarkGreen' :
+		 'DarkBlue';
+    } else {
+	$text = '...';
+	$color = 'black';
+    }
+    $modtime_l->configure(-text => $text, -fg => $color);
 }
 
 {
@@ -2237,12 +2257,12 @@ sub rough_pv_os_analysis {
 		} elsif ($entry->{archname} =~ m{ 5\.3\.0-(24|40)-}) {
 		    $arch_os_version = 'eoan'; # 'Ubuntu 19.10?';
 		} elsif ($entry->{archname} =~ m{ 5\.4\.0-(33|37|73|88|90|96|109)-} ||
-			 $entry->{archname} =~ m{ 5\.13\.0-(28)-}
+			 $entry->{archname} =~ m{ 5\.13\.0-(28|41)-}
 			) {
 		    $arch_os_version = 'focal'; # 'Ubuntu 20.04?';
 		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0|5\.6\.0|5\.10\.0)-}) {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
-		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|56)-}) {
+		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|46|56|76)-}) {
 		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
