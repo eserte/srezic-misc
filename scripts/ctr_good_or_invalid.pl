@@ -38,6 +38,8 @@ sub sort_by_example ($@);
 
 use constant USE_BETA_MATRIX => 0;
 
+use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2023-09-20";
+
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
 					{ pair => '5.38.0:5.39.2',     important => 1 },
 					{ pair => '5.39.1:5.39.2',     important => 1 },
@@ -2684,10 +2686,14 @@ sub get_cached_rt_subject {
 	if (exists $db{$url}) {
 	    $subject = $db{$url};
 	} else {
-	    warn "INFO: Not found in cache, try to fetch from $url...\n";
-	    $subject = get_subject_from_rt($url);
-	    if (defined $subject) {
-		$db{$url} = $subject;
+	    if (strftime("%FT%T", localtime) le SKIP_RT_ISSUE_FETCH_UNTIL) {
+		warn "WARNING: fetching RT issues is disabled until " . SKIP_RT_ISSUE_FETCH_UNTIL . "\n";
+	    } else {
+		warn "INFO: Not found in cache, try to fetch from $url...\n";
+		$subject = get_subject_from_rt($url);
+		if (defined $subject) {
+		    $db{$url} = $subject;
+		}
 	    }
 	}
     };
