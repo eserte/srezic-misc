@@ -38,7 +38,7 @@ sub sort_by_example ($@);
 
 use constant USE_BETA_MATRIX => 0;
 
-use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2023-09-20";
+use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2023-10-01";
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
 					{ pair => '5.38.0:5.39.2',     important => 1 },
