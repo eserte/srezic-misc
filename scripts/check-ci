@@ -98,6 +98,10 @@ exit($success ? 0 : 1);
 	    }
 	}
 
+	if ($check{'github actions'} && $repo !~ m{/}) {
+	    die "Repo '$repo' must be specified as owner/project.\n";
+	}
+
 	require LWP::UserAgent;
 	require JSON::XS;
 	require URI::Escape;
