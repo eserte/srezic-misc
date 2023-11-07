@@ -11,6 +11,7 @@ my $libdir;
 my $debug;
 my $with_cache;
 my $debian_method = 'dpkg_query';
+my @ignore_file_rxs;
 
 sub debug ($) { warn "DEBUG: $_[0]\n" if $debug }
 
@@ -128,14 +129,21 @@ GetOptions(
     "debug"    => \$debug,
     "with-cache" => \$with_cache,
     "debian-method=s" => \$debian_method,
+    'ignore-file-rx=s@' => \@ignore_file_rxs,
 )
-    or die "usage: $0 [--debug] [--with-cache] [--libdir libdir] [--debian-method apt_file_find|dpkg_query] [perldir]\n";
+    or die "usage: $0 [--debug] [--with-cache] [--libdir libdir] [--debian-method apt_file_find|dpkg_query] [--ignore-file-rx ...] [perldir]\n";
+
+for (@ignore_file_rxs) {
+    $_ = qr{$_};
+}
+
 if (!$libdir) {
     my $perldir = shift
 	or die "perldir?";
     $libdir = realpath "$perldir/lib";
 }
 my $real_libdir = realpath $libdir;
+
 
 my @do_unmemoize;
 if ($with_cache) {
@@ -158,11 +166,23 @@ if ($with_cache) {
     }
 }
 
+my $ignore_file_sub = sub ($) {
+    my $f = shift;
+    for my $rx (@ignore_file_rxs) {
+	if ($f =~ $rx) {
+	    debug "Ignore $f because of --ignore-file-rx $rx";
+	    return 1;
+	}
+    }
+    0;
+};
+
 my %sodeps;
 my %sorevdeps;
 if ($^O eq 'darwin') {
     find(sub {
 	     if (-f $_ && m{\.bundle$}) {
+		 return if $ignore_file_sub->($File::Find::name);
 		 debug "Check .bundle $File::Find::name...";
 		 open my $fh, '-|', 'otool', '-L', $File::Find::name
 		     or die $!;
@@ -191,6 +211,7 @@ if ($^O eq 'darwin') {
 } else {
     find(sub {
 	     if (-f $_ && m{\.so$}) {
+		 return if $ignore_file_sub->($File::Find::name);
 		 debug "Check .so $File::Find::name...";
 		 open my $fh, '-|', 'ldd', $File::Find::name
 		     or die $!;
@@ -300,6 +321,11 @@ Use an alternative library path than a given perl directory.
 Define the method for finding suitable packages for shared objects:
 either C<dpkg_query> for using L<dpkg-query(1)> (default), or
 C<apt_file_find> for using L<apt-file(1)>.
+
+=item C<< --ignore-file-rx I<rx> >>
+
+Specify a regular expression to ignore any matching C<.so> or
+C<.bundle> file. This option can be used multiple times.
 
 =back
 

@@ -18,17 +18,33 @@ SKIP: {
     skip "No INC candidates found", 1
 	if !@inc_candidates;
 
-    my %packages;
-    for my $inc (@inc_candidates) {
-	my @cmd = ($script, "--libdir", $inc);
-	ok(run(\@cmd, '>', \my $out), "@cmd runs ok");
-	chomp $out;
-	$packages{$_} = 1 for split /\n/, $out;
+    {
+	my %packages;
+	for my $inc (@inc_candidates) {
+	    my @cmd = ($script, "--libdir", $inc);
+	    ok(run(\@cmd, '>', \my $out), "@cmd runs ok");
+	    chomp $out;
+	    $packages{$_} = 1 for split /\n/, $out;
+	}
+
+	cmp_ok scalar(keys(%packages)), ">", 0, 'found at least one system package';
+
+	diag explain \%packages;
     }
 
-    cmp_ok scalar(keys(%packages)), ">", 0, 'found at least one system package';
+    {
+	my %packages;
+	for my $inc (@inc_candidates) {
+	    my @cmd = ($script, '--libdir', $inc, '--ignore-file-rx', '\.(so|bundle)$');
+	    ok(run(\@cmd, '>', \my $out), "@cmd runs ok");
+	    chomp $out;
+	    $packages{$_} = 1 for split /\n/, $out;
+	}
 
-    diag explain \%packages;
+	is_deeply \%packages, {}, '--ignore-file-rx ignored everything'
+	    or diag explain \%packages;
+	    
+    }
 }
 
 __END__
