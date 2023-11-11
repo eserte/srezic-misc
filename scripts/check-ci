@@ -60,10 +60,11 @@ if (!$check{"travis"} && !$check{"appveyor"} && !$check{"github actions"}) {
 	$check{"github actions"} = 1;
     } else {
 	# for "check-ci" or something else: check both if appropriate files exist
+	# but ignore any CI system explicitly disabled using --no-... option
 	chomp(my $rootdir = `git rev-parse --show-toplevel`);
-	$check{"travis"}   = -f "$rootdir/.travis.yml";
-	$check{"appveyor"} = -f "$rootdir/appveyor.yml" || -f "$rootdir/.appveyor.yml";
-	$check{"github actions"} = -d "$rootdir/.github/workflows" && bsd_glob("$rootdir/.github/workflows/*");
+	$check{"travis"}         = !defined $check{"travis"}         && -f "$rootdir/.travis.yml";
+	$check{"appveyor"}       = !defined $check{"appveyor"}       && -f "$rootdir/appveyor.yml" || -f "$rootdir/.appveyor.yml";
+	$check{"github actions"} = !defined $check{"github actions"} && -d "$rootdir/.github/workflows" && bsd_glob("$rootdir/.github/workflows/*");
     }
 }
 
