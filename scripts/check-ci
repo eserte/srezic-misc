@@ -321,7 +321,7 @@ exit($success ? 0 : 1);
 			if (!$travis_build) {
 			    if (!$is_failed{travis}) {
 				print STDERR "Status at travis:         cannot find commit $current_commit_id\n";
-				$mark_as_failed->('travis', "Cnnot find commit in --no-loop mode") if !$do_loop;
+				$mark_as_failed->('travis', "Cannot find commit in --no-loop mode") if !$do_loop;
 			    }
 			    last DO_TRAVIS;
 			} else {
