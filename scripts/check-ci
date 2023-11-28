@@ -380,7 +380,7 @@ exit($success ? 0 : 1);
 		    if (!$appveyor_build) {
 			if (!$is_failed{appveyor}) {
 			    print STDERR "Status at appveyor:       cannot find commit $current_commit_id\n";
-			    $mark_as_failed->('appveyor', "Cnnot find commit in --no-loop mode") if !$do_loop;
+			    $mark_as_failed->('appveyor', "Cannot find commit in --no-loop mode") if !$do_loop;
 			}
 			last DO_APPVEYOR;
 		    } else {
@@ -417,7 +417,7 @@ exit($success ? 0 : 1);
 		    if (!$github_actions_run_id) {
 			if (!$is_failed{"github actions"}) {
 			    print STDERR "Status at github actions: cannot find $current_commit_id\n";
-			    $mark_as_failed->('github actions', "Cnnot find commit in --no-loop mode") if !$do_loop;
+			    $mark_as_failed->('github actions', "Cannot find commit in --no-loop mode") if !$do_loop;
 			}
 			last DO_GITHUB_ACTIONS;
 		    } else {
