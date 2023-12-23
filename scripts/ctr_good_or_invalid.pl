@@ -41,8 +41,8 @@ use constant USE_BETA_MATRIX => 0;
 use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2024-01-01";
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.38.0:5.39.4',     important => 1 },
-					{ pair => '5.39.2:5.39.4',     important => 1 },
+					{ pair => '5.38.0:5.39.5',     important => 1 },
+					{ pair => '5.39.4:5.39.5',     important => 1 },
 					{ pair => '5.36.0:5.38.0',     important => 1 },
 					{ pair => '5.34.1:5.36.0',     important => 1 },
 					{ pair => '5.32.1:5.34.1',     important => 0 },
@@ -568,7 +568,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 			$mw->SelectionHandle; # calling this mysteriously solves the closure problem...
 			$mw->SelectionHandle(sub {
 						 my $text = basename $currfile;
-						 $text =~ s{(?:amd64-freebsd|x86_64-linux).*}{};
+						 $text =~ s{(?:(?:amd64|arm64|aarch64)-freebsd|x86_64-linux).*}{};
 						 $text = q{"} . $text . qq{\n};
 						 return $text;
 					     });
@@ -1540,7 +1540,7 @@ sub set_currfile {
 	my $get_dist = sub {
 	    my $file = shift;
 	    (my $dist_os = $file) =~ s{.*/}{};
-	    $dist_os =~ s{\.(x86_64|amd64|i[3456]86|darwin-2level|darwin-thread-multi-2level).*}{};
+	    $dist_os =~ s{\.(x86_64|amd64|arm64|aarch64|i[3456]86|darwin-2level|darwin-thread-multi-2level).*}{};
 	    $dist_os;
 	};
 
