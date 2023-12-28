@@ -3009,7 +3009,6 @@ sub sort_by_example ($@) {
 sub unidecode_any {
     my($text, $encoding) = @_;
 
-    require Text::Unidecode;
     require Encode;
 
     # provide better conversions for german umlauts
@@ -3043,6 +3042,7 @@ sub unidecode_any {
 	for (split //, $text) {
 	    my $conv = eval { Encode::encode($encoding, $_, Encode::FB_CROAK()) };
 	    if ($@) {
+		require Text::Unidecode;
 		$res .= Text::Unidecode::unidecode($_);
 	    } else {
 		$res .= $conv;
