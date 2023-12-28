@@ -2805,7 +2805,11 @@ sub get_cached_github_issue_title {
 		my $resp = LWP::UserAgent->new(timeout => 20)->get($url);
 		if ($resp->is_success) {
 		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
-		    $db{$url} = $title;
+		    my $latin1_title = eval { unidecode_any($title, "iso-8859-1") } // $title;
+		    if ($@) {
+			warn "Failed to all unidecode_any(), fallback with original title: $@";
+		    }
+		    $db{$url} = $latin1_title;
 		} else {
 		    die "Cannot get URL $url: " . $resp->dump . "\n";
 		}
@@ -2996,6 +3000,57 @@ sub sort_by_example ($@) {
 	my $score_b = $score{$b};
 	!defined $score_a && !defined $score_b ? $a cmp $b : $score{$b} <=> $score{$a};
     } @_;
+}
+# REPO END
+
+# REPO BEGIN
+# REPO NAME unidecode_any /home/e/eserte/src/srezic-repository 
+# REPO MD5 59f056efd990dc126e49f5e846eee797
+sub unidecode_any {
+    my($text, $encoding) = @_;
+
+    require Text::Unidecode;
+    require Encode;
+
+    # provide better conversions for german umlauts
+    my %override = ("\xc4" => "Ae",
+		    "\xd6" => "Oe",
+		    "\xdc" => "Ue",
+		    "\xe4" => "ae",
+		    "\xf6" => "oe",
+		    "\xfc" => "ue",
+		   );
+    my $override_rx = "(" . join("|", map { quotemeta } keys %override) . ")";
+    $override_rx = qr{$override_rx};
+
+    my $res = "";
+
+    if (!eval {
+	Encode->VERSION(2.12); # need v2.12 to support coderef
+	$res = Encode::encode($encoding, $text,
+			      sub {
+				  my $ch = chr $_[0];
+				  if ($ch =~ $override_rx) {
+				      return $override{$ch};
+				  } else {
+				      my $ascii = unidecode($ch);
+				      Encode::_utf8_off($ascii);
+				      $ascii;
+				  }
+			      });
+	1;
+    }) {
+	for (split //, $text) {
+	    my $conv = eval { Encode::encode($encoding, $_, Encode::FB_CROAK()) };
+	    if ($@) {
+		$res .= Text::Unidecode::unidecode($_);
+	    } else {
+		$res .= $conv;
+	    }
+	}
+    }
+
+    $res;
 }
 # REPO END
 
