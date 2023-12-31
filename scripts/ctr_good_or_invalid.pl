@@ -41,8 +41,8 @@ use constant USE_BETA_MATRIX => 0;
 use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2024-01-01";
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.38.2:5.39.5',     important => 1 },
-					{ pair => '5.39.4:5.39.5',     important => 1 },
+					{ pair => '5.38.2:5.39.6',     important => 1 },
+					{ pair => '5.39.5:5.39.6',     important => 1 },
 					{ pair => '5.36.3:5.38.2',     important => 1 },
 					{ pair => '5.34.3:5.36.3',     important => 1 },
 					{ pair => '5.32.1:5.34.3',     important => 0 },
