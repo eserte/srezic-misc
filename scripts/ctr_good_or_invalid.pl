@@ -1158,7 +1158,8 @@ sub parse_test_report {
 		} elsif (
 			 m{^"Makefile", line \d+: Need an operator$} || # FreeBSD 9
 			 m{^make(\[\d+\])?: ".*Makefile" line \d+: Need an operator$} || # FreeBSD 10
-		         m{^make(\[\d+\])?: ".*Makefile" line \d+: Invalid line type$} # FreeBSD 13
+		         m{^make(\[\d+\])?: ".*Makefile" line \d+: Invalid line type$} || # FreeBSD 13
+			 m{^make(\[\d+\])?: ".*Makefile" line \d+: Invalid line '.*', expanded to '.*'} # FreeBSD 15
 			) {
 		    $add_analysis_tag->('GNU make required');
 		} elsif (
@@ -1204,6 +1205,10 @@ sub parse_test_report {
 			m{^CMake Error}
 		       ) {
 		    $add_analysis_tag->('cmake problem');
+		} elsif(
+			m{\bcmake: not found\b}
+		       ) {
+		    $add_analysis_tag->('cmake missing');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
