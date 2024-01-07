@@ -2710,21 +2710,22 @@ sub get_cached_rt_subject {
 sub get_subject_from_rt {
     my($url) = @_;
 
-    # XXX devel host only for now
-    my $aws_waf_cookie;
-    if (do { require Sys::Hostname; Sys::Hostname::hostname() eq 'cabulja' }) {
-	require "$ENV{HOME}/trash/firefox_cookie_finder.pl";
-	$aws_waf_cookie = FirefoxCookieFinder::find_cookie_value("aws-waf-token", "rt.cpan.org", expected_lifetime => 4, debug => 1);
+    # Hack: inject a hopefully warking aws-waf-token into the request
+    my $aws_waf_token;
+    if (eval { require "$FindBin::RealBin/firefox_cookie_finder.pl"; 1 }) {
+	$aws_waf_token = FirefoxCookieFinder::find_cookie_value("aws-waf-token", "rt.cpan.org", expected_lifetime => 4, debug => 1);
 	if ($url =~ m{^\Qhttps://rt.cpan.org/Ticket/Display.html?id=\E(\d+)}) {
 	    my $new_url = 'https://rt.cpan.org/Public/Bug/Display.html?id=' . $1;
 	    warn "INFO: change RT URL from $url to $new_url.\n";
 	    $url = $new_url;
 	}
+    } else {
+	warn "WARN: cannot load firefox_cookie_finder.pl, probably next fetch will fail...\n";
     }
 
     require LWP::UserAgent;
     require HTML::Entities;
-    my $resp = LWP::UserAgent->new(timeout => 20)->get($url, (defined $aws_waf_cookie ? (Cookie => "aws-waf-token=$aws_waf_cookie") : ()));
+    my $resp = LWP::UserAgent->new(timeout => 20)->get($url, (defined $aws_waf_token ? (Cookie => "aws-waf-token=$aws_waf_token") : ()));
     if ($resp->is_success) {
 	# Quick'n'dirty parsing
     DO_PARSE: {
