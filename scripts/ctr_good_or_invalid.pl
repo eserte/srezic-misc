@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -37,8 +37,6 @@ use POSIX qw(strftime);
 sub sort_by_example ($@);
 
 use constant USE_BETA_MATRIX => 0;
-
-use constant SKIP_RT_ISSUE_FETCH_UNTIL => "2024-02-01";
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
 					{ pair => '5.38.2:5.39.6',     important => 1 },
@@ -2696,14 +2694,10 @@ sub get_cached_rt_subject {
 	if (exists $db{$url}) {
 	    $subject = $db{$url};
 	} else {
-	    if (strftime("%FT%T", localtime) le SKIP_RT_ISSUE_FETCH_UNTIL) {
-		warn "WARNING: fetching RT issues is disabled until " . SKIP_RT_ISSUE_FETCH_UNTIL . "\n";
-	    } else {
-		warn "INFO: Not found in cache, try to fetch from $url...\n";
-		$subject = get_subject_from_rt($url);
-		if (defined $subject) {
-		    $db{$url} = $subject;
-		}
+	    warn "INFO: Not found in cache, try to fetch from $url...\n";
+	    $subject = get_subject_from_rt($url);
+	    if (defined $subject) {
+		$db{$url} = $subject;
 	    }
 	}
     };
@@ -2716,9 +2710,21 @@ sub get_cached_rt_subject {
 sub get_subject_from_rt {
     my($url) = @_;
 
+    # XXX devel host only for now
+    my $aws_waf_cookie;
+    if (do { require Sys::Hostname; Sys::Hostname::hostname() eq 'cabulja' }) {
+	require "$ENV{HOME}/trash/firefox_cookie_finder.pl";
+	$aws_waf_cookie = FirefoxCookieFinder::find_cookie_value("aws-waf-token", "rt.cpan.org", expected_lifetime => 4, debug => 1);
+	if ($url =~ m{^\Qhttps://rt.cpan.org/Ticket/Display.html?id=\E(\d+)}) {
+	    my $new_url = 'https://rt.cpan.org/Public/Bug/Display.html?id=' . $1;
+	    warn "INFO: change RT URL from $url to $new_url.\n";
+	    $url = $new_url;
+	}
+    }
+
     require LWP::UserAgent;
     require HTML::Entities;
-    my $resp = LWP::UserAgent->new(timeout => 20)->get($url);
+    my $resp = LWP::UserAgent->new(timeout => 20)->get($url, (defined $aws_waf_cookie ? (Cookie => "aws-waf-token=$aws_waf_cookie") : ()));
     if ($resp->is_success) {
 	# Quick'n'dirty parsing
     DO_PARSE: {
@@ -2778,7 +2784,7 @@ sub get_subject_from_rt {
 	    }
 	}
     } else {
-	warn "ERROR: can't fetch $url: " . $resp->status_line . "\n";
+	warn "ERROR: can't fetch $url:\n" . $resp->dump . "\nRequest was:\n" . $resp->request->dump . "\n";
     }
 
     undef;
