@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022 Slaven Rezic. All rights reserved.
+# Copyright (C) 2007, 2008, 2009, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022, 2024 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -495,6 +495,10 @@ if (!@dist_or_mods) {
     die "dist or mod?";
 }
 
+######################################################################
+# Determine perls for testing
+
+# handle -pv option (either list of fixed versions -> @perls, or list of conditions -> @pv_conditions)
 my @pv_conditions;
 if (@pv) {
     my @remaining_pvs;
@@ -510,7 +514,30 @@ if (@pv) {
 	if (@pv_conditions) {
 	    die "Mixing conditional perl versions and fixed versions is not supported";
 	}
-	push @perls, map { "perl$_" } map { split /,/ } @remaining_pvs;
+	for my $pv (map { split /,/ } @remaining_pvs) {
+	    my $perl_base = "perl$pv";
+	    if ($^O eq 'freebsd') {
+		# Special handling for FreeBSD with respect to system perl: /usr/local/bin/perl5.X.Y may be the system
+		# perl; in this case this perl should be skipped (because the smoker user usually cannot install into
+		# the system perl installation) unless there's no self-compiled alternative in /usr/perl5.X.Y.
+		my $perl_path = "/usr/local/bin/$perl_base";
+		if (is_system_perl($perl_path)) {
+		    my $alternative = "/usr/perl$pv/bin/perl";
+		    if (-x $alternative) {
+			warn "NOTE: $perl_path (expanded from $pv) is the system perl, use $alternative as an alternative.\n";
+			push @perls, $alternative;
+			next;
+		    } else {
+			warn "NOTE: $perl_path (expanded from $pv) is the system perl and there is no alternative, skip this perl.\n";
+			next;
+		    }
+		}
+	    }
+	    push @perls, $perl_base;
+	}
+    }
+    if (!@perls && !@pv_conditions) {
+	die "*** ERROR: could not find any matching perl.\n";
     }
 }
 
@@ -523,26 +550,10 @@ if ($do_this_perl) {
     }
 }
 
+# No perls found? Use all available perls, maybe filtered by @pv_conditions.
 if (!@perls) {
     if ($all_perls) {
 	my @all_perl_defs;
-
-	my $system_perl; # if symlinked
-	my $system_perl_id; # if hardlinked, then use dev+ino for stat()
-	if ($^O eq 'freebsd') {
-	    my @candidates = ("/usr/local/bin/perl5", "/usr/local/bin/perl");
-	    for my $candidate (@candidates) {
-		if (-l $candidate) {
-		    $system_perl = readlink $candidate;
-		    last;
-		} else {
-		    if (my(@stat) = stat $candidate) {
-			$system_perl_id = join(",", @stat[0,1]);
-			last;
-		    }
-		}
-	    }
-	}
 
 	my @candidates;
 	if ($^O eq 'MSWin32') {
@@ -565,17 +576,7 @@ if (!@perls) {
 		next;
 	    }
 
-	    my $candidate_id = do {
-		if (my @stat = stat $candidate) {
-		    join(",", @stat[0,1]);
-		} else {
-		    undef;
-		}
-	    };
-	    if (
-		($system_perl && $candidate eq $system_perl) ||
-		($system_perl_id && $candidate_id && $candidate_id eq $system_perl_id)
-	       ) {
+	    if (is_system_perl($candidate)) {
 	    HANDLE_SYSTEM_PERL: {
 		    if ($^O eq 'freebsd' && $candidate =~ m{^/usr/local/bin/(.*)$}) {
 			my $alternative_perl = "/usr/$1/bin/perl";
@@ -670,6 +671,8 @@ if ($perlr) {
     @perls = reverse @perls;
 }
 
+######################################################################
+
 CPAN::HandleConfig->load;
 my $prefs_dir_is_changed;
 if ($prefs_dir) {
@@ -686,6 +689,9 @@ if ($reload_index) {
 	   ($use_sqlite ? '$CPAN::Config->{use_sqlite}=1; ' : '') .
 	   'CPAN::Index->force_reload');
 }
+
+######################################################################
+# Determine CPAN distributions for testing
 
 for (@dist_or_mods, @pre_dist_or_mods) {
     # to make it easy to copy'n'paste download URLs from a CPAN http mirror:
@@ -888,6 +894,8 @@ if (!@dist_or_mods) {
 if ($r) {
     @dist_or_mods = reverse @dist_or_mods;
 }
+
+######################################################################
 
 my $has_private_tmpdir;
 if ($my_tmpdir) {
@@ -2369,6 +2377,50 @@ sub normalize_bytes {
     $$varref =~ s{([\d\.]+)([kMG])}{int($1*($2 eq "k" ? 1024 : $2 eq "M" ? 1024**2 : $2 eq "G" ? 1024**3 : die))}e;
     if ($$varref !~ m{^\d+$}) {
 	die "(expanded) $name value '$$varref' does not look like an integer number";
+    }
+}
+
+{
+    my $init_done;
+    my $system_perl_path; # if symlinked
+    my $system_perl_id; # if hardlinked, then use dev+ino for stat()
+    sub _determine_system_perl_init () {
+	if (!$init_done) {
+	    my @candidates;
+	    if ($^O eq 'freebsd') {
+		@candidates = ("/usr/local/bin/perl5", "/usr/local/bin/perl");
+	    } elsif ($^O eq 'linux') {
+		@candidates = ('/usr/bin/perl');
+	    }
+	    for my $candidate (@candidates) {
+		if (-l $candidate) {
+		    $system_perl_path = readlink $candidate;
+		    last;
+		} else {
+		    if (my(@stat) = stat $candidate) {
+			$system_perl_id = join(",", @stat[0,1]);
+			last;
+		    }
+		}
+	    }
+	}
+	$init_done = 1;
+    }
+    sub is_system_perl {
+	my($path) = @_;
+	_determine_system_perl_init;
+	return 1 if $system_perl_path && $path eq $system_perl_path;
+	if ($system_perl_id) {
+	    my $file_id = do {
+		if (my @stat = stat $path) {
+		    join(",", @stat[0,1]);
+		} else {
+		    undef;
+		}
+	    };
+	    return 1 if $file_id && $file_id eq $system_perl_id;
+	}
+	return 0;
     }
 }
 
