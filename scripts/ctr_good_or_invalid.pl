@@ -117,14 +117,14 @@ GetOptions("good" => \$only_good,
 	   'fast-forward' => \$fast_forward,
 	   'match-pv=s@' => \@match_pvs,
 	   'only-recent=s' => \$only_recent,
-	   'fast-matrix-url=s' => \my $fast_matrix_url,
+	   'fast-matrix-url=s@' => \my @fast_matrix_urls,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
           [-noquit-at-end] [-[no]xterm-title]
           [-[no]recent-states] [-[no]check-screesaver] [-show-only]
           [-match-pv opperlver ...] [-only-recent period]
-          [-fast-matrix-url rooturl]
+          [-fast-matrix-url rooturl ...]
           [directory [file ...]]
 EOF
 
@@ -495,16 +495,21 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($matrix_b, -msg => 'Matrix');
     }
-    if ($fast_matrix_url) {
-	my $fast_matrix_b =
-	    $f->Button(-text => 'Fast Matrix',
-		       -image => $images{matrix},
-		       -width => 24,
-		       -command => sub {
-			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("$fast_matrix_url?" . make_query_string(dist=>$currdist));
-		       })->pack(-side => 'left', -fill => 'y');
-	$balloon->attach($fast_matrix_b, -msg => 'Fast Matrix');
+    if (@fast_matrix_urls) {
+	my $i = 0;
+	for my $fast_matrix_url (@fast_matrix_urls) {
+	    $i++;
+	    my $label = 'Fast Matrix' . (@fast_matrix_urls > 1 ? "($i)" : "");
+	    my $fast_matrix_b =
+		$f->Button(-text => $label,
+			   -image => $images{matrix},
+			   -width => 24,
+			   -command => sub {
+			       require Tk::Pod::WWWBrowser;
+			       Tk::Pod::WWWBrowser::start_browser("$fast_matrix_url?" . make_query_string(dist=>$currdist));
+			   })->pack(-side => 'left', -fill => 'y');
+	    $balloon->attach($fast_matrix_b, -msg => $label);
+	}
     }
     {
 	# XXX should this be enabled by option? what about the directory?
