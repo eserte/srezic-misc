@@ -181,6 +181,8 @@ exit($success ? 0 : 1);
 	    } else {
 		$data = $do_github_api_call->("repos/$repo/actions/runs");
 	    }
+	    # First gather the currently running workflows matching the wished commit id
+	    my @candidates;
 	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
 		if ($filter_github_workflow_rx) {
 		    next if $workflow_run->{path} !~ $filter_github_workflow_rx;
@@ -188,8 +190,16 @@ exit($success ? 0 : 1);
 		if ($workflow_run->{'head_sha'} eq $current_commit_id ||
 		    $workflow_run->{'head_branch'} eq $current_commit_id
 		   ) {
-		    return $workflow_run->{'id'};
+		    push @candidates, { path => $workflow_run->{path}, id => $workflow_run->{'id'} };
 		}
+	    }
+	    if (@candidates) {
+		my($path, $id) = @{$candidates[0]}{qw(path id) };
+		# If there's more than one matching active workflow, then pick the first, but tell the user which one was chosen.
+		if (@candidates > 1) {
+		    print STDERR colored("INFO:", "yellow") . " picked workflow " . colored($path, "yellow") . "\n";
+		}
+		return $id;
 	    }
 	    debug "Workflow run for commit $current_commit_id not found at github actions";
 	    undef;
