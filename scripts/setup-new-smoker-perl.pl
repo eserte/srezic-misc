@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016,2017,2018,2019,2020 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017,2018,2019,2020,2024 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -566,14 +566,10 @@ if ($use_cpm) {
 	using => sub {
 	    my @missing_modules = modules_installed_check(\@toolchain_modules);
 
-	    # XXX Temporary (?) hack: use the stable
-	    # RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
-	    # the latter does not always pass tests. Note that this
-	    # may actually create a downgrade of an already installed
-	    # Expect (but this should probably be unlikely)
-	    # UPDATE: Expect 1.32 has also problematic tests.
+	    # See "Install modules needed for CPAN::Reporter" step
+	    # for an explanation.
 	    my @to_install = map {
-		$_ eq 'Expect' ? 'Expect~<1.31' : $_;
+		$_ eq 'Expect' ? ('Expect~<1.31', 'Expect') : $_;
 	    } @missing_modules;
 
 	    local $ENV{PERL_MM_USE_DEFAULT} = 1;
@@ -615,14 +611,15 @@ step "Install modules needed for CPAN::Reporter",
     using => sub {
 	my @missing_modules = modules_installed_check(\@toolchain_modules);
 
-	# XXX Temporary (?) hack: use the stable
-	# RGIERSIG/Expect-1.21.tar.gz instead of Expect 1.31 because
-	# the latter does not always pass tests. Note that this
+	# XXX Temporary (?) hack: first install the stable
+	# RGIERSIG/Expect-1.21.tar.gz instead of newer Expect versions,
+	# e.g. 1.31, 1.32 and 1.35 do not always pass tests. Note that this
 	# may actually create a downgrade of an already installed
-	# Expect (but this should probably be unlikely)
-	# UPDATE: Expect 1.32 has also problematic tests.
+	# Expect (but this should probably be unlikely).
+	# After that try to upgrade Expect to the newest version
+	# (which may fail, but this step will pass)
 	my @to_install = map {
-	    $_ eq 'Expect' ? 'RGIERSIG/Expect-1.21.tar.gz' : $_;
+	    $_ eq 'Expect' ? ('RGIERSIG/Expect-1.21.tar.gz', 'Expect') : $_;
 	} @missing_modules;
 
 	local $ENV{HARNESS_OPTIONS};
