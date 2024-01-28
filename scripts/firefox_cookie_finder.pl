@@ -23,7 +23,8 @@ sub find_cookie_value {
     my @cookie_db_files = sort { -M $a <=> -M $b } bsd_glob("~/.mozilla/firefox/*/cookies.sqlite");
 
     for my $db_file (@cookie_db_files) {
-	$debug->("check $db_file");
+	my $age_seconds = time - (stat($db_file))[9];
+	$debug->("check $db_file (age ${age_seconds} seconds)");
         if (defined $expected_lifetime) {
             my $mod_time = -M $db_file;
             if ($mod_time > $expected_lifetime) {
