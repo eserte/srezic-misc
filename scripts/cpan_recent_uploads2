@@ -536,6 +536,7 @@ sub filter_cpu_intensive_at_night {
 		   |   Test2-Harness-Renderer-JUnit-v?\d # -"-
 		   |   Alien-libsdl2-v?\d         # CPU intensive build of C library
 		   |   Crypt-Perl-\d              # CPU intensive on some systems (missing fast math libraries?)
+		   |   Locale-CLDR-Locales-.*     # there are a lot of these...
 		   )}x && $hour >= 7) {
 	return 0;
     }
