@@ -66,24 +66,51 @@ if (!caller) {
     require Getopt::Long;
 
     my $usage = sub () {
-        die "Usage: $0 [--expected-lifetime days] [--debug] <cookie_name> <host_suffix>\n";
+        die <<EOF
+Usage: $0 [--expected-lifetime days] [--debug] <cookie_name> <host_suffix>
+       $0 [--expected-lifetime days] [--debug] --for-curl-cookie --host-suffix ... <cookie_name1> <cookie_name2> ...
+EOF
     };
 
     Getopt::Long::GetOptions
 	    (
 	     "debug" => \my $debug,
 	     "expected-lifetime=f" => \my $expected_lifetime_in_days,
+	     "for-curl-cookie" => \my $for_curl_cookie,
+	     "host-suffix=s" => \my $provided_host_suffix,
 	    )
 	    or $usage->();
-    $usage->() if @ARGV != 2;
-    my($cookie_name, $host_suffix) = @ARGV;
 
-    my $cookie_value = find_cookie_value($cookie_name, $host_suffix, expected_lifetime => $expected_lifetime_in_days, debug => $debug);
-    if (defined $cookie_value) {
-	print $cookie_value, "\n";
-	exit 0;
+    if ($for_curl_cookie) {
+	if (!$provided_host_suffix) {
+	    warn "--host-suffix is mandatory with --for-curl-cookie.\n";
+	    $usage->();
+	}
+	if (!@ARGV) {
+	    warn "Please specify one or more cookie names.\n";
+	    $usage->();
+	}
+	my @cookie_strings;
+	for my $cookie_name (@ARGV) {
+	    my $cookie_value = find_cookie_value($cookie_name, $provided_host_suffix, expected_lifetime => $expected_lifetime_in_days, debug => $debug);
+	    if (defined $cookie_value) {
+		push @cookie_strings, "$cookie_name=$cookie_value";
+	    } else {
+		die "Cannot find cookie $cookie_name.\n";
+	    }
+	}
+	print join("; ", @cookie_strings);
     } else {
-	die "Cannot find cookie.\n";
+	$usage->() if @ARGV != 2;
+	my($cookie_name, $host_suffix) = @ARGV;
+
+	my $cookie_value = find_cookie_value($cookie_name, $host_suffix, expected_lifetime => $expected_lifetime_in_days, debug => $debug);
+	if (defined $cookie_value) {
+	    print $cookie_value, "\n";
+	    exit 0;
+	} else {
+	    die "Cannot find cookie.\n";
+	}
     }
 }
 
