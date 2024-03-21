@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.38.2:5.39.8',     important => 1 },
-					{ pair => '5.39.7:5.39.8',     important => 1 },
+					{ pair => '5.38.2:5.39.9',     important => 1 },
+					{ pair => '5.39.8:5.39.9',     important => 1 },
 					{ pair => '5.36.3:5.38.2',     important => 1 },
 					{ pair => '5.34.3:5.36.3',     important => 1 },
 					{ pair => '5.32.1:5.34.3',     important => 0 },
@@ -1160,9 +1160,9 @@ sub parse_test_report {
 		    $add_analysis_tag->('panic extend/stack_grow');
 		} elsif (
 			 m{^"Makefile", line \d+: Need an operator$} || # FreeBSD 9
-			 m{^make(\[\d+\])?: ".*Makefile" line \d+: Need an operator$} || # FreeBSD 10
-		         m{^make(\[\d+\])?: ".*Makefile" line \d+: Invalid line type$} || # FreeBSD 13
-			 m{^make(\[\d+\])?: ".*Makefile" line \d+: Invalid line '.*', expanded to '.*'} # FreeBSD 15
+			 m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Need an operator$} || # FreeBSD 10
+		         m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Invalid line type$} || # FreeBSD 13
+			 m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Invalid line '.*', expanded to '.*'} # FreeBSD 15
 			) {
 		    $add_analysis_tag->('GNU make required');
 		} elsif (
