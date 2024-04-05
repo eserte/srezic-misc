@@ -2749,6 +2749,7 @@ sub get_subject_from_rt {
 	    }
 
 	    if (eval { require HTML::TreeBuilder; require Encode; 1 }) {
+		#open my $ofh, ">", "/tmp/test.html"; print $ofh $content;
 		my $tree = HTML::TreeBuilder->new;
 		$tree->parse_content(Encode::decode_utf8($content)); # assume utf-8, without checking
 		for my $element ($tree->look_down('class', 'message-header-key')) {
@@ -2762,6 +2763,19 @@ sub get_subject_from_rt {
 			    $subject =~ s{^\s+}{};
 			    return $subject;
 			}
+		    }
+		}
+		warn "WARNING: Did not find message-header-key+value with HTML::TreeBuilder, fallback to title parsing\n";
+		# message-header-key+value may be missing, maybe if a subject was added later?
+		for my $element ($tree->look_down('_tag', 'title')) {
+		    my $title = join("", $element->content_list);
+		    # there seem to be two variants for title formatting
+		    if ($title =~ /^\#\d+:\s+(.+)/) {
+			my $subject = $1;
+			return $subject;
+		    } elsif ($title =~ /^Bug\s+#\d+\s+for\s+.*?:\s+(.*)/) {
+			my $subject = $1;
+			return $subject;
 		    }
 		}
 		warn "WARNING: Did not find anything with HTML::TreeBuilder, fallback to quick'n'dirty parsing\n";
