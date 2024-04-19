@@ -449,6 +449,7 @@ step "Build perl",
 	    my @build_cmd = (
 			     ($cc ? "env CC='$cc' " : '') .
 			     "nice ./configure.gnu --prefix=$perldir" .
+			     ' -Uinstallusrbinperl' . # never install perl as /usr/bin/perl (may happen on freebsd systems)
 			     ($need_usedevel ? ' -Dusedevel' : '') .
 			     (!$use_mallocwrap ? ' -Dusemallocwrap=no' : '') . # usemallocwrap=yes is probably default
 			     ($build_debug ? ' -DDEBUGGING' : '') .
