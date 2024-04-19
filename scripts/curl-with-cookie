@@ -1,0 +1,53 @@
+#!/usr/bin/env perl
+# -*- perl -*-
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use URI;
+
+use FindBin;
+use lib $FindBin::RealBin;
+require "firefox_cookie_finder.pl";
+
+my @cookie_names;
+Getopt::Long::Configure("pass_through");
+GetOptions(
+    'cookie-name=s@' => \@cookie_names,
+);
+my $url = $ARGV[-1]; # XXX must not be true!
+if (!$url) {
+    die "No URL found in commandline";
+}
+
+my $u = URI->new($url);
+my $host = $u->host
+    or die "Cannot get host name out of '$url'";
+
+my @cookie_name_values;
+for my $cookie_name (@cookie_names) {
+    my $cookie_value = FirefoxCookieFinder::find_cookie_value($cookie_name, $host);
+    if (!defined $cookie_value) {
+	die "Cannot find cookie $cookie_name for host $host.\n";
+    }
+    push @cookie_name_values, "$cookie_name=$cookie_value";
+}
+
+my @cmd = ('curl', (@cookie_name_values ? ('--cookie', join("; ", @cookie_name_values)) : ()), @ARGV);
+system @cmd;
+die "@cmd failed" if $? != 0;
+
+__END__
+
+=head1 EXAMPLES
+
+Make sure you made a recent authenticated visit to rt.cpan.org using
+Firefox, and maybe wait a minute or so to make sure that the cookie
+database is flushed to disk.
+
+Then call:
+
+    curl-with-cookie --silent --cookie-name aws-waf-token 'https://rt.cpan.org/Public/Bug/Display.html?id=122062' | grep '<title>'
+
+=cut
