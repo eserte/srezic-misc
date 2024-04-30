@@ -30,7 +30,8 @@ if (eval { require Imager::QRCode; 1 }) {
     $img->write(file => $tempfile)
 	or die $img->errstr;
 } else {
-    require GD::Barcode::QRCode;
+    require GD;
+    require GD::Barcode::QRcode;
 
     print $tempfh GD::Barcode::QRcode->new($url,
 					   { Ecc => 'L', Version=>12, ModuleSize => 4},
