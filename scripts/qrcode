@@ -42,8 +42,51 @@ if (eval { require Imager::QRCode; 1 }) {
 
 if ($^O eq 'darwin') {
     system 'open', '-W', $tempfile;
-} else {
+} elsif (is_in_path('eog')) {
+    # prefer eog because of new-instance option
     system 'eog', '--new-instance', $tempfile;
+} else {
+    # fallback to anything
+    system 'xdg-open', $tempfile;
+    # hack: as xdg-open may open the application async, sleep for some
+    # time so the temporary file vanishes later
+    sleep 15;
 }
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/eserte/src/srezic-repository 
+# REPO MD5 4be1e368fea0fa9af4e89256a9878820
+sub is_in_path {
+    my($prog) = @_;
+    require File::Spec;
+    if (File::Spec->file_name_is_absolute($prog)) {
+	if ($^O eq 'MSWin32') {
+	    return $prog       if (-f $prog && -x $prog);
+	    return "$prog.bat" if (-f "$prog.bat" && -x "$prog.bat");
+	    return "$prog.com" if (-f "$prog.com" && -x "$prog.com");
+	    return "$prog.exe" if (-f "$prog.exe" && -x "$prog.exe");
+	    return "$prog.cmd" if (-f "$prog.cmd" && -x "$prog.cmd");
+	} else {
+	    return $prog if -f $prog and -x $prog;
+	}
+    }
+    require Config;
+    %Config::Config = %Config::Config if 0; # cease -w
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"     if (-f "$_\\$prog" && -x "$_\\$prog");
+	    return "$_\\$prog.bat" if (-f "$_\\$prog.bat" && -x "$_\\$prog.bat");
+	    return "$_\\$prog.com" if (-f "$_\\$prog.com" && -x "$_\\$prog.com");
+	    return "$_\\$prog.exe" if (-f "$_\\$prog.exe" && -x "$_\\$prog.exe");
+	    return "$_\\$prog.cmd" if (-f "$_\\$prog.cmd" && -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
 
 __END__
