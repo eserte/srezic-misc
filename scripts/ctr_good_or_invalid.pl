@@ -2280,6 +2280,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
 		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|46|56|76|79)-}) {
 		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04?';
+		} elsif ($entry->{archname} =~ m{ 6\.8\.0-(35)-}) {
+		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
