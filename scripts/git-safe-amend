@@ -8,6 +8,8 @@ use Doit::Util qw(in_directory);
 
 return 1 if caller;
 
+sub y_or_n (;$);
+
 my $doit = Doit->init;
 $doit->add_component('git');
 
@@ -32,12 +34,35 @@ in_directory {
 	}
     } @files;
     if (@changed_files_not_in_last_commit) {
-	error "Some files were changed which are not in the last commit: @changed_files_not_in_last_commit";
-	# XXX maybe the user could be asked if continue with the rest?
+	warning "Some files were changed which are not in the last commit: @changed_files_not_in_last_commit.\nContinue with amending just @changed_files_in_last_commit (y/n)?";
+	if (!y_or_n) {
+	    error "Aborting.";
+	}
     }
 
     $doit->system('git', 'add', @changed_files_in_last_commit);
     $doit->system('git', 'commit', '--amend', '--no-edit');
 } $doit->git_root;
+
+# REPO BEGIN
+# REPO NAME y_or_n /home/e/eserte/src/srezic-repository 
+# REPO MD5 146cfcf8f954555fe0117a55b0ddc9b1
+sub y_or_n (;$) {
+    my $default = shift;
+    while () {
+        chomp(my $yn = <STDIN>);
+	if ($yn eq '' && defined $default) {
+	    $yn = $default;
+	}
+        if (lc $yn eq 'y') {
+            return 1;
+        } elsif (lc $yn eq 'n') {
+	    return 0;
+        } else {
+            print STDERR "Please answer y or n: ";
+        }
+    }
+}
+# REPO END
 
 __END__
