@@ -1460,6 +1460,12 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
+		} elsif ($annotation =~ m{(https://bitbucket.org/.*/issues/\S+)}) {
+		    my $title = get_cached_bitbucket_issue_title($1);
+		    if (defined $title) {
+			$annotation .= " ($title)";
+			$changed = 1;
+		    }
 		}
 	    }
 	    if ($changed) {
@@ -2283,6 +2289,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04?';
 		} elsif ($entry->{archname} =~ m{ 6\.8\.0-(35)-}) {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
+		} elsif ($entry->{archname} eq 'aarch64-linux-gnu-thread-multi 6.1.0') {
+		    $arch_os_version = 'noble'; # 'Ubuntu 24.04? (system perl)';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
@@ -2897,6 +2905,62 @@ sub get_cached_gitlab_issue_title {
 	}
     } else {
 	warn "WARN: Unexpected gitlab URL '$url'";
+    }
+    $title;
+}
+
+sub get_cached_bitbucket_issue_title {
+    my($url) = @_;
+    my $title;
+    if (my($owner, $repo, $issue_number, $short_subject) = $url =~ m|https://bitbucket\.org/([^/]+)/([^/]+)/issues/(\d+)(?:/(.+))?|) {
+	eval {
+	    require DB_File;
+	    require Fcntl;
+	    my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/bitbucket_issue_titles.db");
+	    if (!-d dirname($cache_file)) {
+		require File::Path;
+		File::Path::mkpath(dirname($cache_file));
+	    }
+	    # XXX implement locking for all!
+	    tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+		or die "ERROR: Can't tie cache file $cache_file: $!";
+	    if (exists $db{$url}) {
+		$title = $db{$url};
+	    } else {
+		warn "INFO: Not found in cache, try to fetch from $url...\n";
+		require LWP::UserAgent;
+		require JSON::XS;
+		require YAML;
+		require MIME::Base64;
+		my $creds = YAML::LoadFile("$ENV{HOME}/.bitbucket");
+		my $username = $creds->{username} // die "username is missing in ~/.bitbucket";
+		my $app_password = $creds->{'app-password'} // die "app-password is missing in ~/.bitbucket";
+		my $ua = LWP::UserAgent->new(timeout => 20);
+		my $auth = MIME::Base64::encode_base64("$username:$app_password");
+		$ua->default_header('Authorization' => "Basic $auth");
+		my $api_url = "https://api.bitbucket.org/2.0/repositories/$owner/$repo/issues/$issue_number";
+		my $response = $ua->get($api_url);
+		if ($response->is_success) {
+		    my $issue_data = JSON::XS::decode_json($response->content);
+		    $title = $issue_data->{title};
+		    my $latin1_title = eval { unidecode_any($title, "iso-8859-1") } // $title;
+		    if ($@) {
+			warn "Failed to all unidecode_any(), fallback with original title: $@";
+		    }
+		    $db{$url} = $latin1_title;
+		} else {
+		    die "Cannot get URL $api_url: " . $response->dump . "\n";
+		}
+	    }
+	};
+	if ($@) {
+	    warn "ERROR: $@";
+	    if (!defined $title && $short_subject) {
+		$title = $short_subject; # use it, but don't cache it
+	    }
+	}
+    } else {
+	warn "WARN: Unexpected bitbucket URL '$url'";
     }
     $title;
 }
