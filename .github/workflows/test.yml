@@ -17,6 +17,7 @@ jobs:
        include:
          - os: 'ubuntu-20.04'
          - os: 'ubuntu-22.04'
+         - os: 'ubuntu-24.04'
     steps:
     - name: apt hacks
       # /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
@@ -24,7 +25,7 @@ jobs:
         sudo rm -f /etc/apt/sources.list.d/*.list
         sudo apt-get update -qq
       if: "startsWith(matrix.os, 'ubuntu-')"
-    - uses: actions/checkout@v3
+    - uses: taiki-e/checkout-action@v1
     - name: Build and test
       run: |
         set -e
