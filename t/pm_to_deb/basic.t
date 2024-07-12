@@ -46,7 +46,7 @@ my $pm_to_db = "$FindBin::RealBin/../../scripts/pm-to-deb";
 
 {
     my $out = `$perl $pm_to_db Storable`;
-    like $out, qr{^(perl|libperl5.\d+)$}, 'found package for Storable'
+    like $out, qr{^(perl|libperl5.\d+(?:t64)?)$}, 'found package for Storable'
 	or more_diag;
 }
 
