@@ -2261,6 +2261,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'centos8'; # 'CentOS8'; --- but may be also rocky 8.5
 		} elsif ($entry->{archname} =~ m{ 5\.14\.0-.*\.el9[._]}) {
 		    $arch_os_version = 'rocky9'; # may be also CentOS9?
+		} elsif ($entry->{archname} =~ m{ 5\.4\.188-104\.359\.amzn2\.x86_64}) {
+		    $arch_os_version = 'rocky9'; # system perl, maybe created in a container?
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
