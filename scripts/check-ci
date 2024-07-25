@@ -16,7 +16,7 @@ sub usage () {
                    [--travis] [--appveyor]
                    [--github-actions [--use-gh|--no-use-gh] [--filter-github-workflow-rx regexp|--filter-github-workflow-filename filename]]
                    [--commit SHA1]
-                   [--wait seconds] [--no-loop] [--timeout seconds]
+                   [--wait seconds] [--no-loop] [--timeout seconds] [--total-timeout seconds]
                    [--debug]
                    [user/repo]\n";
 }
@@ -27,6 +27,7 @@ my %check;
 my $commit;
 my $wait_seconds = 15;
 my $timeout = 10;
+my $total_timeout = 3600;
 my $github_api_limit_seconds = 60; # do at most one request per minute because of rate limiting
 my $use_travis_v3 = 1;
 my $use_gh = undef; # undef mean: maybe
@@ -41,6 +42,7 @@ GetOptions(
 	   "commit=s" => \$commit,
 	   "wait=i" => \$wait_seconds,
 	   "t|timeout=i" => \$timeout,
+	   "total-timeout=i" => \$total_timeout,
 	   "use-gh!" => \$use_gh,
 	   "loop!" => \$do_loop,
 	   "filter-github-workflow-rx=s" => \$filter_github_workflow_rx,
@@ -78,6 +80,10 @@ if ($check{"github actions"} && !defined $use_gh) {
 
 if (defined $filter_github_workflow_rx) {
     $filter_github_workflow_rx = qr{$filter_github_workflow_rx};
+}
+
+if ($total_timeout) {
+    alarm($total_timeout);
 }
 
 my $success = check_ci $repo, commit => $commit, wait => $wait_seconds;
