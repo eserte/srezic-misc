@@ -73,7 +73,8 @@ $xvfb_pid = fork();
 if ($xvfb_pid == 0) {
     my @xvfbargs = split /\s+/, $xvfbargs;
     my @listentcp = split /\s+/, $listentcp;
-    my @cmd = ('Xvfb', ":$servernum", @xvfbargs, @listentcp, '-auth', $auth_file); # XXX missing: >>"$errorfile" 2>&1);
+    open STDERR, '>', $errorfile or warn "Can't redirct stderr to $errorfile: $!";
+    my @cmd = ('Xvfb', ":$servernum", @xvfbargs, @listentcp, '-auth', $auth_file);
     exec(@cmd);
     die "Problem starting '@cmd': $!";
 }
