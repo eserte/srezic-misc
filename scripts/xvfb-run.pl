@@ -39,6 +39,7 @@ sub find_free_servernum {
     return $servernum;
 }
 
+my $exit_status;
 sub clean_up {
     if (-e $auth_file) {
         system("XAUTHORITY=$auth_file xauth remove :$servernum >/dev/null 2>&1");
@@ -48,6 +49,8 @@ sub clean_up {
 	#warn "killing $xvfb_pid";
         kill 'TERM', $xvfb_pid;
     }
+
+    $? = ($exit_status >> 8);
 }
 
 END { clean_up }
@@ -71,6 +74,9 @@ my $mcookie = join "", map { sprintf "%02x", int(rand(256)) } 1..16;
 }
 
 $xvfb_pid = fork();
+if (!defined $xvfb_pid) {
+    die "fork failed: $!";
+}
 if ($xvfb_pid == 0) {
     my @xvfbargs = split /\s+/, $xvfbargs;
     my @listentcp = split /\s+/, $listentcp;
@@ -82,10 +88,10 @@ if ($xvfb_pid == 0) {
 
 sleep(1); # Give Xvfb a chance to start
 
-my $exit_status = do {
+$exit_status = do {
     local $ENV{DISPLAY} = ":$servernum";
     local $ENV{XAUTHORITY} = $auth_file;
     system(@command);
 };
 
-exit($exit_status >> 8);
+# exit code set in cleanup
