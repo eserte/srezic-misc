@@ -2791,6 +2791,8 @@ sub get_subject_from_rt {
 		    } elsif ($title =~ /^Bug\s+#\d+\s+for\s+.*?:\s+(.*)/) {
 			my $subject = $1;
 			return $subject;
+		    } else {
+			warn "WARNING: found unparsable title '$title'\n";
 		    }
 		}
 		warn "WARNING: Did not find anything with HTML::TreeBuilder, fallback to quick'n'dirty parsing\n";
