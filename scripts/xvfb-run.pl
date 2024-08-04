@@ -15,6 +15,7 @@ my $xauthproto = ".";
 
 my ($auto_servernum, $auth_file, $help, $listen_tcp);
 
+Getopt::Long::Configure(qw(pass_through require_order));
 GetOptions(
     "a|auto-servernum" => \$auto_servernum,
     "e|error-file=s" => \$errorfile,
