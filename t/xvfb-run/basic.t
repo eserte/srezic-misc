@@ -21,7 +21,7 @@ if ($run_original) {
 }
 
 SKIP: {
-    my $no_tests = 1;
+    my $no_tests = 5;
     skip "IPC::Run required", $no_tests if !eval { require IPC::Run; 1 };
     skip "Tk required", $no_tests if !module_exists('Tk');
 
