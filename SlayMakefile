@@ -113,6 +113,7 @@ test-compile:
 		next if $script =~ m{/reports-sent-cache.pl$} && !$perl_5010_or_better;
 		next if $script =~ m{/capture-tiny-watcher.pl$}; # only interesting on Windows systems; needs P9Y::ProcessTable
 		next if $script =~ m{/firefox_cookie_finder.pl$} && !eval { require DBI; 1 };
+		next if $script =~ m{/git-safe-amend$} && !eval { require Doit; 1 };
 		system($perl, '-c', $script);
 		is($?, 0, "$script compiled OK");
 	    }
