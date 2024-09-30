@@ -26,6 +26,7 @@ jobs:
         sudo apt-get update -qq
       if: "startsWith(matrix.os, 'ubuntu-')"
     - uses: taiki-e/checkout-action@v1
+    - uses: eserte/Doit/.github/actions/install-doit-from-github@master
     - name: Build and test
       run: |
         set -e
