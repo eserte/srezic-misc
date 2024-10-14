@@ -759,6 +759,20 @@ sub parse_test_report {
 			 /sys(read|write)\(\) isn't allowed on :utf8 handles/
 			) {
 		    $add_analysis_tag->('sysread+syswrite on utf8');
+		} elsif ( # Array found where operator expected at /home/cpansand/.cpan/build/2024101323/List-Stream-0.0.1-0/blib/lib/List/Stream.pm line 90, near "->@*"
+		         /Array found where operator expected at .*near \"->\@\*\"/ ||
+			  #     Error:  syntax error at /home/cpansand/.cpan/build/2024101401/List-Stream-0.0.1-0/blib/lib/List/Stream.pm line 90, near "->@* "
+			 /syntax error at .*near \"->\@\*/
+		        ) {
+		    $add_analysis_tag->('postfix deref');
+		} elsif ( # Warning was 'Possible precedence problem between ! and string eq at /opt/perl-5.41.4/lib/site_perl/5.41.4/BSON.pm line 99.'
+		         /Possible precedence problem between ! and /
+		        ) {
+		    $add_analysis_tag->('possible precedence problem');
+		} elsif (
+		         /\QCan't find string terminator "'" anywhere before EOF at /
+		        ) {
+		    $add_analysis_tag->('old package separator');
 		} elsif ( # should be before pod coverage and maybe pod tests
 			 /Unrecognized character .* at \._\S+ line \d+\./ ||
 			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
@@ -976,7 +990,8 @@ sub parse_test_report {
 			 m{\QCan't locate YAML/Base.pm in @INC (you may need to install the YAML::Base module) (@INC contains: \E.*\Q/inc/YAML.pm line \E\d+} ||
 			 m{\QRegexp modifiers "/a" and "/d" are mutually exclusive at inc/Module/Install/AutoInstall.pm} ||
 			 m{\QBEGIN failed--compilation aborted at inc/Module/Install/Makefile.pm line \Q\d+\.} ||
-			 m{\QRedundant argument in sprintf at inc/Spiffy.pm line 225.}
+			 m{\QRedundant argument in sprintf at inc/Spiffy.pm line 225.} ||
+			 m{\QString found where operator expected\E.+\QTest/More.pm line \E\d+\Q, near } # old package separator removal in 5.41.x
 			) {
 		    $add_analysis_tag->('possibly old bundled modules');
 		} elsif (
