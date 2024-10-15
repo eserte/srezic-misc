@@ -492,7 +492,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 		       -width => 24,
 		       -command => sub {
 			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("http://" . (USE_BETA_MATRIX ? 'beta-' : '') . "matrix.cpantesters.org/?" . make_query_string(dist=>$currdist));
+			   Tk::Pod::WWWBrowser::start_browser("http://" . (USE_BETA_MATRIX ? 'beta-' : '') . "matrix.cpantesters.org/?" . make_query_string(dist=>"$currdist $currversion"));
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($matrix_b, -msg => 'Matrix');
     }
@@ -507,7 +507,7 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 			   -width => 24,
 			   -command => sub {
 			       require Tk::Pod::WWWBrowser;
-			       Tk::Pod::WWWBrowser::start_browser("$fast_matrix_url?" . make_query_string(dist=>$currdist));
+			       Tk::Pod::WWWBrowser::start_browser("$fast_matrix_url?" . make_query_string(dist=>"$currdist $currversion"));
 			   })->pack(-side => 'left', -fill => 'y');
 	    $balloon->attach($fast_matrix_b, -msg => $label);
 	}
