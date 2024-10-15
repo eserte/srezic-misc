@@ -727,6 +727,14 @@ sub parse_test_report {
 			 /^(?:#\s+Error:\s+)?(?:Smartmatch|given|when) is experimental $at_source_qr$/
 			) {
 		    $add_analysis_tag->('smartmatch');
+		} elsif ( # got: 'syntax error at /home/cpansand/.cpan/build/2024101423/App-HTTP_Proxy_IMP-0.958-0/blib/lib/App/HTTP_Proxy_IMP/IMP.pm line 91, near "$_ ~"
+		         /syntax error at .*near .*~"/
+			) {
+		    $add_analysis_tag->('smartmatch removal');
+		} elsif ( # Feature "switch" is not supported by Perl 5.41.4 at /home/cpansand/.cpan/build/2024101501/AnyEvent-Net-Curl-Queued-0.049-0/blib/lib/AnyEvent/Net/Curl/Queued/Easy.pm line 5.
+		         /\QFeature "switch" is not supported by Perl 5/
+		        ) {
+		    $add_analysis_tag->('switch removal');
 		} elsif (
 			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|values|shift|unshift|splice|each) on reference is experimental $at_source_qr$/
 			) {
@@ -773,6 +781,10 @@ sub parse_test_report {
 		         /\QCan't find string terminator "'" anywhere before EOF at /
 		        ) {
 		    $add_analysis_tag->('old package separator');
+		} elsif ( # Attempt to call undefined import method with arguments ("humanize") via package "Protocol::FIX" (Perhaps you forgot to load the package?) at /home/cpansand/.cpan/build/2024101319/Protocol-FIX-0.08-0/blib/lib/Protocol/FIX/Parser.pm line 7.
+		         /\QAttempt to call undefined import method with arguments/
+		        ) {
+		    $add_analysis_tag->('undefined import method');
 		} elsif ( # should be before pod coverage and maybe pod tests
 			 /Unrecognized character .* at \._\S+ line \d+\./ ||
 			 /^#\s+Failed test 'Pod coverage on [A-Za-z0-9:_]*?\._[A-Za-z0-9:_]+'/
