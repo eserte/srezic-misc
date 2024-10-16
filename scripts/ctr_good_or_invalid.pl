@@ -735,6 +735,10 @@ sub parse_test_report {
 		         /\QFeature "switch" is not supported by Perl 5/
 		        ) {
 		    $add_analysis_tag->('switch removal');
+		} elsif ( # Error:  syntax error at /home/cpansand/.cpan/build/2024101508/REST-Neo4p-0.4003-0/blib/lib/REST/Neo4p/Agent.pm line 214, near ") {"
+		         /\Qsyntax error at .*, near \"\)\s*\{\"/
+		        ) {
+		    $add_analysis_tag->('possibly switch removal');
 		} elsif (
 			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|values|shift|unshift|splice|each) on reference is experimental $at_source_qr$/
 			) {
