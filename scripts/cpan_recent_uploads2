@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2013,2014,2015,2017,2018,2021,2023 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2013,2014,2015,2017,2018,2021,2023,2024 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -181,6 +181,7 @@ my %unit2secs = (
 		 "m" => 60,
 		 "h" => 3600,
 		 "d" => 86400,
+		 "y" => 365*86400,
 		);
 my $units_qr = '(?:' . join('|', map { quotemeta } keys %unit2secs) . ')'; $units_qr = qr{$units_qr};
 
