@@ -2326,7 +2326,7 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
 		} elsif ($entry->{archname} eq 'aarch64-linux-gnu-thread-multi 6.1.0') {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04? (system perl)';
-		} elsif ($entry->{archname} =~ m{ 6.1.0-25-}) {
+		} elsif ($entry->{archname} =~ m{ 6.1.0-(25|26)-}) {
 		    $arch_os_version = 'bookworm'; # 'Debian/bookworm?';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
