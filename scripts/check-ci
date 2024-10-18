@@ -203,6 +203,12 @@ exit($success ? 0 : 1);
 		my($path, $id) = @{$candidates[0]}{qw(path id) };
 		# If there's more than one matching active workflow, then pick the first, but tell the user which one was chosen.
 		if (@candidates > 1) {
+		    if ($debug) {
+			debug "The following workflow canidates exist:";
+			for my $candidate (@candidates) {
+			    debug "* $candidate->{path}";
+			}
+		    }
 		    print STDERR colored("INFO:", "yellow") . " picked workflow " . colored($path, "yellow") . "\n";
 		}
 		return $id;
