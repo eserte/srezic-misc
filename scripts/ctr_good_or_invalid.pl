@@ -736,7 +736,8 @@ sub parse_test_report {
 		        ) {
 		    $add_analysis_tag->('switch removal');
 		} elsif ( # Error:  syntax error at /home/cpansand/.cpan/build/2024101508/REST-Neo4p-0.4003-0/blib/lib/REST/Neo4p/Agent.pm line 214, near ") {"
-		         /\Qsyntax error at .*, near \"\)\s*\{\"/
+		          # Error:  syntax error at /home/cpansand/.cpan/build/2024101510/Tapper-Installer-5.0.1-0/blib/lib/Tapper/Installer/Base.pm line 221, near "){"
+		         /syntax error at .*, near \"\)\s*\{\"/
 		        ) {
 		    $add_analysis_tag->('possibly switch removal');
 		} elsif (
@@ -970,7 +971,9 @@ sub parse_test_report {
 		} elsif (
 			 /^collect2: error: ld returned 1 exit status/ ||
 			 m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC} ||
-			 /^.*\.a\(.*\.o\):.*: undefined reference to `.*'/ # g++/windows/strawberry perl
+			 /^.*\.a\(.*\.o\):.*: undefined reference to `.*'/ || # g++/windows/strawberry perl
+		         /ld: error: undefined hidden symbol: / || # clang freebsd
+			 m{\bld: \S+\.so: hidden symbol `.*' isn't defined} # gcc linux
 			) {
 		    $add_analysis_tag->('linker error');
 		} elsif (
