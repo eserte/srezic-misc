@@ -39,8 +39,8 @@ sub sort_by_example ($@);
 use constant USE_BETA_MATRIX => 0;
 
 my @current_beforemaintrelease_pairs = ( # remember: put a space before "RC", not a dash
-					{ pair => '5.40.0:5.41.4',     important => 1 },
-					#{ pair => '5.39.9:5.39.10',    important => 1 },
+					{ pair => '5.40.0:5.41.5',     important => 1 },
+					{ pair => '5.41.4:5.41.5',     important => 1 },
 					{ pair => '5.38.2:5.40.0',     important => 1 },
 					{ pair => '5.36.3:5.38.2',     important => 1 },
 					{ pair => '5.34.3:5.36.3',     important => 1 },
@@ -740,6 +740,10 @@ sub parse_test_report {
 		         /syntax error at .*, near \"\)\s*\{\"/
 		        ) {
 		    $add_analysis_tag->('possibly switch removal');
+		} elsif ( #     Error:  Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at /home/cpansand/.cpan/build/2024101720/XML-Simple-Sugar-v1.1.2-1/blib/lib/XML/Simple/Sugar.pm line 5.
+		         /Changing use VERSION while another use VERSION is in scope is deprecated/
+		        ) {
+		    $add_analysis_tag->('changing use VERSION');
 		} elsif (
 			 /^(?:#\s+Error:\s+)?(?:push|pop|keys|values|shift|unshift|splice|each) on reference is experimental $at_source_qr$/
 			) {
@@ -1265,6 +1269,7 @@ sub parse_test_report {
 			 /Fatal error: .*: No space left on device/ # from gcc
 		         || /\branlib: .*: No space left on device/ # from ranlib; seen in Alien::ffmpeg
 			 || /\bar: .*: No space left on device/ # from ar; seen in Alien::ffmpeg
+			 || /\bcp: .*: No space left on device/ # from cp; seen in DBD::SQLite
 			 || /ERROR: .*: No space left on device/ # from EUMM
 			 || /mkdir .*: No space left on device $at_source_qr/ # from EU::Command
 			 || m{/usr/bin/ld:.*: No space left on device} # seen in Alien::MuPDF
@@ -1713,6 +1718,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'possible file temp locking issue' && $annotation_text_for_analysis =~ m{database is locked}i)
 		       || ($analysis_tag eq 'sysread+syswrite on utf8' && $annotation_text_for_analysis =~ m{sys(read|write).*utf8}i)
 		       || ($analysis_tag eq 'LWP::Protocol::https missing' && $annotation_text_for_analysis =~ m{(LWP::Protocol::https|Protocol scheme 'https' is not supported)}i)
+		       || ($analysis_tag eq 'changing use VERSION' && $annotation_text_for_analysis =~ m{Changing use VERSION while another use VERSION is in scope is deprecated}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}i
 		      );
