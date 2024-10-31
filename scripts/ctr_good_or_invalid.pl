@@ -737,7 +737,9 @@ sub parse_test_report {
 		    $add_analysis_tag->('switch removal');
 		} elsif ( # Error:  syntax error at /home/cpansand/.cpan/build/2024101508/REST-Neo4p-0.4003-0/blib/lib/REST/Neo4p/Agent.pm line 214, near ") {"
 		          # Error:  syntax error at /home/cpansand/.cpan/build/2024101510/Tapper-Installer-5.0.1-0/blib/lib/Tapper/Installer/Base.pm line 221, near "){"
-		         /syntax error at .*, near \"\)\s*\{\"/
+		         /syntax error at .*, near \"\)\s*\{\"/ ||
+			  # # 255 - Bareword found where operator expected (Missing operator before "when"?) at bin/compare-code line 335, near "'CSV'  when"
+			 /\QBareword found where operator expected (Missing operator before "when"?)/
 		        ) {
 		    $add_analysis_tag->('possibly switch removal');
 		} elsif ( #     Error:  Changing use VERSION while another use VERSION is in scope is deprecated, and will become fatal in Perl 5.44 at /home/cpansand/.cpan/build/2024101720/XML-Simple-Sugar-v1.1.2-1/blib/lib/XML/Simple/Sugar.pm line 5.
