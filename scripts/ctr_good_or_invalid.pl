@@ -1335,6 +1335,8 @@ sub parse_test_report {
 		    }
 		} elsif (/\b(Mojolicious|Mojo::Base)\b/) {
 		    $add_analysis_tag->('mojolicious');
+		} elsif (/^\s*(Test::(?:Pod|Pod::Coverage|Perl::Critic|Signature|Prereq|Kwalitee))\s+\S+\s+(\S+)/) { # scenarios handled in cpan_smoke_modules_wrapper3 and should be skipped if the prereq is mentioned
+		    $prereq_versions{$1} = $2;
 		}
 	    } elsif ($section eq 'ENVIRONMENT') {
 		if (m{^\s+PERL5LIB = (.*)}) {
@@ -1922,9 +1924,28 @@ sub set_currfile {
 			       'Test-Simple problem' => 'testsimple',
 			       'mojolicious' => 'mojolicious',
 			      );
+	# See also related regexp under condition $section eq 'PREREQUISITES'
+	# and related scenarios using _scenario_hidemod in cpan_smoke_modules_wrapper3
+	my %skip_scenario_on_module_prereq =
+	    (
+		'testpod' => 'Test::Pod',
+		'testpodcoverage' => 'Test::Pod::Coverage',
+		'testperlcritic' => 'Test::Perl::Critic',
+		'testsignature' => 'Test::Signature',
+		'testprereq' => 'Test::Prereq',
+		'testkwalitee' => 'Test::Kwalitee',
+	    );
 	my @scenarios = do {
 	    my %seen;
 	    grep { !$seen{$_}++ }
+	    grep {
+		my $prereq = $skip_scenario_on_module_prereq{$_};
+		if ($prereq && exists $parsed_report->{prereq_versions}->{$prereq}) {
+		    0;
+		} else {
+		    1;
+		}
+	    }
 	    map { exists $map_to_scenario{$_} ? $map_to_scenario{$_} : () }
 	    keys %analysis_tags
 	};
