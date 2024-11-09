@@ -1984,6 +1984,7 @@ sub set_currfile {
 	if ($url) {
 	    $w = $f->Button(-text => $annotation_label,
 			    @common_analysis_button_config,
+			    -bg => 'yellow',
 			    -command => sub {
 				require Tk::Pod::WWWBrowser;
 				Tk::Pod::WWWBrowser::start_browser($url);
@@ -1997,6 +1998,7 @@ sub set_currfile {
 	    if (defined $annotation_file && defined $annotation_linenumber) {
 		my $eb = $f->Button(-text => "Edit",
 				    @common_analysis_button_config,
+				    -bg => 'yellow',
 				    -command => sub {
 					system('emacsclient', '-n', '+'.$annotation_linenumber, $annotation_file);
 				    })->pack(-side => 'left');
