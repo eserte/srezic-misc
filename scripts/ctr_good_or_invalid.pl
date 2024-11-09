@@ -1452,13 +1452,16 @@ sub get_annotation_info {
     my($fulldist) = @_;
     my($dist, $version) = parse_distvname($fulldist);
 
-    my($annotation_text, $annotation_label);
+    my($annotation_text, $annotation_label, $annotation_file, $annotation_linenumber);
     if ($distvname2annotation && $distvname2annotation->{$fulldist}) {
 	$annotation_text = $distvname2annotation->{$fulldist};
 	$annotation_label = 'Annotation';
     } elsif ($distname2annotation && $distname2annotation->{$dist}) {
-	$annotation_text = $distname2annotation->{$dist}->{annotation} . ' (version ' . $distname2annotation->{$dist}->{version} . ')';
+	my $annotation_record = $distname2annotation->{$dist};
+	$annotation_text = $annotation_record->{annotation} . ' (version ' . $annotation_record->{version} . ')';
 	$annotation_label = 'Old Annotation';
+	$annotation_file = $annotation_record->{file};
+	$annotation_linenumber = $annotation_record->{linenumber};
     }
     if (defined $annotation_text) {
 	my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
@@ -1517,6 +1520,8 @@ sub get_annotation_info {
 		label => $annotation_label,
 		text  => $annotation_text,
 		url   => $url,
+		file  => $annotation_file,
+		linenumber => $annotation_linenumber,
 	       );
     }
     ();
@@ -1973,19 +1978,34 @@ sub set_currfile {
     ($currdist, $currversion) = parse_distvname($currfulldist);
 
     {
-	my($url, $annotation_label, $annotation_text) = @annotation_info{qw(url label text)};
+	my($url, $annotation_label, $annotation_text, $annotation_file, $annotation_linenumber) = @annotation_info{qw(url label text file linenumber)};
+	my $f = $analysis_frame->Frame;
 	my $w;
 	if ($url) {
-	    $w = $analysis_frame->Button(-text => $annotation_label,
-					 -command => sub {
-					     require Tk::Pod::WWWBrowser;
-					     Tk::Pod::WWWBrowser::start_browser($url);
-					 })->pack;
+	    $w = $f->Button(-text => $annotation_label,
+			    @common_analysis_button_config,
+			    -command => sub {
+				require Tk::Pod::WWWBrowser;
+				Tk::Pod::WWWBrowser::start_browser($url);
+			    })->pack(-side => 'left');
 	} elsif (defined $annotation_label) {
-	    $w = $analysis_frame->Label(-text => $annotation_label)->pack;
+	    $w = $f->Label(-text => $annotation_label)->pack(-side => 'left');
 	}
 	if ($w) {
 	    $balloon->attach($w, -msg => $annotation_text);
+
+	    if (defined $annotation_file && defined $annotation_linenumber) {
+		my $eb = $f->Button(-text => "Edit",
+				    @common_analysis_button_config,
+				    -command => sub {
+					system('emacsclient', '-n', '+'.$annotation_linenumber, $annotation_file);
+				    })->pack(-side => 'left');
+		$balloon->attach($eb, -msg => "Edit $annotation_file:$annotation_linenumber");
+	    }
+
+	    $f->pack;
+	} else {
+	    $f->destroy; # never used...
 	}
     }
 
@@ -2671,17 +2691,24 @@ sub read_annotate_txt {
 	    next if !defined $distname; # may happen for invalid distnames like "font_ft2_0.1.0"
 
 	    $add_annotation->(\$distvname2annotation{$distvname}, $annotation);
+
+	    my $annotation_record = {
+		version => $distversion,
+		annotation => $annotation,
+		file => $file,
+		linenumber => $.,
+	    };
 	    if (exists $distname2annotation{$distname}) {
 		my $cmp = cmp_version($distname2annotation{$distname}->{version}, $distversion);
 		if ($cmp < 0) { # existing is older
-		    $distname2annotation{$distname} = { version => $distversion, annotation => $annotation };
+		    $distname2annotation{$distname} = $annotation_record;
 		} elsif ($cmp == 0) {
 		    $add_annotation->(\$distname2annotation{$distname}->{annotation}, $annotation);
 		} else {
 		    # ignore
 		}
 	    } else {
-		$distname2annotation{$distname} = { version => $distversion, annotation => $annotation };
+		$distname2annotation{$distname} = $annotation_record;
 	    }		
 	}
     }
