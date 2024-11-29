@@ -10,7 +10,7 @@ our $VERSION = '2.01';
 use Getopt::Long;
 use Hash::Util qw(lock_keys);
 
-my @all_auto = qw(httpclient httpserver open stderr wwwcache xmlparser mogilefs dns custom facter-facts);
+my @all_auto = qw(httpclient httpserver open stderr wwwcache xmlparser mogilefs dns custom facter-facts exec);
 my %auto = map{($_,0)} @all_auto;
 
 my $wwwcache_mapfile;
@@ -31,6 +31,7 @@ my %pending_http_request;
 my %pending_http_serving;
 my %pending_mogilefs_stored_request;
 my %pending_dns_request;
+my %pending_exec;
 my %memory_per_pid;
 my %http_per_pid;
 
@@ -201,8 +202,8 @@ while(<>) {
             push @markers, ["httpclient END $method $hostpath", $time-$start_time];
             delete $pending_http_request{"$pid $fd"};
             push @{ $http_per_pid{$pid} }, sprintf('httpclient %.6fs END   %-4s %s', $prev_time-$time, $method, $hostpath);
-        } elsif ($auto{httpclient} && $syscall =~ m{^connect\(\d+,.*sin_port=htons\(80\), sin_addr=inet_addr\("([^"]+)"\)}) {
-            push @markers, ["httpclient CONNECT to $2", $prev_time-$start_time];
+        } elsif ($auto{httpclient} && $syscall =~ m{^connect\(\d+,.*sin_port=htons\((80|443)\), sin_addr=inet_addr\("([^"]+)"\)}) {
+            push @markers, ["httpclient CONNECT to $2:$1", $prev_time-$start_time];
 	} elsif ($auto{httpserver} && $syscall =~ m{^read\(\d+,\s+\"(GET|POST|HEAD)\s+(\S+)\s+HTTP/}) {
             my($method, $path) = ($1, $2);
             push @markers, ["httpserver START $method $path", $prev_time-$start_time];
@@ -262,6 +263,12 @@ while(<>) {
             delete $pending_dns_request{"$pid $fd"};
         } elsif ($auto{'facter-facts'} && $syscall =~ m{^(?:open|execve)\(\"/etc/facter/facts\.d/([^"]+)}) {
             push @markers, ["facter fact $1 BEGIN", $prev_time-$start_time];
+        } elsif ($auto{'exec'} && $syscall =~ m{^execve\("(.*?)\"} && $syscall !~ /\bENOENT\b/) {
+            push @markers, ["exec $pid $1", $prev_time-$start_time];
+            $pending_exec{$pid} = $prev_time;
+        } elsif ($auto{'exec'} && $syscall =~ /^\Q+++ exited with \E\d+\Q +++/ && exists $pending_exec{$pid}) {
+            push @markers, ["exec $pid END", $prev_time-$start_time];
+            delete $pending_exec{$pid};
         } elsif ($auto{custom} && $syscall =~ $custom_rx) {
             (my $label = $syscall) =~ s{\s+<[\d\.]+>$}{};
             push @markers, [$label, $prev_time-$start_time];
@@ -329,7 +336,7 @@ sub debug_output {
     require Data::Dumper; print STDERR "Line " . __LINE__ . ", File: " . __FILE__ . "\n" . Data::Dumper->new([\%http_per_pid],[qw()])->Indent(1)->Useqq(1)->Dump; # XXX
 
     {
-        for my $var (qw(pending_http_request pending_http_serving pending_mogilefs_stored_request pending_dns_request)) {
+        for my $var (qw(pending_http_request pending_http_serving pending_mogilefs_stored_request pending_dns_request pending_exec)) {
             my $hashref = eval '\%' . $var;
             die if !$hashref;
             if (keys %$hashref) {
