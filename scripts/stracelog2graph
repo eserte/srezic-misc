@@ -119,6 +119,10 @@ while(<>) {
     s{^(?:\[pid\s+)?(\d+)\]?\s+}{}; # throw pid away. accept both forms (stderr and -o)
     my $pid = $1;
     next if (defined $only_pid && $pid != $only_pid);
+
+    # throw duration away
+    s{\s+<\d+\.\d+>$}{};
+
     if (m{^\*\*\*\s*(.*)}) {
 	my $marker = $1;
 	push @markers, [$marker, $prev_time-$start_time];
