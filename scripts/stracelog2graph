@@ -138,7 +138,7 @@ while(<>) {
             }
             $pending_line{$pid} = [$syscall_name, $syscall_line];
             next;
-        } elsif ($syscall =~ m{^<\.\.\. (\S+) resumed> (.*)}) {
+        } elsif ($syscall =~ m{^<\.\.\. (\S+) resumed>(.*)}) {
             my($resumed_syscall_name, $resumed_syscall_line) = ($1, $2);
             if (!$pending_line{$pid}) {
                 warn "Mismatch in strace log: found resumed line for pid <$pid>, but we are not waiting for a pending line.\n";
