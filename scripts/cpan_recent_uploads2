@@ -317,6 +317,7 @@ GATHER_DATA: {
 	    # strip "id/" from $path
 	    debug("ignore (not in id)"), next if $path !~ m{^id/(.*)};
 	    $path = $1;
+	    debug("ignore (not a dist)"), next if $path =~ m{\.ppm\.zip$}i; # check before the .zip regexp below
 	    if ($only_dists || $only_indexed) {
 		# same list of extensions as in CPAN::DistnameInfo
 		debug("ignore (not a dist)"), next if $path !~ m{(\.zip|\.tgz|\.tar\.(z|gz|bz2))$}i;
