@@ -1697,7 +1697,7 @@ sub set_currfile {
 			   ) && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
 		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*fail}i)
 		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail)}i)
-		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{perl.*critic.*fail}i)
+		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{(perl.*critic.*fail|fail.*perl.*critic)}i)
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependenc(y|ies) .*not declared|not declared .*dependenc(y|ies)|can't locate |not specified (in|as) configure_requires)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
 		       || ($analysis_tag eq 'undefined symbol in shared lib' && $annotation_text_for_analysis =~ m{undefined symbol}i)
