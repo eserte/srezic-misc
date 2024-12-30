@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014,2015,2017,2018,2019 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015,2017,2018,2019,2024 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -205,7 +205,15 @@ REPORTS_LOOP: for my $file (@reports) {
 	    }
 
 	    last DO_SEND if $r->send;
-	    warn "[" . _ts . "] Something failed in $process_file: " . $r->errstr . ".\n";
+	    my $errstr = $r->errstr;
+	    if ($errstr =~ m{(
+				 \Qfact submission failed: No healthy backends\E
+			     )}x) {
+		# short error message
+		warn "[" . _ts . "] Failed for $process_file: $1\n";
+	    } else {
+		warn "[" . _ts . "] Something failed in $process_file: " . $errstr . ".\n";
+	    }
 	    if ($try == $max_retry) {
 		die "Stop.\n";
 	    }
