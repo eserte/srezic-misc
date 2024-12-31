@@ -208,6 +208,9 @@ REPORTS_LOOP: for my $file (@reports) {
 	    my $errstr = $r->errstr;
 	    if ($errstr =~ m{(
 				 \Qfact submission failed: No healthy backends\E
+			     |   \Qfact submission failed: Proxy Error\E
+			     |   \Qfact submission failed: Internal Exception\E
+			     |   \Qfact submission failed: backend read error\E
 			     )}x) {
 		# short error message
 		warn "[" . _ts . "] Failed for $process_file: $1\n";
