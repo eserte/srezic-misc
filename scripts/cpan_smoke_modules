@@ -1430,7 +1430,7 @@ Please fix and retry with <RETURN>: "};
 **********************************************************************
 * WARNING
 * SlayMakefile exists in $prefs_dir, but slaymake is not available.
-* Please install Slay::Maker from CPAN.
+* Please install Slay::Makefile from CPAN.
 * Proceeding without validating and updating distroprefs.
 **********************************************************************
 EOF
