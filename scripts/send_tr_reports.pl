@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008,2012,2013,2014,2015,2017,2018,2019,2024 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008,2012,2013,2014,2015,2017,2018,2019,2024,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -208,6 +208,7 @@ REPORTS_LOOP: for my $file (@reports) {
 	    my $errstr = $r->errstr;
 	    if ($errstr =~ m{(
 				 \Qfact submission failed: No healthy backends\E
+			     |   \Qfact submission failed: All backends failed or unhealthy\E
 			     |   \Qfact submission failed: Proxy Error\E
 			     |   \Qfact submission failed: Internal Exception\E
 			     |   \Qfact submission failed: backend read error\E
