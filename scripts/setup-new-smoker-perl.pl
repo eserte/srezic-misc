@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013,2014,2015,2016,2017,2018,2019,2020,2024 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2014,2015,2016,2017,2018,2019,2020,2024,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -229,7 +229,7 @@ if (-f $downloaded_perl_bz2 && -s $downloaded_perl_bz2) {
     $downloaded_perl = $downloaded_perl_gz;
 }
 if (!defined $download_url) {
-    $download_url = "http://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
+    $download_url = "https://www.cpan.org/src/5.0/$perl_tar_gz"; # XXX only .gz
 } else {
     basename($download_url) eq $perl_tar_gz
 	or die "Unexpected download URL '$download_url' does not match expected basename '$perl_tar_gz'";
