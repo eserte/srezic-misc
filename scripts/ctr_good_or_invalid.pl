@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -602,6 +602,45 @@ if ($auto_good) {
 			$mw->destroy;
 		    }
 		})
+}
+
+{
+    # cd .../CPAN-Testers-Matrix
+    # convert images/cpantesters_favicon.ico png:- | base64
+    my $icon_data = <<EOF;
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
+AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAP1BMVEUAAAD/AAAAgQDMzMxm
+ZplmZmaQGzesNzfHUlLjbm4zM2asN1KZmZn///+Zmcw3clIbVjdSjVJuqW6KxYo3cjeuaZfnAAAA
+A3RSTlMAdXWIUczeAAAAAWJLR0QN9rRh9QAAAAd0SU1FB+kBGQgJL5nuBucAAACNSURBVBjTLY6B
+EoQgCERJwDrCJOv/v/UWDZ2R92ZFiVAsWut+/DZUsphZzTqWSF6inikmW92/DPFk289lthkQUWGZ
+UadkN9fWxBU9hLJd6q01y+sQ7ugYwi+ZAscSF8YI9eh3jBhPJhRDRwB7vyHUzZhKj7djPS3fdaJS
+3gjs8PwApUAm6+MUZaRS5+Q/AzAIn3BWLJgAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjUtMDEtMjVU
+MDg6MDk6NDcrMDE6MDBh1fMNAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDI1LTAxLTI1VDA4OjA5OjQ3
+KzAxOjAwEIhLsQAAAABJRU5ErkJggg==
+EOF
+    my $icon = $mw->Photo(
+	-format => 'png',
+	-data => $icon_data,
+    );
+    $mw->Icon(-image => $icon);
+
+    if (eval { require Tk::FreeDesktop::Wm; 1 }) {
+	if (!eval {
+	    require File::Temp;
+	    require MIME::Base64;
+	    my($tmpfh,$tmpfile) = File::Temp::tempfile(SUFFIX => '.png', TMPDIR => 1, UNLINK => 1);
+	    $tmpfh->print(MIME::Base64::decode_base64($icon_data));
+	    $tmpfh->close;
+
+	    my $fd = Tk::FreeDesktop::Wm->new(mw => $mw);
+	    my @image_files = ($tmpfile);
+	    $fd->set_wm_icon([ @image_files ]);
+
+	    1;
+	}) {
+	    warn "WARNING: Failed while using Tk::FreeDesktop::Wm to set icon: $@";
+	}
+    }
 }
 
 #$mw->FullScreen; # does not work (with fvwm2 only?)
