@@ -2389,6 +2389,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'rocky9'; # system perl, maybe created in a container?
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
+		} elsif ($entry->{archname} =~ m{-linux-thread-multi 6\.11\.0}) {
+		    $arch_os_version = "fedora41"; # fedora41? (system perl)
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
 		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
 		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
@@ -2413,9 +2415,9 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'focal'; # 'Ubuntu 20.04?';
 		} elsif ($entry->{archname} =~ m{ (5\.3\.0|5\.4\.0|5\.6\.0|5\.10\.0)-}) {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
-		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|46|56|76|79)-}) {
+		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|46|56|76|79|131)-}) {
 		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04?';
-		} elsif ($entry->{archname} =~ m{ 6\.8\.0-(35)-}) {
+		} elsif ($entry->{archname} =~ m{ 6\.8\.0-(35|51)-}) {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
 		} elsif ($entry->{archname} eq 'aarch64-linux-gnu-thread-multi 6.1.0') {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04? (system perl)';
