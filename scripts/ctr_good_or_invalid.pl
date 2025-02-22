@@ -1284,14 +1284,18 @@ sub parse_test_report {
 			 m{^Makefile:\d+: recipe for target '(.*?)' failed$} && $1 !~ m{^(?:test|test_dynamic|all)$}
 			) {
 		    $add_analysis_tag->('make problem (failed target)');
-		} elsif(
-			m{^CMake Error}
-		       ) {
+		} elsif (
+			 m{^CMake Error}
+		        ) {
 		    $add_analysis_tag->('cmake problem');
-		} elsif(
-			m{\bcmake: not found\b}
-		       ) {
+		} elsif (
+			 m{\bcmake: not found\b}
+		        ) {
 		    $add_analysis_tag->('cmake missing');
+		} elsif (
+		        m{^You tried to plan twice at }
+		        ) {
+		    $add_analysis_tag->('plan twice');
 		} elsif (
 			 /^\QBailout called.  Further testing stopped:/
 			) {
@@ -1767,6 +1771,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'sysread+syswrite on utf8' && $annotation_text_for_analysis =~ m{sys(read|write).*utf8}i)
 		       || ($analysis_tag eq 'LWP::Protocol::https missing' && $annotation_text_for_analysis =~ m{(LWP::Protocol::https|Protocol scheme 'https' is not supported)}i)
 		       || ($analysis_tag eq 'changing use VERSION' && $annotation_text_for_analysis =~ m{Changing use VERSION while another use VERSION is in scope is deprecated}i)
+		       || ($analysis_tag eq 'plan twice' && $annotation_text_for_analysis =~ m{plan twice}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}i
 		      );
