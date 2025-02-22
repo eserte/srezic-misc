@@ -1772,6 +1772,8 @@ sub set_currfile {
 		       || ($analysis_tag eq 'LWP::Protocol::https missing' && $annotation_text_for_analysis =~ m{(LWP::Protocol::https|Protocol scheme 'https' is not supported)}i)
 		       || ($analysis_tag eq 'changing use VERSION' && $annotation_text_for_analysis =~ m{Changing use VERSION while another use VERSION is in scope is deprecated}i)
 		       || ($analysis_tag eq 'plan twice' && $annotation_text_for_analysis =~ m{plan twice}i)
+		       || (($analysis_tag eq 'switch removal' || $analysis_tag eq 'possibly switch removal') && $annotation_text_for_analysis =~ m{switch removal}i)
+		       || ($analysis_tag eq 'smartmatch removal' && $annotation_text_for_analysis =~ m{smartmatch removal}i)
 		       ### generic match
 		       || $annotation_text_for_analysis =~ m{\Q$analysis_tag}i
 		      );
