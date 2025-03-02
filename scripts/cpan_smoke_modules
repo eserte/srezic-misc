@@ -1804,15 +1804,17 @@ END {
 	system @idletermchecker_cmd, "-tk", "-s", "-remove", $tty;
     }
 
-    if ($signal_end && time-$start_time>60 && is_in_path("tkmessage") && $^O ne 'darwin') {
+    if ($signal_end && time-$start_time>60) {
 	my $msg = "Smoking finished (";
 	$msg .= "dists=";
 	$msg .= @dist_or_mods > 3 ? join(", ", @dist_or_mods[0..2]) . " ..." : join(", ", @dist_or_mods);
 	$msg .= ", perls=" . join(", ", @perls);
 	$msg .= ")";
 	print STDERR $msg, "\n";
-	if (fork == 0) {
-	    exec("tkmessage", "-bg", "green", "-fg", "black", $msg);
+	if (($^O =~ m{^(linux|freebsd)$} && $ENV{DISPLAY}) && is_in_path("tkmessage") && $^O ne 'darwin') {
+	    if (fork == 0) {
+		exec("tkmessage", "-bg", "green", "-fg", "black", $msg);
+	    }
 	}
     }
 
