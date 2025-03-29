@@ -2424,6 +2424,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'bullseye'; # 'Debian/bullseye?';
 		} elsif ($entry->{archname} =~ m{ 5\.15\.0-(25|30|46|56|76|79|131|134)-}) {
 		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04?';
+		} elsif ($entry->{archname} =~ m{ 6\.1\.0-1009-oem}) {
+		    $arch_os_version = 'jammy'; # 'Ubuntu 22.04', oem (?) version
 		} elsif ($entry->{archname} =~ m{ 6\.8\.0-(35|51)-}) {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
 		} elsif ($entry->{archname} eq 'aarch64-linux-gnu-thread-multi 6.1.0') {
