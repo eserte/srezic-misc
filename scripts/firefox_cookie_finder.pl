@@ -20,7 +20,10 @@ sub find_cookie_value {
     # If expected_cookie_lifetime_in_days is provided, convert it to seconds
     my $expected_lifetime = defined $expected_lifetime_in_days ? $expected_lifetime_in_days * 24 * 60 * 60 : undef;
 
-    my @cookie_db_files = sort { -M $a <=> -M $b } bsd_glob("~/.mozilla/firefox/*/cookies.sqlite");
+    my @cookie_db_files = sort { -M $a <=> -M $b }
+	bsd_glob("~/.mozilla/firefox/*/cookies.sqlite"),
+	bsd_glob("~/snap/firefox/common/.mozilla/firefox/*/cookies.sqlite"),
+	;
 
     for my $db_file (@cookie_db_files) {
 	my $age_seconds = time - (stat($db_file))[9];
