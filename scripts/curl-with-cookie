@@ -34,7 +34,19 @@ for my $cookie_name (@cookie_names) {
     push @cookie_name_values, "$cookie_name=$cookie_value";
 }
 
-my @cmd = ('curl', (@cookie_name_values ? ('--cookie', join("; ", @cookie_name_values)) : ()), @ARGV);
+my @cookie_opts;
+if (@cookie_name_values) {
+    my $cookie_val = join("; ", @cookie_name_values);
+    if (0) {
+	# This does not seem to work with large cookies and newer curl
+	# versions (e.g. 7.81). See https://curl.se/mail/lib-2023-05/0017.html
+	@cookie_opts = ('--cookie', $cookie_val);
+    } else {
+	@cookie_opts = ('-H', "Cookie: $cookie_val");
+    }
+}
+
+my @cmd = ('curl', @cookie_opts, @ARGV);
 system @cmd;
 die "@cmd failed" if $? != 0;
 
