@@ -38,8 +38,11 @@ my @cookie_opts;
 if (@cookie_name_values) {
     my $cookie_val = join("; ", @cookie_name_values);
     if (0) {
-	# This does not seem to work with large cookies and newer curl
+	# This does not seem to work with large cookies and some curl
 	# versions (e.g. 7.81). See https://curl.se/mail/lib-2023-05/0017.html
+	# In newer curl versions (e.g. 8.9.1) the limit was raised from 4k to 8k,
+	# and additionally a warning is issued, if it's exceeded.
+	# Nevertheless, keep the -H code.
 	@cookie_opts = ('--cookie', $cookie_val);
     } else {
 	@cookie_opts = ('-H', "Cookie: $cookie_val");
