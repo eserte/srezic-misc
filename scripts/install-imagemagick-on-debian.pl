@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2016,2017,2020,2022 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016,2017,2020,2022,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -238,20 +238,17 @@ sub deb_src_advice () {
     chomp(my $codename = `lsb_release -cs`);
     my $sources_list_message;
     if ($codename eq 'stretch') {
-	$sources_list_message .= <<'EOF';
-Try to add something like the following on debian/stretch systems:
+	$sources_list_message .= <<"EOF";
+Try to add something like the following on debian systems:
 
-    deb-src http://http.debian.net/debian stretch main contrib non-free
+    deb-src https://http.debian.net/debian $codename main contrib non-free
 EOF
     } else {
-	$sources_list_message .= <<'EOF';
+	$sources_list_message .= <<"EOF";
 Try to add something like the following on ubuntu/mint systems:
 
-    deb-src http://archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse
+    deb-src https://archive.ubuntu.com/ubuntu/ $codename main restricted universe multiverse
 
-or
-
-    deb-src http://archive.ubuntu.com/ubuntu/ precise main restricted universe multiverse
 EOF
     }
     mydie <<"EOF";
