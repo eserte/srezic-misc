@@ -471,6 +471,6 @@ Slaven Rezic
 
 =head1 SEE ALSO
 
-L<Test::Reporter>.
+L<Test::Reporter>, L<Test::Reporter::Transport::Metabase>.
 
 =cut
