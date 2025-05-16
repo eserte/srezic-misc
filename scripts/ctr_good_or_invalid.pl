@@ -286,6 +286,7 @@ if (@match_pvs) {
 		    or die "ERROR: can't open file $file: $!\n";
 	    CHECK_VERSION: {
 		    while(<$fh>) {
+			s/\r//; # for windows reports
 			last if /^$/;
 			if (/^X-Test-Reporter-Perl:\s+v([\d\.]+)/) { # XXX RCs?
 			    my $this_pv = version->new($1);
@@ -324,6 +325,7 @@ if ($only_recent) {
 	    or die "ERROR: can't open file $file: $!\n";
     CHECK_DIST: {
 	    while(<$fh>) {
+		s/\r//; # for windows reports
 		last if /^$/;
 		if (/^X-Test-Reporter-Distfile:\s+(.+)/) {
 		    if ($is_recent{$1}) {
@@ -2260,7 +2262,7 @@ sub get_recent_states {
 	    for my $f (map { @$_ } values %$hash) {
 		if (!exists $report_file_info{$f}) {
 		    if (open my $fh, $f) {
-			my($epoch) = $f =~ m{\.(\d+)\.\d+\.rpt$};
+			my($epoch) = $f =~ m{\.(\d+)\.-?\d+\.rpt$};
 			my($x_test_reporter_perl, $archname);
 			while(<$fh>) {
 			    chomp;
@@ -2671,7 +2673,7 @@ sub is_user_at_computer {
 
 sub parse_report_filename {
     my $filename = shift;
-    if (my($state, $distv_arch, $epoch, $pid) = $filename =~ m{(?:^|/)($the_ct_states_rx)\.(.*)\.(\d+)\.(\d+)\.rpt$}) {
+    if (my($state, $distv_arch, $epoch, $pid) = $filename =~ m{(?:^|/)($the_ct_states_rx)\.(.*)\.(\d+)\.(-?\d+)\.rpt$}) {
 	my @tokens = split /\./, $distv_arch;
 	my $distv = shift @tokens;
 	my $arch;
