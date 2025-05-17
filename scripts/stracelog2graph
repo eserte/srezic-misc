@@ -172,8 +172,11 @@ while(<>) {
 	    my $meta = $1 . ".meta";
 	    my $marker = load_meta("DATA: ", $meta);
 	    push @markers, [$marker, $prev_time-$start_time];
-	} elsif ($auto{open} && $syscall =~ m{^open\(\"(.+?)\", }) {
-	    my $file = $1;
+	} elsif ($auto{open} && (
+                    $syscall =~ m{^open\(\"(?<file>.+?)\", }
+                 || $syscall =~ m{^openat\(AT_FDCWD, \"(?<file>.+?)\", }
+                )) {
+	    my $file = $+{file};
 	    if (   $file ne "/var/www/" # uninteresting, Apache artefact (documentroot checking)
 		&& (!defined $pid || $file !~ m{[\.-]$pid$}) # tempfile for LWP mirror/mf::wwwcache
 		&& $file !~ m{/\.tmp/} # mf::images temporary file
