@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2017,2020 Slaven Rezic. All rights reserved.
+# Copyright (C) 2017,2020,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,9 +14,19 @@
 
 use strict;
 use File::Temp qw(tempdir);
+use Getopt::Long;
 
-my $url = shift
-    or die "Please specify URL or something else\n";
+GetOptions("pw!" => \my $pw)
+    or die "usage?";
+
+my $url;
+if ($pw) {
+    print STDERR "Enter password or secret: ";
+    $url = get_password();
+} else {
+    $url = shift
+	or die "Please specify URL or something else\n";
+}
 
 my $tempdir = tempdir("qrcode_XXXXXXXX", TMPDIR =>1, CLEANUP => 1);
 my $tempfile = "$tempdir/qrcode.png";
@@ -86,6 +96,27 @@ sub is_in_path {
 	}
     }
     undef;
+}
+# REPO END
+
+# REPO BEGIN
+# REPO NAME get_password /home/e/eserte/src/srezic-repository 
+# REPO MD5 260645ad15d9259849059e682785d7d3
+sub get_password {
+    my $password;
+    if (eval { require Term::ReadKey }) {
+	$| = 1;
+	Term::ReadKey::ReadMode('noecho');
+	chomp($password = <STDIN>);
+	Term::ReadKey::ReadMode('restore');
+    } else {
+	warn <<EOF;
+Term::ReadKey is not installed on this system, which means that the
+password will be echoed to the terminal.
+EOF
+        chomp($password = <STDIN>);
+    }
+    $password;
 }
 # REPO END
 
