@@ -1,20 +1,28 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
-# Copyright (C) 2014,2018,2024 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2018,2024,2025 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 use strict;
 use warnings;
-our $VERSION = 0.003;
+our $VERSION = 0.004;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
 
-GetOptions()
-    or die "usage?";
+sub usage () {
+    require File::Basename;
+    die "usage: @{[ File::Basename::basename($0) ]} [-r|--reverse] file1 file2 ...\n";
+}
+
+my $reverse;
+GetOptions("reverse|r" => \$reverse)
+    or usage;
 my @files = @ARGV;
-@files or die "usage?";
+@files or usage;
+
+@files = reverse @files if $reverse;
 
 my $principal_file = shift @files;
 print "="x70, "\n";
@@ -44,12 +52,14 @@ multi-diff - make a diff over multiple files
 
 =head1 SYNOPSIS
 
-    multi-diff file ...
+    multi-diff [-r|--reverse] file ...
 
 =head1 DESCRIPTION
 
 Run a series of L<diff(1)> calls with the first file in the argument
 list against all other files.
+
+Use the C<--reverse> option to reverse the list of files.
 
 =head1 AUTHOR
 
