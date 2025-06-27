@@ -1557,6 +1557,12 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
+		} elsif ($annotation =~ m{(https://codeberg.org/.*/(issues|pull)/\S+)}) {
+		    my $title = get_cached_codeberg_issue_title($1);
+		    if (defined $title) {
+			$annotation .= " ($title)";
+			$changed = 1;
+		    }
 		}
 	    }
 	    if ($changed) {
@@ -3115,6 +3121,55 @@ sub get_cached_bitbucket_issue_title {
 	warn "WARN: Unexpected bitbucket URL '$url'";
     }
     $title;
+}
+
+sub get_cached_codeberg_issue_title {
+    my ($url) = @_;
+    my $title;
+
+    if ($url =~ m{^https?://codeberg\.org/([^/]+)/([^/]+)/(issues|pull)/(\d+)$}) {
+        my ($owner, $repo, $type, $number) = ($1, $2, $3, $4);
+        my $api_url = "https://codeberg.org/api/v1/repos/$owner/$repo/" . ($type eq 'pull' ? 'pulls' : 'issues') . "/$number";
+
+        eval {
+            require DB_File;
+            require Fcntl;
+            my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/codeberg_issue_titles.db");
+            if (!-d dirname($cache_file)) {
+                require File::Path;
+                File::Path::mkpath(dirname($cache_file));
+            }
+
+            tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+                or die "ERROR: Can't tie cache file $cache_file: $!";
+
+            if (exists $db{$api_url}) {
+                $title = $db{$api_url};
+            } else {
+                warn "INFO: Not found in cache, fetching from $api_url...\n";
+                require LWP::UserAgent;
+                require JSON::XS;
+                my $resp = LWP::UserAgent->new(timeout => 20)->get($api_url);
+                if ($resp->is_success) {
+                    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
+                    my $latin1_title = eval { unidecode_any($title, "iso-8859-1") } // $title;
+                    if ($@) {
+                        warn "Failed to call unidecode_any(), fallback with original title: $@";
+                    }
+                    $db{$api_url} = $latin1_title;
+                } else {
+                    die "Cannot fetch from Codeberg API URL $api_url: " . $resp->dump . "\n";
+                }
+            }
+        };
+        if ($@) {
+            warn "ERROR: $@";
+        }
+    } else {
+        warn "WARN: Unexpected Codeberg URL '$url'";
+    }
+
+    return $title;
 }
 
 sub make_query_string {
