@@ -134,9 +134,8 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 return 1 if caller(); # for modulino-style testing
 
 my($distvname2annotation, $distname2annotation);
-if (@annotate_files) {
-    ($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
-}
+do_read_annotate_files();
+
 my $rtticket_to_title;
 if (0 && @annotate_files) {
     $rtticket_to_title = read_rt_information(); # old GNUS hack, not used anymore
@@ -590,6 +589,7 @@ $mw->bind("<Print>" => sub {
     require Tk::WidgetDump;
     $mw->WidgetDump;
 });
+$mw->bind('<P>'         => sub { start_ptksh() });
 for my $key ('F4', 'M-Left') {
     $mw->bind("<$key>" => sub { $prev_b->invoke });
 }
@@ -2405,7 +2405,7 @@ sub rough_pv_os_analysis {
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{-linux-thread-multi 6\.11\.0}) {
-		    $arch_os_version = "fedora41"; # fedora41? (system perl)
+		    $arch_os_version = "fedora41"; # fedora41? (system perl), may also be fedora42
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
 		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
 		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
@@ -2734,6 +2734,12 @@ sub parse_distvname {
 	($currdist, $currversion) = $currfulldist =~ m{^(.*)-(.*)$};
     }
     ($currdist, $currversion);
+}
+
+sub do_read_annotate_files {
+    if (@annotate_files) {
+	($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
+    }
 }
 
 sub read_annotate_txt {
@@ -3288,6 +3294,54 @@ sub _db_file_filename {
 	require DB_File;
     }
     $filename . ($DB_File::db_version eq '' || $DB_File::db_version <= 1 ? '' : int($DB_File::db_version));
+}
+
+# Taken from my_everything_checker_checks which took it from BBBikeAdvanced.pm
+sub start_ptksh {
+    # Is there already a (withdrawn) ptksh?
+    foreach my $mw0 (Tk::MainWindow::Existing()) {
+	if ($mw0->title =~ /^ptksh/) {
+	    $mw0->deiconify;
+	    $mw0->raise;
+	    return;
+	}
+    }
+    require Config;
+    my @perldirs = grep { defined $_ && -x $_ } ($Config::Config{'sitebin'}, $Config::Config{'scriptdir'});
+    my $perldir;
+    local @ARGV; # otherwise ptksh tries to load $AGV[0]
+    TRY: {
+        # Find the ptksh script
+        for $perldir (@perldirs) {
+            if (-r "$perldir/ptksh") {
+		require "$perldir/ptksh";
+                last TRY;
+            }
+        }
+	$perldir = dirname($^X);
+	if (-r "$perldir/ptksh") {
+	    require "$perldir/ptksh";
+	} else {
+	    my $f = ((Tk::MainWindow::Existing())[0])->getOpenFile
+		((-d $perldir ? (-initialdir => $perldir) : ()),
+		 -title => "Path to ptksh",
+		);
+	    if (defined $f) {
+		require $f;
+	    } else {
+		return;
+	    }
+	}
+    } 
+
+    # The created mainwindow is unnecessary - destroy it
+    foreach my $mw0 (Tk::MainWindow::Existing()) {
+	if ($mw0->title eq '$mw') {
+	    $mw0->destroy;
+	} elsif ($mw0->title eq 'ptksh') {
+	    $mw0->protocol('WM_DELETE_WINDOW' => [$mw0, 'withdraw']);
+	}
+    }
 }
 
 # REPO BEGIN
