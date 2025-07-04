@@ -216,6 +216,7 @@ GetOptions("n" => \$n,
 	   'mirrorurlperl'  => sub { $mirror_url = 'http://www.perl.com/CPAN/' },
 	   'mirrorurldevelooper' => sub { $mirror_url = 'http://cpan.develooper.com/' },
 	   'mirrorurlmetacpan' => sub { $mirror_url = 'http://cpan.metacpan.org/' }, # contains also backpan
+	   'mirrorurlhttpsmetacpan' => sub { $mirror_url = 'https://cpan.metacpan.org/' }, # contains also backpan
 	   'mirrorurlfastftp|mirrorurlftpfast' => sub { $mirror_url = 'ftp://ftp.hawo.stw.uni-erlangen.de/CPAN' },
 	   'debug!' => \$debug,
 	   'pre=s@' => \@pre_dist_or_mods,
