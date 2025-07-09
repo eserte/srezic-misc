@@ -1347,6 +1347,10 @@ sub parse_test_report {
 		    if ($signal != 0) {
 			$signalled{$testfile} = $signal;
 		    }
+		} elsif (
+		         m{\Qpanic: MUTEX_LOCK (22) [Magic.xs:525] during global destruction\E}
+		        ) {
+		    $add_analysis_tag->('!!!freebsd perl bug!!!'); # https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=287302
 		} else {
 		    # collect PROGRAM OUTPUT string (maybe)
 		    if (!$program_output->{skip_collector}) {
