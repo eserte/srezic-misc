@@ -1550,7 +1550,7 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
-		} elsif ($annotation =~ m{(http\S+/gitlab.com/\S+/issues/\S+)}) {
+		} elsif ($annotation =~ m{(http\S+/(?:gitlab.com|gitlab.ow2.org)/\S+/issues/\S+)}) {
 		    my $title = get_cached_gitlab_issue_title($1);
 		    if (defined $title) {
 			$annotation .= " ($title)";
@@ -3038,11 +3038,11 @@ sub get_cached_github_issue_title {
 sub get_cached_gitlab_issue_title {
     my($url) = @_;
     my $title;
-    if (my($project, $issue) = $url =~ m{^https?://gitlab.com/(.+?/.+?)/(?:-/)?issues/(\d+)}) {
+    if (my($host, $project, $issue) = $url =~ m{^https?://([^/]+)/(.+?/.+?)/(?:-/)?issues/(\d+)}) {
 	eval {
 	    require URI::Escape;
 	    my $enc_project = URI::Escape::uri_escape($project);
-	    my $api_url = "https://gitlab.com/api/v4/projects/$enc_project/issues/$issue";
+	    my $api_url = "https://$host/api/v4/projects/$enc_project/issues/$issue";
 
 	    require DB_File;
 	    require Fcntl;
