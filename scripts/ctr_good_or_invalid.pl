@@ -2880,7 +2880,8 @@ sub get_cached_rt_subject {
 	    warn "INFO: Not found in cache, try to fetch from $url...\n";
 	    $subject = get_subject_from_rt($url);
 	    if (defined $subject) {
-		$db{$url} = $subject;
+		my $latin1_subject = eval { unidecode_any($subject, "iso-8859-1") } // $subject;
+		$db{$url} = $latin1_subject;
 	    }
 	}
     };
