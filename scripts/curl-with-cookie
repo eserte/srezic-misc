@@ -22,8 +22,8 @@ if (!$url) {
 }
 
 my $u = URI->new($url);
-my $host = $u->host
-    or die "Cannot get host name out of '$url'";
+my $host = eval { $u->host }
+    or die "Cannot get host name out of '$url': $@";
 
 my @cookie_name_values;
 for my $cookie_name (@cookie_names) {
