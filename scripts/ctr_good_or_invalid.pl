@@ -2405,7 +2405,8 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'centos8'; # 'CentOS8'; --- but may be also rocky 8.5
 		} elsif ($entry->{archname} =~ m{ 5\.14\.0-.*\.el9[._]}) {
 		    $arch_os_version = 'rocky9'; # may be also CentOS9?
-		} elsif ($entry->{archname} =~ m{ 5\.4\.188-104\.359\.amzn2\.x86_64}) {
+		} elsif ($entry->{archname} =~ m{ 5\.4\.188-104\.359\.amzn2\.x86_64}
+		      || $entry->{archname} =~ m{ 5\.10\.235-227\.919\.amzn2\.x86_64}) {
 		    $arch_os_version = 'rocky9'; # system perl, maybe created in a container?
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
@@ -2445,6 +2446,10 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04? (system perl)';
 		} elsif ($entry->{archname} =~ m{ 6.1.0-(25|26|28|31|33|37)-}) {
 		    $arch_os_version = 'bookworm'; # 'Debian/bookworm?';
+		} elsif ($entry->{archname} =~ m{ 6\.1\.0$}) {
+		    $arch_os_version = 'trixie'; # 'Debian/trixie?';
+		} elsif ($entry->{archname} =~ m{ 6\.\d+\.\d+\+deb13-}) {
+		    $arch_os_version = 'trixie'; # 'Debian/trixie!';
 		} else {
 		    warn "INFO: Unrecognized archname '$entry->{archname}' -> fallback to 'linux'\n";
 		    $arch_os_version = 'linux';
