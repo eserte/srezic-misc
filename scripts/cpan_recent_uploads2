@@ -307,9 +307,9 @@ GATHER_DATA: {
 	    my $path = $entry->{path};
 	    if ($entry->{type} eq 'delete') {
 		$deleted_dist{$path} = 1;
+		debug("$path was marked as deleted");
 		next;
 	    }
-	    debug("$path was marked as deleted"), next if exists $deleted_dist{$path};
 	    debug("unhandled entry type: $entry->{type}"), next if $entry->{type} ne 'new';
 	    debug("skipping over (already seen)"), next if defined $last_epoch && $entry->{epoch} >= $last_epoch;
 	    $last_epoch = $entry->{epoch};
