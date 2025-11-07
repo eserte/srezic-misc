@@ -6,18 +6,22 @@
 
 use strict;
 use warnings;
-our $VERSION = 0.004;
+our $VERSION = 0.005;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
 
 sub usage () {
     require File::Basename;
-    die "usage: @{[ File::Basename::basename($0) ]} [-r|--reverse] file1 file2 ...\n";
+    die "usage: @{[ File::Basename::basename($0) ]} [-r|--reverse] [-U|--unified num] file1 file2 ...\n";
 }
 
 my $reverse;
-GetOptions("reverse|r" => \$reverse)
+my $unified_num;
+GetOptions(
+    "reverse|r" => \$reverse,
+    "U|unified=i" => \$unified_num,
+)
     or usage;
 my @files = @ARGV;
 @files or usage;
@@ -33,7 +37,7 @@ for my $file (@files) {
     next if $seen_file{$file}++;
     print "="x70, "\n";
     print "=== $file\n";
-    my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', "-u", $principal_file, $file);
+    my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', (defined $unified_num ? "--unified=$unified_num" : "-u"), $principal_file, $file);
     system @cmd;
     if ($? != 0) {
 	$count_diffs++;
@@ -52,7 +56,7 @@ multi-diff - make a diff over multiple files
 
 =head1 SYNOPSIS
 
-    multi-diff [-r|--reverse] file ...
+    multi-diff [-r|--reverse] [-U|--unified num] file ...
 
 =head1 DESCRIPTION
 
@@ -60,6 +64,9 @@ Run a series of L<diff(1)> calls with the first file in the argument
 list against all other files.
 
 Use the C<--reverse> option to reverse the list of files.
+
+Use the C<-U> or C<--unified> option to change the number of lines of
+unified context.
 
 =head1 AUTHOR
 
