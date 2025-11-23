@@ -261,7 +261,7 @@ $CPAN::Config = {
   'prefs_dir' => q[__HOME__/.cpan/prefs],
   'recommends_policy' => q[0],
   'test_report' => q[1],
-  'urllist' => [q[http://cpan.cpantesters.org/], q[http://cpan.develooper.com/], q[ftp://ftp.funet.fi/pub/CPAN]],
+  'urllist' => [q[http://cpan.metacpan.org/], q[http://www.cpan.org/], q[ftp://ftp.funet.fi/pub/CPAN], q[http://cpan.cpantesters.org/]],
   'yaml_module' => q[YAML::Syck],
 };
 1;
