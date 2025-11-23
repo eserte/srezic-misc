@@ -13,7 +13,8 @@ sub maybe_xterm_conf ($);
 sub _get_system_perl ();
 
 my @specs;
-my $mirror_url = "http://cpan.cpantesters.org/";
+#my $mirror_url = "http://cpan.cpantesters.org/"; # XXX as of 2025-11-23 not working anymore
+my $mirror_url = 'http://cpan.metacpan.org/';
 my $min_build_dir_avail;
 my @pv;
 my $scripts_dir = $FindBin::RealBin;
