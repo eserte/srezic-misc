@@ -91,6 +91,7 @@ my @match_pvs;
 my $only_recent;
 my $display_os_analysis = 'os_version'; # or 'os'
 my $report_encoding = 'utf8'; # 'Guess'; use Encode::Guess qw/iso-8859-1 utf8 ascii/;
+my $prefs_dir = "$ENV{HOME}/.cpan/prefs"; # XXX assume the default, robust code would need to lookup in CPAN config
 
 GetOptions("good" => \$only_good,
 	   "auto-good!" => \$auto_good,
@@ -135,6 +136,8 @@ return 1 if caller(); # for modulino-style testing
 
 my($distvname2annotation, $distname2annotation);
 do_read_annotate_files();
+
+my $distname2prefs = get_list_of_cpan_prefs();
 
 my $rtticket_to_title;
 if (0 && @annotate_files) {
@@ -1751,8 +1754,8 @@ sub set_currfile {
 			    $analysis_tag eq 'experimental functions on references are forbidden' ||
 			    $analysis_tag eq 'experimental functions on references'
 			   ) && $annotation_text_for_analysis =~ m{Experimental .* on scalar is now forbidden})
-		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*fail}i)
-		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail)}i)
+		       || ($analysis_tag eq 'pod coverage test' && $annotation_text_for_analysis =~ m{pod coverage .*fail|pod.coverage\.t\b.*\bfail}i)
+		       || ($analysis_tag eq 'pod test' && $annotation_text_for_analysis =~ m{(pod test.*fail|pod (and|&) pod coverage .*test.*fail|pod\.t\b.*\bfail)}i)
 		       || ($analysis_tag eq 'perl critic' && $annotation_text_for_analysis =~ m{(perl.*critic.*fail|fail.*perl.*critic)}i)
 		       || ($analysis_tag eq 'prereq fail' && $annotation_text_for_analysis =~ m{(undeclared dependenc|is not installed|dependenc(y|ies) .*not declared|not declared .*dependenc(y|ies)|can't locate |not specified (in|as) configure_requires)}i)
 		       || ($analysis_tag eq 'prereq version fail' && $annotation_text_for_analysis =~ m{prereq.*version}i)
@@ -2058,6 +2061,7 @@ sub set_currfile {
     ($currdist, $currversion) = parse_distvname($currfulldist);
 
     {
+	# Create annotation buttons
 	my($url, $annotation_label, $annotation_text, $annotation_file, $annotation_linenumber) = @annotation_info{qw(url label text file linenumber)};
 	my $f = $analysis_frame->Frame;
 	my $w;
@@ -2084,7 +2088,22 @@ sub set_currfile {
 				    })->pack(-side => 'left');
 		$balloon->attach($eb, -msg => "Edit $annotation_file:$annotation_linenumber");
 	    }
+	}
 
+	# Create distroprefs button
+	my $prefs_file = $distname2prefs->{$currdist};
+	if ($prefs_file) {
+	    my $w = $f->Button(
+		-text => 'Distroprefs',
+		@common_analysis_button_config,
+		-command => sub {
+		    system('emacsclient', '-n', "$prefs_dir/$prefs_file");
+		},
+	    )->pack(-side => 'left');
+	    $balloon->attach($w, -msg => "Edit/view $prefs_dir/$prefs_file");
+	}
+
+	if ($f->children) {
 	    $f->pack;
 	} else {
 	    $f->destroy; # never used...
@@ -2810,6 +2829,30 @@ sub read_annotate_txt {
 	}
     }
     (\%distvname2annotation, \%distname2annotation);
+}
+
+sub get_list_of_cpan_prefs { # CPAN distroprefs
+    my %dist_with_prefs;
+    if (opendir(my $DIR, $prefs_dir)) {
+	while(defined(my $file = readdir $DIR)) {
+	    next if $file =~ /^\d+/; # convention: skip files like 01.DISABLED.yml etc, all starting with digits
+	    next if $file =~ /^zz-/; # convention: skip files starting with zz (e.g. zz-automated-testing.yml)
+	    if ($file =~ m{^(.*)\.(ya?ml|dd)$}) {
+		push @{ $dist_with_prefs{$1} }, $file;
+	    }
+	}
+
+	# keep only one file in %dist_with_prefs values, prefer yaml file
+	while(my($k,$v) = each %dist_with_prefs) {
+	    my($yaml_file) = grep { /\.ya?ml$/ } @$v;
+	    if (!defined $yaml_file) {
+		$yaml_file = $v->[0];
+	    }
+	    $dist_with_prefs{$k} = $yaml_file;
+	}
+    }
+
+    \%dist_with_prefs;
 }
 
 sub read_auto_good_file {
