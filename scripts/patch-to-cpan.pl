@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2013 Slaven Rezic. All rights reserved.
+# Copyright (C) 2013,2025 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -14,7 +14,7 @@
 
 use strict;
 use warnings;
-our $VERSION = 0.001;
+our $VERSION = 0.002;
 
 use File::Copy qw(cp);
 use File::Temp qw(tempdir);
@@ -26,6 +26,11 @@ my $github;
 my $patch_url;
 my $dist;
 my $distver;
+
+#my $cpan_root_url = 'http://cpan.cpantesters.org';
+#my $cpan_server_can_directory_listing_sorting = 1;
+my $cpan_root_url = 'http://cpan.metacpan.org';
+my $cpan_server_can_directory_listing_sorting = 0;
 
 sub usage (;$) {
     my $msg = shift;
@@ -132,12 +137,20 @@ sub show_upload_url {
         if ($user) {
             $user = uc $user;
             my($user2, $user1) = $user =~ m{^((.).)};
-            my $destdir = 'http://cpan.cpantesters.org/authors/id/' . $user1 . '/' . $user2 . '/' . $user . '/patches/';
+            my $destdir = "$cpan_root_url/authors/id/" . $user1 . '/' . $user2 . '/' . $user . '/patches/';
             my $desturl = $destdir . $patch_file;
-            print STDERR <<EOF
+            print STDERR <<EOF;
 Patch file will appear at: $desturl
+EOF
+            if ($cpan_server_can_directory_listing_sorting) {
+                print STDERR <<EOF;
 Directory listing: $destdir?C=M;O=D
 EOF
+            } else {
+                print STDERR <<EOF;
+Directory listing: $destdir
+EOF
+            }
         }
     }
 }
