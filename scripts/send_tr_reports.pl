@@ -214,6 +214,7 @@ REPORTS_LOOP: for my $file (@reports) {
 			     |   \Qfact submission failed: Gateway Error\E
 			     |   \Qfact submission failed: Backend unavailable, connection timeout\E
 			     |   \Qfact submission failed: first byte timeout\E
+			     |   \Qfact submission failed: Not Found\E
 			     )}x) {
 		# short error message
 		warn "[" . _ts . "] Failed for $process_file: $1\n";
