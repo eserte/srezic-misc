@@ -2265,6 +2265,15 @@ sub check_disk_free_directory {
 			last;
 		    } else {
 			warn "INFO: Remove now oldest build directory: $oldest_directory\n";
+			require File::Find;
+			File::Find::find(sub {
+					     return unless -d $_;
+					     unless (-x _) {
+						 warn "INFO: Need to fix directory permissions for $File::Find::name...\n";
+						 chmod 0700, $File::Find::name
+						     or warn "ERROR: Failed to chmod $File::Find::name: $!";
+					     }
+					 }, $oldest_directory);
 			rmtree($oldest_directory, 0, 0);
 			$last_remove_candidate = $oldest_directory;
 			next; # retry
