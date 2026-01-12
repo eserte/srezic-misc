@@ -1,25 +1,29 @@
 #!/usr/bin/env perl
 #
-# Copyright (C) 2014,2018,2024,2025 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2018,2024,2025,2026 Slaven Rezic. All rights reserved.
 # This package is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 use strict;
 use warnings;
-our $VERSION = 0.005;
+our $VERSION = 0.006;
 
 use File::Temp qw(tempfile);
 use Getopt::Long;
 
 sub usage () {
     require File::Basename;
-    die "usage: @{[ File::Basename::basename($0) ]} [-r|--reverse] [-U|--unified num] file1 file2 ...\n";
+    die "usage: @{[ File::Basename::basename($0) ]} [-r|--reverse] [-U|--unified num] [--word-diff|--color-word-diff] file1 file2 ...\n";
 }
 
 my $reverse;
+my $word_diff;
+my $color_word_diff;
 my $unified_num;
 GetOptions(
     "reverse|r" => \$reverse,
+    "word-diff" => \$word_diff,
+    "color-word-diff" => \$color_word_diff, # private
     "U|unified=i" => \$unified_num,
 )
     or usage;
@@ -37,7 +41,18 @@ for my $file (@files) {
     next if $seen_file{$file}++;
     print "="x70, "\n";
     print "=== $file\n";
-    my @cmd = ("diff", "-I", '$HeadURL:', "-I", '$Id:', (defined $unified_num ? "--unified=$unified_num" : "-u"), $principal_file, $file);
+    my @cmd;
+    if ($color_word_diff) {
+	push @cmd, 'color-wdiff';
+    } elsif ($word_diff) {
+	push @cmd, 'wdiff';
+    } else {
+	push @cmd, (
+	    "diff", "-I", '$HeadURL:', "-I", '$Id:',
+	    (defined $unified_num ? "--unified=$unified_num" : "-u"),
+	);
+    }
+    push @cmd, ($principal_file, $file);
     system @cmd;
     if ($? != 0) {
 	$count_diffs++;
@@ -56,7 +71,7 @@ multi-diff - make a diff over multiple files
 
 =head1 SYNOPSIS
 
-    multi-diff [-r|--reverse] [-U|--unified num] file ...
+    multi-diff [-r|--reverse] [-U|--unified num] [--word-diff|--color-word-diff] file ...
 
 =head1 DESCRIPTION
 
@@ -67,6 +82,13 @@ Use the C<--reverse> option to reverse the list of files.
 
 Use the C<-U> or C<--unified> option to change the number of lines of
 unified context.
+
+Use C<--word-diff> for word diff. Requires L<wdiff(1)> to be installed.
+
+Use C<--color-word-diff> for colorized word diff. Requires a private
+helper script around C<wdiff> to be installed.
+
+Note that C<-r> and C<-U> are not available with any word diff.
 
 =head1 AUTHOR
 
