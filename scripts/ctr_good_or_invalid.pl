@@ -135,6 +135,7 @@ my $reportdir = shift || "$ENV{HOME}/var/cpansmoker";
 return 1 if caller(); # for modulino-style testing
 
 my($distvname2annotation, $distname2annotation);
+my %annotate_files_mtime;
 do_read_annotate_files();
 
 my $distname2prefs = get_list_of_cpan_prefs();
@@ -2626,6 +2627,7 @@ sub nextfile {
     my $increment = shift || 1;
     if ($currfile_i+$increment <= $#files) {
 	$currfile_i+=$increment;
+	do_read_annotate_files(); # maybe re-read
 	set_currfile();
     } else {
 	if ($quit_at_end) {
@@ -2767,7 +2769,20 @@ sub parse_distvname {
 
 sub do_read_annotate_files {
     if (@annotate_files) {
-	($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
+	if (keys %annotate_files_mtime) {
+	    my $need_to_reload = 0;
+	    for my $annotate_file (@annotate_files) {
+		my $mtime = (stat($annotate_file))[9];
+		if (defined $mtime && $annotate_files_mtime{$annotate_file} < $mtime) {
+		    warn "INFO: $annotate_file needs to be reloaded...\n";
+		    $need_to_reload++;
+		}
+	    }
+	    return if !$need_to_reload;
+	}
+	if (@annotate_files) {
+	    ($distvname2annotation, $distname2annotation) = read_annotate_txt(@annotate_files);
+	}
     }
 }
 
@@ -2798,6 +2813,7 @@ sub read_annotate_txt {
 		next;
 	    }
 	}
+	my $mtime = (stat($file))[9];
 	while(<$fh>) {
 	    chomp;
 	    next if /^\s*$/;
@@ -2827,6 +2843,7 @@ sub read_annotate_txt {
 		$distname2annotation{$distname} = $annotation_record;
 	    }		
 	}
+	$annotate_files_mtime{$file} = $mtime;
     }
     (\%distvname2annotation, \%distname2annotation);
 }
