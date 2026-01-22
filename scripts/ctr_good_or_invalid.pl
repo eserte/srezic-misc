@@ -4,7 +4,7 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025 Slaven Rezic. All rights reserved.
+# Copyright (C) 2008-2010,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -2463,7 +2463,7 @@ sub rough_pv_os_analysis {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04?';
 		} elsif ($entry->{archname} eq 'aarch64-linux-gnu-thread-multi 6.1.0') {
 		    $arch_os_version = 'noble'; # 'Ubuntu 24.04? (system perl)';
-		} elsif ($entry->{archname} =~ m{ 6.1.0-(25|26|28|31|33|37)-}) {
+		} elsif ($entry->{archname} =~ m{ 6.1.0-(25|26|28|31|33|37|42)-}) {
 		    $arch_os_version = 'bookworm'; # 'Debian/bookworm?';
 		} elsif ($entry->{archname} =~ m{ 6\.1\.0$}) {
 		    $arch_os_version = 'trixie'; # 'Debian/trixie?';
