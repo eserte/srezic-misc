@@ -2431,7 +2431,7 @@ sub rough_pv_os_analysis {
 		} elsif ($entry->{archname} =~ m{ \d+\.\d+\.\d+-\d+\.fc(\d+)\.}) {
 		    $arch_os_version = "fedora$1";
 		} elsif ($entry->{archname} =~ m{-linux-thread-multi 6\.11\.0}) {
-		    $arch_os_version = "fedora41"; # fedora41? (system perl), may also be fedora42
+		    $arch_os_version = "fedora43"; # fedora41? (system perl), may also be fedora42 or fedora43
 		} elsif ($entry->{archname} =~ m{ 3\.2\.0}) {
 		    $arch_os_version = 'wheezy'; # 'Debian/wheezy?';
 		} elsif ($entry->{archname} =~ m{ 3\.16\.}) {
