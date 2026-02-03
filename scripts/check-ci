@@ -99,19 +99,10 @@ exit($success ? 0 : 1);
 	die "Unhandled options: " . join(" ", %opts) if %opts;
 
 	if (!defined $current_commit_id) {
-	    # default to HEAD
 	    chomp($current_commit_id = `git log -1 --format=format:'%H'`);
 	    if (!$current_commit_id) {
 		die "Unexpected: cannot find a commit";
 	    }
-	} else {
-	    # translate commit-ish into full commit SHA
-	    my @cmd = (qw(git rev-parse), $current_commit_id);
-	    open my $fh, '-|', @cmd
-		or die "Error running @cmd: $!";
-	    chomp($current_commit_id = scalar <$fh>);
-	    close $fh
-		or die "Error running @cmd: $!";
 	}
 
 	if ($check{'github actions'} && $repo !~ m{/}) {
