@@ -5,12 +5,42 @@ use if !$ENV{DOIT_IN_REMOTE}, lib => "$ENV{HOME}/src/Doit/lib";
 use Doit; # get from CPAN, or do "git clone git://github.com/eserte/doit.git ~/src/Doit"
 use Doit::Log;
 use Doit::Util qw(in_directory);
+use Getopt::Long;
+
+sub can_be_amended {
+    my($doit) = @_;
+    my $err;
+    chomp(my $upstream = eval { $doit->info_open3({quiet=>1, errref => \$err}, qw(git rev-parse --abbrev-ref --symbolic-full-name @{upstream})) });
+    if (!defined $upstream || $upstream eq '') {
+	info "Safe to amend: no known upstream.\n";
+	return 1;
+    }
+
+    if (eval { $doit->info_system({quiet=>1}, qw(git merge-base --is-ancestor HEAD), $upstream); 1 }) {
+	warning <<EOF;
+NOT safe to amend: HEAD is reachable from $upstream (it was pushed, or at least the remote-tracking branch contains it).
+Specify
+
+    $0 --skip-amend-check
+
+to bypass this check.
+EOF
+	return 0;
+    } else {
+	info "Safe to amend: HEAD is not reachable from $upstream.";
+	return 1;
+    }
+}
 
 return 1 if caller;
 
 sub y_or_n (;$);
 
 my $doit = Doit->init;
+
+GetOptions("skip-amend-check" => \my $skip_amend_check)
+    or die "usage?";
+
 $doit->add_component('git');
 
 @ARGV and error "No arguments expected";
@@ -20,6 +50,12 @@ in_directory {
     if (!@files) {
 	info "No changed files";
 	exit;
+    }
+
+    if (!$skip_amend_check) {
+	if (!can_be_amended($doit)) {
+	    exit 1;
+	}
     }
 
     my %files_in_last_commit = map { ($_,1) } split /\n/, $doit->info_qx({quiet=>1}, qw(git diff-tree --no-commit-id --name-only -r HEAD --root));
