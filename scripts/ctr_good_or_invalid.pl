@@ -1508,16 +1508,16 @@ sub get_annotation_info {
     my($fulldist) = @_;
     my($dist, $version) = parse_distvname($fulldist);
 
-    my($annotation_text, $annotation_label, $annotation_file, $annotation_linenumber);
+    my($annotation_text, $annotation_label, $annotation_file, $annotation_linenumber, $old_annotation_record);
     if ($distvname2annotation && $distvname2annotation->{$fulldist}) {
 	$annotation_text = $distvname2annotation->{$fulldist};
 	$annotation_label = 'Annotation';
     } elsif ($distname2annotation && $distname2annotation->{$dist}) {
-	my $annotation_record = $distname2annotation->{$dist};
-	$annotation_text = $annotation_record->{annotation} . ' (version ' . $annotation_record->{version} . ')';
+	$old_annotation_record = $distname2annotation->{$dist};
+	$annotation_text = $old_annotation_record->{annotation};
 	$annotation_label = 'Old Annotation';
-	$annotation_file = $annotation_record->{file};
-	$annotation_linenumber = $annotation_record->{linenumber};
+	$annotation_file = $old_annotation_record->{file};
+	$annotation_linenumber = $old_annotation_record->{linenumber};
     }
     if (defined $annotation_text) {
 	my @annotations = split /, ?/, $annotation_text; # annotation may be a comma-separated list ...
@@ -1572,6 +1572,10 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
+		}
+		if ($old_annotation_record) {
+		    $annotation .= ' (version ' . $old_annotation_record->{version} . ')';
+		    $changed =1;
 		}
 	    }
 	    if ($changed) {
