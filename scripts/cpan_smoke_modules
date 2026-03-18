@@ -910,7 +910,7 @@ if ($my_tmpdir) {
 } else {
     my @tmpdir_defs = (
 		       # Directory      User-owned	Do a noexec check?
-		       (defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1, 1] : ()),
+		       #(defined $ENV{XDG_RUNTIME_DIR} ? [$ENV{XDG_RUNTIME_DIR}, 1, 1] : ()), # do not use XDG_RUNTIME_DIR which usually points to a rather small partition /run/user/$uid
 		       ['/var/tmp',     0,             0],
 		       ['/tmp',         0,             0],
 		      );
