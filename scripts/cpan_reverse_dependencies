@@ -4,12 +4,11 @@
 #
 # Author: Slaven Rezic
 #
-# Copyright (C) 2014,2016,2022 Slaven Rezic. All rights reserved.
+# Copyright (C) 2014,2016,2022,2026 Slaven Rezic. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
-# Mail: slaven@rezic.de
-# WWW:  http://www.rezic.de/eserte/
+# WWW:  https://github.com/eserte/srezic-misc
 #
 
 use strict;
@@ -28,7 +27,10 @@ EOF
 }
 
 my $recurse;
-GetOptions("rec|recurse!" => \$recurse)
+GetOptions(
+    "rec|recurse!" => \$recurse,
+    "xml-file=s" => \my $xml_file,
+)
     or usage;
 
 my $mod = shift
@@ -43,11 +45,16 @@ if ($recurse) {
 
     require XML::LibXML;
 
-    my $resp = $ua->get('http://deps.cpantesters.org/depended-on-by.pl?xml=1;dist='.$mod);
-    if (!$resp->is_success) {
-	die "Fetching failed: " . $resp->as_string;
+    my $p;
+    if ($xml_file) {
+	$p = XML::LibXML->load_xml(location => $xml_file);
+    } else {
+	my $resp = $ua->get('http://deps.cpantesters.org/depended-on-by.pl?xml=1;dist='.$mod);
+	if (!$resp->is_success) {
+	    die "Fetching failed: " . $resp->as_string;
+	}
+	$p = XML::LibXML->load_xml(string => $resp->decoded_content(charset => 'none'));
     }
-    my $p = XML::LibXML->load_xml(string => $resp->decoded_content(charset => 'none'));
     for my $node ($p->findnodes('//depended_on_by//dist/name')) {
 	print $node->findvalue('.'), "\n";
     }
