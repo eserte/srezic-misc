@@ -445,8 +445,9 @@ TRY_TYPESCRIPT: {
 	my $typescript_day_dir = "$cpan_smoke_typescripts_dir/" . POSIX::strftime("%Y%m%d", localtime $now);
 	if (!-d $typescript_day_dir) {
 	    mkdir $typescript_day_dir;
+	    my $err = $!;
 	    if (!-d $typescript_day_dir) {
-		die "Can't create $typescript_day_dir: $!";
+		die "Can't create $typescript_day_dir: $err";
 	    }
 	}
 	$typescript_file = $typescript_day_dir . "/" . POSIX::strftime("%H%M%S", localtime) . ".typescript";
