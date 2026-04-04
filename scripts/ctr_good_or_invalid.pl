@@ -1572,6 +1572,12 @@ sub get_annotation_info {
 			$annotation .= " ($title)";
 			$changed = 1;
 		    }
+		} elsif ($annotation =~ m{(https://trac\.\S+)}) {
+		    my $title = get_cached_trac_issue_title($1);
+		    if (defined $title) {
+			$annotation .= " ($title)";
+			$changed = 1;
+		    }
 		}
 		if ($old_annotation_record) {
 		    $annotation .= ' (version ' . $old_annotation_record->{version} . ')';
@@ -3252,6 +3258,70 @@ sub get_cached_codeberg_issue_title {
     }
 
     return $title;
+}
+
+sub get_cached_trac_issue_title {
+    my($url) = @_;
+    my $title;
+
+    if ($url =~ m{^https?://trac\.(xapian\.org)/ticket/(\d+)$}) {
+        my ($site, $number) = ($1, $2);
+
+        eval {
+            require DB_File;
+            require Fcntl;
+            my $cache_file = _db_file_filename("$ENV{HOME}/.cache/ctr_good_or_invalid/trac_issue_titles.db");
+            if (!-d dirname($cache_file)) {
+                require File::Path;
+                File::Path::mkpath(dirname($cache_file));
+            }
+
+            tie my %db, 'DB_File', $cache_file, &Fcntl::O_RDWR|&Fcntl::O_CREAT|($^O eq 'freebsd' ? &Fcntl::O_EXLOCK : 0), 0644
+                or die "ERROR: Can't tie cache file $cache_file: $!";
+
+            if (exists $db{$url}) {
+                $title = $db{$url};
+            } else {
+		$title = get_subject_from_trac($url);
+		if (defined $title) {
+		    my $latin1_title = eval { unidecode_any($title, "iso-8859-1") } // $title;
+		    $db{$url} = $latin1_title;
+		}		    
+            }
+        };
+        if ($@) {
+            warn "ERROR: $@";
+        }
+    } else {
+        warn "WARN: Unexpected trac URL '$url'";
+    }
+
+    return $title;
+}
+
+sub get_subject_from_trac {
+    my($url) = @_;
+
+    if (eval { require HTML::TreeBuilder; require Encode; 1 }) {
+	warn "INFO: Not found in cache, fetching from $url...\n";
+	require LWP::UserAgent;
+	my $resp = LWP::UserAgent->new(timeout => 20)->get($url);
+	if ($resp->is_success) {
+	    my $content = $resp->decoded_content(charset => 'none');
+	    my $tree = HTML::TreeBuilder->new;
+	    $tree->parse_content(Encode::decode_utf8($content)); # assume utf-8, without checking
+	    my($element) = $tree->look_down(_tag => 'title');
+	    if ($element) {
+		my $subject = join("", $element->content_list);
+		$subject =~ s{^\s+}{};
+		return $subject;
+	    }
+	} else {
+	    die "Cannot fetch from trac URL $url: " . $resp->dump . "\n";
+	}
+    } else {
+	die "require HTML::TreeBuilder to fetch title from trac issue, got error: $@";
+    }
 }
 
 sub make_query_string {
