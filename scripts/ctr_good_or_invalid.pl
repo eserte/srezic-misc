@@ -1441,6 +1441,7 @@ sub parse_test_report {
 		    elsif (($signal == 10 && $currarchname =~ m{freebsd|darwin}) ||
 			   ($signal ==  7 && $currarchname =~ m{linux})) { $signal = 'BUS' }
 		    elsif ($signal == 4)  { $signal = 'ILL' }
+		    elsif ($signal == 5)  { $signal = 'TRAP' }
 
 		    my $line_number = $testfile_to_linenumber{$testfile};
 		    if (!$line_number) {
@@ -1782,6 +1783,7 @@ sub set_currfile {
 			    $analysis_tag eq 'signal KILL' ||
 			    $analysis_tag eq 'very long runtime (>= 30 min)'
 			   ) && $annotation_text_for_analysis =~ m{\btest suite hangs\b}i)
+		       || ($analysis_tag eq 'signal TRAP' && $annotation_text_for_analysis =~ m{\b(SIGTRAP|TRAP)\b})
 		       || ($analysis_tag eq 'system perl used' && $annotation_text_for_analysis =~ m{system\s+perl}i)
 		       || ($analysis_tag eq 'code points over 0xFF' && $annotation_text_for_analysis =~ m{code.points.over.0xFF}i)
 		       || ($analysis_tag eq 'inherited AUTOLOAD forbidden' && $annotation_text_for_analysis =~ m{inherited AUTOLOAD.*(forbidden|no longer allowed)}i)
