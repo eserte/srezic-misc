@@ -10,7 +10,8 @@ use Getopt::Long;
 sub can_be_amended {
     my($doit) = @_;
     my $err;
-    chomp(my $upstream = eval { $doit->info_open3({quiet=>1, errref => \$err}, qw(git rev-parse --abbrev-ref --symbolic-full-name @{upstream})) });
+    my $upstream = eval { $doit->info_open3({quiet=>1, errref => \$err}, qw(git rev-parse --abbrev-ref --symbolic-full-name @{upstream})) };
+    chomp $upstream if defined $upstream;
     if (!defined $upstream || $upstream eq '') {
 	info "Safe to amend: no known upstream.\n";
 	return 1;
