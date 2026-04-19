@@ -1248,7 +1248,8 @@ sub parse_test_report {
 			 m{^"Makefile", line \d+: Need an operator$} || # FreeBSD 9
 			 m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Need an operator$} || # FreeBSD 10
 		         m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Invalid line type$} || # FreeBSD 13
-			 m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Invalid line '.*', expanded to '.*'} # FreeBSD 15
+			 m{^make(\[\d+\])?: ".*[mM]akefile" line \d+: Invalid line '.*', expanded to '.*'} || # FreeBSD 15
+			 m{^make(\[\d+\])?: .*[mM]akefile:\d+: Invalid line ".*", expanded to ".* "} # alternative diagnostics or newer BSD make (seen with FreeBSD 13..16)
 			) {
 		    $add_analysis_tag->('GNU make required');
 		} elsif (
