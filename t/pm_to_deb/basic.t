@@ -35,7 +35,14 @@ plan 'no_plan';
     }
 }
 
-my $perl = '/usr/bin/perl'; # makes sense only with system perl, force it
+my $perl;
+if ($INC{'Devel/Cover.pm'}) {
+    # We cannot assume that /usr/bin/perl has Devel::Cover is installed, so keep the current perl.
+    # Also turn of coverage on pm-to-deb.
+    $perl = "$^X -MDevel::Cover";
+} else {
+    $perl = '/usr/bin/perl'; # makes sense only with system perl, force it
+}
 my $pm_to_db = "$FindBin::RealBin/../../scripts/pm-to-deb";
 
 {
