@@ -6,6 +6,11 @@ on:
       - '*travis*'
       - '*appveyor*'
       - '*doozer*'
+  workflow_dispatch:
+    inputs:
+      debug:
+        type: boolean
+        default: false
 
 jobs:
 
@@ -18,6 +23,11 @@ jobs:
          - os: 'ubuntu-22.04'
          - os: 'ubuntu-24.04'
     steps:
+    - name: maybe set debugging
+      run: |
+        if [ "${{ inputs.debug }}" = "true" ]; then
+            export CPAN_PLUGIN_SYSDEPS_DEBUG=1
+        fi
     - name: apt hacks
       # /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
       run: |
