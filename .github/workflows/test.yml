@@ -23,11 +23,6 @@ jobs:
          - os: 'ubuntu-22.04'
          - os: 'ubuntu-24.04'
     steps:
-    - name: maybe set debugging
-      run: |
-        if [ "${{ inputs.debug }}" = "true" ]; then
-            export CPAN_PLUGIN_SYSDEPS_DEBUG=1
-        fi
     - name: apt hacks
       # /etc/apt/sources.list should be sufficient; all the other repositories are possibly problematic
       run: |
@@ -48,7 +43,7 @@ jobs:
         sudo apt-file update
 
         git clone https://github.com/eserte/travis-helper-cpan-pm.git
-        ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps
+        ./travis-helper-cpan-pm/travis-helper-cpan-pm --distroprefs=https://github.com/eserte/srezic-cpan-distroprefs --enable-sysdeps ${{ inputs.debug && '--debug' || '' }}
 
         which cpan
         # has to be patched
