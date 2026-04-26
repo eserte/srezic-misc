@@ -93,6 +93,9 @@ install-prereqs-with-cpan:
 echo-prereqs:
 	echo $CPAN_PREREQS
 
+preinstall-sysdeps:
+	sudo apt-get install -q `scripts/pm-to-deb $CPAN_PREREQS`
+
 # XXX Unfortunately SlayMakefile does not fail if any of the targets fail
 # XXX So best is to call the targets separately
 test:	test-t test-compile

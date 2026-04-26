@@ -53,6 +53,9 @@ jobs:
         # has to be patched
         cpan Slay::Makefile
 
+        echo "::group::preinstall sysdeps"
+        slaymake -d preinstall-sysdeps
+
         echo "::group::install CPAN prereqs"
         #slaymake -d install-prereqs-with-cpan
         cpan $(slaymake echo-prereqs)
