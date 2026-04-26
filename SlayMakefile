@@ -90,6 +90,9 @@ install-prereqs-with-cpan:
 	    }
 	}
 
+echo-prereqs:
+	echo $CPAN_PREREQS
+
 # XXX Unfortunately SlayMakefile does not fail if any of the targets fail
 # XXX So best is to call the targets separately
 test:	test-t test-compile
