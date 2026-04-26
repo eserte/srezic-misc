@@ -58,7 +58,8 @@ jobs:
 
         echo "::group::install CPAN prereqs"
         #slaymake -d install-prereqs-with-cpan
-        cpan $(slaymake echo-prereqs)
+        #cpan $(slaymake echo-prereqs)
+        slaymake -d install-missing-prereqs-with-cpan
         echo completed slaymake run
 
         echo "::group::test suite"
