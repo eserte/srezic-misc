@@ -49,7 +49,8 @@ jobs:
         # has to be patched
         cpan Slay::Makefile
 
-        slaymake -d install-prereqs-with-cpan
+        #slaymake -d install-prereqs-with-cpan
+        cpan $(slaymake echo-prereqs)
         echo completed slaymake run
         slaymake -d test-t
         slaymake -d test-compile
