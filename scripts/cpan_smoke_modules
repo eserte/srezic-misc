@@ -349,10 +349,10 @@ usage: $0
 -hidemod: use Devel::Hide to "hide" modules when building. A popular one is
           -hidemod "Test::Pod Test::Pod::Coverage"
 -perl-env: set environment variable for the given perl executable. The
-           perl executable may be a path or just a version number (any
-           substring of the resolved path matches). If the perl part is
-           empty, then the environment variable is set for all perls.
-           Example: -perl-env 5.20.1:DEBUG=1 -perl-env :GLOBAL=1
+           perl part must exactly match the resolved path of the perl
+           executable. If the perl part is empty, then the environment
+           variable is set for all perls.
+           Example: -perl-env /usr/perl5.20.1/bin/perl:DEBUG=1 -perl-env :GLOBAL=1
 
 -n:  do not do anything, just show what would be done
 -debug: enable more debugging
@@ -1194,7 +1194,7 @@ EOF
     local %ENV = %ENV; # local $ENV{PERL_CPAN_REPORTER_DIR} and a later local %ENV = %ENV seems to trigger a perl bug...
     for my $perl_env (@perl_envs) {
 	if (my($target_perl, $key, $val) = $perl_env =~ m{^(.*):([^:=]+)=(.*)$}) {
-	    if ($target_perl eq '' || index($perl, $target_perl) >= 0) {
+	    if ($target_perl eq '' || $perl eq $target_perl) {
 		$ENV{$key} = $val;
 		if ($debug) {
 		    warn "DEBUG: set $key=$val for $perl\n";
@@ -2809,11 +2809,11 @@ it's just the absence of this environment variable.
 
 =item -perl-env I<perl>:I<VAR>=I<VAL>
 
-Set environment variable for the given perl executable. I<perl> may be
-a path or just a version number (any substring of the resolved path
-matches). If the I<perl> part is empty, then the environment variable
-is set for all perls. This option may be specified multiple times.
-Example: C<-perl-env 5.20.1:DEBUG=1 -perl-env :GLOBAL=1>.
+Set environment variable for the given perl executable. The I<perl>
+part must exactly match the resolved path of the perl executable. If
+the I<perl> part is empty, then the environment variable is set for
+all perls. This option may be specified multiple times.
+Example: C<-perl-env /usr/perl5.20.1/bin/perl:DEBUG=1 -perl-env :GLOBAL=1>.
 
 =item -[no]failifnothingdone
 
