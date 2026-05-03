@@ -1208,9 +1208,6 @@ EOF
 	    }
 	    if ($match) {
 		$ENV{$key} = $val;
-		if ($debug) {
-		    warn "DEBUG: set $key=$val for $perl\n";
-		}
 	    }
 	} else {
 	    warn "WARN: Invalid -perl-env specification '$perl_env', expected perl:VAR=VAL\n";
@@ -2943,6 +2940,8 @@ Set to the current "action" (e.g. C<test>, C<install> ...). Typically
 used in distroprefs files.
 
 =back
+
+(More environment variables need to be documented)
 
 =head1 DEFAULT CONFIGURATION
 
