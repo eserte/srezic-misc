@@ -1208,6 +1208,7 @@ EOF
 	    }
 	    if ($match) {
 		$ENV{$key} = $val;
+		warn "INFO: set $key=$val for $perl\n";
 	    }
 	} else {
 	    warn "WARN: Invalid -perl-env specification '$perl_env', expected perl:VAR=VAL\n";
