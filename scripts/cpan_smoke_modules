@@ -114,6 +114,7 @@ my $unkind = 0;
 #my $mirror_url = 'http://cpan.cpantesters.org/'; # XXX as of 2025-11-23 not working anymore
 my $mirror_url = 'http://cpan.metacpan.org/';
 my @hidemod;
+my @perl_envs;
 my $time_fake;
 my $use_vncserver;
 my $x11_display;
@@ -250,6 +251,7 @@ GetOptions("n" => \$n,
 	       }
 	   },
 	   'hidemod=s@' => \@hidemod,
+	   'perl-env=s@' => \@perl_envs,
 	   'timefake=s' => \$time_fake,
 	   'vnc!'  => \$use_vncserver,
 	   'x11display=s' => \$x11_display,
@@ -309,7 +311,7 @@ usage: $0
      [-[no]destroyperl]
      [-strace|-truss|-ktrace file] [-[no]typescript] [-filemon]
      [-[no]signalend] [-moduleprintused] [-hidemod A::B ...]
-     [-timefake options]
+     [-perl-env perl:VAR=VAL ...] [-timefake options]
      [-[no]distroprefs] [-prefsdir ...]
      [-[no]limits] [-vnc] [-x11display :...]
      [-minbuilddiravail bytes|...k|...M|...G|...%]
@@ -346,6 +348,11 @@ usage: $0
 -unkind:      disable the default to run with low priority
 -hidemod: use Devel::Hide to "hide" modules when building. A popular one is
           -hidemod "Test::Pod Test::Pod::Coverage"
+-perl-env: set environment variable for the given perl executable. The
+           perl executable may be a path or just a version number (any
+           substring of the resolved path matches). If the perl part is
+           empty, then the environment variable is set for all perls.
+           Example: -perl-env 5.20.1:DEBUG=1 -perl-env :GLOBAL=1
 
 -n:  do not do anything, just show what would be done
 -debug: enable more debugging
@@ -1185,6 +1192,18 @@ EOF
 
     # Set PERL_CPAN_REPORTER_DIR if $prefix/.cpanreporterdir file exists
     local %ENV = %ENV; # local $ENV{PERL_CPAN_REPORTER_DIR} and a later local %ENV = %ENV seems to trigger a perl bug...
+    for my $perl_env (@perl_envs) {
+	if (my($target_perl, $key, $val) = $perl_env =~ m{^(.*):([^:=]+)=(.*)$}) {
+	    if ($target_perl eq '' || index($perl, $target_perl) >= 0) {
+		$ENV{$key} = $val;
+		if ($debug) {
+		    warn "DEBUG: set $key=$val for $perl\n";
+		}
+	    }
+	} else {
+	    warn "WARN: Invalid -perl-env specification '$perl_env', expected perl:VAR=VAL\n";
+	}
+    }
     if ($PERL_CPAN_REPORTER_DIR) {
 	$ENV{PERL_CPAN_REPORTER_DIR} = $PERL_CPAN_REPORTER_DIR;
     } else {
@@ -2788,6 +2807,14 @@ for C<PERL_PERTURB_KEYS> (defaults to C<NO> if this option is used).
 Note that technically there's no C<PERL_PERTURB_KEYS=YES> in perl;
 it's just the absence of this environment variable.
 
+=item -perl-env I<perl>:I<VAR>=I<VAL>
+
+Set environment variable for the given perl executable. I<perl> may be
+a path or just a version number (any substring of the resolved path
+matches). If the I<perl> part is empty, then the environment variable
+is set for all perls. This option may be specified multiple times.
+Example: C<-perl-env 5.20.1:DEBUG=1 -perl-env :GLOBAL=1>.
+
 =item -[no]failifnothingdone
 
 Exit with a false value (1) if no distribution is tested. This usually
@@ -2903,8 +2930,6 @@ Set to the current "action" (e.g. C<test>, C<install> ...). Typically
 used in distroprefs files.
 
 =back
-
-(More environment variables need to be documented)
 
 =head1 DEFAULT CONFIGURATION
 
