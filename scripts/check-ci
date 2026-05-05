@@ -190,21 +190,22 @@ exit($success ? 0 : 1);
 	    # First gather the currently running workflows matching the wished commit id
 	    my @candidates;
 	    for my $workflow_run (@{ $data->{workflow_runs} || [] }) {
-		if ($filter_github_workflow_rx) {
-		    next if $workflow_run->{path} !~ $filter_github_workflow_rx;
-		}
 		if ($workflow_run->{'head_sha'} eq $current_commit_id ||
 		    $workflow_run->{'head_branch'} eq $current_commit_id
 		   ) {
 		    push @candidates, { path => $workflow_run->{path}, id => $workflow_run->{'id'} };
 		}
 	    }
-	    if (@candidates) {
-		my($path, $id) = @{$candidates[0]}{qw(path id) };
+	    # Then filter by --filter-github-workflow-rx (if set)
+	    my @filtered_candidates = $filter_github_workflow_rx ? (grep { $_->{path} =~ $filter_github_workflow_rx } @candidates) : @candidates;
+
+	    # Pick the only or first workflow run
+	    if (@filtered_candidates) {
+		my($path, $id) = @{$filtered_candidates[0]}{qw(path id) };
 		# If there's more than one matching active workflow, then pick the first, but tell the user which one was chosen.
 		if (@candidates > 1) {
 		    if ($debug) {
-			debug "The following workflow canidates exist:";
+			debug "The following workflow candidates exist:";
 			for my $candidate (@candidates) {
 			    debug "* $candidate->{path}";
 			}
@@ -213,6 +214,8 @@ exit($success ? 0 : 1);
 		}
 		return $id;
 	    }
+
+	    # Nothing found?
 	    debug "Workflow run for commit $current_commit_id not found at github actions";
 	    undef;
 	};
