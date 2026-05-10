@@ -1019,6 +1019,9 @@ sub parse_test_report {
 			 /^\s*(#\s+Error:\s+|#\s+)?Can't load '.*?\.so' for module .*: .*?\.so(?:\.\d+)?: perl: fatal: relocation error: .*: referenced symbol not found $at_source_qr/ # solaris variant
 			) {
 		    $add_analysis_tag->('undefined symbol in shared lib');
+		} elsif (/\bdl_load_file failed: .*\.so: undefined symbol: .* $at_source_qr/ # seen with XS::JIT
+			) {
+		    $add_analysis_tag->('undefined symbol');
 		} elsif (
 			 /^collect2: error: ld returned 1 exit status/ ||
 			 m{^/usr/bin/ld: [^:]+: relocation R_X86_64_32 against `a local symbol' can not be used when making a shared object; recompile with -fPIC} ||
