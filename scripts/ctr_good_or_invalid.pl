@@ -3140,15 +3140,18 @@ sub get_cached_gitlab_issue_title {
 	    if (exists $db{$url}) {
 		$title = $db{$url};
 	    } else {
-		warn "INFO: Not found in cache, try to fetch from $url...\n";
+		warn "INFO: Not found in cache, try to fetch from $api_url...\n";
 		require LWP::UserAgent;
 		require JSON::XS;
 		my $resp = LWP::UserAgent->new(timeout => 20)->get($api_url);
 		if ($resp->is_success) {
-		    $title = JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title};
+		    $title = eval { JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title} };
+		    if (!defined $title) {
+			die "Content fetched from $api_url cannot be deserialized as JSON. Error: $@";
+		    }
 		    $db{$url} = $title;
 		} else {
-		    die "Cannot get URL $url: " . $resp->dump . "\n";
+		    die "Cannot get URL $api_url: " . $resp->dump . "\n";
 		}
 	    }
 	};
