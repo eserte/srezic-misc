@@ -1636,17 +1636,19 @@ sub set_currfile {
     my $curr_state;
     (my $curr_short_version = $x_test_reporter_perl) =~ s{^v}{}; # e.g. 5.10.0, without a leading "v"
 
-    my $title = "ctr_good_or_invalid:";
+    my $prog = "ctr_good_or_invalid";
+    my $title;
     if ($subject) {
-	$title =  " " . $subject;
+	$title = $subject;
 	if ($x_test_reporter_perl) {
 	    $title .= " (perl " . $x_test_reporter_perl . ")";
 	}
 	my $mw = $more->toplevel;
 	($curr_state) = $subject =~ m{^(\S+)};
 	$curr_state = lc $curr_state if defined $curr_state; # "fail", "pass" ...
+	$title .= " - $prog";
     } else {
-	$title = " (subject not parseable)";
+	$title = "$prog (subject not parseable)";
     }
 
     set_modtime_l((stat($currfile))[9]);
