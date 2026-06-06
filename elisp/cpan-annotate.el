@@ -107,7 +107,7 @@ Fails if not exactly one matching window is found."
       (goto-char (point-min))
       (let ((url (buffer-substring-no-properties (point) (line-end-position))))
         (setq url (replace-regexp-in-string "[ \t\n\r]+" "" url))
-        (when (string-empty-p url)
+        (when (string= url "")
           (error "URL file is empty"))
         (unless (cl-some (lambda (re) (string-match-p re url))
                          cpan-annotate-issue-url-regexps)
@@ -136,7 +136,8 @@ Fails if not exactly one matching window is found."
           (when (string-match "^\\(\\S+\\)\\s-+\\(.*\\)$" line)
             (let* ((ldistvname (match-string 1 line))
                    (ldistname (cpan-annotate--extract-dist-name ldistvname))
-                   (lurls (split-string (match-string 2 line) "," t "\\s-+"))
+                   (lurls (mapcar (lambda (s) (replace-regexp-in-string "^\\s-+\\|\\s-+$" "" s))
+                                  (split-string (match-string 2 line) "," t)))
                    (lnormalized-urls (mapcar #'cpan-annotate--normalize-url lurls)))
               (cond
                ((string= ldistvname distvname)
