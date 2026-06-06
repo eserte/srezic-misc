@@ -79,6 +79,7 @@ my $reversed;
 my $geometry;
 my $quit_at_end = 1;
 my $do_xterm_title = 1;
+my $prog_name = "ctr_good_or_invalid";
 my $show_recent_states = 1;
 my $use_recent_states_cache = 0;
 my $recent_months = 1;
@@ -109,6 +110,7 @@ GetOptions("good" => \$only_good,
 	   "geometry=s" => \$geometry,
 	   "quit-at-end!" => \$quit_at_end,
 	   "xterm-title!" => \$do_xterm_title,
+	   "prog-name=s" => \$prog_name,
 	   "recent-states!" => \$show_recent_states,
 	   "recent-states-cache!" => \$use_recent_states_cache,
 	   "recent-months=s" => \$recent_months,
@@ -123,7 +125,7 @@ GetOptions("good" => \$only_good,
 	  )
     or die <<EOF;
 usage: $0 [-good] [-[no]auto-good] [-sort date] [-r] [-geometry x11geom]
-          [-noquit-at-end] [-[no]xterm-title]
+          [-noquit-at-end] [-[no]xterm-title] [-prog-name ...]
           [-[no]recent-states] [-[no]check-screesaver] [-show-only]
           [-match-pv opperlver ...] [-only-recent period]
           [-fast-matrix-url rooturl ...]
@@ -1636,7 +1638,6 @@ sub set_currfile {
     my $curr_state;
     (my $curr_short_version = $x_test_reporter_perl) =~ s{^v}{}; # e.g. 5.10.0, without a leading "v"
 
-    my $prog = "ctr_good_or_invalid";
     my $title;
     if ($subject) {
 	$title = $subject;
@@ -1646,9 +1647,9 @@ sub set_currfile {
 	my $mw = $more->toplevel;
 	($curr_state) = $subject =~ m{^(\S+)};
 	$curr_state = lc $curr_state if defined $curr_state; # "fail", "pass" ...
-	$title .= " - $prog";
+	$title .= " - $prog_name";
     } else {
-	$title = "$prog (subject not parseable)";
+	$title = "$prog_name (subject not parseable)";
     }
 
     set_modtime_l((stat($currfile))[9]);
