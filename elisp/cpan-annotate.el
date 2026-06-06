@@ -77,10 +77,14 @@
       (match-string 1 url)
     url))
 
+(defun cpan-annotate--wmctrl-l ()
+  "Run wmctrl -l and return the output as a string."
+  (shell-command-to-string "wmctrl -l"))
+
 (defun cpan-annotate--get-distvname ()
   "Get the DISTVNAME from wmctrl -l.
 Fails if not exactly one matching window is found."
-  (let* ((wmctrl-output (shell-command-to-string "wmctrl -l"))
+  (let* ((wmctrl-output (cpan-annotate--wmctrl-l))
          (lines (split-string wmctrl-output "\n" t))
          (matches nil))
     (dolist (line lines)
@@ -114,62 +118,65 @@ Fails if not exactly one matching window is found."
           (error "URL does not match any known issue patterns: %s" url))
         url))))
 
+(defun cpan-annotate--do-insert (distvname current-url)
+  "Perform the insertion of DISTVNAME and CURRENT-URL into the current buffer."
+  (let* ((normalized-url (cpan-annotate--normalize-url current-url))
+         (dist-name (cpan-annotate--extract-dist-name distvname))
+         (version (cpan-annotate--extract-version distvname))
+         (version-float (cpan-annotate--version-to-float version))
+         (found-dist-line nil)
+         (found-url-for-dist-line nil))
+    (goto-char (point-min))
+    (while (not (eobp))
+      (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+        (when (string-match "^\\([^ \t\n\r]+\\)[ \t]+\\(.*\\)$" line)
+          (let* ((ldistvname (match-string 1 line))
+                 (lurls-str (match-string 2 line))
+                 (ldistname (cpan-annotate--extract-dist-name ldistvname))
+                 (lurls (mapcar (lambda (s) (replace-regexp-in-string "^\\s-+\\|\\s-+$" "" s))
+                                (split-string lurls-str "," t)))
+                 (lnormalized-urls (mapcar #'cpan-annotate--normalize-url lurls)))
+            (cond
+             ((string= ldistvname distvname)
+              (setq found-dist-line t)
+              (if (member normalized-url lnormalized-urls)
+                  (error "URL exists already for this distvname")
+                (goto-char (line-end-position))
+                (insert "," current-url))
+              (goto-char (point-max))) ;; exit loop
+             ((and (string= ldistname dist-name)
+                   (member normalized-url lnormalized-urls))
+              (setq found-url-for-dist-line t)
+              (let* ((lversion (cpan-annotate--extract-version ldistvname))
+                     (lversion-float (cpan-annotate--version-to-float lversion)))
+                (if (< lversion-float version-float)
+                    (progn
+                      (goto-char (line-beginning-position))
+                      (delete-region (point) (line-end-position))
+                      (insert distvname)
+                      (indent-to cpan-annotate-url-column)
+                      (insert lurls-str)
+                      (goto-char (point-max))) ;; exit loop
+                  (error "URL exists already for a newer or same version: %s" ldistvname))))))))
+      (unless (eobp) (forward-line 1)))
+    (unless (or found-dist-line found-url-for-dist-line)
+      ;; Append new line
+      (goto-char (point-max))
+      (unless (bolp) (insert "\n"))
+      (insert distvname)
+      (indent-to cpan-annotate-url-column)
+      (insert current-url)
+      (insert "\n"))))
+
 ;;;###autoload
 (defun cpan-annotate-insert ()
   "Interactively add or update a CPAN testers annotation."
   (interactive)
   (let* ((current-url (cpan-annotate--read-current-url))
          (distvname (cpan-annotate--get-distvname))
-         (normalized-url (cpan-annotate--normalize-url current-url))
-         (annotate-file (expand-file-name cpan-annotate-annotate-file))
-         (dist-name (cpan-annotate--extract-dist-name distvname))
-         (version (cpan-annotate--extract-version distvname))
-         (version-float (cpan-annotate--version-to-float version)))
-
+         (annotate-file (expand-file-name cpan-annotate-annotate-file)))
     (find-file annotate-file)
-    (goto-char (point-min))
-
-    (let ((found-dist-line nil)
-          (found-url-for-dist-line nil))
-      (while (not (eobp))
-        (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-          (when (string-match "^\\([^ \t\n\r]+\\)[ \t]+\\(.*\\)$" line)
-            (let* ((ldistvname (match-string 1 line))
-                   (ldistname (cpan-annotate--extract-dist-name ldistvname))
-                   (lurls (mapcar (lambda (s) (replace-regexp-in-string "^\\s-+\\|\\s-+$" "" s))
-                                  (split-string (match-string 2 line) "," t)))
-                   (lnormalized-urls (mapcar #'cpan-annotate--normalize-url lurls)))
-              (cond
-               ((string= ldistvname distvname)
-                (setq found-dist-line t)
-                (if (member normalized-url lnormalized-urls)
-                    (error "URL exists already for this distvname")
-                  (goto-char (line-end-position))
-                  (insert "," current-url))
-                (goto-char (point-max))) ;; exit loop
-               ((and (string= ldistname dist-name)
-                     (member normalized-url lnormalized-urls))
-                (setq found-url-for-dist-line t)
-                (let* ((lversion (cpan-annotate--extract-version ldistvname))
-                       (lversion-float (cpan-annotate--version-to-float lversion)))
-                  (if (< lversion-float version-float)
-                      (progn
-                        (goto-char (line-beginning-position))
-                        (when (looking-at "[^ \t\n\r]+")
-                          (replace-match distvname))
-                        (goto-char (point-max))) ;; exit loop
-                    (error "URL exists already for a newer or same version: %s" ldistvname))))))))
-        (unless (eobp) (forward-line 1)))
-
-      (unless (or found-dist-line found-url-for-dist-line)
-        ;; Append new line
-        (goto-char (point-max))
-        (unless (bolp) (insert "\n"))
-        (insert distvname)
-        (indent-to cpan-annotate-url-column)
-        (insert current-url)
-        (insert "\n")))
-
+    (cpan-annotate--do-insert distvname current-url)
     (message "Added annotation for %s" distvname)))
 
 (provide 'cpan-annotate)
