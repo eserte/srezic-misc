@@ -32,7 +32,7 @@
   :group 'cpan-annotate)
 
 (defcustom cpan-annotate-window-regexp
-  "^\\(FAIL\\|NA\\|UNKNOWN\\) \\(\\S+\\) .* - ctr_good_or_invalid$"
+  "^\\(FAIL\\|NA\\|UNKNOWN\\)\\s-+\\([^[:space:]]+\\)\\s-+.*- ctr_good_or_invalid$"
   "Regexp to match the window title and extract DISTVNAME (group 2)."
   :type 'string
   :group 'cpan-annotate)
@@ -85,7 +85,7 @@ Fails if not exactly one matching window is found."
          (matches nil))
     (dolist (line lines)
       ;; wmctrl -l output format: window-id desktop-id hostname title
-      (when (string-match "^0x[0-9a-f]+ +[0-9-]+ +\\S+ +\\(.*\\)$" line)
+      (when (string-match "^0x[0-9a-f]+\\s-+[0-9-]+\\s-+[^[:space:]]+\\s-+\\(.*\\)$" line)
         (let ((title (match-string 1 line)))
           (when (string-match cpan-annotate-window-regexp title)
             (push (match-string 2 title) matches)))))
@@ -133,7 +133,7 @@ Fails if not exactly one matching window is found."
           (found-url-for-dist-line nil))
       (while (not (eobp))
         (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-          (when (string-match "^\\(\\S+\\)\\s-+\\(.*\\)$" line)
+          (when (string-match "^\\([^[:space:]]+\\)\\s-+\\(.*\\)$" line)
             (let* ((ldistvname (match-string 1 line))
                    (ldistname (cpan-annotate--extract-dist-name ldistvname))
                    (lurls (mapcar (lambda (s) (replace-regexp-in-string "^\\s-+\\|\\s-+$" "" s))
@@ -155,7 +155,7 @@ Fails if not exactly one matching window is found."
                   (if (< lversion-float version-float)
                       (progn
                         (goto-char (line-beginning-position))
-                        (when (looking-at "\\S-+")
+                        (when (looking-at "[^[:space:]]+")
                           (replace-match distvname))
                         (goto-char (point-max))) ;; exit loop
                     (error "URL exists already for a newer or same version: %s" ldistvname))))))))
