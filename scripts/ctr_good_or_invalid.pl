@@ -3146,7 +3146,8 @@ sub get_cached_gitlab_issue_title {
 		warn "INFO: Not found in cache, try to fetch from $api_url...\n";
 		require LWP::UserAgent;
 		require JSON::XS;
-		my $resp = LWP::UserAgent->new(timeout => 20)->get($api_url);
+		# explicitly set Accept header, otherwise anti-bot systems like Anubis could respond with a challenge page
+		my $resp = LWP::UserAgent->new(timeout => 20)->get($api_url, Accept => 'application/json');
 		if ($resp->is_success) {
 		    $title = eval { JSON::XS::decode_json($resp->decoded_content(charset => "none"))->{title} };
 		    if (!defined $title) {
