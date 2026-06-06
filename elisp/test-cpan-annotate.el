@@ -1,7 +1,10 @@
 ;;; test-cpan-annotate.el --- Tests for cpan-annotate.el -*- lexical-binding: t; -*-
 
+;; To run tests from repository root:
+;; emacs -batch -L elisp -l test-cpan-annotate.el -f ert-run-tests-batch-and-exit
+
 (require 'ert)
-(require 'cpan-annotate "./elisp/cpan-annotate.el")
+(require 'cpan-annotate)
 
 (ert-deftest cpan-annotate-test-version-to-float ()
   (should (= (cpan-annotate--version-to-float "0.001") 0.001))
