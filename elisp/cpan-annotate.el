@@ -120,7 +120,8 @@ Fails if not exactly one matching window is found."
 
 (defun cpan-annotate--do-insert (distvname current-url)
   "Perform the insertion of DISTVNAME and CURRENT-URL into the current buffer."
-  (let* ((normalized-url (cpan-annotate--normalize-url current-url))
+  (let* ((indent-tabs-mode nil)
+         (normalized-url (cpan-annotate--normalize-url current-url))
          (dist-name (cpan-annotate--extract-dist-name distvname))
          (version (cpan-annotate--extract-version distvname))
          (version-float (cpan-annotate--version-to-float version))
