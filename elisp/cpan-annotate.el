@@ -24,9 +24,13 @@
 
 (defcustom cpan-annotate-issue-url-regexps
   '("^https://github\\.com/.*/issues/[0-9]+$"
-    "^https://gitlab\\.com/.*/-/issues/[0-9]+$"
+    "^https://github\\.com/.*/pull/[0-9]+$"
+    "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/issues/[0-9]+$"
+    "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/work_items/[0-9]+$"
     "^https://codeberg\\.org/.*/issues/[0-9]+$"
-    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+$")
+    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+$"
+    "^https://rt\\.cpan\\.org/Ticket/Display\\.html\\?id=[0-9]+$"
+   )
   "List of regexps to match valid issue URLs."
   :type '(repeat string)
   :group 'cpan-annotate)
