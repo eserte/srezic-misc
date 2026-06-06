@@ -4,6 +4,7 @@
 ;; emacs -batch -L elisp -l test-cpan-annotate.el -f ert-run-tests-batch-and-exit
 
 (require 'ert)
+(require 'cl-lib)
 (require 'cpan-annotate)
 
 (defun approx-equal (a b)
