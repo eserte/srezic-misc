@@ -476,8 +476,10 @@ my $more = $mw->Scrolled("More")->pack(-fill => "both", -expand => 1);
 		       -image => $images{metacpan},
 		       -width => 24,
 		       -command => sub {
+			   #my $url = "https://www.metacpan.org/release/$currdist";
+			   my $url = "https://www.metacpan.org/dist/$currdist";
 			   require Tk::Pod::WWWBrowser;
-			   Tk::Pod::WWWBrowser::start_browser("http://www.metacpan.org/release/$currdist");
+			   Tk::Pod::WWWBrowser::start_browser($url);
 		       })->pack(-side => 'left', -fill => 'y');
 	$balloon->attach($mc_b, -msg => 'MetaCPAN');
     }
