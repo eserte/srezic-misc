@@ -53,13 +53,22 @@
 (ert-deftest cpan-annotate-test-do-insert-new ()
   (with-temp-buffer
     (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/1")
-    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1\n"))))
+    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1\n"))
+
+    (erase-buffer)
+    (cpan-annotate--do-insert "Zuzu-0.001" "https://rt.cpan.org/Public/Bug/Display.html?id=12345")
+    (should (string= (buffer-string) "Zuzu-0.001                              12345\n"))))
 
 (ert-deftest cpan-annotate-test-do-insert-append-url ()
   (with-temp-buffer
     (insert "Zuzu-0.001                              https://github.com/user/repo/issues/1\n")
     (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/2")
-    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1,https://github.com/user/repo/issues/2\n"))))
+    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1,https://github.com/user/repo/issues/2\n"))
+
+    (erase-buffer)
+    (insert "Zuzu-0.001                              12345\n")
+    (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/1")
+    (should (string= (buffer-string) "Zuzu-0.001                              12345,https://github.com/user/repo/issues/1\n"))))
 
 (ert-deftest cpan-annotate-test-do-insert-duplicate-url ()
   (with-temp-buffer

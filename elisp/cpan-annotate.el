@@ -148,7 +148,7 @@ Fails if not exactly one matching window is found."
               (if (member normalized-url lnormalized-urls)
                   (error "URL exists already for this distvname")
                 (goto-char (line-end-position))
-                (insert "," current-url))
+                (insert "," normalized-url))
               (goto-char (point-max))) ;; exit loop
              ((and (string= ldistname dist-name)
                    (member normalized-url lnormalized-urls))
@@ -171,7 +171,7 @@ Fails if not exactly one matching window is found."
       (unless (bolp) (insert "\n"))
       (insert distvname)
       (indent-to cpan-annotate-url-column)
-      (insert current-url)
+      (insert normalized-url)
       (insert "\n"))))
 
 ;;;###autoload
