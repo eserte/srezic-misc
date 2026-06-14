@@ -28,8 +28,9 @@
     "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/issues/[0-9]+$"
     "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/work_items/[0-9]+$"
     "^https://codeberg\\.org/.*/issues/[0-9]+$"
-    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+$"
-    "^https://rt\\.cpan\\.org/Ticket/Display\\.html\\?id=[0-9]+$"
+    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+\\(&.*\\)?$"
+    "^https://rt\\.cpan\\.org/Ticket/Display\\.html\\?id=[0-9]+\\(&.*\\)?$"
+    "^https://sourceforge\\.net/p/[^/]+/bugs/[0-9]+/?$"
    )
   "List of regexps to match valid issue URLs."
   :type '(repeat string)
@@ -77,7 +78,7 @@
 
 (defun cpan-annotate--normalize-url (url)
   "Normalize URL.  RT URLs are converted to their ID if they match the RT pattern."
-  (if (string-match "https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=\\([0-9]+\\)" url)
+  (if (string-match "https://rt\\.cpan\\.org/\\(?:Public/Bug\\|Ticket\\)/Display\\.html\\?id=\\([0-9]+\\)" url)
       (match-string 1 url)
     url))
 
@@ -147,7 +148,7 @@ Fails if not exactly one matching window is found."
               (if (member normalized-url lnormalized-urls)
                   (error "URL exists already for this distvname")
                 (goto-char (line-end-position))
-                (insert "," current-url))
+                (insert "," normalized-url))
               (goto-char (point-max))) ;; exit loop
              ((and (string= ldistname dist-name)
                    (member normalized-url lnormalized-urls))
@@ -170,7 +171,7 @@ Fails if not exactly one matching window is found."
       (unless (bolp) (insert "\n"))
       (insert distvname)
       (indent-to cpan-annotate-url-column)
-      (insert current-url)
+      (insert normalized-url)
       (insert "\n"))))
 
 ;;;###autoload

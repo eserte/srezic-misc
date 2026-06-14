@@ -29,7 +29,10 @@
 
 (ert-deftest cpan-annotate-test-normalize-url ()
   (should (string= (cpan-annotate--normalize-url "https://github.com/user/repo/issues/1") "https://github.com/user/repo/issues/1"))
-  (should (string= (cpan-annotate--normalize-url "https://rt.cpan.org/Public/Bug/Display.html?id=12345") "12345")))
+  (should (string= (cpan-annotate--normalize-url "https://rt.cpan.org/Public/Bug/Display.html?id=12345") "12345"))
+  (should (string= (cpan-annotate--normalize-url "https://rt.cpan.org/Ticket/Display.html?id=163630") "163630"))
+  (should (string= (cpan-annotate--normalize-url "https://rt.cpan.org/Ticket/Display.html?id=163630&results=abcd") "163630"))
+  (should (string= (cpan-annotate--normalize-url "https://sourceforge.net/p/kontocheck/bugs/23/") "https://sourceforge.net/p/kontocheck/bugs/23/")))
 
 (ert-deftest cpan-annotate-test-get-distvname ()
   (let ((mock-output "0x02c00044  0     N/A FAIL Alien-ggml-0.09 aarch64-freebsd-thread-multi 15.0-beta1 (perl v5.42.0) - ctr_good_or_invalid\n0x03c00044  3     N/A FAIL Search-Xapian-1.2.25.7 aarch64-freebsd-ld 15.0-stable (perl v5.42.2) - ctr_good_or_invalid"))
@@ -50,13 +53,22 @@
 (ert-deftest cpan-annotate-test-do-insert-new ()
   (with-temp-buffer
     (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/1")
-    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1\n"))))
+    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1\n"))
+
+    (erase-buffer)
+    (cpan-annotate--do-insert "Zuzu-0.001" "https://rt.cpan.org/Public/Bug/Display.html?id=12345")
+    (should (string= (buffer-string) "Zuzu-0.001                              12345\n"))))
 
 (ert-deftest cpan-annotate-test-do-insert-append-url ()
   (with-temp-buffer
     (insert "Zuzu-0.001                              https://github.com/user/repo/issues/1\n")
     (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/2")
-    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1,https://github.com/user/repo/issues/2\n"))))
+    (should (string= (buffer-string) "Zuzu-0.001                              https://github.com/user/repo/issues/1,https://github.com/user/repo/issues/2\n"))
+
+    (erase-buffer)
+    (insert "Zuzu-0.001                              12345\n")
+    (cpan-annotate--do-insert "Zuzu-0.001" "https://github.com/user/repo/issues/1")
+    (should (string= (buffer-string) "Zuzu-0.001                              12345,https://github.com/user/repo/issues/1\n"))))
 
 (ert-deftest cpan-annotate-test-do-insert-duplicate-url ()
   (with-temp-buffer
