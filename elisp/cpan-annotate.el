@@ -28,8 +28,9 @@
     "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/issues/[0-9]+$"
     "^https://gitlab\\.\\(com\\|ow2\\.org\\)/.*/-/work_items/[0-9]+$"
     "^https://codeberg\\.org/.*/issues/[0-9]+$"
-    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+$"
-    "^https://rt\\.cpan\\.org/Ticket/Display\\.html\\?id=[0-9]+$"
+    "^https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=[0-9]+\\(&.*\\)?$"
+    "^https://rt\\.cpan\\.org/Ticket/Display\\.html\\?id=[0-9]+\\(&.*\\)?$"
+    "^https://sourceforge\\.net/p/[^/]+/bugs/[0-9]+/?$"
    )
   "List of regexps to match valid issue URLs."
   :type '(repeat string)
