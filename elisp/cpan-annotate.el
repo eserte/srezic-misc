@@ -77,7 +77,7 @@
 
 (defun cpan-annotate--normalize-url (url)
   "Normalize URL.  RT URLs are converted to their ID if they match the RT pattern."
-  (if (string-match "https://rt\\.cpan\\.org/Public/Bug/Display\\.html\\?id=\\([0-9]+\\)" url)
+  (if (string-match "https://rt\\.cpan\\.org/\\(?:Public/Bug\\|Ticket\\)/Display\\.html\\?id=\\([0-9]+\\)" url)
       (match-string 1 url)
     url))
 
