@@ -49,9 +49,16 @@ if ($recurse) {
     if ($xml_file) {
 	$p = XML::LibXML->load_xml(location => $xml_file);
     } else {
-	my $resp = $ua->get('http://deps.cpantesters.org/depended-on-by.pl?xml=1;dist='.$mod);
+	my $c_resp = $ua->get('http://deps.cpantesters.org/static/style.css');
+	my $cookie = $c_resp->header('set-cookie');
+	if (defined $cookie && $cookie =~ /^(.*?);/) {
+	    $cookie = $1;
+	} else {
+	    undef $cookie;
+	}
+	my $resp = $ua->get('http://deps.cpantesters.org/depended-on-by.pl?xml=1;dist='.$mod, (defined $cookie ? (Cookie => $cookie) : ()));
 	if (!$resp->is_success) {
-	    die "Fetching failed: " . $resp->as_string;
+	    die "Fetching failed:\n" . "Request:\n" . $resp->request->dump . "\nResponse\n" . $resp->dump;
 	}
 	$p = XML::LibXML->load_xml(string => $resp->decoded_content(charset => 'none'));
     }
