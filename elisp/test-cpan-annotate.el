@@ -59,6 +59,14 @@
     (cpan-annotate--do-insert "Zuzu-0.001" "https://rt.cpan.org/Public/Bug/Display.html?id=12345")
     (should (string= (buffer-string) "Zuzu-0.001                              12345\n"))))
 
+(ert-deftest cpan-annotate-test-do-insert-overflow ()
+  (with-temp-buffer
+    (let ((long-distvname "This-Is-A-Very-Long-Distribution-Name-With-Version-1.2.3")
+          (url "https://github.com/user/repo/issues/1"))
+      (cpan-annotate--do-insert long-distvname url)
+      (should (string= (buffer-string)
+                       (concat long-distvname " " url "\n"))))))
+
 (ert-deftest cpan-annotate-test-do-insert-append-url ()
   (with-temp-buffer
     (insert "Zuzu-0.001                              https://github.com/user/repo/issues/1\n")

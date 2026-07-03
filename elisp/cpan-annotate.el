@@ -160,7 +160,7 @@ Fails if not exactly one matching window is found."
                       (goto-char (line-beginning-position))
                       (delete-region (point) (line-end-position))
                       (insert distvname)
-                      (indent-to cpan-annotate-url-column)
+                      (indent-to cpan-annotate-url-column 1)
                       (insert lurls-str)
                       (goto-char (point-max))) ;; exit loop
                   (error "URL exists already for a newer or same version: %s" ldistvname))))))))
@@ -170,7 +170,7 @@ Fails if not exactly one matching window is found."
       (goto-char (point-max))
       (unless (bolp) (insert "\n"))
       (insert distvname)
-      (indent-to cpan-annotate-url-column)
+      (indent-to cpan-annotate-url-column 1)
       (insert normalized-url)
       (insert "\n"))))
 
