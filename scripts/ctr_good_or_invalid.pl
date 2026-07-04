@@ -1800,7 +1800,7 @@ sub set_currfile {
 		       || ($analysis_tag eq 'bare << forbidden' && $annotation_text_for_analysis =~ m{\bbare\b.*<<.*\bforbidden\b})
 		       || ($analysis_tag eq 'non-positive $/' && $annotation_text_for_analysis =~ m{setting.*\$/.*reference.*forbidden}i)
 		       || ($analysis_tag eq 'max unicode code point' && $annotation_text_for_analysis =~ m{Use of code point .* is not allowed}i)
-		       || ($analysis_tag eq 'taint' && $annotation_text_for_analysis =~ m{\btaint\b}i)
+		       || ($analysis_tag eq 'taint' && $annotation_text_for_analysis =~ m{(\btaint\b|-T\s+switch\b)}i)
 		       || ($analysis_tag eq 'defined array' && $annotation_text_for_analysis =~ m{can't use.*defined.*\@array}i)
 		       || ($analysis_tag eq 'defined hash' && $annotation_text_for_analysis =~ m{defined\b.*\bhash})
 		       || ($analysis_tag eq 'ssl certificate problem' && $annotation_text_for_analysis =~ m{certificate\s+not\s+valid}i)
