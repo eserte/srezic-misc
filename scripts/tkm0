@@ -1,0 +1,109 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use POSIX qw(strftime);
+use File::Spec;
+use Time::HiRes qw(time);
+
+my $tkm_ret;
+my $lastcmd;
+my $starttime;
+my $endtime;
+
+if (@ARGV) {
+    $lastcmd = join(" ", map { m{\s} ? "'$_'" : $_ } @ARGV);
+    $starttime = time();
+    system(@ARGV);
+    $tkm_ret = $? >> 8;
+} else {
+    $lastcmd = "last command";
+}
+
+$endtime = time();
+
+if (length($lastcmd) > 164) {
+    $lastcmd = substr($lastcmd, 0, 80) . "..." . substr($lastcmd, -80);
+}
+
+my $bg = "yellow";
+my $fg = "black";
+if (defined $tkm_ret) {
+    $bg = ($tkm_ret == 0) ? "green4" : "red";
+    $fg = "white";
+}
+
+my $found;
+my $tkmessage_path = is_in_path('tkmessage');
+if (defined $tkmessage_path) {
+    $found = "tkmessage";
+} elsif (is_in_path('xmessage')) {
+    $found = "xmessage";
+}
+
+my $timeinfo;
+my $st_str = defined $starttime ? strftime("%FT%T", localtime($starttime)) : undef;
+my $et_str = strftime("%FT%T", localtime($endtime));
+
+if (defined $starttime) {
+    my $dur = sprintf("%.3f", $endtime - $starttime);
+    $timeinfo = "<$st_str - $et_str> <${dur}s>";
+} else {
+    $timeinfo = "<$et_str>";
+}
+
+my $ret_str = defined $tkm_ret ? "<$tkm_ret> " : "";
+
+if ($found && $found eq "tkmessage") {
+    my $perl = is_in_path('pistachio-perl') // "perl";
+    my $msg = "$lastcmd\n$ret_str$timeinfo";
+    if (fork() == 0) {
+        exec($perl, $tkmessage_path, "-center", "-bg", $bg, "-fg", $fg, "-title", "Last command", "-font", "Courier 14 bold", $msg);
+        die "exec failed: $!";
+    }
+} elsif ($found && $found eq "xmessage") {
+    my $msg = "$ret_str$timeinfo $lastcmd";
+    if (fork() == 0) {
+        exec("xmessage", "-center", "-bg", $bg, "-fg", $fg, "-title", "Last command", "-font", "-adobe-courier-medium-o-normal--14-*", $msg);
+        die "exec failed: $!";
+    }
+} else {
+    print STDERR "$ret_str$timeinfo $lastcmd\n";
+}
+
+exit($tkm_ret // 0);
+
+# REPO BEGIN
+# REPO NAME is_in_path /home/e/eserte/src/srezic-repository 
+# REPO MD5 4be1e368fea0fa9af4e89256a9878820
+sub is_in_path {
+    my($prog) = @_;
+    require File::Spec;
+    if (File::Spec->file_name_is_absolute($prog)) {
+	if ($^O eq 'MSWin32') {
+	    return $prog       if (-f $prog && -x $prog);
+	    return "$prog.bat" if (-f "$prog.bat" && -x "$prog.bat");
+	    return "$prog.com" if (-f "$prog.com" && -x "$prog.com");
+	    return "$prog.exe" if (-f "$prog.exe" && -x "$prog.exe");
+	    return "$prog.cmd" if (-f "$prog.cmd" && -x "$prog.cmd");
+	} else {
+	    return $prog if -f $prog and -x $prog;
+	}
+    }
+    require Config;
+    %Config::Config = %Config::Config if 0; # cease -w
+    my $sep = $Config::Config{'path_sep'} || ':';
+    foreach (split(/$sep/o, $ENV{PATH})) {
+	if ($^O eq 'MSWin32') {
+	    # maybe use $ENV{PATHEXT} like maybe_command in ExtUtils/MM_Win32.pm?
+	    return "$_\\$prog"     if (-f "$_\\$prog" && -x "$_\\$prog");
+	    return "$_\\$prog.bat" if (-f "$_\\$prog.bat" && -x "$_\\$prog.bat");
+	    return "$_\\$prog.com" if (-f "$_\\$prog.com" && -x "$_\\$prog.com");
+	    return "$_\\$prog.exe" if (-f "$_\\$prog.exe" && -x "$_\\$prog.exe");
+	    return "$_\\$prog.cmd" if (-f "$_\\$prog.cmd" && -x "$_\\$prog.cmd");
+	} else {
+	    return "$_/$prog" if (-x "$_/$prog" && !-d "$_/$prog");
+	}
+    }
+    undef;
+}
+# REPO END
