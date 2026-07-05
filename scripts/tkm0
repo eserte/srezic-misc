@@ -3,8 +3,9 @@ use strict;
 use warnings;
 use POSIX qw(strftime);
 use File::Spec;
+use Time::HiRes qw(time);
 
-my $tkm_ret = 0;
+my $tkm_ret;
 my $lastcmd;
 my $starttime;
 my $endtime;
@@ -15,8 +16,7 @@ if (@ARGV) {
     system(@ARGV);
     $tkm_ret = $? >> 8;
 } else {
-    $lastcmd = $ENV{TKM_COMMAND} || "unknown command";
-    $tkm_ret = $ENV{TKM_RET} // 0;
+    $lastcmd = "last command";
 }
 
 if (length($lastcmd) > 164) {
@@ -25,7 +25,12 @@ if (length($lastcmd) > 164) {
 
 $endtime = time();
 
-my $bg = ($tkm_ret == 0) ? "green4" : "red";
+my $bg = "yellow";
+my $fg = "black";
+if (defined $tkm_ret) {
+    $bg = ($tkm_ret == 0) ? "green4" : "red";
+    $fg = "white";
+}
 
 my $found;
 my $tkmessage_path;
@@ -47,11 +52,13 @@ my $st_str = defined $starttime ? strftime("%FT%T", localtime($starttime)) : und
 my $et_str = strftime("%FT%T", localtime($endtime));
 
 if (defined $starttime) {
-    my $dur = $endtime - $starttime;
+    my $dur = sprintf("%.3f", $endtime - $starttime);
     $timeinfo = "<$st_str - $et_str> <${dur}s>";
 } else {
     $timeinfo = "<$et_str>";
 }
+
+my $ret_str = defined $tkm_ret ? "<$tkm_ret> " : "";
 
 if ($found && $found eq "tkmessage") {
     my $perl = "perl";
@@ -61,26 +68,19 @@ if ($found && $found eq "tkmessage") {
             last;
         }
     }
-    my $msg = "$lastcmd\n<$tkm_ret> $timeinfo";
+    my $msg = "$lastcmd\n$ret_str$timeinfo";
     if (fork() == 0) {
-        # Redirect output to avoid cluttering the terminal
-        open STDIN,  '<', '/dev/null';
-        open STDOUT, '>', '/dev/null';
-        open STDERR, '>', '/dev/null';
-        exec($perl, $tkmessage_path, "-center", "-bg", $bg, "-fg", "white", "-title", "Last command", "-font", "Courier 14 bold", $msg);
-        exit(1);
+        exec($perl, $tkmessage_path, "-center", "-bg", $bg, "-fg", $fg, "-title", "Last command", "-font", "Courier 14 bold", $msg);
+        die "exec failed: $!";
     }
 } elsif ($found && $found eq "xmessage") {
-    my $msg = "<$tkm_ret> $timeinfo $lastcmd";
+    my $msg = "$ret_str$timeinfo $lastcmd";
     if (fork() == 0) {
-        open STDIN,  '<', '/dev/null';
-        open STDOUT, '>', '/dev/null';
-        open STDERR, '>', '/dev/null';
-        exec("xmessage", "-center", "-bg", $bg, "-fg", "white", "-title", "Last command", "-font", "-adobe-courier-medium-o-normal--14-*", $msg);
-        exit(1);
+        exec("xmessage", "-center", "-bg", $bg, "-fg", $fg, "-title", "Last command", "-font", "-adobe-courier-medium-o-normal--14-*", $msg);
+        die "exec failed: $!";
     }
 } else {
-    print "<$tkm_ret> $timeinfo $lastcmd\n";
+    print "$ret_str$timeinfo $lastcmd\n";
 }
 
-exit($tkm_ret);
+exit($tkm_ret // 0);
