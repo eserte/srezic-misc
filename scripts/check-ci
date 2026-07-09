@@ -183,9 +183,9 @@ exit($success ? 0 : 1);
 	my $get_current_github_actions_run_id = sub {
 	    my $data;
 	    if ($filter_github_workflow_filename) {
-		$data = $do_github_api_call->("repos/$repo/actions/workflows/$filter_github_workflow_filename/runs");
+		$data = $do_github_api_call->("repos/$repo/actions/workflows/$filter_github_workflow_filename/runs?per_page=100");
 	    } else {
-		$data = $do_github_api_call->("repos/$repo/actions/runs");
+		$data = $do_github_api_call->("repos/$repo/actions/runs?per_page=100");
 	    }
 	    # First gather the currently running workflows matching the wished commit id
 	    my @candidates;
