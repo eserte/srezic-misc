@@ -12,9 +12,13 @@ use lib $FindBin::RealBin;
 require "firefox_cookie_finder.pl";
 
 my @cookie_names;
+my $profile;
+my $debug;
 Getopt::Long::Configure("pass_through");
 GetOptions(
     'cookie-name=s@' => \@cookie_names,
+    'profile=s' => \$profile,
+    'debug!' => \$debug,
 );
 my $url = $ARGV[-1]; # XXX must not be true!
 if (!$url) {
@@ -27,7 +31,11 @@ my $host = eval { $u->host }
 
 my @cookie_name_values;
 for my $cookie_name (@cookie_names) {
-    my $cookie_value = FirefoxCookieFinder::find_cookie_value($cookie_name, $host);
+    my $cookie_value = FirefoxCookieFinder::find_cookie_value(
+	$cookie_name, $host,
+	(defined $profile ? (profile => $profile) : ()),
+	(defined $debug ? (debug => $debug) : ()),
+    );
     if (!defined $cookie_value) {
 	die "Cannot find cookie $cookie_name for host $host.\n";
     }

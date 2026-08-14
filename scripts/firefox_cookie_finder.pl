@@ -12,6 +12,7 @@ use File::Glob qw(bsd_glob);
 sub find_cookie_value {
     my ($cookie_name, $host_suffix, %options) = @_;
     my $expected_lifetime_in_days = delete $options{expected_lifetime};
+    my $profile = delete $options{profile};
     my $debug_flag = delete $options{debug};
     die "Unhandled options: " . join(" ", %options) if %options;
 
@@ -20,10 +21,51 @@ sub find_cookie_value {
     # If expected_cookie_lifetime_in_days is provided, convert it to seconds
     my $expected_lifetime = defined $expected_lifetime_in_days ? $expected_lifetime_in_days * 24 * 60 * 60 : undef;
 
-    my @cookie_db_files = sort { -M $a <=> -M $b }
-	bsd_glob("~/.mozilla/firefox/*/cookies.sqlite"),
-	bsd_glob("~/snap/firefox/common/.mozilla/firefox/*/cookies.sqlite"),
-	;
+    my @firefox_directories;
+    {
+	my @firefox_directory_candidates = ('.mozilla/firefox', 'snap/firefox/common');
+	for my $candidate (@firefox_directory_candidates) {
+	    my $candidate_path = "$ENV{HOME}/$candidate";
+	    push @firefox_directories, $candidate_path if -d $candidate_path;
+	}
+	if (!@firefox_directories) {
+	    die "No firefox directory found in home directory, tried @firefox_directory_candidates\n";
+	}
+    }	
+
+    my @cookie_db_files;
+    if (defined $profile) {
+	my $profile_dir;
+	if (-d $profile) {
+	    $profile_dir = $profile;
+	} else {
+	    for my $firefox_directory (@firefox_directories) {
+		my $candidate = "$firefox_directory/$profile";
+		if (-d $candidate) {
+		    $profile_dir = $candidate;
+		    last;
+		}
+		($candidate) = bsd_glob("$firefox_directory/*.$profile");
+		if (-d $candidate) {
+		    $profile_dir = $candidate;
+		    last;
+		}
+	    }
+	}
+	if (!defined $profile_dir) {
+	    die "Cannot find a profile directory for profile name '$profile'\n";
+	}
+	@cookie_db_files = "$profile_dir/cookies.sqlite";
+	if (!-f $cookie_db_files[0]) {
+	    die "The profile directory $profile_dir does not have a cookies.sqlite file\n";
+	}
+    } else {
+	@cookie_db_files = map { bsd_glob("$_/*/cookies.sqlite") } @firefox_directories;
+	if (!@cookie_db_files) {
+	    die "No cookies.sqlite files found in @firefox_directories\n";
+	}
+    }
+    @cookie_db_files = sort { -M $a <=> -M $b } @cookie_db_files;
 
     for my $db_file (@cookie_db_files) {
 	my $age_seconds = time - (stat($db_file))[9];
