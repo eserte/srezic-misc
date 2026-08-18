@@ -17,6 +17,7 @@ sub usage () {
                    [--github-actions [--use-gh|--no-use-gh] [--filter-github-workflow-rx regexp|--filter-github-workflow-filename filename]]
                    [--commit SHA1]
                    [--wait seconds] [--no-loop] [--timeout seconds] [--total-timeout seconds]
+                   [--api-retries N]
                    [--debug]
                    [user/repo]\n";
 }
@@ -30,6 +31,7 @@ my $timeout = 10;
 my $total_timeout = 3600;
 my $github_api_limit_seconds = 60; # do at most one request per minute because of rate limiting
 my $use_travis_v3 = 1;
+my $api_max_retries = 3;
 my $use_gh = undef; # undef mean: maybe
 my $do_loop = 1;
 my $filter_github_workflow_rx;
@@ -46,6 +48,7 @@ GetOptions(
 	   "use-gh!" => \$use_gh,
 	   "loop!" => \$do_loop,
 	   "filter-github-workflow-rx=s" => \$filter_github_workflow_rx,
+	   "api-retries=i" => \$api_max_retries,
 	   "filter-github-workflow-filename=s" => \$filter_github_workflow_filename,
 	  )
     or usage;
@@ -138,6 +141,7 @@ exit($success ? 0 : 1);
 	######################################################################
 	# Github Actions
 	my $last_github_api_access;
+	my $github_api_consecutive_errors = 0;
 	my $do_github_api_call = sub ($@) {
 	    my($rel_api_url, %opts) = @_;
 	    my $do_rate_check = delete $opts{do_rate_check};
@@ -149,17 +153,28 @@ exit($success ? 0 : 1);
 		debug "About to run '@cmd'";
 		open my $fh, '-|', @cmd
 		    or do {
-			$mark_as_failed->('github actions', "Error running '@cmd': $!");
+			$github_api_consecutive_errors++;
+			if ($github_api_consecutive_errors > $api_max_retries) {
+			    $mark_as_failed->('github actions', "Error running '@cmd': $! (after $api_max_retries retries)");
+			} else {
+			    debug "Error running '@cmd': $! (attempt $github_api_consecutive_errors/$api_max_retries)";
+			}
 			return;
 		    };
 		local $/;
 		$json = <$fh>;
 		close $fh
 		    or do {
-			$mark_as_failed->('github actions', "Error running '@cmd': $!");
+			$github_api_consecutive_errors++;
+			if ($github_api_consecutive_errors > $api_max_retries) {
+			    $mark_as_failed->('github actions', "Error running '@cmd': $! (after $api_max_retries retries)");
+			} else {
+			    debug "Error running '@cmd': $! (attempt $github_api_consecutive_errors/$api_max_retries)";
+			}
 			return;
 		    };
 		debug "Fetch from github actions via gh successful";
+		$github_api_consecutive_errors = 0;
 	    } else {
 		if (defined $last_github_api_access && time < $last_github_api_access + $github_api_limit_seconds) {
 		    debug "Limit accesses against github API to avoid rate limit errors";
@@ -173,9 +188,16 @@ exit($success ? 0 : 1);
 		    debug "Rate limit exceeded while fetching from github actions";
 		    return undef;
 		} elsif (!$res->is_success) {
-		    $mark_as_failed->('github actions', "Request to $url failed: " . $res->status_line);
+		    $github_api_consecutive_errors++;
+		    if ($github_api_consecutive_errors > $api_max_retries) {
+			$mark_as_failed->('github actions', "Request to $url failed: " . $res->status_line . " (after $api_max_retries retries)");
+		    } else {
+			debug "Request to $url failed: " . $res->status_line . " (attempt $github_api_consecutive_errors/$api_max_retries)";
+		    }
+		    return undef;
 		}
 		debug "Fetch from github actions successful";
+		$github_api_consecutive_errors = 0;
 		$json = $res->decoded_content(charset => 'none');
 	    }
 	    return JSON::XS::decode_json($json);
@@ -235,13 +257,21 @@ exit($success ? 0 : 1);
 	######################################################################
 	# Appveyor
 	my $appveyor_build_url = "https://ci.appveyor.com/api/projects/$repo";
+	my $appveyor_api_consecutive_errors = 0;
 	my $get_current_appveyor_build = sub {
 	    debug "About to get from $appveyor_build_url";
 	    my $res = $ua->get($appveyor_build_url);
 	    if (!$res->is_success) {
-		$mark_as_failed->('appveyor', "Request to $appveyor_build_url failed: " . $res->status_line);
+		$appveyor_api_consecutive_errors++;
+		if ($appveyor_api_consecutive_errors > $api_max_retries) {
+		    $mark_as_failed->('appveyor', "Request to $appveyor_build_url failed: " . $res->status_line . " (after $api_max_retries retries)");
+		} else {
+		    debug "Request to $appveyor_build_url failed: " . $res->status_line . " (attempt $appveyor_api_consecutive_errors/$api_max_retries)";
+		}
+		return undef;
 	    }
 	    debug "Fetch from appveyor successful";
+	    $appveyor_api_consecutive_errors = 0;
 	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
 	    if ($data->{build}->{commitId} eq $current_commit_id) {
 		return $data->{build};
@@ -254,15 +284,23 @@ exit($success ? 0 : 1);
 	# Travis CI
 	my $travis_domain = 'travis-ci.com'; # was travis-ci.org
 	my $travis_build_id;
+	my $travis_api_consecutive_errors = 0;
 	my $get_current_travis_build_v3 = sub {
 	    my $repo_escaped = URI::Escape::uri_escape($repo);
 	    my $travis_builds_url = "https://api.$travis_domain/repo/$repo_escaped/builds";
 	    debug "About to get from $travis_builds_url";
 	    my $res = $ua->get($travis_builds_url, 'Travis-API-Version' => 3);
 	    if (!$res->is_success) {
-		$mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line);
+		$travis_api_consecutive_errors++;
+		if ($travis_api_consecutive_errors > $api_max_retries) {
+		    $mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line . " (after $api_max_retries retries)");
+		} else {
+		    debug "Request to $travis_builds_url failed: " . $res->status_line . " (attempt $travis_api_consecutive_errors/$api_max_retries)";
+		}
+		return undef;
 	    }
 	    debug "Fetch from travis successful";
+	    $travis_api_consecutive_errors = 0;
 	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
 	    for my $build (@{ $data->{builds} }) {
 		if ($build->{commit}->{sha} eq $current_commit_id) {
@@ -277,9 +315,16 @@ exit($success ? 0 : 1);
 	    debug "About to get from $travis_builds_url";
 	    my $res = $ua->get($travis_builds_url);
 	    if (!$res->is_success) {
-		$mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line);
+		$travis_api_consecutive_errors++;
+		if ($travis_api_consecutive_errors > $api_max_retries) {
+		    $mark_as_failed->('travis', "Request to $travis_builds_url failed: " . $res->status_line . " (after $api_max_retries retries)");
+		} else {
+		    debug "Request to $travis_builds_url failed: " . $res->status_line . " (attempt $travis_api_consecutive_errors/$api_max_retries)";
+		}
+		return undef;
 	    }
 	    debug "Fetch from travis successful";
+	    $travis_api_consecutive_errors = 0;
 	    my $data = JSON::XS::decode_json($res->decoded_content(charset => 'none'));
 	    for my $build (@$data) {
 		if ($build->{commit} eq $current_commit_id) {
