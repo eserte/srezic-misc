@@ -14,11 +14,13 @@ require "firefox_cookie_finder.pl";
 my @cookie_names;
 my $profile;
 my $debug;
+my $method;
 Getopt::Long::Configure("pass_through");
 GetOptions(
     'cookie-name=s@' => \@cookie_names,
     'profile=s' => \$profile,
     'debug!' => \$debug,
+    'method=s' => \$method,
 );
 my $url = $ARGV[-1]; # XXX must not be true!
 if (!$url) {
@@ -35,6 +37,7 @@ for my $cookie_name (@cookie_names) {
 	$cookie_name, $host,
 	(defined $profile ? (profile => $profile) : ()),
 	(defined $debug ? (debug => $debug) : ()),
+	(defined $method ? (method => $method) : ()),
     );
     if (!defined $cookie_value) {
 	die "Cannot find cookie $cookie_name for host $host.\n";
@@ -72,5 +75,12 @@ database is flushed to disk.
 Then call:
 
     curl-with-cookie --silent --cookie-name aws-waf-token 'https://rt.cpan.org/Public/Bug/Display.html?id=122062' | grep '<title>'
+
+By default the cookie value is extracted using DBI+DBD::SQLite if available,
+falling back to a 'sqlite3'/'sqlite' binary in PATH otherwise. Use
+C<--method> to force a specific extraction method (C<auto>, C<dbi>, or
+C<sqlite>):
+
+    curl-with-cookie --method sqlite --cookie-name aws-waf-token 'https://rt.cpan.org/Public/Bug/Display.html?id=122062'
 
 =cut
