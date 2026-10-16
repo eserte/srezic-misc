@@ -37,7 +37,7 @@ sub find_cookie_value {
 	my @firefox_directory_candidates = (
 	    '.mozilla/firefox',                       # Linux
 	    'snap/firefox/common',                     # Linux (snap package)
-	    'Library/Application Support/Firefox',     # macOS
+	    'Library/Application Support/Firefox/Profiles', # macOS
 	);
 	for my $candidate (@firefox_directory_candidates) {
 	    my $candidate_path = "$ENV{HOME}/$candidate";
